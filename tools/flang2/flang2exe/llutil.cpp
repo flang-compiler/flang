@@ -662,6 +662,8 @@ convert_dtype(LL_Module *module, DTYPE dtype, int addrspace)
   DTYPE dt;
 
   switch (DTY(dtype)) {
+  default:
+    break;
 
   case TY_NONE:
   case TY_ANY:
@@ -839,8 +841,9 @@ is_struct_kind(DTYPE dtype, bool check_return,
   case TY_DCMPLX:
   case TY_CMPLX128:
     return true;
+  default:
+    return false;
   }
-  return false;
 }
 
 LL_Type *
@@ -4335,6 +4338,7 @@ ll_instr_flags_from_aop(ATOMIC_RMW_OP aop)
   switch (aop) {
   default:
     assert(false, "gen_llvm_atomicrmw_expr: unimplemented op", aop, ERR_Fatal);
+    return InstrListFlagsNull;
   case AOP_XCHG:
     return ATOMIC_XCHG_FLAG;
   case AOP_ADD:

@@ -11,6 +11,7 @@
  *           - miscellaneous
  */
 
+#include "universal.h"
 #include "lrutils.h"
 
 void
@@ -320,8 +321,10 @@ s1toa4(INT *from, INT *to, INT *count)
     break;
   case 1:
     *a4++ = ' ';
+    FLANG_FALLTHROUGH;
   case 2:
     *a4++ = ' ';
+    FLANG_FALLTHROUGH;
   case 3:
     *a4++ = ' ';
   }

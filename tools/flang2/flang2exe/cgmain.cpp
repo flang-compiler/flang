@@ -1897,7 +1897,7 @@ restartConcur:
                 make_stmt(STMT_RET, ilix2, false, SPTR_NULL, ilt);
                 break;
               }
-              // fall through
+              FLANG_FALLTHROUGH;
             default:
               switch (ILI_OPC(ilix2)) {
               case IL_ISELECT:
@@ -2193,20 +2193,25 @@ gen_call_vminmax_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
   case TY_FLOAT:
   case TY_DBLE:
     type = 'f';
+    FLANG_FALLTHROUGH;
   case TY_INT:
     sign = 's';
+    FLANG_FALLTHROUGH;
   case TY_UINT:
     if (vect_size != 2 && vect_size != 4 && vect_size != 8 && vect_size != 16)
       return NULL;
     break;
   case TY_SINT:
     sign = 's';
+    FLANG_FALLTHROUGH;
   case TY_USINT:
     if (vect_size != 4 && vect_size != 8 && vect_size != 16)
       return NULL;
     break;
   case TY_BINT:
     sign = 's';
+    return NULL;
+    break;
   default:
     return NULL;
   }
@@ -2997,9 +3002,11 @@ write_instructions(LL_Module *module)
         case I_FADD:
           if (XBIT(216, 2))
             break;
+          FLANG_FALLTHROUGH;
         case I_FDIV:
           if (XBIT(216, 4))
             break;
+          FLANG_FALLTHROUGH;
         case I_FSUB:
         case I_FMUL:
         case I_FREM:
@@ -3798,7 +3805,7 @@ ad_csed_instr(LL_InstrName instr_name, int ilix, LL_Type *ll_type,
           instr = NULL;
           break;
         }
-        // fall through
+        FLANG_FALLTHROUGH;
       default:
         instr = (instr->flags & STARTEBB) ? NULL : instr->prev;
         break;
@@ -4452,6 +4459,8 @@ gen_va_arg(int ilix)
   addr_op = gen_load(ap_cast, uintptr_type, flags);
 
   switch (DTY(arg_dtype)) {
+  default:
+    break;
 #ifdef LONG_DOUBLE_FLOAT128
   case TY_FLOAT128:
   case TY_CMPLX128:
@@ -5090,6 +5099,9 @@ gen_abs_expr(int ilix)
   Curr_Instr = gen_instr(I_SELECT, operand->tmps, operand->ll_type, NULL);
   bool_type = make_int_lltype(1);
   switch (ILI_OPC(ilix)) {
+  default:
+    interr("Unknown abs opcode", ILI_OPC(ilix), ERR_Fatal);
+    return NULL;
   case IL_IABS:
     cc_itype = I_ICMP;
     cc_val = convert_to_llvm_intcc(CC_LT);
@@ -5235,7 +5247,8 @@ gen_minmax_expr(int ilix, OPERAND *op1, OPERAND *op2)
     }
     break;
   default:
-    break; /*TODO: can this happen? */
+    interr("Unknown minmax opcode", ILI_OPC(ilix), ERR_Fatal);
+    return NULL;
   }
   cmp_op = make_tmp_op(bool_type, make_tmps());
 
@@ -5768,6 +5781,8 @@ fused_multiply_add_candidate(int ilix)
   int l, r, lx, rx;
 
   switch (ILI_OPC(ilix)) {
+  default:
+    break;
 #if defined(USE_FMA_EXTENSIONS)
   case IL_FSUB:
 #endif
@@ -5829,6 +5844,8 @@ get_mac_name(int *swap, int *fneg, int ilix, int matches, int l, int r)
   opc = ILI_OPC((*swap) ? r : l);
   *fneg = (opc == IL_FNEG) || (opc == IL_DNEG);
   switch (ILI_OPC(ilix)) {
+  default:
+    break;
   case IL_FADD:
     return (*fneg) ? "x86.fma.vfnmadd.ss" : "x86.fma.vfmadd.ss";
   case IL_DADD:
@@ -6346,6 +6363,7 @@ gen_mulh_expr(int ilix)
     break;
   default:
     interr("Unknown mulh opcode", ILI_OPC(ilix), ERR_Fatal);
+    return NULL;
   }
 
   /* Extend both sides to i128. */
@@ -6416,6 +6434,7 @@ make_bitcast(OPERAND *cast_op, LL_Type *rslt_type)
 
           return operand;
         }
+        FLANG_FALLTHROUGH;
       default:
         if (instr->flags & STARTEBB)
           instr = NULL;
@@ -6835,6 +6854,7 @@ make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
           ll_tmp = make_lltype_from_dtype(DT_UINT);
           operand->flags |= OPF_ZEXT;
           operand = convert_int_size(0, operand, ll_tmp);
+          FLANG_FALLTHROUGH;
         default:
           break;
         }
@@ -7026,6 +7046,7 @@ update_return_type_for_ccfunc(int ilix, ILI_OP opc)
     assert(false,
            "update_return_type_for_ccfunc(): return type not handled for opc ",
            opc, ERR_Fatal);
+    return;
   }
   DTySetParamList(new_dtype, DTyParamList(dtype));
   DTYPEP(sptr, new_dtype);
@@ -8192,7 +8213,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_VCOS:
     if (ILI_OPC(ILI_OPND(ilix, 1)) == IL_VSINCOS)
       break;
-    /* fall-through */
+    FLANG_FALLTHROUGH;
   default:
     if (ILI_ALT(ilix)) {
       ilix = ILI_ALT(ilix);
@@ -8692,6 +8713,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       operand = op6;
       break;
     }
+    FLANG_FALLTHROUGH;
   case IL_KAND:
   case IL_AND:
     operand = gen_binary_expr(ilix, I_AND);
@@ -8736,6 +8758,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     mftof(f, tmp[1]);
     zero_ili = ad1ili(IL_FCON, getcon(tmp, DT_FLOAT));
     comp_exp_type = make_lltype_from_dtype(DT_FLOAT);
+    FLANG_FALLTHROUGH;
   case IL_DCJMPZ:
     if (!zero_ili) {
       d = 0.0;
@@ -9014,12 +9037,14 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
 #ifdef IL_DFRSPX87
   case IL_FREESPX87:
     cse_opc = true;
+    FLANG_FALLTHROUGH;
   case IL_DFRSPX87:
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype(DT_FLOAT);
     goto _process_define_ili;
   case IL_FREEDPX87:
     cse_opc = true;
+    FLANG_FALLTHROUGH;
   case IL_DFRDPX87:
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype(DT_DBLE);
@@ -9027,6 +9052,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
 #endif
   case IL_FREEKR:
     cse_opc = true;
+    FLANG_FALLTHROUGH;
   case IL_DFRKR:
     if (expected_type == NULL) {
       expected_type = make_lltype_from_dtype(DT_INT8);
@@ -9034,6 +9060,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     goto _process_define_ili;
   case IL_FREEIR:
     cse_opc = true;
+    FLANG_FALLTHROUGH;
   case IL_DFRIR:
     if (expected_type == NULL) {
       expected_type = make_lltype_from_dtype(DT_INT);
@@ -9041,12 +9068,14 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     goto _process_define_ili;
   case IL_FREESP:
     cse_opc = true;
+    FLANG_FALLTHROUGH;
   case IL_DFRSP:
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype(DT_FLOAT);
     goto _process_define_ili;
   case IL_FREEDP:
     cse_opc = true;
+    FLANG_FALLTHROUGH;
   case IL_DFRDP:
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype(DT_DBLE);
@@ -9062,7 +9091,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128FREE:
     cse_opc = 1;
-  /* FALLTHROUGH */
+    FLANG_FALLTHROUGH;
   case IL_FLOAT128RESULT:
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype(DT_FLOAT128);
@@ -9070,18 +9099,21 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
 #endif
   case IL_FREEAR:
     cse_opc = true;
+    FLANG_FALLTHROUGH;
   case IL_DFRAR:
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype(DT_CPTR);
     goto _process_define_ili;
   case IL_FREECS:
     cse_opc = true;
+    FLANG_FALLTHROUGH;
   case IL_DFRCS:
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype(DT_CMPLX);
     goto _process_define_ili;
   case IL_FREECD:
     cse_opc = true;
+    FLANG_FALLTHROUGH;
   case IL_DFRCD:
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype(DT_DCMPLX);
@@ -9090,7 +9122,8 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     /* llvm_info.curr_ret_ili = ilix; */
     llvm_info.curr_ret_dtype = cse_opc ? DT_NONE : dtype_from_return_type(opc);
     switch (ILI_OPC(ILI_OPND(ilix, 1))) {
-
+    default:
+      break;
 #ifdef PGPLUS
     case IL_JSRA:
 #endif
@@ -9283,6 +9316,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
       assert(0, "gen_llvm_expr(): unsupport operand for CS2KR ", opc,
              ERR_Fatal);
       /* it is not worth it to do it */
+      break;
     }
 
     operand =
@@ -11162,6 +11196,7 @@ process_extern_function_sptr(SPTR sptr)
       /* Workaround: LLVM on x86 does not sign extend i16 types */
       retc = char_type(DT_INT, SPTR_NULL);
 #endif
+      FLANG_FALLTHROUGH;
     case TY_BINT:
       extend_prefix = "signext";
       break;
@@ -11571,8 +11606,6 @@ process_sptr_offset(SPTR sptr, ISZ_T off)
     }
     break;
 #endif
-  default:
-    assert(false, "process_sptr(): unexpected storage type", sc, ERR_Fatal);
   }
 
   DBGTRACEOUT("")
@@ -12071,9 +12104,9 @@ gen_sptr(SPTR sptr)
       sptr_operand->string = SNAME(sptr);
       break;
     }
-  /* TBD */
+    /* TBD */
+    FLANG_FALLTHROUGH;
   case SC_BASED:
-  default:
     assert(0, "gen_sptr(): unexpected storage type", sc, ERR_Fatal);
   }
 #ifdef OMP_OFFLOAD_LLVM
@@ -12403,6 +12436,7 @@ gen_base_addr_operand(int ilix, LL_Type *expected_type)
         opnd = ad1ili(IL_IAMV, opnd);
       }
     }
+    FLANG_FALLTHROUGH;
   case IL_AADD:
     opnd = opnd ? opnd : ILI_OPND(ilix, 2);
     operand = (XBIT(183, 0x40000))
@@ -13098,7 +13132,7 @@ process_formal_arguments(LL_ABI_Info *abi)
         ftn_byval = true;
         break;
       }
-    /* falls thru */
+      FLANG_FALLTHROUGH;
     case LL_ARG_INDIRECT:
     case LL_ARG_INDIRECT_BUFFERED:
       /* For device pointer, we need to home it because we will need to pass it

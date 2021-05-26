@@ -3015,7 +3015,7 @@ semant1(int rednum, SST *top)
    */
   case BLOCK_STMT1:
     set_construct_name(0);
-    // fall through
+    FLANG_FALLTHROUGH;
   case BLOCK_STMT2:
     if (DI_NEST(sem.doif_depth) >= DI_B(DI_FIRST_DIRECTIVE) && !XBIT(59,8))
       error(1219, ERR_Severe, gbl.lineno,
@@ -4689,7 +4689,7 @@ semant1(int rednum, SST *top)
     } else {
       defer_put_kind_type_param(sem.param_offset, -1, np, 0, ast, 1);
     }
-
+    FLANG_FALLTHROUGH;
   /* ------------------------------------------------------------------ */
   /*
    *	<opt comma> ::= |
@@ -10714,8 +10714,7 @@ procedure_stmt:
             } else if ((da_type == DA_VALUE) || (da_type == DA_REFERENCE)) {
               break;
             }
-
-          /*  fall thru  */
+            FLANG_FALLTHROUGH;
           default:
             error(84, 3, gbl.lineno, SYMNAME(sptr),
                   "- must be defined for ATTRIBUTES");
@@ -11610,7 +11609,7 @@ proc_dcl_init:
 
     if (SST_FIRSTG(RHS(3)) & 0x1 && SST_LSYMG(RHS(3)))
       SST_LSYMP(RHS(1), SST_LSYMG(RHS(3)));
-
+    FLANG_FALLTHROUGH;
   /*
    *	<binding attr list> ::= <binding attr>
    */
@@ -12472,6 +12471,7 @@ gen_dinit(int sptr, SST *stkptr)
   case ST_UNKNOWN:
   case ST_IDENT:
     STYPEP(sptr, ST_VAR);
+    FLANG_FALLTHROUGH;
   case ST_VAR:
   case ST_ARRAY:
     if (SCG(sptr) == SC_NONE)
@@ -14415,13 +14415,14 @@ _do_iface(int iface_state, int i)
     goto iface_err;
   case ST_GENERIC:
     iface = GSAMEG(iface);
+    FLANG_FALLTHROUGH;
   case ST_INTRIN:
   case ST_PD:
     iface = iface_intrinsic(iface);
     if (!iface) {
       goto iface_err;
     }
-  /* fall thru */
+    FLANG_FALLTHROUGH;
   case ST_ENTRY:
   case ST_PROC:
     paramct = PARAMCTG(iface);
@@ -16727,8 +16728,6 @@ sem_pgphase_name()
     return "INTERNAL";
   case PHASE_END:
     return "END";
-  default:
-    return "unknown";
   }
 }
 

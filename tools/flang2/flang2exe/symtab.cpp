@@ -962,6 +962,7 @@ getprint(int sptr)
   case TY_NCHAR:
     sptr = CONVAL1G(sptr); /* sptr to char string constant */
     dtype = DTYPEG(sptr);
+    FLANG_FALLTHROUGH;
   case TY_HOLL: /* Should be no holleriths in symbol table */
   case TY_CHAR:
     from = stb.n_base + CONVAL1G(sptr);

@@ -911,6 +911,7 @@ export_module_subprogram(FILE *subprog_file, int subprog_sym, int limitsptr,
           Trace(("Ignore %d(%s) in %d(%s)", sptr, SYMNAME(sptr), subprog_sym,
                  SYMNAME(subprog_sym)));
         }
+        FLANG_FALLTHROUGH;
       case ST_TYPEDEF:
         if (SCOPEG(sptr) && (SCOPEG(sptr) != sym_module)) {
           /*
@@ -1364,9 +1365,11 @@ rqueue_ast(int ast, int *unused)
   case A_ID:
     if (A_ALIASG(ast) && A_ALIASG(ast) != ast)
       queue_ast(A_ALIASG(ast));
+    FLANG_FALLTHROUGH;
   case A_CNST:
     if (ast < ast_flag_lowest_const)
       ast_flag_lowest_const = ast;
+    FLANG_FALLTHROUGH;
   case A_LABEL:
   case A_INIT:
     if (A_SPTRG(ast) && A_SPTRG(ast) < symbol_flag_size)
@@ -1441,6 +1444,7 @@ rqueue_ast(int ast, int *unused)
     break;
   case A_MP_CANCEL:
     queue_ast(A_IFPARG(ast));
+    FLANG_FALLTHROUGH;
   case A_MP_SECTIONS:
   case A_MP_CANCELLATIONPOINT:
     queue_ast(A_ENDLABG(ast));
@@ -1984,6 +1988,7 @@ queue_symbol(int sptr)
       /* FS#17726 - export overloaded type */
       queue_symbol((int)GTYPEG(sptr));
     }
+    FLANG_FALLTHROUGH;
   case ST_OPERATOR:
     if (GSAMEG(sptr))
       queue_symbol((int)GSAMEG(sptr));
@@ -2795,7 +2800,7 @@ export_one_ast(int ast)
         lzprintf(outlz, "\n");
       }
     }
-  /* fall through to dump argt */
+    FLANG_FALLTHROUGH;
   case A_CALL:
   case A_ICALL:
   case A_ENDMASTER:

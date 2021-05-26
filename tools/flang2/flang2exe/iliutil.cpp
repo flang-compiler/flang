@@ -1375,6 +1375,7 @@ ad_cse(int ilix)
       ilix = ad1ili(IL_CSE, ilix);
       break;
     }
+    FLANG_FALLTHROUGH;
   default:
     interr("ad_cse: bad IL_RES", ilix, ERR_Severe);
     break;
@@ -1445,6 +1446,7 @@ ad_free(int ilix)
   switch (r) {
   default:
     interr("ad_free: not yet implemented for this result type", r, ERR_Fatal);
+    return 0;
   case ILIA_IR:
     opc = IL_FREEIR;
     break;
@@ -4701,6 +4703,8 @@ addarth(ILI *ilip)
       if (con1v2 >= 1 && is_zero_one(op2)) {
         /* low-quality range analysis */
         switch (cond) {
+        default:
+          break;
         case CC_EQ:
         case CC_LE:
           if (con1v2 > 1) {
@@ -4762,6 +4766,8 @@ addarth(ILI *ilip)
       if (con2v2 >= 1 && is_zero_one(op1)) {
         /* low-quality range analysis */
         switch (cond) {
+        default:
+          break;
         case CC_EQ:
         case CC_GE:
           if (con2v2 > 1) {
@@ -7370,6 +7376,8 @@ red_kadd(int ilix, INT con[2])
 
   opc = ILI_OPC(ilix);
   switch (opc) {
+  default:
+    break;
 
   case IL_KCON:
     val[0] = CONVAL1G(ILI_OPND(ilix, 1));
@@ -7934,6 +7942,8 @@ addbran(ILI *ilip)
     cc_op2 = (CC_RELATION) op2;
   }
   switch (ilip->opc) {
+  default:
+    break;
 
   case IL_LCJMPZ:
     /*
@@ -8124,6 +8134,8 @@ addbran(ILI *ilip)
       if (CONVAL2G(ILI_OPND(op1, 1)) >= 1 && is_zero_one(op2)) {
         /* low-quality range analysis */
         switch (cond) {
+        default:
+          break;
         case CC_EQ:
         case CC_LE:
           if (CONVAL2G(ILI_OPND(op1, 1)) > 1) {
@@ -8181,6 +8193,8 @@ addbran(ILI *ilip)
       if (CONVAL2G(ILI_OPND(op2, 1)) >= 1 && is_zero_one(op1)) {
         /* low-quality range analysis */
         switch (cond) {
+        default:
+          break;
         case CC_EQ:
         case CC_GE:
           if (CONVAL2G(ILI_OPND(op2, 1)) > 1) {
@@ -8593,6 +8607,8 @@ addbran(ILI *ilip)
 
 fold_jmp:
   switch (cond) {
+  default:
+    break;
   case CC_EQ:
     if (cmp_val == 0)
       return ad1ili(IL_JMP, lab);
@@ -9679,6 +9695,8 @@ has_nme(int nme)
   if (nme == rewr_old_nme)
     return true;
   switch (NME_TYPE(nme)) {
+  default:
+    break;
   case NT_MEM:
   case NT_IND:
   case NT_ARR:
@@ -10112,8 +10130,6 @@ atomic_origin_name(ATOMIC_ORIGIN origin)
     return "openmp";
   case AORG_OPENACC:
     return "openacc";
-  default:
-    return "<bad origin>";
   }
 }
 
@@ -10174,6 +10190,8 @@ dump_ili(FILE *f, int i)
   for (j = 1; j <= noprs; j++) {
     int opn = ILI_OPND(i, j);
     switch (IL_OPRFLAG(opc, j)) {
+    default:
+      break;
     case ILIO_SYM:
     case ILIO_OFF:
       if (opn <= 0) {
@@ -10489,6 +10507,7 @@ dilitree(int i)
         indent += 3;
         break;
       }
+      FLANG_FALLTHROUGH;
     case ILIO_IRLNK:
     case ILIO_KRLNK:
     case ILIO_ARLNK:
@@ -10572,6 +10591,8 @@ prnme(int opn, int ili)
 {
 
   switch (NME_TYPE(opn)) {
+  default:
+    break;
   case NT_VAR:
     prsym(NME_SYM(opn), gbl.dbgfil);
     break;
@@ -13753,6 +13774,7 @@ ili_throw_label(int ilix)
   switch (opc) {
   default:
     interr("ili_throw_label: not a call", ILI_OPC(ilix), ERR_Fatal);
+    return 0;
   case IL_QJSR:
     /* QJSR never throws */
     return 0;
@@ -13772,6 +13794,7 @@ ili_throw_label(int ilix)
   switch (opc) {
   default:
     interr("ili_throw_label: unexpected alt", opc, ERR_Fatal);
+    return 0;
   case IL_GJSR:
     return ILI_OPND(ilix, 3);
   case IL_GJSRA:
@@ -13944,6 +13967,7 @@ atomic_info_index(ILI_OP opc)
   switch (opc) {
   default:
     assert(false, "atomic_info: not an atomic op", opc, ERR_Severe);
+    return 0;
   case IL_CMPXCHGI:
   case IL_CMPXCHGKR:
   case IL_CMPXCHGA:
@@ -14129,6 +14153,7 @@ memory_order(int ilix)
   switch (opc) {
   default:
     assert(false, "memory_order: unimplemented op", opc, ERR_Severe);
+    return MO_UNDEF;
   case IL_CMPXCHGI:
   case IL_CMPXCHGKR:
   case IL_CMPXCHGA: {

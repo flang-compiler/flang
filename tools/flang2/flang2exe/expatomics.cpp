@@ -1756,10 +1756,12 @@ get_ops(MSZ msz, int is_openmp)
     if (is_openmp) {
       return &dp_ops;
     }
+    FLANG_FALLTHROUGH;
   case MSZ_PTR:
     if (is_openmp) {
       return &ar_ops;
     }
+    FLANG_FALLTHROUGH;
   case MSZ_SLWORD:
   case MSZ_ULWORD:
   case MSZ_I8:
@@ -1767,6 +1769,7 @@ get_ops(MSZ msz, int is_openmp)
   case MSZ_F4:
     if (is_openmp)
       return &sp_ops;
+    FLANG_FALLTHROUGH;
   default:
     return &ir_ops;
   }
@@ -2066,6 +2069,7 @@ auto_retrieve(auto_temp *temp)
   switch (IL_TYPE(ILI_OPC(temp->expr))) {
   default:
     interr("auto_retrieve: unexpected IL_TYPE", IL_TYPE(temp->expr), ERR_Fatal);
+    return 0;
   case ILTY_STORE:
   case ILTY_PSTORE:
     return ad_load(temp->expr);

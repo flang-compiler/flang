@@ -1447,6 +1447,8 @@ transform_wrapup(void)
         if (IGNOREG(sptr) || CONSTRUCTSYMG(sptr) != i || EARLYSPECG(sptr) != j)
           continue;
         switch (STYPEG(sptr)) {
+        default:
+          break;
         case ST_VAR:
         case ST_ARRAY:
           wraplist[wrapcount++] = sptr;

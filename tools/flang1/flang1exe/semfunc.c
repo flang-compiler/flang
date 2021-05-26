@@ -132,6 +132,7 @@ get_static_type_descriptor(int sptr)
       sptr = DTY(dtype + 3);
       break;
     }
+    FLANG_FALLTHROUGH;
   default:
     return 0; /* TBD - probably need other cases for unlimited
                * polymorphic entities.
@@ -594,6 +595,8 @@ in_kernel_region()
   int df;
   for (df = 1; df <= sem.doif_depth; df++) {
     switch (DI_ID(df)) {
+    default:
+      break;
     case DI_CUFKERNEL:
     case DI_ACCDO:
     case DI_ACCLOOP:
@@ -4268,6 +4271,7 @@ ref_intrin(SST *stktop, ITEM *list)
     case TY_SINT:
       if ((sptr = GSINTG(sptre)))
         break;
+      FLANG_FALLTHROUGH;
     case TY_WORD:
     case TY_LOG:
     case TY_INT:
@@ -4308,6 +4312,7 @@ ref_intrin(SST *stktop, ITEM *list)
         A_OPTYPEP(SST_ASTG(stktop), intrin);
         return 1;
       }
+      FLANG_FALLTHROUGH;
     default:
       sptr = 0;
       break;
@@ -5117,6 +5122,7 @@ no_const_fold:
         switch (opc) {
         case IM_ICHAR:
           dtyper = stb.user.dt_int;
+          FLANG_FALLTHROUGH;
         case IM_NCHAR:
         case IM_NINDEX:
         case IM_NLEN:
@@ -5303,7 +5309,7 @@ no_const_fold:
       ARG_AST(2) = mk_cval((INT)bits_in((int)DDTG(f_dt)), DT_INT);
       count++;
     }
-  /*  fall thru  */
+    FLANG_FALLTHROUGH;
   default: /* name is just the name of the specific or generic */
   use_intr_sym:
     func_ast = mk_id(sptre);
@@ -5812,6 +5818,7 @@ ref_pd(SST *stktop, ITEM *list)
   case PD_dotproduct:
     if (!XBIT(49, 0x40)) /* if xbit set, CM fortran intrinsics allowed */
       goto bad_args;
+    FLANG_FALLTHROUGH;
   case PD_dot_product:
     if (count != 2) {
       E74_CNT(pdsym, count, 2, 2);
@@ -6202,7 +6209,7 @@ ref_pd(SST *stktop, ITEM *list)
     if (!XBIT(49, 0x40)) /* if xbit set, CM fortran intrinsics allowed */
       goto bad_args;
     pdtype = PD_ubound;
-  /*  fall thru  */
+    FLANG_FALLTHROUGH;
   case PD_lbound:
   case PD_ubound:
   lbound_ubound:
@@ -7224,6 +7231,7 @@ ref_pd(SST *stktop, ITEM *list)
   case PD_dshape:
     if (!XBIT(49, 0x40)) /* if xbit set, CM fortran intrinsics allowed */
       goto bad_args;
+    FLANG_FALLTHROUGH;
   case PD_shape:
     if (count < 1 || count > 2) {
       E74_CNT(pdsym, count, 1, 2);
@@ -7680,6 +7688,7 @@ ref_pd(SST *stktop, ITEM *list)
   case PD_dsize:
     if (!XBIT(49, 0x40)) /* if xbit set, CM fortran intrinsics allowed */
       goto bad_args;
+    FLANG_FALLTHROUGH;
   case PD_size:
     if (count == 0 || count > 3) {
       E74_CNT(pdsym, count, 1, 3);
@@ -9235,6 +9244,7 @@ ref_pd(SST *stktop, ITEM *list)
         conval = pdtype == PD_maxexponent ? 8189 : -8188;
       else
         conval = pdtype == PD_maxexponent ? 16384 : -16381;
+      FLANG_FALLTHROUGH;
     default:
       E74_ARG(pdsym, 0, NULL);
       goto call_e74_arg;

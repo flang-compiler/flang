@@ -2778,6 +2778,7 @@ exit_loop:
             DLLG(ps->new_sptr) == DLL_EXPORT) {
           DLLP(ps->new_sptr, DLL_IMPORT);
         }
+        FLANG_FALLTHROUGH;
       case ST_CMBLK:
         if (stb.curr_scope != curr_scope()->sptr &&
             DLLG(ps->new_sptr) == DLL_EXPORT) {
@@ -5983,7 +5984,7 @@ fill_links_symbol(SYMITEM *ps, WantPrivates wantPrivates)
     if (CLASSG(sptr) && TBPLNKG(sptr) && can_find_dtype(TBPLNKG(sptr))) {
       TBPLNKP(sptr, new_dtype(TBPLNKG(sptr)));
     }
-  /* fall thru */
+    FLANG_FALLTHROUGH;
   case ST_STFUNC:
   case ST_PD:
   case ST_ISOC:

@@ -1641,6 +1641,8 @@ read_datatype(void)
   dtype = getDtypeVal("datatype");
   dval = getTYKind();
   switch (dval) {
+  default:
+    break;
   case TY_CMPLX:
     datatypexref[dtype] = DT_CMPLX;
     break;
@@ -1894,6 +1896,7 @@ fix_datatype(void)
           fval = symbolxref[fval];
         }
         DTySetFuncVal(dtype, fval);
+        break;
       default:
         break;
       }
@@ -3594,7 +3597,7 @@ fix_symbol(void)
           }
         }
       }
-      /* fall through */
+      FLANG_FALLTHROUGH;
     case ST_VAR:
       if (STYPEG(sptr) != ST_ARRAY && VARDSCG(sptr)) {
         desc = SDSCG(sptr);
@@ -3892,6 +3895,7 @@ fix_symbol(void)
         ADDRESSP(sptr, ADDRESSG(ptr));
         break;
       }
+      FLANG_FALLTHROUGH;
     case ST_ENTRY:
       paramcount = PARAMCTG(sptr);
       dpdsc = DPDSCG(sptr);
@@ -5805,7 +5809,7 @@ IPA_nme_conflict(int nme1, int nme2)
           /* probably S1 -> *S2, conflict */
           return 1;
         }
-      /* fall through */
+        FLANG_FALLTHROUGH;
       case INFO_GTARGET:
       case INFO_OGTARGET:
       case INFO_OTARGET:
@@ -5906,7 +5910,7 @@ F90_nme_conflict(int nme1, int nme2)
             /* probably S1 -> *S2, conflict */
             return 1;
           }
-        /* fall through */
+          FLANG_FALLTHROUGH;
         case INFO_FLDYNTARGET:
         case INFO_FGDYNTARGET:
         case INFO_FOTARGET:
@@ -5965,7 +5969,7 @@ F90_nme_conflict(int nme1, int nme2)
           /* probably S1 -> *S2, conflict */
           return 1;
         }
-      /* fall through */
+        FLANG_FALLTHROUGH;
       case INFO_FLDYNTARGET:
       case INFO_FGDYNTARGET:
       case INFO_FOTARGET:

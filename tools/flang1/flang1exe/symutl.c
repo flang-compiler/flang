@@ -1984,7 +1984,7 @@ mk_spread_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty, int dim,
         goto no_arr_sptr;
       }
     }
-  /*  fall-thru  */
+    FLANG_FALLTHROUGH;
   case A_ID:
   case A_MEM:
     arr_sptr = find_array(arr_ast, &ssast);

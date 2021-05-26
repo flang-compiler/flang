@@ -1402,6 +1402,8 @@ init_fold_const(int opr, INT conval1, INT conval2, DTYPE dtype)
     return val;
   }
   switch (DTY(dtype)) {
+  default:
+    break;
   case TY_BINT:
   case TY_SINT:
   case TY_INT:
@@ -2489,6 +2491,8 @@ eval_min(CONST *arg, DTYPE dtype)
         c->dtype = wrkarg1->dtype;
       }
       switch (DTY(dtype)) {
+      default:
+        break;
       case TY_INT:
         if (wrkarg2->u1.conval < wrkarg1->u1.conval) {
           c->u1 = wrkarg2->u1;
@@ -2618,6 +2622,8 @@ eval_max(CONST *arg, DTYPE dtype)
         c->dtype = wrkarg1->dtype;
       }
       switch (DTY(dtype)) {
+      default:
+        break;
       case TY_CHAR:
         if (strcmp(stb.n_base + CONVAL1G(wrkarg2->u1.conval),
                    stb.n_base + CONVAL1G(wrkarg1->u1.conval)) > 0) {
@@ -2859,11 +2865,9 @@ negate_const_be(INT conval, DTYPE dtype)
 int
 mk_unop(int optype, int lop, DTYPE dtype)
 {
-  INT conval;
   switch (optype) {
   case OP_ADD:
     return lop;
-
   case OP_SUB:
     switch (DTY(dtype)) {
     case TY_BINT:
@@ -2872,26 +2876,22 @@ mk_unop(int optype, int lop, DTYPE dtype)
     case TY_BLOG:
     case TY_SLOG:
     case TY_LOG:
-      break;
     case TY_REAL:
-      conval = negate_const_be(lop, dtype);
-      break;
-
     case TY_DBLE:
     case TY_CMPLX:
     case TY_DCMPLX:
     case TY_INT8:
     case TY_LOG8:
-      conval = negate_const_be(lop, dtype);
-      break;
-
+      return negate_const_be(lop, dtype);
     default:
       interr("mk_unop-negate: bad dtype", dtype, ERR_Severe);
       break;
     }
-      return conval;
-    }
-
+    break;
+  default:
+    interr("mk_unop-negate: bad op", optype, ERR_Severe);
+    break;
+  }
   return lop;
 }
 
@@ -3223,6 +3223,8 @@ eval_nint(CONST *arg, DTYPE dtype)
 
     con1 = wrkarg->u1.conval;
     switch (DTY(dtype1)) {
+    default:
+      break;
     case TY_REAL:
       num1[0] = CONVAL2G(stb.flt0);
       if (xfcmp(con1, num1[0]) >= 0)
@@ -3264,6 +3266,8 @@ eval_floor(CONST *arg, DTYPE dtype)
     adjust = 0;
     con1 = wrkarg->u1.conval;
     switch (DTY(wrkarg->dtype)) {
+    default:
+      break;
     case TY_REAL:
       conval = cngcon(con1, DT_REAL, dtype);
       num1[0] = CONVAL2G(stb.flt0);
@@ -3316,6 +3320,8 @@ eval_ceiling(CONST *arg, DTYPE dtype)
     adjust = 0;
     con1 = wrkarg->u1.conval;
     switch (DTY(wrkarg->dtype)) {
+    default:
+      break;
     case TY_REAL:
       conval = cngcon(con1, DT_REAL, dtype);
       num1[0] = CONVAL2G(stb.flt0);
@@ -5277,6 +5283,7 @@ eval_init_expr(CONST *e)
         new_e->id = AC_ACONST;
         break;
       }
+      FLANG_FALLTHROUGH;
     default:
       new_e = eval_init_expr_item(cur_e);
       break;

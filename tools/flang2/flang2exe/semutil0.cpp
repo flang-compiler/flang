@@ -482,11 +482,13 @@ cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp)
       switch (from) {
       case TY_CMPLX:
         oldval = CONVAL1G(oldval);
+        FLANG_FALLTHROUGH;
       case TY_REAL:
         xfix(oldval, &result);
         return result;
       case TY_DCMPLX:
         oldval = CONVAL1G(oldval);
+        FLANG_FALLTHROUGH;
       case TY_DBLE:
         num[0] = CONVAL1G(oldval);
         num[1] = CONVAL2G(oldval);
@@ -498,6 +500,7 @@ cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp)
       case TY_CHAR:
         if (flg.standard)
           ERR170("conversion of CHARACTER constant to numeric");
+        FLANG_FALLTHROUGH;
       case TY_HOLL:
         cp = stb.n_base + CONVAL1G(oldval);
         oldcvlen = 4;
@@ -538,11 +541,13 @@ cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp)
       switch (from) {
       case TY_CMPLX:
         oldval = CONVAL1G(oldval);
+        FLANG_FALLTHROUGH;
       case TY_REAL:
         xfix64(oldval, num);
         return getcon(num, newtyp);
       case TY_DCMPLX:
         oldval = CONVAL1G(oldval);
+        FLANG_FALLTHROUGH;
       case TY_DBLE:
         num1[0] = CONVAL1G(oldval);
         num1[1] = CONVAL2G(oldval);
@@ -554,6 +559,7 @@ cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp)
       case TY_CHAR:
         if (flg.standard)
           ERR170("conversion of CHARACTER constant to numeric");
+        FLANG_FALLTHROUGH;
       case TY_HOLL:
         cp = stb.n_base + CONVAL1G(oldval);
         holtonum(cp, num, 8);
@@ -594,6 +600,7 @@ cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp)
         return CONVAL1G(oldval);
       case TY_DCMPLX:
         oldval = CONVAL1G(oldval);
+        FLANG_FALLTHROUGH;
       case TY_DBLE:
         num[0] = CONVAL1G(oldval);
         num[1] = CONVAL2G(oldval);
@@ -605,6 +612,7 @@ cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp)
       case TY_CHAR:
         if (flg.standard)
           ERR170("conversion of CHARACTER constant to numeric");
+        FLANG_FALLTHROUGH;
       case TY_HOLL:
         cp = stb.n_base + CONVAL1G(oldval);
         holtonum(cp, num, 4);

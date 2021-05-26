@@ -514,7 +514,6 @@ kind_to_string(SCOPEKIND kind)
   case SCOPE_INTERFACE:  return "Interface";
   case SCOPE_USE:        return "Use";
   case SCOPE_PAR:        return "Par";
-  default:               return "<unknown>";
   }
 }
 

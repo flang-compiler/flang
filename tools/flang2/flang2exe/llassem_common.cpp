@@ -607,6 +607,8 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
         if (is_empty_typedef(tdtype)) {
           break;
         }
+        // TODO: Print the struct?
+        break;
 
 #ifdef LONG_DOUBLE_FLOAT128
       case TY_X87:

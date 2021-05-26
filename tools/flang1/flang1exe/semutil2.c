@@ -4380,7 +4380,7 @@ construct_acl_from_ast(int ast, DTYPE dtype, int parent_acltype)
           subscr_aclp->u1.expr->lop = construct_acl_from_ast(sub_ast, 0, 0);
           break;
         }
-      /*  fall thru  */
+        FLANG_FALLTHROUGH;
       default:
         l->u1.ast = sub_ast;
         l->dtype = A_DTYPEG(sub_ast);
@@ -6249,15 +6249,17 @@ const_eval(int ast)
       switch (A_OPTYPEG(ast)) {
       case OP_LEQV:
         val = (lv == rv) ? SCFTN_TRUE : SCFTN_FALSE;
+        FLANG_FALLTHROUGH;
       case OP_LNEQV:
         val = (lv == rv) ? SCFTN_FALSE : SCFTN_TRUE;
+        FLANG_FALLTHROUGH;
       case OP_LOR:
         val = (lv == SCFTN_TRUE || rv == SCFTN_TRUE) ? SCFTN_TRUE : SCFTN_FALSE;
+        FLANG_FALLTHROUGH;
       case OP_LAND:
         val = (lv == SCFTN_TRUE && rv == SCFTN_TRUE) ? SCFTN_TRUE : SCFTN_FALSE;
       }
       return val;
-
     case OP_XTOI:
       lop = A_LOPG(ast);
       rop = A_ROPG(ast);
@@ -11107,7 +11109,7 @@ eval_init_expr_item(ACL *cur_e)
         return 0;
       }
     }
-  /* ELSE FALL THRU */
+    FLANG_FALLTHROUGH;
   case AC_CONST:
     new_e = clone_init_const(cur_e, TRUE);
     if (new_e->id == AC_AST) {

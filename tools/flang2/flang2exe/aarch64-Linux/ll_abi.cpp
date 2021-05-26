@@ -68,6 +68,8 @@ update_homogeneous(void *context, DTYPE dtype, unsigned address,
     dtype = (DTYPE)DTY(dtype + 1); // ???
 
   switch (dtype) {
+  default:
+    break;
   case DT_CMPLX:
     dtype = DT_FLOAT;
     break;

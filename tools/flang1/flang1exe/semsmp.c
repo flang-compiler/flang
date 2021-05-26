@@ -7773,6 +7773,8 @@ begin_parallel_clause(int doif)
   {
     switch (DI_ID(doif)) {
       int sptr, ast;
+    default:
+      break;
     case DI_PARDO:
       break;
     case DI_PDO:
@@ -7804,6 +7806,7 @@ begin_parallel_clause(int doif)
   case DI_TARGTEAMSDISTPARDO:
   case DI_TARGPARDO:
     do_private();
+    FLANG_FALLTHROUGH;
   default:
     break;
   }
@@ -7814,7 +7817,7 @@ begin_parallel_clause(int doif)
   case DI_PDO:
   case DI_SIMD:
     private_check();
-
+    FLANG_FALLTHROUGH;
   case DI_PAR:
   case DI_PARDO:
   case DI_PARSECTS:
@@ -7831,6 +7834,7 @@ begin_parallel_clause(int doif)
   case DI_TEAMSDISTPARDO:
   case DI_TARGPARDO:
     do_firstprivate((DI_ID(doif) == DI_TASK || DI_ID(doif) == DI_TASKLOOP));
+    FLANG_FALLTHROUGH;
   default:
     break;
   }
@@ -7851,6 +7855,7 @@ begin_parallel_clause(int doif)
   case DI_TARGPARDO:
   case DI_TASKLOOP:
     do_lastprivate();
+    FLANG_FALLTHROUGH;
   default:
     break;
   }
@@ -7867,6 +7872,7 @@ begin_parallel_clause(int doif)
   case DI_SIMD:
   case DI_TEAMS:
     do_reduction();
+    FLANG_FALLTHROUGH;
   default:
     break;
   }
@@ -7886,10 +7892,12 @@ begin_parallel_clause(int doif)
   case DI_PARSECTS:
   case DI_PARWORKS:
     do_copyin();
+    FLANG_FALLTHROUGH;
   case DI_TASK:
   case DI_TASKLOOP:
   case DI_TEAMS:
     do_default_clause(doif);
+    FLANG_FALLTHROUGH;
   default:
     break;
   }
@@ -7911,6 +7919,7 @@ end_parallel_clause(int doif)
   case DI_SIMD:
   case DI_TEAMS:
     end_reduction(DI_REDUC(doif), doif);
+    FLANG_FALLTHROUGH;
   default:
     break;
   }
@@ -7960,6 +7969,7 @@ end_parallel_clause(int doif)
   case DI_TARGTEAMSDISTPARDO:
   case DI_SIMD:
     deallocate_privates(doif);
+    FLANG_FALLTHROUGH;
   default:
     break;
   }
@@ -7967,6 +7977,8 @@ end_parallel_clause(int doif)
   {
     switch (DI_ID(doif)) {
       int sptr, ast;
+    default:
+      break;
     case DI_PARDO:
     case DI_TARGPARDO:
       break;
@@ -8079,7 +8091,7 @@ gen_reduction(REDUC *reducp, REDUC_SYM *reduc_symp, LOGICAL rmme,
     goto end_reduction;
   case OP_SUB:
     opc = OP_ADD;
-    /*  fall thru  */
+    FLANG_FALLTHROUGH;
   case OP_ADD:
   case OP_MUL:
     SST_OPTYPEP(&opr, opc);
@@ -8238,6 +8250,8 @@ end_lastprivate(int doif)
     return;
   lab = 0;
   switch (DI_ID(doif)) {
+  default:
+    break;
   case DI_SIMD:
     sptr = DI_DOINFO(doif + 1)->index_var;
     i1 = mk_id(sptr);
@@ -8519,6 +8533,8 @@ restore_clauses(void)
   distchunk = sav_chk.distchunk;
   mp_iftype = sav_chk.mp_iftype;
   switch (DI_ID(sem.doif_depth)) {
+  default:
+    break;
   case DI_TARGET:
     if (CL_PRESENT(CL_IF) &&
         (mp_iftype == IF_DEFAULT || mp_iftype == IF_TARGET)) {
@@ -9713,6 +9729,7 @@ needCharLen(int sptr)
     } else if (DTYG(DTYG(dtype)) == TY_NCHAR) {
       return true;
     }
+    FLANG_FALLTHROUGH;
   default:
     return false;
   }

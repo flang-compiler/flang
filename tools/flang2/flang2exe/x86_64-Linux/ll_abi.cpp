@@ -146,6 +146,9 @@ amd64_update_class(void *context, DTYPE dtype, unsigned address,
 
   enum amd64_class cls[2] = {AMD64_MEMORY, AMD64_MEMORY};
   switch (DTY(dtype)) {
+  default:
+    break;
+
   case TY_VECT:
   case TY_128:
   case TY_FLOAT128:

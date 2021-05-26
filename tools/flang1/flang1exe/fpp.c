@@ -1993,6 +1993,7 @@ tobinary(char *st, int b)
       t = c - 'a' + 10;
       if (b > 10)
         break;
+      FLANG_FALLTHROUGH;
     case 'A':
     case 'B':
     case 'C':
@@ -2002,6 +2003,7 @@ tobinary(char *st, int b)
       t = c - 'A' + 10;
       if (b > 10)
         break;
+      FLANG_FALLTHROUGH;
     default:
       t = -1;
       if (c == 'l' || c == 'L' || c == 'u' || c == 'U')
@@ -2129,7 +2131,7 @@ again:
         goto nextok_ret;
       }
     }
-  /* FALL THROUGH */
+    FLANG_FALLTHROUGH;
   case 'A':
   case 'B':
   case 'D':
@@ -2424,8 +2426,7 @@ again:
         goto nextok_ret;
       }
     }
-  /* FALL THROUGH */
-
+    FLANG_FALLTHROUGH;
   default:
     switch (MASK(c)) {
     case NOFUNC:

@@ -1085,6 +1085,8 @@ dsym(int sptr)
   SYMLKP(0, SPTR_NULL);
 
   switch (stype) {
+  default:
+    break;
   case ST_ARRAY:
   case ST_IDENT:
   case ST_STRUCT:
@@ -3146,6 +3148,7 @@ dumpdtype(DTYPE dtype)
     fprintf(dfile, "<%lu x ", DTyVecLength(dtype));
     putdtype(DTySeqTyElement(dtype));
     fputc('>', dfile);
+    FLANG_FALLTHROUGH;
   default:
     /* simple datatypes, just the one line of info */
     putline();
@@ -4000,8 +4003,7 @@ _printili(int i)
       appendstring1("NULL");
       break;
     }
-/* fall through */
-
+    FLANG_FALLTHROUGH;
   default:
     appendstring1(ilis[opc].name);
     if (noprs) {

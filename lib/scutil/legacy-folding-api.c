@@ -497,8 +497,6 @@ check(enum fold_status status)
   case FOLD_UNDERFLOW:
     fperror(FPE_FPUNF);
     break;
-  default:
-    assert(!"scutil-api.c:check:unknown status");
   }
 }
 

@@ -3953,6 +3953,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
         break;
       }
       /* else fall thru for handling character */
+      FLANG_FALLTHROUGH;
 
     default:
       gargili = ILM_RESULT(ilm1);
@@ -4910,6 +4911,7 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
   switch (opc) {
   case IM_ICHAR: /* char to integer */
     tmp = MSZ_BYTE;
+    FLANG_FALLTHROUGH;
   case IM_INCHAR: /* nchar to integer */
     if (opc == IM_INCHAR)
       tmp = MSZ_UHWORD;
@@ -5138,6 +5140,7 @@ exp_fstring(ILM_OP opc, ILM *ilmp, int curilm)
      * ftn_strcmp.
      */
     ILM_RESTYPE(curilm) = ILM_ISCHAR;
+    FLANG_FALLTHROUGH;
   case IM_INDEX:
   case IM_KINDEX:
   case IM_NINDEX:
@@ -5963,6 +5966,7 @@ AssignAddresses(void)
               default:
                 break;
               }
+              break;
             default:
               break;
             }

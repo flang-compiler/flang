@@ -61,6 +61,8 @@ build_same_base_nme(int nme1, int nme2, int *res_nme)
       return false;
 
     switch (NME_TYPE(nme1)) {
+    default:
+      break;
     case NT_VAR:
       if (NME_SYM(nme1) != NME_SYM(nme2) &&
           STYPEG(NME_SYM(nme1)) == STYPEG(NME_SYM(nme2)) &&

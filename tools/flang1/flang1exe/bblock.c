@@ -1768,6 +1768,7 @@ eliminate_unused_variables(int which)
       case SC_BASED:
         if (MIDNUMG(sptr) && VISITG(MIDNUMG(sptr)))
           break;
+        FLANG_FALLTHROUGH;
       case SC_LOCAL:
       case SC_NONE:
       case SC_PRIVATE:

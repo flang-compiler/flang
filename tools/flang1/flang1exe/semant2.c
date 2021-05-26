@@ -1170,6 +1170,7 @@ semant2(int rednum, SST *top)
         case ST_PD:
           if (!EXPSTG(sptr))
             break;
+          FLANG_FALLTHROUGH;
         default:
           error(84, 3, gbl.lineno, SYMNAME(sptr),
                 "as a dummy argument to a statement function");

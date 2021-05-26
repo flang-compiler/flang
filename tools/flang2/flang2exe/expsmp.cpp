@@ -1552,6 +1552,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
                   "Parallel loop activated with %schedule schedule",
                   "schedule=%s", doschedule, NULL);
       }
+      FLANG_FALLTHROUGH;
 
     case KMP_DISTRIBUTE_STATIC_CHUNKED:
     case KMP_DISTRIBUTE_STATIC:

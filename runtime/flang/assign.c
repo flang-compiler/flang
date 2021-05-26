@@ -52,6 +52,7 @@ __fortio_assign(char *item,           /* where to store */
   case __INT8:
     if (__ftn_32in64_)
       I64_MSH(valp->val.i8) = 0;
+    FLANG_FALLTHROUGH;
   case __BIGINT:
   case __BIGREAL:
     lp = valp;

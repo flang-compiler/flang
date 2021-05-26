@@ -247,7 +247,7 @@ semant3(int rednum, SST *top)
         error(155, 3, gbl.lineno, SYMNAME(gbl.currsub),
               "- ELEMENTAL subprograms may not contain OpenMP directives");
     }
-  /*  fall thru  */
+    FLANG_FALLTHROUGH;
   /*
    *	<simple stmt> ::= <pragma stmt> |
    */
@@ -2516,7 +2516,7 @@ errorstop_shared:
    */
   case ASSOCIATE_STMT1:
     construct_name = 0;
-  /* FALLTHROUGH */
+    FLANG_FALLTHROUGH;
   case ASSOCIATE_STMT2:
     rhstop = rednum == ASSOCIATE_STMT1 ? 3 : 5;
     itemp = SST_BEGG(RHS(rhstop));
@@ -2588,7 +2588,7 @@ errorstop_shared:
    */
   case SELECT_TYPE_STMT1:
     construct_name = 0;
-  /* FALLTHROUGH */
+    FLANG_FALLTHROUGH;
   case SELECT_TYPE_STMT2:
     rhstop = rednum == SELECT_TYPE_STMT1 ? 3 : 5;
     NEED_DOIF(doif, DI_SELECT_TYPE);
@@ -3038,6 +3038,8 @@ errorstop_shared:
     }
     /* treat logical like integer */
     switch (dtype) {
+    default:
+      break;
     case DT_BLOG:
       dtype = DT_BINT;
       break;
@@ -3491,7 +3493,7 @@ errorstop_shared:
         msg = 1044; // 2018-C1124 -- sptr is not a variable
         break;
       }
-      // fall through
+      FLANG_FALLTHROUGH;
     case ST_UNKNOWN: // potential keyword as an identifier
     case ST_IDENT:
     case ST_VAR:
@@ -3523,7 +3525,7 @@ errorstop_shared:
         DI_CONC_ERROR_SYMS(doif) = add_symitem(sptr, DI_CONC_ERROR_SYMS(doif));
         break;
       }
-      // fall through
+      FLANG_FALLTHROUGH;
     case TK_LOCAL:
       if (sptr < DI_CONC_SYMAVL(doif)) {
         // sptr is external to the loop; get a construct instance.
@@ -4555,7 +4557,7 @@ errorstop_shared:
         case ST_UNKNOWN:
         case ST_IDENT:
           STYPEP(sptr, ST_VAR);
-        /*  fall thru  */
+          FLANG_FALLTHROUGH;
         case ST_VAR:
           if (SDSCG(sptr) == 0 && !F90POINTERG(sptr)) {
             if (SCG(sptr) == SC_NONE)
@@ -4979,6 +4981,7 @@ errorstop_shared:
     case S_LVALUE:
       SST_DBEGP(LHS, itemp);
       SST_DENDP(LHS, itemp);
+      FLANG_FALLTHROUGH;
     default:
       break;
     }
@@ -5859,7 +5862,7 @@ check_doconcurrent_ast(int ast, int *doif)
             "Intrinsic subroutine call in DO CONCURRENT", name);
       break;
     }
-    // fall through
+    FLANG_FALLTHROUGH;
   case A_FUNC:
   case A_INTR:
     if (DI_CONC_KIND(*doif) == DC_HEADER)
@@ -5921,7 +5924,7 @@ check_doconcurrent_ast(int ast, int *doif)
       error(1050, ERR_Severe, gbl.lineno, "Branch out of", CNULL); // 2018-C1138
       break;
     }
-    // fall through
+    FLANG_FALLTHROUGH;
   case A_CGOTO:
     for (astli = A_LISTG(ast); astli; astli = ASTLI_NEXT(astli)) {
       sptr = A_SPTRG(ASTLI_AST(astli));

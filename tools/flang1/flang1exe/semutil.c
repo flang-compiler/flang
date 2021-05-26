@@ -478,12 +478,12 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
       break;
     case TY_CMPLX:
       mkexpr1(old);
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     case TY_REAL:
       break;
     case TY_DCMPLX:
       mkexpr1(old);
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     case TY_DBLE:
       break;
     case TY_CHAR:
@@ -494,7 +494,7 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     default:
       goto type_error;
     }
-
+    FLANG_FALLTHROUGH;
   case TY_LOG8:
   case TY_INT8:
     switch (from) {
@@ -512,12 +512,12 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
       break;
     case TY_CMPLX:
       mkexpr1(old);
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     case TY_REAL:
       break;
     case TY_DCMPLX:
       mkexpr1(old);
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     case TY_DBLE:
       break;
     case TY_CHAR:
@@ -537,7 +537,7 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_SINT:
       cngtyp(old, DT_INT);
       SST_DTYPEP(old, DT_INT);
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     case TY_LOG:
     case TY_INT:
     case TY_LOG8:
@@ -547,7 +547,7 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
       break;
     case TY_DCMPLX:
       mkexpr1(old);
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     case TY_DBLE:
       break;
     case TY_CHAR:
@@ -568,7 +568,7 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_SINT:
       cngtyp(old, DT_INT);
       SST_DTYPEP(old, DT_INT);
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     case TY_LOG:
     case TY_INT:
     case TY_LOG8:
@@ -578,7 +578,7 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
       break;
     case TY_CMPLX:
       mkexpr1(old);
-    /* fall thru to */
+      FLANG_FALLTHROUGH;
     case TY_REAL:
       break;
     case TY_CHAR:
@@ -599,14 +599,14 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_SLOG:
       cngtyp(old, DT_INT);
       SST_DTYPEP(old, DT_INT);
-/* fall thru to ... */
+      FLANG_FALLTHROUGH;
     case TY_DBLE:
     case TY_LOG:
     case TY_INT:
     case TY_LOG8:
     case TY_INT8:
       cngtyp(old, DT_REAL);
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     case TY_REAL:
       if (fromisv)
         mkexpr1(old);
@@ -638,14 +638,14 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_SLOG:
       cngtyp(old, DT_INT);
       SST_DTYPEP(old, DT_INT);
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     case TY_REAL:
     case TY_LOG:
     case TY_INT:
     case TY_LOG8:
     case TY_INT8:
       cngtyp(old, DT_REAL8);
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     case TY_DBLE:
       if (fromisv)
         mkexpr1(old);
@@ -1103,10 +1103,11 @@ again:
       /* Not a frozen intrinsic, so assume its a variable */
       sptr = newsym(sptr);
       sem_set_storage_class(sptr);
-    /* fall thru to ... */
+      FLANG_FALLTHROUGH;
     case ST_UNKNOWN:
     case ST_IDENT:
       STYPEP(sptr, ST_VAR);
+      FLANG_FALLTHROUGH;
     case ST_VAR:
     case ST_STRUCT:
     case ST_MEMBER:
@@ -1117,6 +1118,7 @@ again:
         get_static_descriptor(sptr);
         get_all_descriptors(sptr);
       }
+      FLANG_FALLTHROUGH;
     case ST_DESCRIPTOR:
     var_primary:
       SST_IDP(stkptr, S_LVALUE);
@@ -1361,6 +1363,7 @@ mklvalue(SST *stkptr, int stmt_type)
     case ST_UNKNOWN:
     case ST_IDENT:
       STYPEP(sptr, ST_VAR);
+      FLANG_FALLTHROUGH;
     case ST_VAR:
       if (POINTERG(sptr) && SDSCG(sptr) == 0 && !F90POINTERG(sptr)) {
         if (SCG(sptr) == SC_NONE)
@@ -1411,7 +1414,7 @@ mklvalue(SST *stkptr, int stmt_type)
           setimplicit(sptr);
       }
       // fall through
-
+      FLANG_FALLTHROUGH;
     case ST_PROC: /* Function/intrinsic reference used as an lvalue */
       if (stmt_type == 3) {
         SST_ASTP(stkptr, mk_id(sptr));
@@ -1945,7 +1948,7 @@ mkvarref(SST *stktop, ITEM *list)
   case S_DERIVED:
     sptr = SST_SYMG(stktop);
     dtype = DTYPEG(sptr);
-  /* fall through */
+    FLANG_FALLTHROUGH;
   case S_IDENT: /* dtype has not been set in semantic stack yet */
     sptr = SST_SYMG(stktop);
   varref_ident:
@@ -3281,6 +3284,7 @@ check_derived_type_array_section(int ast)
         }
       }
       mem = parent;
+      FLANG_FALLTHROUGH;
     default:
       return;
     }
@@ -3792,7 +3796,7 @@ assign_pointer(SST *newtop, SST *stktop)
     case ST_GENERIC:
       if (!select_gsame(sptr))
         break;
-    /*  fall thru  */
+      FLANG_FALLTHROUGH;
     case ST_PD:
     case ST_INTRIN:
       sp2 = intrinsic_as_arg(sptr);
@@ -5440,7 +5444,7 @@ mod_type(int dtype, int ty, int kind, int len, int propagated, int sptr)
             CNULL);
       break;
     }
-/* NB: no break here. */
+    FLANG_FALLTHROUGH;
   case TY_REAL:
     if (kind == 0)
       return dtype;
@@ -5467,7 +5471,7 @@ mod_type(int dtype, int ty, int kind, int len, int propagated, int sptr)
       error(32, 2, gbl.lineno, (sptr) ? SYMNAME(sptr) : "doublecomplex", CNULL);
       break;
     }
-/* NB: no break here. */
+    FLANG_FALLTHROUGH;
   case TY_CMPLX:
     if (kind == 0)
       return dtype;
@@ -6245,6 +6249,8 @@ do_end(DOINFO *doinfo)
     }
     for (++sptr; sptr < stb.stg_avail; ++sptr)
       switch (STYPEG(sptr)) {
+      default:
+        break;
       case ST_UNKNOWN:
       case ST_IDENT:
       case ST_VAR:
@@ -6415,6 +6421,8 @@ do_end(DOINFO *doinfo)
       break;
 
     switch (DI_ID(orig_doif)) {
+    default:
+      break;
     case DI_DO:
       (void)add_stmt(mk_stmt(A_ENDDO, 0));
       break;

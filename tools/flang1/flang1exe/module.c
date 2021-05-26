@@ -1560,6 +1560,7 @@ check_sc(int sptr)
       mdalloc_list = px;
       break;
     }
+    FLANG_FALLTHROUGH;
   case SC_CMBLK:
     MDALLOCP(sptr, 0);
     break;
@@ -1598,7 +1599,7 @@ check_sc(int sptr)
         break;
       }
     }
-  /* else fall thru */
+    FLANG_FALLTHROUGH;
   default:
 #ifdef DEVICEG
     propagate_device_flags(sptr);

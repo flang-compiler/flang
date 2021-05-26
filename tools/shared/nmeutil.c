@@ -252,6 +252,10 @@ add_arrnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst, int sub, bool inlarr)
 
   case NT_ADD:
     switch (NME_TYPE(nm)) {
+    case NT_INDARR:
+    case NT_ADD:
+    case NT_SAFE:
+      break;
 
     case NT_VAR:
     case NT_MEM:
@@ -546,12 +550,12 @@ dt_nme(int nm)
 {
   int i;
   switch (NME_TYPE(nm)) {
-
+  case NT_INDARR:
+  case NT_ADD:
   case NT_UNK:
     break;
   case NT_VAR:
     return DTYPEG(NME_SYM(nm));
-
   case NT_MEM:
     if (NME_SYM(nm) == 0 || NME_SYM(nm) == 1) {
       if (dt_nme((int)NME_NM(nm)) == DT_DCMPLX) {
@@ -564,7 +568,6 @@ dt_nme(int nm)
       return DTYPEG(NME_SYM(nm));
     else
       return DTYPEG(i);
-
   case NT_ARR: {
     DTYPE i = dt_nme((int)NME_NM(nm));
     if (DTY(i) == TY_ARRAY)
@@ -1568,6 +1571,9 @@ DumpnameHelper(FILE *f, int opn)
   level++;
 
   switch (NME_TYPE(opn)) {
+  case NT_INDARR:
+  case NT_ADD:
+    break;
   case NT_VAR:
     prsym(NME_SYM(opn), ff);
     break;
@@ -1652,6 +1658,8 @@ DumpnmeHelper(FILE *f, int opn)
 
   __dmpnme(ff, opn, 0);
   switch (NME_TYPE(opn)) {
+  case NT_INDARR:
+  case NT_ADD:
   case NT_VAR:
     break;
   case NT_MEM:

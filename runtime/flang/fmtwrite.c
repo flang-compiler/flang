@@ -1896,6 +1896,7 @@ fw_writenum(int code, char *item, int type)
       w = d + 10;
     }
     e_flag = TRUE;
+    FLANG_FALLTHROUGH;
   case FED_G0: /* G0 */
     if (code == FED_G0 && dval == 0) {
       d = 0; /* d = 0 for zeros */

@@ -722,6 +722,7 @@ copy_to_scalar(int ast, int std, int sym)
       if (DESCARRAYG(sptr))
         break;
     }
+    FLANG_FALLTHROUGH;
   default:
     if (!pure_gbl.local_mode) {
       LOGICAL rhs_is_dist = FALSE;
@@ -1408,7 +1409,7 @@ transform_call(int std, int ast)
         }
         break;
       }
-    /* FALL THROUGH */
+      FLANG_FALLTHROUGH;
     case A_CNST:
       if (DTY(A_DTYPEG(ele)) == TY_HOLL) {
         /* treat as sequence-associated */
@@ -1421,7 +1422,7 @@ transform_call(int std, int ast)
         }
         break;
       }
-    /* FALL THROUGH */
+      FLANG_FALLTHROUGH;
     case A_BINOP:
     case A_PAREN:
     case A_CMPLXC:

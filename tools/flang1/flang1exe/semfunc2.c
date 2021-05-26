@@ -637,7 +637,7 @@ again:
     case ST_UNKNOWN:
     case ST_IDENT:
       STYPEP(sptr, ST_VAR);
-    /* fall through to ... */
+      FLANG_FALLTHROUGH;
     case ST_VAR:
     case ST_ARRAY:
       if (DTY(DTYPEG(sptr)) != TY_ARRAY || DDTG(DTYPEG(sptr)) == DT_DEFERCHAR ||
@@ -863,6 +863,7 @@ intrinsic_as_arg(int intr)
     sp2 = select_gsame(intr);
     if (sp2 == 0)
       return 0;
+    FLANG_FALLTHROUGH;
   case ST_PD:
   case ST_INTRIN:
     cp = PNMPTRG(sp2);
@@ -1166,7 +1167,7 @@ chkarg(SST *stkptr, int *dtype)
       case ST_UNKNOWN:
       case ST_IDENT:
         STYPEP(sptr, ST_VAR);
-      /* fall through to ... */
+        FLANG_FALLTHROUGH;
       case ST_VAR:
       store_var:
         argtyp = DTYPEG(sptr);
@@ -2601,6 +2602,7 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
           if (ALLOCATTRG(sptr)) {
             ALLOCDESCP(sptr, TRUE);
           }
+          FLANG_FALLTHROUGH;
         default:
           break;
         }

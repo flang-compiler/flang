@@ -1518,6 +1518,7 @@ move_labels(int stdstart, int stdlast)
     case A_ENDFORALL:
     case A_ELSEFORALL:
       interr("move_labels: statement not handled", std, 4);
+      FLANG_FALLTHROUGH;
     default:
       STD_LABEL(std) = sptrLbl;
       break;

@@ -951,6 +951,7 @@ _avail(int expr, LOGICAL *av_p)
           *av_p = FALSE;
           return TRUE;
         }
+        FLANG_FALLTHROUGH;
       case NT_ARR:
       case NT_MEM:
       case NT_UNK:
@@ -2179,9 +2180,11 @@ is_ptrast_arg(int ptrast, int ast)
             astx = A_LOPG(ptrast);
           if (memsym_of_ast(astx) == sptr)
             return FALSE; /* not safe */
+          FLANG_FALLTHROUGH;
         case A_MEM:
           if (is_parentof_ast(ele, ptrast))
             return FALSE;
+          FLANG_FALLTHROUGH;
         case A_SUBSCR:
         default:
           break;
