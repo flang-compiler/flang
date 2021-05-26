@@ -6,6 +6,7 @@
  */
 
 #include <stdlib.h>
+#include "global.h"
 
 int
 __fort_atol(char *p)
@@ -47,9 +48,11 @@ __fort_strtol(char *str, char **ptr, int base)
       case 'g':
       case 'G':
         val <<= 10;
+        FLANG_FALLTHROUGH;
       case 'm':
       case 'M':
         val <<= 10;
+        FLANG_FALLTHROUGH;
       case 'k':
       case 'K':
         val <<= 10;

@@ -688,6 +688,7 @@ endrcand(void)
         NME_RAT(ILI_OPND(val, 2)) = 0;
         if (RCAND_OLOAD(cand))
           ILI_RAT(RCAND_OLOAD(cand)) = 0;
+        FLANG_FALLTHROUGH;
       case RATA_TEMP:
       case RATA_CONST:
       case RATA_RPL:
@@ -737,6 +738,7 @@ endrcand(void)
         NME_RAT(ILI_OPND(val, 2)) = 0;
         if (RCAND_OLOAD(cand))
           ILI_RAT(RCAND_OLOAD(cand)) = 0;
+        FLANG_FALLTHROUGH;
       case RATA_TEMP:
       case RATA_CONST:
       case RATA_RPL:
@@ -1175,7 +1177,7 @@ _assn_rtemp(int ili, int temp)
       rtype = RCAND_RTYPE(rcand) = RATA_VECT;
       break;
     }
-
+    FLANG_FALLTHROUGH;
   default:
     interr("_assn_rtemp: illegal ili for temp assn", ili, ERR_Severe);
   }
@@ -1278,6 +1280,7 @@ select_rtemp(int ili)
         break;
       }
     }
+    FLANG_FALLTHROUGH;
 #ifdef ILIA_CS
   case ILIA_CS:
     type = 5;

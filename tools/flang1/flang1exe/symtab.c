@@ -1053,6 +1053,7 @@ getprint(int sptr)
   case TY_HOLL:
     sptr = CONVAL1G(sptr);
     dtype = DTYPEG(sptr);
+    FLANG_FALLTHROUGH;
   case TY_CHAR:
   like_char:
     from = stb.n_base + CONVAL1G(sptr);

@@ -3868,7 +3868,7 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
       ILIBLKP(BIH_LABEL(expb.curbih), 0);
       BIH_LABEL(expb.curbih) = SPTR_NULL;
     }
-
+    FLANG_FALLTHROUGH;
 #endif
   case IM_DOEND:
     /* for address of count variable */
@@ -4059,6 +4059,8 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
       while (arg > 1) {
         ILM *argilm = (ILM *)(ilmb.ilm_base + arg);
         switch (ILM_OPC(argilm)) {
+        default:
+          break;
         case IM_PLD:
           if (depth == 0) {
             arg = ILM_OPND(argilm, 1);

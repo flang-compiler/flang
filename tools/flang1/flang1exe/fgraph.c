@@ -281,8 +281,7 @@ flowgraph(void)
        * from happening.
        */
       CNTL_TOPFG(cntl.top) = 0;
-    /* fall thru */
-
+      FLANG_FALLTHROUGH;
     default:
     check_last_std:
       is_ujmp = FALSE;
@@ -675,7 +674,7 @@ partition_blocks(void)
         STD_KERNEL(s) = STD_KERNEL(std);
         cr_block(s);
       }
-    /*  fall thru  */
+      FLANG_FALLTHROUGH;
     case A_DOWHILE:
       wr_block();
       cr_block(std);
@@ -929,6 +928,7 @@ partition_blocks(void)
       break;
     case A_RETURN:
       STD_BR(std) = 1;
+      FLANG_FALLTHROUGH;
     default:
       chk_block(std);
       break;

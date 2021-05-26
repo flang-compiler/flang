@@ -68,10 +68,10 @@ need_charlen(DTYPE dtype)
       return true;
     else if (DTY(DTySeqTyElement(dtype)) == TY_NCHAR)
       return true;
+    return false;
   default:
     return false;
   }
-  return false;
 }
 
 static int
@@ -101,6 +101,8 @@ is_fastcall(int ilix)
   case IL_JSR:  /* sym lnk */
   case IL_JSRA: /* arlnk lnk stc  , arlnk is the address of function */
     switch (ILI_OPC(ILI_OPND(ilix, 2))) {
+    default:
+      break;
     /* mth_i_ ..  routines? */
     case IL_DADP: /* dplnk dp lnk */
     case IL_DASP: /* splnk sp lnk */

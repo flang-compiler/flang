@@ -3233,6 +3233,7 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
             db, cu_mdnode,
             DTyAlgTyTag(dtype) ? SYMNAME(DTyAlgTyTag(dtype)) : "", file_mdnode,
             0, sz, align, 0, members_mdnode, 0);
+        FLANG_FALLTHROUGH;
       case TY_STRUCT:
         if (LL_MDREF_IS_NULL(type_mdnode)) {
           members_mdnode = ll_create_flexible_md_node(db->module);

@@ -52,8 +52,6 @@ ll_get_linkage_string(enum LL_LinkageType linkage)
     return "external";
   case LL_NO_LINKAGE:
     break;
-  default:
-    break;
   }
   return "";
 }
@@ -647,9 +645,6 @@ ll_write_instruction(FILE *out, LL_Instruction *inst, LL_Module *module, int no_
     fprintf(out, "%s]", SPACES);
     break;
   case LL_NONE:
-    break;
-  default:
-    fprintf(stderr, "Error: unrendered instruction %d\n", inst->op);
     break;
   }
   if (!LL_MDREF_IS_NULL(inst->dbg_line_op)) {

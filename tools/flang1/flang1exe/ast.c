@@ -705,6 +705,7 @@ mk_binop(int optype, int lop, int rop, DTYPE dtype)
     if (DTY(dtype) == TY_INT8 || DTY(dtype) == TY_LOG8) {
       lop = convert_int(lop, dtype);
     }
+    FLANG_FALLTHROUGH;
   default:
     break;
   }
@@ -718,7 +719,7 @@ mk_binop(int optype, int lop, int rop, DTYPE dtype)
   case OP_LOR:
   case OP_LAND:
     commutable = TRUE;
-  /***** fall through *****/
+    FLANG_FALLTHROUGH;
   default:
     if (A_TYPEG(lop) == A_CNST) {
       ncons = 1;
@@ -1411,6 +1412,7 @@ convert_cnst(int cnst, int newtyp)
     case TY_DWORD:
       if (to == TY_BLOG)
         return cnst; /* don't convert typeless for now */
+      FLANG_FALLTHROUGH;
     case TY_BLOG:
     case TY_SLOG:
     case TY_LOG:
@@ -1433,6 +1435,7 @@ convert_cnst(int cnst, int newtyp)
     case TY_DWORD:
       if (to == TY_SLOG)
         return cnst; /* don't convert typeless for now */
+      FLANG_FALLTHROUGH;
     case TY_BINT:
     case TY_SINT:
     case TY_INT:
@@ -1455,6 +1458,7 @@ convert_cnst(int cnst, int newtyp)
     case TY_DWORD:
       if (to == TY_LOG)
         return cnst; /* don't convert typeless for now */
+      FLANG_FALLTHROUGH;
     case TY_BINT:
     case TY_SINT:
     case TY_INT:
@@ -1483,6 +1487,7 @@ convert_cnst(int cnst, int newtyp)
       break;
     case TY_DCMPLX:
       sptr = CONVAL1G(sptr);
+      FLANG_FALLTHROUGH;
     case TY_DBLE:
       num[0] = CONVAL1G(sptr);
       num[1] = CONVAL2G(sptr);
@@ -1527,6 +1532,7 @@ convert_cnst(int cnst, int newtyp)
         break;
       case TY_DCMPLX:
         sptr = CONVAL1G(sptr);
+        FLANG_FALLTHROUGH;
       case TY_DBLE:
         num1[0] = CONVAL1G(sptr);
         num1[1] = CONVAL2G(sptr);
@@ -1557,6 +1563,7 @@ convert_cnst(int cnst, int newtyp)
         break;
       case TY_DCMPLX:
         sptr = CONVAL1G(sptr);
+        FLANG_FALLTHROUGH;
       case TY_DBLE:
         num[0] = CONVAL1G(sptr);
         num[1] = CONVAL2G(sptr);
@@ -2848,7 +2855,7 @@ replace_memsym_of_ast(int ast, SPTR sptr)
     if (A_TYPEG(A_MEMG(ast)) == A_ID) {
       return mk_member(A_PARENTG(ast), mk_id(sptr), A_DTYPEG(ast)); 
     }
-    /* else fall through to error */
+    FLANG_FALLTHROUGH;
   default:
     interr("replace_memsym_of_ast: unexpected ast", ast, 3);
   }
@@ -2950,7 +2957,7 @@ left_array_symbol(int ast)
       sptr = A_SPTRG(ast);
       if (DTY(DTYPEG(sptr)) == TY_ARRAY)
         return sptr;
-    /* FALLTHROUGH */
+      FLANG_FALLTHROUGH;
     case A_LABEL:
     case A_ENTRY:
       if (asym)
@@ -3002,6 +3009,7 @@ left_subscript_ast(int ast)
       if (DTY(DTYPEG(sptr)) == TY_ARRAY) {
         interr("left_subscript_ast: found unsubscripted array ID", ast, 3);
       }
+      FLANG_FALLTHROUGH;
     case A_LABEL:
     case A_ENTRY:
       if (aleft)
@@ -3057,6 +3065,7 @@ left_nonscalar_subscript_ast(int ast)
                " found unsubscripted array ID",
                ast, 3);
       }
+      FLANG_FALLTHROUGH;
     case A_LABEL:
     case A_ENTRY:
       if (aleft)
@@ -3150,7 +3159,9 @@ dist_ast(int ast)
       case ST_MEMBER:
         if (DISTG(sptr) || ALIGNG(sptr))
           return ast;
-      default:;
+        break;
+      default:
+        break;
       }
     }
   }
@@ -3207,7 +3218,7 @@ contiguous_array_section(int subscr_ast)
     case A_FUNC:
       if (A_SHAPEG(ast))
         return FALSE;
-    /* FALL THRU */
+      FLANG_FALLTHROUGH;
     case A_CNST:
     case A_BINOP:
     case A_UNOP:
@@ -3498,6 +3509,7 @@ replace_ast_subtree(int original, int subtree, int replacement)
     /* should not get here, the replacement should have
      * replaced the original by now */
     interr("replace_ast_subtree: unexpected ID ast", original, 3);
+    FLANG_FALLTHROUGH;
   default:
     interr("replace_ast_subtree: unexpected ast type", original, 3);
   }
@@ -7051,6 +7063,7 @@ ast_intr(int i_intr, DTYPE dtype, int cnt, ...)
       case TY_SINT:
         if ((sptr = GSINTG(sptr)))
           break;
+        FLANG_FALLTHROUGH;
       case TY_WORD:
       case TY_DWORD:
       case TY_BLOG:
@@ -7636,6 +7649,7 @@ find_pointer_variable(int ast)
     ast = A_MEMG(ast);
     if (A_TYPEG(ast) == A_ID)
       return (A_SPTRG(ast));
+    FLANG_FALLTHROUGH;
   default:
     break;
   }
@@ -8421,11 +8435,13 @@ cngcon(INT oldval, int oldtyp, int newtyp)
     switch (from) {
     case TY_CMPLX:
       oldval = CONVAL1G(oldval);
+      FLANG_FALLTHROUGH;
     case TY_REAL:
       xfix(oldval, &result);
       return result;
     case TY_DCMPLX:
       oldval = CONVAL1G(oldval);
+      FLANG_FALLTHROUGH;
     case TY_DBLE:
       num[0] = CONVAL1G(oldval);
       num[1] = CONVAL2G(oldval);
@@ -8476,11 +8492,13 @@ cngcon(INT oldval, int oldtyp, int newtyp)
       switch (from) {
       case TY_CMPLX:
         oldval = CONVAL1G(oldval);
+        FLANG_FALLTHROUGH;
       case TY_REAL:
         xfix64(oldval, num);
         return getcon(num, newtyp);
       case TY_DCMPLX:
         oldval = CONVAL1G(oldval);
+        FLANG_FALLTHROUGH;
       case TY_DBLE:
         num1[0] = CONVAL1G(oldval);
         num1[1] = CONVAL2G(oldval);
@@ -8533,6 +8551,7 @@ cngcon(INT oldval, int oldtyp, int newtyp)
         return CONVAL1G(oldval);
       case TY_DCMPLX:
         oldval = CONVAL1G(oldval);
+        FLANG_FALLTHROUGH;
       case TY_DBLE:
         num[0] = CONVAL1G(oldval);
         num[1] = CONVAL2G(oldval);
@@ -8573,6 +8592,7 @@ cngcon(INT oldval, int oldtyp, int newtyp)
         return CONVAL1G(oldval);
       case TY_CMPLX:
         oldval = CONVAL1G(oldval);
+        FLANG_FALLTHROUGH;
       case TY_REAL:
         xdble(oldval, num);
         break;

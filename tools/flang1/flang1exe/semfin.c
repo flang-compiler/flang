@@ -2186,7 +2186,8 @@ nml_check_item(int sptr)
   switch (STYPEG(sptr)) {
   case ST_UNKNOWN:
   case ST_IDENT:
-    STYPEP(sptr, ST_VAR); /* fall thru */
+    STYPEP(sptr, ST_VAR);
+    FLANG_FALLTHROUGH;
   case ST_VAR:
     if (SCG(sptr) == SC_DUMMY) {
       if (DTY(DDTG(dtype)) != TY_CHAR)
@@ -2885,7 +2886,7 @@ _available_size(int ast)
       return TRUE;
     if (ast == astb.ptr0c)
       return TRUE;
-  /* fall through */
+    FLANG_FALLTHROUGH;
   case A_PAREN:
   case A_CONV:
     if (_available_size(A_LOPG(ast))) {
@@ -2897,7 +2898,7 @@ _available_size(int ast)
     if (!HCCSYMG(A_SPTRG(lop))) {
       return FALSE;
     }
-  /* fall through */
+    FLANG_FALLTHROUGH;
   case A_INTR:
     firstarg = 0;
     narg = A_ARGCNTG(ast);
@@ -2996,7 +2997,7 @@ _available(int ast)
       return TRUE;
     if (ast == astb.ptr0c)
       return TRUE;
-  /* fall through */
+    FLANG_FALLTHROUGH;
   case A_PAREN:
   case A_CONV:
     if (_available(A_LOPG(ast))) {
@@ -3008,7 +3009,7 @@ _available(int ast)
     if (!HCCSYMG(A_SPTRG(lop))) {
       return FALSE;
     }
-  /* fall through */
+    FLANG_FALLTHROUGH;
   case A_INTR:
     firstarg = 0;
     narg = A_ARGCNTG(ast);
@@ -3197,7 +3198,7 @@ misc_checks(void)
         /* unreferenced symbol in host subprogram; set storage class */
         STYPEP(sptr, ST_VAR);
       }
-    /* fall through */
+      FLANG_FALLTHROUGH;
     case ST_ARRAY:
     case ST_VAR:
       if (gbl.internal == 1 && SCG(sptr) == SC_NONE) {
@@ -3424,7 +3425,7 @@ misc_checks(void)
         case ST_IDENT:
           if (SCG(sptr) != SC_NONE)
             break;
-          // fall through
+          FLANG_FALLTHROUGH;
         case ST_VAR:
         case ST_ARRAY:
         case ST_PARAM:

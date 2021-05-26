@@ -1027,6 +1027,7 @@ llCollectSymbolInfo(ILM *ilmpx)
             break;
           default:;
           }
+          break;
         default:;
         }
       }

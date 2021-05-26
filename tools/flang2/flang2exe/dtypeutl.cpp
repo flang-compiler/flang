@@ -85,9 +85,11 @@ is_container_dtype(DTYPE dtype)
     if (is_array_dtype(dtype))
       dtype = array_element_dtype(dtype);
     switch (DTYG(dtype)) {
-      case TY_STRUCT:
-      case TY_UNION:
-        return true;
+    default:
+      break;
+    case TY_STRUCT:
+    case TY_UNION:
+      return true;
     }
   }
   return false;

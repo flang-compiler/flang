@@ -1135,8 +1135,9 @@ dumpomptarget(OMPACCEL_TINFO *tinfo)
     return;
 
   switch (tinfo->mode) {
+  default:
+    break;
   case mode_none_target:
-
     fprintf(gbl.dbgfil, " <mode none>");
     break;
   case mode_target:
@@ -1777,6 +1778,7 @@ exp_ompaccel_mploop(ILM *ilmp, int curilm)
                 "Parallel loop activated with %schedule schedule",
                 "schedule=%s", doschedule, NULL);
     }
+    FLANG_FALLTHROUGH;
   case KMP_DISTRIBUTE_STATIC_CHUNKED:
   case KMP_DISTRIBUTE_STATIC:
     ili = ll_make_kmpc_for_static_init_simple_spmd(&loop_args, sched);

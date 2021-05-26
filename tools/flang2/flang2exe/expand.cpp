@@ -1075,7 +1075,7 @@ replace_by_one(ILM_OP opc, ILM *ilmp, int curilm)
 
   default:
     interr("replace_by_one opc not cased", opc, ERR_Severe);
-    break;
+    return;
   }
   /* CHANGE the ILM in place */
   SetILM_OPC(ilmp, newopc);
@@ -1726,6 +1726,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
         store = ad2ili(IL_FREE, expr, dt);
         break;
       }
+      FLANG_FALLTHROUGH;
 
     default:
       interr("PSEUDOST: bad link", curilm, ERR_Severe);
@@ -2333,6 +2334,8 @@ exp_ref(ILM_OP opc, ILM *ilmp, int curilm)
   int dtype;
 
   switch (opc) {
+  default:
+    return;
 
   case IM_BASE:
     /* get the base symbol entry  */
@@ -2353,7 +2356,6 @@ exp_ref(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_ELEMENT:
     exp_array(opc, ilmp, curilm);
     return;
-  default:;
   }
 
   ILM_RESULT(curilm) = ili1;
@@ -2870,14 +2872,13 @@ exp_pure(SPTR extsym, int nargs, ILM *ilmp, int curilm)
   cili = ILI_OF(curilm);
   switch (ILI_OPC(cili)) {
   case IL_DFRAR:
-    switch (nargs) {
-    case 0:
+    if (nargs == 0) {
       cili = jsr2qjsr(cili);
       ilix = ad_acon(extsym, 0);
       ilix = ad2ili(IL_APURE, ilix, cili);
       ILM_RESULT(curilm) = ilix;
       break;
-    case 1:
+    } else if (nargs == 1) {
       switch (IL_RES(ILI_OPC(args[0]))) {
       case ILIA_AR:
         cili = jsr2qjsr(cili);
@@ -2890,23 +2891,20 @@ exp_pure(SPTR extsym, int nargs, ILM *ilmp, int curilm)
         ilix = ad_acon(extsym, 0);
         ilix = ad3ili(IL_APUREI, ilix, args[0], cili);
         ILM_RESULT(curilm) = ilix;
+        break;
       default:
         break;
       }
-    default:
-      break;
     }
     break;
 
   case IL_DFRIR:
-    switch (nargs) {
-    case 0:
+    if (nargs == 0) {
       cili = jsr2qjsr(cili);
       ilix = ad_acon(extsym, 0);
       ilix = ad2ili(IL_IPURE, ilix, cili);
       ILM_RESULT(curilm) = ilix;
-      break;
-    case 1:
+    } else if (nargs == 1) {
       switch (IL_RES(ILI_OPC(args[0]))) {
       case ILIA_AR:
         cili = jsr2qjsr(cili);
@@ -2919,11 +2917,10 @@ exp_pure(SPTR extsym, int nargs, ILM *ilmp, int curilm)
         ilix = ad_acon(extsym, 0);
         ilix = ad3ili(IL_IPUREI, ilix, args[0], cili);
         ILM_RESULT(curilm) = ilix;
+        break;
       default:
         break;
       }
-    default:
-      break;
     }
     break;
 

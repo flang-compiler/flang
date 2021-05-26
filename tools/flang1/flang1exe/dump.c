@@ -1640,6 +1640,7 @@ dastreex(int astx, int l, int notlast)
     break;
   case A_MP_ATOMICREAD:
     dastreex(A_SRCG(astx), l + 4, 0);
+    FLANG_FALLTHROUGH;
   case A_MP_ATOMICWRITE:
   case A_MP_ATOMICUPDATE:
   case A_MP_ATOMICCAPTURE:
@@ -1656,6 +1657,7 @@ dastreex(int astx, int l, int notlast)
     break;
   case A_MP_CANCEL:
     dastreex(A_IFPARG(astx), l + 4, 0);
+    FLANG_FALLTHROUGH;
   case A_MP_SECTIONS:
   case A_MP_CANCELLATIONPOINT:
     dastreex(A_ENDLABG(astx), l + 4, 0);

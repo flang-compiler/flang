@@ -1112,7 +1112,6 @@ ENTFTN(TEMPLATE, template)
       break;
 
     case __TRANSCRIPTIVE:
-    default:
       __fort_abort("TEMPLATE: bad dist-target flags");
     }
 
@@ -1154,7 +1153,6 @@ ENTFTN(TEMPLATE, template)
       break;
 
     case __TRANSCRIPTIVE:
-    default:
       __fort_abort("TEMPLATE: bad dist-format flags");
     }
 

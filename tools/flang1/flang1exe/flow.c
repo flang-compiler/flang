@@ -1211,6 +1211,7 @@ again:
   case A_CNST:
     if (!XBIT(7, 0x100000))
       break;
+    FLANG_FALLTHROUGH;
   default:
     interr("bld_use, ast nyd", ast, 3);
   }
@@ -1394,6 +1395,7 @@ again:
   case A_CNST:
     if (!XBIT(7, 0x100000))
       break;
+    FLANG_FALLTHROUGH;
   default:
     interr("bld_lhs, ast nyd", ast, 3);
     df = NULL;
@@ -1662,6 +1664,8 @@ add_store(int nme)
      */
     for (; 1; nme = NME_NM(nme)) {
       switch (NME_TYPE(nme)) {
+      default:
+        break;
 
       case NT_ARR:
       case NT_MEM:
@@ -1726,6 +1730,8 @@ add_store(int nme)
 #endif
 
     switch (NME_TYPE(nme)) {
+    default:
+      break;
 
     case NT_ARR:
       if (NME_SYM(nme))

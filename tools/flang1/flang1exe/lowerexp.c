@@ -594,6 +594,7 @@ conv_blog_ilm(int ast, int ilm, int dtype)
   case TY_INT8:
     ilm = plower("oi", "I8TOI", ilm);
     ilm = plower("oi", "ITOSC", ilm);
+    FLANG_FALLTHROUGH;
   case TY_WORD:
     if (ast && A_TYPEG(ast) == A_CNST) {
       s = lower_getintcon(cngcon(CONVAL2G(A_SPTRG(ast)), DTYG(dtype), DT_SLOG));
@@ -942,6 +943,7 @@ conv_dble_ilm(int ast, int ilm, int dtype)
   case TY_SINT:
   case TY_SLOG:
     ilm = conv_int_ilm(ast, ilm, dtype);
+    FLANG_FALLTHROUGH;
   case TY_LOG:
   case TY_INT:
     ilm = plower("oi", "DFLOAT", ilm);
@@ -1014,6 +1016,7 @@ conv_cmplx_ilm(int ast, int ilm, int dtype)
   case TY_SINT:
   case TY_SLOG:
     ilm = conv_int_ilm(ast, ilm, dtype);
+    FLANG_FALLTHROUGH;
   case TY_LOG:
   case TY_INT:
     ilm = plower("oi", "FLOAT", ilm);
@@ -1091,6 +1094,7 @@ conv_dcmplx_ilm(int ast, int ilm, int dtype)
   case TY_SINT:
   case TY_SLOG:
     ilm = conv_int_ilm(ast, ilm, dtype);
+    FLANG_FALLTHROUGH;
   case TY_LOG:
   case TY_INT:
     ilm = plower("oi", "DFLOAT", ilm);
@@ -2049,6 +2053,7 @@ lower_function(int ast)
         sptr = A_SPTRG(A_MEMG(a));
         if (param && POINTERG(param) && POINTERG(sptr))
           goto by_reference;
+        FLANG_FALLTHROUGH;
       case A_INTR:
         if (is_iso_cloc(a)) {
           /* byval C_LOC(x) == regular pass by reference (X),
@@ -2057,7 +2062,7 @@ lower_function(int ast)
           a = ARGT_ARG(A_ARGSG(a), 0);
           goto by_reference;
         }
-      /* default fall through */
+        FLANG_FALLTHROUGH;
       default:
       /* expressions & scalar variables -- always emit BYVAL.
        * expand will take do the right thing for nonscalar
@@ -4480,6 +4485,7 @@ lower_intrinsic(int ast)
   case I_INDEX:
   case I_KINDEX:
     ilm = lower_conv_ilm(ast, ilm, fromdtype, A_NDTYPEG(ast));
+    FLANG_FALLTHROUGH;
   default:
     break;
   }
@@ -4656,6 +4662,7 @@ lower_ast(int ast, int *unused)
       lilm = lower_conv(A_LOPG(ast), DT_REAL4);
       rilm = lower_conv(A_ROPG(ast), DT_REAL4);
       ilm = plower("oii", "CMPLX", lilm, rilm);
+      FLANG_FALLTHROUGH;
     case TY_DCMPLX:
       lilm = lower_conv(A_LOPG(ast), DT_REAL8);
       rilm = lower_conv(A_ROPG(ast), DT_REAL8);

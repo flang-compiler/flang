@@ -742,8 +742,7 @@ again:
   case 'Y':
   case 'Z':
     c = c + ('a' - 'A');
-  /*  fall thru ... */
-
+    FLANG_FALLTHROUGH;
   case 'a':
   case 'b':
   case 'c':
@@ -1019,8 +1018,7 @@ again:
     /*  else, treat this '.' as beginning of numeric constant:  */
     currc--;
     c = '.';
-  /*  fall thru .... */
-
+    FLANG_FALLTHROUGH;
   case '+':
   case '-':
     i = 0;

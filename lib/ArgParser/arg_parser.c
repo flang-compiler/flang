@@ -460,10 +460,6 @@ parse_arguments(const arg_parser_t *parser, int argc, char **argv)
         *(((bool_string_t *)value->location)->string_ptr) = next_string;
       }
       break;
-
-    default:
-      interr("Uknown command line argument value type", value->type, ERR_Fatal);
-      break;
     }
 
     /* Remember that the value as set */

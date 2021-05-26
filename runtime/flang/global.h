@@ -9,6 +9,10 @@
  * \brief Global definitions and declarations for Fortran I/O library
  */
 
+#ifndef FLANG_RUNTIME_GLOBAL_DEFS_H_
+#define FLANG_RUNTIME_GLOBAL_DEFS_H_
+
+#include "universal.h"
 #include "fioMacros.h"
 #include "stdioInterf.h" /* stubbed version of stdio.h */
 #include "cnfg.h" /* declarations for configuration items */
@@ -400,3 +404,5 @@ extern void *__fortio_fiofcb_next(FIO_FCB *);
 
 extern bool __fio_eq_str(char *str, int len, char *pattern);
 extern VOID __fortio_swap_bytes(char *, int, long);
+
+#endif /* FLANG_RUNTIME_GLOBAL_DEFS_H_ */

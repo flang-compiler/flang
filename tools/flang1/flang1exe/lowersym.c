@@ -134,7 +134,7 @@ lower_set_symbols(void)
           }
         }
       }
-    /* fall through */
+      FLANG_FALLTHROUGH;
     case ST_MEMBER:
     case ST_DESCRIPTOR:
       if (!IGNOREG(sptr) && DTY(DTYPEG(sptr)) == TY_ARRAY) {
@@ -144,7 +144,7 @@ lower_set_symbols(void)
           VISIT2P(sptr, 1);
         }
       }
-    /* fall through */
+      FLANG_FALLTHROUGH;
     case ST_VAR:
       if (SCG(sptr) == SC_BASED) {
         /* look at section descriptor, pointer */
@@ -900,8 +900,7 @@ lower_prepare_symbols()
           fill_fixed_array_dtype(dtype);
         }
       }
-      /* fall through */
-
+      FLANG_FALLTHROUGH;
     case ST_VAR:
     case ST_IDENT:
     case ST_STRUCT:
@@ -1083,6 +1082,7 @@ lower_prepare_symbols()
       if (fval) {
         CCSYMP(fval, 1);
       }
+      FLANG_FALLTHROUGH;
     default:
       break;
     }
@@ -1949,6 +1949,7 @@ lower_visit_symbol(int sptr)
     if (SCG(sptr) == SC_NONE) {
       SCP(sptr, SC_LOCAL);
     }
+    FLANG_FALLTHROUGH;
   default:
     break;
   }
@@ -5453,6 +5454,7 @@ llvm_check_retval_inargs(int sptr)
           SCP(fval, SC_DUMMY);
         }
       }
+      FLANG_FALLTHROUGH;
     case TY_DCMPLX:
       if (DTY(ent_dtype) != TY_DCMPLX) {
         return;

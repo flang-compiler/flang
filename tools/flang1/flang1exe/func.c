@@ -1358,6 +1358,7 @@ check_pointer_type(int past, int tast, int stmt, LOGICAL is_sourced_allocation)
       isNullAssn = true;
       break;
     }
+    FLANG_FALLTHROUGH;
   default:
     return;
   }
@@ -3451,7 +3452,7 @@ rewrite_sub_args(int arg_ast, int lc)
             sym = VTABLEG(sym);
             break;
           }
-        /* Fall Thru */
+          FLANG_FALLTHROUGH;
         default:
           sym = A_SPTRG(A_LOPG(arg));
         }
@@ -4159,6 +4160,7 @@ rewrite_calls(void)
     case A_MP_CANCEL:
       a = rewrite_sub_ast(A_IFPARG(ast), 0);
       A_IFPARP(ast, a);
+      FLANG_FALLTHROUGH;
     case A_MP_SECTIONS:
     case A_MP_CANCELLATIONPOINT:
       a = rewrite_sub_ast(A_ENDLABG(ast), 0);
@@ -4530,6 +4532,7 @@ search_conform_array(int ast, int flag)
       if (A_SHAPEG(ARGT_ARG(argt, i)))
         if ((j = search_conform_array(ARGT_ARG(argt, i), flag)) != 0)
           return j;
+    FLANG_FALLTHROUGH;
   case A_FUNC:
     if (elemental_func_call(ast)) {
       /* search up to all arguments of elemental function for
@@ -5784,7 +5787,7 @@ inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove)
   case I_MAXLOC:
   case I_MINLOC:
     dtypeval = DDTG(A_DTYPEG(ARGT_ARG(args, 0)));
-  /* fall through */
+    FLANG_FALLTHROUGH;
   case I_MAXVAL:
   case I_MINVAL:
     astdim = ARGT_ARG(args, 1);

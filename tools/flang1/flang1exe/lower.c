@@ -760,7 +760,8 @@ trav_struct(int dtype, int off)
     if (sizeof(DT_QUAD) == 16)
       interr("trav_struct: update handling of long doubles", dtype, 3);
 #endif
-  /* we're treating this like DBLE for now. */
+    /* We're treating this like DBLE for now. */
+    FLANG_FALLTHROUGH;
   case TY_DBLE:
     regclass[regi] = CLASS_SSEDP;
     return;

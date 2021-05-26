@@ -2173,7 +2173,7 @@ mkSub(int astliTriples, int sub, int astmpyr, int ast)
      */
     if (!is_linear(A_LOPG(ast)))
       return FALSE;
-  /***** fall thru -- treat as ID *****/
+    FLANG_FALLTHROUGH;
   case A_ID:
     i = 0;
     for (astli = astliTriples; astli; astli = ASTLI_NEXT(astli), i++)
@@ -2826,7 +2826,7 @@ distrib(int ili, int mpyr)
       l->next = NULL;
       return l;
     }
-  /* continue into the default case */
+    FLANG_FALLTHROUGH;
   default:
     opc1 = ILI_OPC(mpyr);
     if (opc1 == IL_IADD) {
@@ -3102,20 +3102,24 @@ ILI_OPC(int astx)
       if (DT_ISBASIC(A_DTYPEG(astx)))
         return IL_IADD;
       interr("ILI_OPC: unknown dtype for ADD", astx, 4);
+      return 0;
     case OP_SUB:
       if (A_DTYPEG(astx) == DT_ADDR)
         return IL_ASUB;
       if (DT_ISBASIC(A_DTYPEG(astx)))
         return IL_ISUB;
       interr("ILI_OPC: unknown dtype for SUB", astx, 4);
+      return 0;
     case OP_MUL:
       if (DT_ISBASIC(A_DTYPEG(astx)))
         return IL_IMUL;
       interr("ILI_OPC: unknown dtype for MUL", astx, 4);
+      return 0;
     case OP_DIV:
       if (DT_ISBASIC(A_DTYPEG(astx)))
         return IL_IDIV;
       interr("ILI_OPC: unknown dtype for DIV", astx, 4);
+      return 0;
     default:
       return 0; /* opcode unknown */
     }

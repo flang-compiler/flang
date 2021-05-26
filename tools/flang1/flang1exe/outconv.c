@@ -405,7 +405,7 @@ convert_omp_workshare(void)
         } else if (HCCSYMG(lsptr) && SCG(lsptr) == SC_PRIVATE) {
           break;
         }
-      /* FALL THRU */
+        FLANG_FALLTHROUGH;
       default:
         single = mk_stmt(A_MP_SINGLE, 0);
         add_stmt_before(single, std);
@@ -2699,7 +2699,7 @@ convert_template_instance(void)
           }
         }
       }
-    /* FALL THROUGH */
+      FLANG_FALLTHROUGH;
     default:
       ast_visit(1, 1);
       ast_traverse(ast, NULL, _mark_descr, &dummy);
@@ -5108,6 +5108,7 @@ eliminate_barrier(void)
        * top of a pghpf_local_mode region */
       at = at_local_mode(ast);
       bLocal += at;
+      FLANG_FALLTHROUGH;
     default:
       bFound = FALSE;
       break;

@@ -1776,6 +1776,8 @@ decl_private_sym(int sptr)
     int i;
     for (i = sem.doif_depth; i; i--) {
       switch (DI_ID(i)) {
+      default:
+        break;
       case DI_TASK:
       case DI_TASKLOOP:
         TASKP(new, 1);

@@ -44,7 +44,7 @@ set_mach(X86TYPE *mach, int machtype)
      */
     mach->type[MACH_AMD_ZEN] = 1;
     mach->feature[FEATURE_AVX2] = 1;
-    /* ...and fall through... */
+    FLANG_FALLTHROUGH;
 
   case TP_PILEDRIVER:
     /* AMD piledriver
@@ -55,7 +55,7 @@ set_mach(X86TYPE *mach, int machtype)
     mach->feature[FEATURE_LD_VMOVUPD] = 1;    /* added on 14 Dec 2015 */
     mach->feature[FEATURE_ST_VMOVUPD] = 1;    /*   "    "    "    "   */
     mach->feature[FEATURE_ST_MOVUPD] = 1;     /*   "    "    "    "   */
-    /* ...and fall through... */
+    FLANG_FALLTHROUGH;
 
   case TP_BULLDOZER:
     /* AMD bulldozer
@@ -72,13 +72,13 @@ set_mach(X86TYPE *mach, int machtype)
     }
     mach->feature[FEATURE_ALIGNLOOP8] = 1;
     mach->feature[FEATURE_ALIGNJMP8] = 1;
-    /* ...and fall through... */
+    FLANG_FALLTHROUGH;
 
   case TP_ISTANBUL:
     /* AMD instanbul
      */
     mach->type[MACH_AMD_ISTANBUL] = 1;
-    /* ...and fall through... */
+    FLANG_FALLTHROUGH;
 
   case TP_SHANGHAI:
     /* AMD shanghai, like greyhound but with a larger cache.
@@ -87,7 +87,7 @@ set_mach(X86TYPE *mach, int machtype)
     mach->feature[FEATURE_MULTI_ACCUM] = 1;
     if (mach->cachesize == 0)
       mach->cachesize = (6 * 1024 * 1024);
-    /* ...and fall through... */
+    FLANG_FALLTHROUGH;
 
   case TP_GH:
     /* AMD greyhound
@@ -134,7 +134,7 @@ set_mach(X86TYPE *mach, int machtype)
     /* AMD hammer
      */
     mach->feature[FEATURE_SSE3] = 1;
-    /* ...and fall through... */
+    FLANG_FALLTHROUGH;
 
   case TP_K8:
     /* AMD hammer
@@ -181,7 +181,7 @@ set_mach(X86TYPE *mach, int machtype)
       mach->type[MACH_INTEL_SKYLAKE] = 1;
       mach->feature[FEATURE_AVX512VL] = 1;
     }
-    /* ...and fall through... */
+    FLANG_FALLTHROUGH;
 
   case TP_KNIGHTS_LANDING:
     if (! DONT_GENERATE_AVX512) {
@@ -190,7 +190,7 @@ set_mach(X86TYPE *mach, int machtype)
       }
       mach->feature[FEATURE_AVX512F] = 1;
     }
-    /* ...and fall through... */
+    FLANG_FALLTHROUGH;
 
   case TP_HASWELL:
     mach->type[MACH_INTEL_HASWELL] = 1;
@@ -199,7 +199,7 @@ set_mach(X86TYPE *mach, int machtype)
     has_fma3 = 1;
     mach->feature[FEATURE_LD_VMOVUPD] = 1;
     mach->feature[FEATURE_ST_VMOVUPD] = 1;
-    /* ...and fall through... */
+    FLANG_FALLTHROUGH;
 
   case TP_IVYBRIDGE:
   case TP_SANDYBRIDGE:
@@ -207,7 +207,7 @@ set_mach(X86TYPE *mach, int machtype)
     mach->feature[FEATURE_AVX] = 1;
     mach->feature[FEATURE_ST_MOVUPD] = 1;
     mach->feature[FEATURE_MULTI_ACCUM] = 1;
-    /* ...and fall through... */
+    FLANG_FALLTHROUGH;
 
   case TP_NEHALEM:
     mach->type[MACH_INTEL_NEHALEM] = 1;
@@ -217,14 +217,14 @@ set_mach(X86TYPE *mach, int machtype)
     mach->feature[FEATURE_SSEPMAX] = 1;
     if (mach->cachesize == 0)
       mach->cachesize = (8 * 1024 * 1024);
-    /* ...and fall through... */
+    FLANG_FALLTHROUGH;
 
   case TP_PENRYN:
     mach->type[MACH_INTEL_PENRYN] = 1;
     mach->feature[FEATURE_SSE41] = 1;
     if (mach->cachesize == 0)
       mach->cachesize = (6 * 1024 * 1024);
-    /* ...and fall through... */
+    FLANG_FALLTHROUGH;
 
   case TP_CORE2:
     mach->type[MACH_INTEL_CORE2] = 1;
@@ -232,7 +232,7 @@ set_mach(X86TYPE *mach, int machtype)
     mach->feature[FEATURE_MNI] = 1;
     if (mach->cachesize == 0)
       mach->cachesize = (4 * 1024 * 1024);
-    /* ...and fall through... */
+    FLANG_FALLTHROUGH;
 
   case TP_P7:
     /* Intel P7 Pentium IV

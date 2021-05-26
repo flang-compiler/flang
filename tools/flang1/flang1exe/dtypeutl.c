@@ -39,7 +39,7 @@ target_name(DTYPE dtype)
     if (XBIT(57, 0x200)) {
       return "complex*16";
     }
-  /* else fall through */
+    FLANG_FALLTHROUGH;
   case TY_LOG:
   case TY_INT:
   case TY_FLOAT:
@@ -559,6 +559,7 @@ size_ast(int sptr, DTYPE dtype)
 
   case TY_NCHAR:
     mlpyr = 2;
+    FLANG_FALLTHROUGH;
   case TY_CHAR:
     if (dtype == DT_ASSCHAR || dtype == DT_DEFERCHAR
         || dtype == DT_ASSNCHAR || dtype == DT_DEFERNCHAR
@@ -686,6 +687,7 @@ size_ast_of(int ast, DTYPE dtype)
 
   case TY_NCHAR:
     mlpyr = 2;
+    FLANG_FALLTHROUGH;
   case TY_CHAR:
     concat = 0;
     if (ast) {
@@ -1199,6 +1201,7 @@ alignment(DTYPE dtype)
   case TY_QCMPLX:
     if (!flg.dalign)
       return dtypeinfo[TY_INT].align;
+    FLANG_FALLTHROUGH;
   case TY_QUAD:
   case TY_WORD:
   case TY_HOLL:
@@ -2913,6 +2916,7 @@ pr_dent(DTYPE dt, FILE *f)
       fprintf(f, " +++++ MEMBER %d(%s)\n", ss, SYMNAME(ss));
       pr_dent(DTYPEG(ss), f);
     }
+    FLANG_FALLTHROUGH;
   default:
     break;
   }

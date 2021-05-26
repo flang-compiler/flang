@@ -618,6 +618,7 @@ again:
 
   case ';': /* statement separator; set flag and ... */
     scn.multiple_stmts = TRUE;
+    FLANG_FALLTHROUGH;
   case '!':  /* inline comment character .. treat like end
               * of line character .......   */
   case '\n': /* return end of statement token: */
@@ -1115,7 +1116,7 @@ get_stmt(void)
     case CT_SMP:
       is_smp = TRUE;
       is_sgi = sentinel == SL_SGI;
-    /* fall thru */
+      FLANG_FALLTHROUGH;
     case CT_INITIAL:
     initial_card:
       gbl.in_include = in_include;
@@ -1284,7 +1285,7 @@ get_stmt(void)
         sem.submod_sym = 0;
       }
       finish();
-
+      FLANG_FALLTHROUGH;
     case CT_DIRECTIVE:
       put_astfil(curr_line, &printbuff[8], TRUE);
       put_lineno(curr_line);
@@ -2408,6 +2409,7 @@ crunch(void)
 #if DEBUG
           case '=':
             interr("crunch ==", 3, 2);
+            FLANG_FALLTHROUGH;
 #endif
           case '<':
           case '>':
@@ -2971,7 +2973,7 @@ classify_smp(void)
         }
       }
     }
-  /* fall thru to end_shared_nowait: */
+    FLANG_FALLTHROUGH;
   case TK_MP_ENDSECTIONS:
   case TK_MP_ENDSIMD:
   case TK_MP_ENDSINGLE:
@@ -3116,6 +3118,7 @@ classify_smp(void)
           cp -= 8;
           break;
         }
+        FLANG_FALLTHROUGH;
       case 's':
         if (strncmp(cp, "simd", 4) == 0) {
           scn.stmtyp = tkntyp = TK_MP_ENDDISTSIMD;
@@ -3149,7 +3152,7 @@ classify_smp(void)
         break;
       }
     }
-  /* fall thru to end_shared: */
+    FLANG_FALLTHROUGH;
   case TK_MP_ENDCRITICAL:
   case TK_MP_ENDMASTER:
   case TK_MP_ENDORDERED:
@@ -3238,6 +3241,7 @@ classify_smp(void)
           cp -= 8;
           break;
         }
+        FLANG_FALLTHROUGH;
       case 's':
         if (strncmp(cp, "simd", 4) == 0) {
           scn.stmtyp = tkntyp = TK_MP_ENDTARGTEAMSDISTSIMD;
@@ -3389,6 +3393,7 @@ classify_smp(void)
       cp += 4 + 1;
       scn.stmtyp = tkntyp = TK_MP_PARDOSIMD;
     }
+    FLANG_FALLTHROUGH;
   case TK_MP_PARSECTIONS:
   case TK_MP_PARWORKSHR:
   case TK_MP_PARDOSIMD:
@@ -4066,6 +4071,7 @@ classify_dec(void)
       }
       goto ill_dec;
     }
+    FLANG_FALLTHROUGH;
   default:
     break;
   }
@@ -4800,6 +4806,7 @@ alpha(void)
             integer_only = TRUE;
           goto alpha_exit;
         }
+        FLANG_FALLTHROUGH;
       case TKF_DOUBLE:
         tkntyp = double_type(&currc[idlen], &idlen);
         if (tkntyp) {
@@ -4842,7 +4849,7 @@ alpha(void)
       scmode = SCM_DEFINED_IO;
       goto return_identifier;
     }
-  /* fall thru  */
+    FLANG_FALLTHROUGH;
   case SCM_OPERATOR:
     scmode = SCM_FIRST;
     if (scn.stmtyp == TK_USE) {
@@ -5240,7 +5247,7 @@ get_keyword:
       scmode = SCM_FIRST;
       break;
     }
-  /* fall thru */
+    FLANG_FALLTHROUGH;
   case TK_RECORD:
   case TK_STRUCTURE:
     scmode = SCM_IDENT;
@@ -5309,7 +5316,7 @@ get_keyword:
     scn.stmtyp = tkntyp = double_type(&currc[idlen], &idlen);
     if (tkntyp == 0)
       goto return_identifier;
-    // fall through
+    FLANG_FALLTHROUGH;
   case TK_DBLEPREC:
   case TK_DBLECMPLX:
   case TK_BYTE:
@@ -5400,6 +5407,7 @@ get_keyword:
   case TK_INQUIRE:
     past_equal = TRUE;
     reset_past_equal = FALSE;
+    FLANG_FALLTHROUGH;
   case TK_BACKSPACE:
   case TK_CLOSE:
   case TK_DECODE:
@@ -5749,7 +5757,7 @@ get_keyword:
       idlen -= 4;
       break;
     }
-    // fall through
+    FLANG_FALLTHROUGH;
   case TK_ENDFUNCTION:
   case TK_ENDPROCEDURE:
   case TK_ENDPROGRAM:
@@ -5789,6 +5797,7 @@ get_keyword:
     if (!sem.in_enum) {
       goto return_identifier;
     }
+    FLANG_FALLTHROUGH;
   default:
     break;
   }
@@ -7819,7 +7828,7 @@ ff_get_stmt(void)
         sem.submod_sym = 0;
       }
       finish();
-
+      FLANG_FALLTHROUGH;
     case CT_DIRECTIVE:
       put_astfil(curr_line, &printbuff[8], TRUE);
       put_lineno(curr_line);
@@ -7894,7 +7903,7 @@ ff_get_stmt(void)
     case CT_SMP:
       is_smp = TRUE;
       is_sgi = sentinel == SL_SGI;
-    /* fall thru */
+      FLANG_FALLTHROUGH;
     case CT_INITIAL:
     initial_card:
       gbl.in_include = in_include;
@@ -8524,7 +8533,7 @@ ff_get_noncomment(char *inptr)
      *
      */
     card_type = CT_CONTINUATION;
-  /* fall thru  */
+    FLANG_FALLTHROUGH;
   case CT_INITIAL:
   case CT_CONTINUATION:
   cont_shared:
@@ -8779,7 +8788,7 @@ _write_token(int tk, INT ctkv)
     break;
   case TK_EOL:
     currCol = 0;
-  /* fall through to default case */
+    FLANG_FALLTHROUGH;
   default:
     fprintf(astb.astfil, " %d", currCol);
     break;
@@ -9291,7 +9300,7 @@ _rd_token(INT *tknv)
     break;
   case TK_HOLLERITH:
     kind = get_num(10);
-    /* fall thru */
+    FLANG_FALLTHROUGH;
   case TK_FMTSTR:
   case TK_STRING:
   case TK_KSTRING:

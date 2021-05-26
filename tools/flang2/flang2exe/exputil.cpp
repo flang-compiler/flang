@@ -1106,7 +1106,7 @@ mk_impsym(SPTR sptr)
       sprintf(bf, "__imp_%s_%s", SYMNAME(INMODULEG(sptr)), SYMNAME(sptr));
       break;
     }
-  /*****  else FALLTHRU  *****/
+    FLANG_FALLTHROUGH;
   default:
     sprintf(bf, "__imp_%s", getsname(sptr));
   }

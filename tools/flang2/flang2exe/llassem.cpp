@@ -3290,12 +3290,12 @@ Found:
      */
     if (!CFUNCG(sptr))
       break;
-  /* else fall through */
+    FLANG_FALLTHROUGH;
   case ST_VAR:
   case ST_STRUCT:
     if (!CFUNCG(sptr))
       return SPTR_NULL;
-  /* fall through */
+    FLANG_FALLTHROUGH;
   case ST_CMBLK:
     if (AG_STYPE(gblsym) != stype) {
       error(S_0166_OP1_cannot_be_a_common_block_and_a_subprogram, ERR_Severe, 0,
@@ -3718,6 +3718,7 @@ getsname(SPTR sptr)
     if (PTR_INITIALIZERG(sptr) && PTR_TARGETG(sptr)) {
       sptr = (SPTR) PTR_TARGETG(sptr);
     }
+    FLANG_FALLTHROUGH;
   case ST_ENTRY:
     if (ALTNAMEG(sptr)) {
       return get_altname(sptr);
@@ -4835,6 +4836,7 @@ get_llvm_name(SPTR sptr)
         sprintf(name, "%s_%d", SYMNAME(sptr), sptr);
         return name;
       }
+      FLANG_FALLTHROUGH;
     case SC_STATIC:
       if (CLASSG(sptr) && DESCARRAYG(sptr))
         goto xlate_name;
@@ -4910,7 +4912,7 @@ get_llvm_name(SPTR sptr)
     case SC_BASED:
       if (MIDNUMG(sptr) && SCG(MIDNUMG(sptr)) == SC_DUMMY)
         return SYMNAME(MIDNUMG(sptr));
-      // fall-through
+      FLANG_FALLTHROUGH;
     case SC_PRIVATE:
       sprintf(name, "%s_%d", SYMNAME(sptr), sptr);
       break;
@@ -5460,9 +5462,13 @@ write_module_as_subroutine(void)
   switch (dttypes[dtype]) {
   case _TY_INT:
     print_token(" 0");
+    break;
   case _TY_REAL:
     print_token(" 0.0");
+    break;
   case _TY_CMPLX:
+    // TODO
+    FLANG_FALLTHROUGH;
   default:
     print_token(" undef");
   }

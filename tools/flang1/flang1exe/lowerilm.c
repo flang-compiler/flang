@@ -433,6 +433,7 @@ lower_start_stmt(int lineno, int label, int exec, int std)
       case A_CONTINUE:
         if (STD_LABEL(prev))
           goto exitloop;
+        FLANG_FALLTHROUGH;
       case A_COMMENT:
         break;
       default:
@@ -990,7 +991,7 @@ handle_arguments(int ast, int symfunc, int via_ptr)
       }
       break;
     }
-  /* else fall thru */
+    FLANG_FALLTHROUGH;
   default:
     tbp_mem = tbp_pass_arg = tbp_bind = 0;
   }
@@ -1122,6 +1123,7 @@ handle_arguments(int ast, int symfunc, int via_ptr)
         sptr = A_SPTRG(A_MEMG(a));
         if (param && POINTERG(param) && POINTERG(sptr))
           goto by_reference;
+        FLANG_FALLTHROUGH;
       case A_INTR:
         if (is_iso_cloc(a)) {
           /* byval C_LOC(x) == regular pass by reference (X),
@@ -1130,7 +1132,7 @@ handle_arguments(int ast, int symfunc, int via_ptr)
           a = ARGT_ARG(A_ARGSG(a), 0);
           goto by_reference;
         }
-      /* default fall through */
+        FLANG_FALLTHROUGH;
       default:
       /* expressions & scalar variables -- always emit BYVAL.
        * expand will take do the right thing for nonscalar
@@ -1274,7 +1276,7 @@ handle_arguments(int ast, int symfunc, int via_ptr)
               sym = VTABLEG(sym);
               break;
             }
-          /* Fall Thru */
+            FLANG_FALLTHROUGH;
           default:
             sym = 0;
           }
@@ -4341,6 +4343,7 @@ lower_stmt(int std, int ast, int lineno, int label)
        * fall through */
       break;
     }
+    FLANG_FALLTHROUGH;
   case A_CALL:
     lower_start_stmt(lineno, label, TRUE, std);
     lop = A_LOPG(ast);
@@ -4527,7 +4530,7 @@ lower_stmt(int std, int ast, int lineno, int label)
       lower_push(0);
     }
     lower_push(STKCANCEL);
-
+    FLANG_FALLTHROUGH;
   case A_DO:
     lower_do_stmt(std, ast, lineno, label);
     break;
@@ -5743,6 +5746,7 @@ lower_base_address(int ast, int pointerval)
     switch (pointerval) {
     case SourceBase:
       base = plower("oi", "LOC", base);
+      FLANG_FALLTHROUGH;
     case VarBase:
     case TargetBase:
     case ArgumentBase:
@@ -6006,6 +6010,7 @@ lower_ilm(int ast)
       /* should only reach here if no conversion was needed anyway */
       lop = A_LOPG(ast);
       ilm = lower_ilm(lop);
+      FLANG_FALLTHROUGH;
     default:
       break;
     }

@@ -1512,6 +1512,7 @@ dinit_eval(int ast)
     if (A_OPTYPEG(ast) == I_NULL) {
       return 0;
     }
+    FLANG_FALLTHROUGH;
   default:
     break;
   }

@@ -585,7 +585,7 @@ do_sw(void)
     break;
   case SW_IVDEP:
     no_specified = true;
-  /*  fall thru  */
+    FLANG_FALLTHROUGH;
   case SW_DEPCHK:
     if (no_specified)
       assn(DIR_OFFSET(currdir, depchk), 0);
@@ -1389,7 +1389,7 @@ assn(int diroff, int v)
     break; /* TBDLOOP */
   case S_GLOBAL:
     ((int *)(&direct.gbl))[diroff] = v;
-  /* fall thru */
+    FLANG_FALLTHROUGH;
   case S_ROUTINE:
     ((int *)(&direct.rou))[diroff] = v;
     /*
@@ -1403,7 +1403,7 @@ assn(int diroff, int v)
       direct.loop_flag = false;
       do_now = false;
     }
-  /* fall thru */
+    FLANG_FALLTHROUGH;
   case S_LOOP:
     ((int *)(&direct.loop))[diroff] = v;
     break;
@@ -1418,7 +1418,7 @@ bset(int diroff, int v)
     break; /* TBDLOOP */
   case S_GLOBAL:
     ((int *)(&direct.gbl))[diroff] |= v;
-  /* fall thru */
+    FLANG_FALLTHROUGH;
   case S_ROUTINE:
     ((int *)(&direct.rou))[diroff] |= v;
     if (do_now || (gbl.currsub == 0 && sem.pgphase == 0)) {
@@ -1426,7 +1426,7 @@ bset(int diroff, int v)
       direct.loop_flag = false;
       do_now = false;
     }
-  /* fall thru */
+    FLANG_FALLTHROUGH;
   case S_LOOP:
     ((int *)(&direct.loop))[diroff] |= v;
     break;
@@ -1442,7 +1442,7 @@ bclr(int diroff, int v)
     break; /* TBDLOOP */
   case S_GLOBAL:
     ((int *)(&direct.gbl))[diroff] &= ~v;
-  /* fall thru */
+    FLANG_FALLTHROUGH;
   case S_ROUTINE:
     ((int *)(&direct.rou))[diroff] &= ~v;
     if (do_now || (gbl.currsub == 0 && sem.pgphase == 0)) {
@@ -1450,7 +1450,7 @@ bclr(int diroff, int v)
       direct.loop_flag = false;
       do_now = false;
     }
-  /* fall thru */
+    FLANG_FALLTHROUGH;
   case S_LOOP:
     ((int *)(&direct.loop))[diroff] &= ~v;
     break;
@@ -1665,7 +1665,7 @@ retry:
   case 'Y':
   case 'Z':
     c += upper_to_lower;
-  /* fall thru */
+    FLANG_FALLTHROUGH;
   case 'a':
   case 'b':
   case 'c':
@@ -1726,7 +1726,7 @@ retry:
       typ = T_INT;
       break;
     }
-  /* fall thru */
+    FLANG_FALLTHROUGH;
   case '1':
   case '2':
   case '3':

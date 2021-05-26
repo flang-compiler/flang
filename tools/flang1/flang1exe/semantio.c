@@ -4793,6 +4793,7 @@ put_edit(int code)
     case 2: /* a comma was just seen */
       if (code == FED_RPAREN)
         ERR170("right parenthesis occurred after comma in FORMAT");
+      FLANG_FALLTHROUGH;
     /*
      * fall through for state transition
      */

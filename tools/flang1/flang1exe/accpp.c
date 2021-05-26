@@ -2648,7 +2648,7 @@ subst(PPSYM *sp)
               continue;
             case CONCAT:
               *qq = ARGST;
-            /***** fall thru *****/
+              FLANG_FALLTHROUGH;
             case ARGST:
               qq++;
               break;
@@ -4085,6 +4085,7 @@ again:
   case '$':
     if (XBIT(123, 0x100000))
       goto defret;
+    FLANG_FALLTHROUGH;
 
   /* Identifier or Fortran 'C' comment.
    * If this is Fortran and a 'C', it might be an identifier or comment.
@@ -4113,6 +4114,7 @@ again:
       }
       /* Fall thru if we do not have a C or c in the first column */
     }
+    FLANG_FALLTHROUGH;
 
   case 'A':
   case 'B': /* case 'C': */

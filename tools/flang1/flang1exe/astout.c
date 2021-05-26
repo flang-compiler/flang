@@ -3259,6 +3259,7 @@ print_sname(int sym)
       put_string("::");
       break;
     }
+    FLANG_FALLTHROUGH;
   default:
     if (ENCLFUNCG(sym) && STYPEG(ENCLFUNCG(sym)) == ST_MODULE) {
       put_string(SYMNAME(ENCLFUNCG(sym)));
@@ -3935,7 +3936,7 @@ put_const(int sptr)
     sptr = CONVAL1G(sptr); /* sptr to char string constant */
     dtype = DTYPEG(sptr);
     put_l_to_u("nc");
-/*** fall thru ***/
+    FLANG_FALLTHROUGH;
   case TY_CHAR:
     from = stb.n_base + CONVAL1G(sptr);
     put_char('\'');
