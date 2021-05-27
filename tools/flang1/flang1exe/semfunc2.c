@@ -2572,6 +2572,11 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
                    INTENTG(A_SPTRG(actual)) == INTENT_IN &&
                    !POINTERG(A_SPTRG(actual)))
           error(193, 2, gbl.lineno, buf, SYMNAME(ext));
+        sptr = sym_of_ast(actual);
+        if (!POINTERG(sptr) && is_protected(sptr)) {
+          err_protected(sptr, "be an actual argument when the dummy argument "
+                              "is INTENT(OUT) or INTENT(INOUT)");
+        }
       }
       if (!ALLOCATTRG(arg) && ASSUMSHPG(arg) && actual) {
         /* full descriptor required for 'arg' */
