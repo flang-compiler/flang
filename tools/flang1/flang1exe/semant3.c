@@ -542,6 +542,13 @@ semant3(int rednum, SST *top)
       if (CLASSG(sptr) && !MONOMORPHICG(sptr) && !ALLOCATTRG(sptr)) {
         error(1217, ERR_Severe, gbl.lineno, SYMNAME(sptr), CNULL);
       }
+      if (STYPEG(sptr) == ST_ENTRY && FVALG(sptr)) {
+        char buffer[256];
+        (void)snprintf(buffer, sizeof(buffer), "- should use %s",
+                       SYMNAME(FVALG(sptr)));
+        error(72, 3, gbl.lineno, SYMNAME(sptr), buffer);
+        sptr = FVALG(sptr);
+      }
       chk_and_rewrite_cmplxpart_assn(RHS(2), RHS(5));
 
       /* really an assignment statement */
