@@ -43,6 +43,8 @@
 #define TY_OF(s) (DTYG(TYPE_OF(s)))
 #define PT_OF(s) (DDTG(TYPE_OF(s))) /* pointer to data type */
 
+#define ERRMSG_BUFFSIZE 200
+
 static void resolve_proc_pointer(SST *);
 
 static int ref_array(SST *, ITEM *);
@@ -3829,6 +3831,10 @@ assign_pointer(SST *newtop, SST *stktop)
     error(72, 3, gbl.lineno, SYMNAME(pvar), "- must be a POINTER variable");
     return 0;
   }
+  if (is_protected(pvar)) {
+    err_protected(pvar, "be assigned");
+    return 0;
+  }
  
   if (is_procedure_ptr(pvar)) {
     int iface=0;
@@ -4548,7 +4554,7 @@ is_protected(int sptr)
 void
 err_protected(int sptr, char *context)
 {
-  char bf[128];
+  char bf[ERRMSG_BUFFSIZE];
   sprintf(bf, "%s %s -",
           "A use-associated object with the PROTECTED attribute cannot",
           context);
