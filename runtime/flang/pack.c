@@ -70,8 +70,6 @@ void ENTFTN(PACK, pack)(void *rb,         /* result base */
   if (ISSCALAR(mask)) {
     mlen = GET_DIST_SIZE_OF(TYPEKIND(mask));
     mval = I8(__fort_varying_log)(mb, &mlen);
-    if (!mval)
-      return;
     mask_is_array = 0;
   } else if (F90_TAG_G(mask) == __DESC) {
     for (i = F90_RANK_G(mask); --i >= 0;)
