@@ -7179,10 +7179,13 @@ ref_pd(SST *stktop, ITEM *list)
     if (stkp != NULL)
       /* use size of vector */
       ast = size_of_ast(ARG_AST(2));
-    else if (DTY(dtype2) != TY_ARRAY)
-      /* mask is a scalar; use size of array */
-      ast = size_of_ast(ARG_AST(0));
-    else {
+    else if (DTY(dtype2) != TY_ARRAY) {
+      /* mask is a scalar; use (size of array * (- (int)mask) ) */
+      int temp;
+      ast = mk_convert(ARG_AST(1), DT_INT);
+      temp = mk_binop(OP_SUB, astb.bnd.zero, ast, astb.bnd.dtype);
+      ast = mk_binop(OP_MUL, size_of_ast(ARG_AST(0)), temp, astb.bnd.dtype);
+    } else {
       /* else compute size by the expression  'count(mask)' */
       int t1;
       t1 = mk_argt(2);              /* space for arguments */
