@@ -2844,6 +2844,8 @@ write_instructions(LL_Module *module)
   bool forceLabel = true;
   bool dbg_line_op_written;
   bool routine_label_written;
+  bool ret_scalar;
+  int entry;
 
   DBGTRACEIN("")
 
@@ -3131,10 +3133,17 @@ write_instructions(LL_Module *module)
           /* -finstrument-functions */
           write_profile_exit();
         }
+        ret_scalar = false;
+        for (entry = gbl.currsub; entry > NOSYM; entry = SYMLKG(entry)) {
+          int fval = FVALG(entry);
+          if(fval && SCG(fval) != SC_DUMMY && SCG(fval) != SC_BASED) {
+            ret_scalar = true;
+            break;
+          }
+        }
         /* This is a way to return value for multiple entries with return type
          * pass as argument to the master/common routine */
-        if (has_multiple_entries(gbl.currsub) && FVALG(gbl.currsub) &&
-            SCG(FVALG(gbl.currsub)) != SC_DUMMY) {
+        if (has_multiple_entries(gbl.currsub) && ret_scalar) {
           /* (1) bitcast result(second argument) from i8* to type of p->ll_type
            * (2) store result into (1)
            * (3) return void.
