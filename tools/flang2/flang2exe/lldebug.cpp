@@ -952,14 +952,15 @@ lldbg_create_aggregate_members_type(LL_DebugInfo *db, SPTR first, int findex,
           db->need_dup_composite_type |= true;
         }
       } else {
-        if (!ll_feature_debug_info_ver90(&db->module->ir)) {
+        if (!SDSCG(element))
           element = SYMLKG(element);
-          assert(element > NOSYM,
-                 "lldbg_create_aggregate_members_type: element not exists",
-                 element, ERR_Fatal);
+        assert(element > NOSYM,
+               "lldbg_create_aggregate_members_type: element not exists",
+               element, ERR_Fatal);
+        is_desc_member = true;
+        if (!ll_feature_debug_info_ver90(&db->module->ir)) {
           db->need_dup_composite_type = false;
         }
-        is_desc_member = true;
       }
     }
     elem_dtype = DTYPEG(element);
