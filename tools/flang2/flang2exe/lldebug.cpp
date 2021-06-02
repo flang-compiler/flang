@@ -1836,6 +1836,32 @@ lldbg_emit_file(LL_DebugInfo *db, int findex)
   return get_file_mdnode(db, findex);
 }
 
+static LOGICAL
+is_procedure_dtype(DTYPE dtype) {
+  return dtype > DT_NONE && DTY(dtype) == TY_PROC;
+}
+
+static LOGICAL
+is_procedure_ptr_dtype(DTYPE dtype) {
+  return ((dtype > DT_NONE) && (DTY(dtype) == TY_PTR) &&
+          is_procedure_dtype(DTySeqTyElement(dtype)));
+}
+
+LOGICAL
+is_procedure_ptr(SPTR sptr) {
+  if (sptr > NOSYM && (POINTERG(sptr))) {
+    switch (STYPEG(sptr)) {
+    case ST_PROC:
+    case ST_ENTRY:
+      /* subprograms aren't considered to be procedure pointers */
+      break;
+    default:
+      return is_procedure_ptr_dtype(DTYPEG(sptr));
+    }
+  }
+  return FALSE;
+}
+
 static LL_MDRef
 lldbg_emit_parameter_list(LL_DebugInfo *db, DTYPE dtype, DTYPE ret_dtype,
                           SPTR sptr, int findex)
@@ -1864,8 +1890,10 @@ lldbg_emit_parameter_list(LL_DebugInfo *db, DTYPE dtype, DTYPE ret_dtype,
           lldbg_emit_modified_type(db, ret_dtype, SPTR_NULL, findex);
     else
 #endif
+      /* Reference is used in case of non basic type */
       retval_mdnode =
-          lldbg_emit_type(db, ret_dtype, SPTR_NULL, findex, true, false, true);
+          lldbg_emit_type(db, ret_dtype, SPTR_NULL, findex,
+                          !DT_ISBASIC(ret_dtype), false, true);
   } else {
     if (ll_feature_debug_info_pre34(&db->module->ir))
       retval_mdnode = ll_get_md_null();
@@ -2965,8 +2993,11 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
             return type_mdnode;
           }
         }
-        type_mdnode = lldbg_emit_type(db, DTySeqTyElement(dtype), sptr, findex,
-                                      false, false, false);
+        type_mdnode = lldbg_emit_type(db, DTySeqTyElement(dtype),
+                                      is_procedure_ptr(sptr)
+                                          ? DTyInterface(DTySeqTyElement(dtype))
+                                          : sptr,
+                                      findex, false, false, false);
         sz = (ZSIZEOF(dtype) * 8);
         align[1] = ((alignment(dtype) + 1) * 8);
         align[0] = 0;
@@ -3067,7 +3098,20 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
                 SPTR datasptr = MIDNUMG(sptr);
                 if (datasptr == NOSYM)
                   datasptr = SYMLKG(sptr);
-                if ((SCG(datasptr) == SC_DUMMY) && !db->cur_subprogram_mdnode) {
+                if ((SCG(sptr) == SC_DUMMY) || ((SCG(datasptr) == SC_DUMMY) &&
+                                                !db->cur_subprogram_mdnode)) {
+                  const unsigned zero =
+                      lldbg_encode_expression_arg(LL_DW_OP_int, 0);
+                  const unsigned constu =
+                      lldbg_encode_expression_arg(LL_DW_OP_constu, 0);
+                  dataloc = lldbg_emit_expression_mdnode(db, 2, constu, zero);
+                  if (ll_feature_debug_info_ver90(&db->module->ir)) {
+                    is_live = lldbg_emit_expression_mdnode(db, 2, constu, zero);
+                    if (ALLOCATTRG(sptr))
+                      allocated = is_live;
+                    else
+                      associated = is_live;
+                  }
                   // If cur_subprogram_md is not yet ready, we are interested
                   // only in type. datalocation is about value than type. So
                 } else {
@@ -3364,8 +3408,10 @@ lldbg_emit_global_variable(LL_DebugInfo *db, SPTR sptr, ISZ_T off, int findex,
   SPTR new_sptr = (SPTR)REVMIDLNKG(sptr);
   get_extra_info_for_sptr(&display_name, &scope_mdnode, &type_mdnode, db, sptr);
   if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir) && CCSYMG(sptr) &&
-      new_sptr && (STYPEG(new_sptr) == ST_ARRAY) &&
-      (POINTERG(new_sptr) || ALLOCATTRG(new_sptr)) && SDSCG(new_sptr)) {
+      new_sptr &&
+      (is_procedure_ptr(new_sptr) ||
+       ((STYPEG(new_sptr) == ST_ARRAY) &&
+        (POINTERG(new_sptr) || ALLOCATTRG(new_sptr)) && SDSCG(new_sptr)))) {
     type_mdnode = lldbg_emit_type(db, DTYPEG(new_sptr), new_sptr, findex, false,
                                   false, false);
     display_name = SYMNAME(new_sptr);
@@ -3594,9 +3640,15 @@ lldbg_emit_local_variable(LL_DebugInfo *db, SPTR sptr, int findex,
   /* If it's an associate statement, associating another variable
    * take the pointer to type of associated variable.*/
   if (new_sptr && CCSYMG(sptr) && !SDSCG(new_sptr) &&
-      ADDRTKNG(new_sptr)) {
-    type_mdnode = lldbg_emit_type(db, DTYPEG(new_sptr), sptr, findex, false,
-                                  false, false);
+      (ADDRTKNG(new_sptr) || is_procedure_ptr(new_sptr))) {
+    if (is_procedure_ptr(new_sptr))
+      type_mdnode =
+          lldbg_emit_type(db, DTySeqTyElement(DTYPEG(new_sptr)),
+                          DTyInterface(DTySeqTyElement(DTYPEG(new_sptr))),
+                          findex, false, false, false);
+    else
+      type_mdnode = lldbg_emit_type(db, DTYPEG(new_sptr), sptr, findex, false,
+                                    false, false);
     DBLINT64 align = {0};
     DBLINT64 offset = {0};
     offset[0] = offset[1] = 0;
