@@ -10993,6 +10993,22 @@ create_global_initializer(GBL_LIST *gitem, const char *flag_str,
 }
 
 /**
+   \brief Check if sptr is the midnum of a scalar and scalar has POINTER/ALLOCATABLE attribute
+   \param sptr  A symbol
+ */
+bool
+pointer_scalar_need_debug_info(SPTR sptr)
+{
+  if ((sptr > NOSYM) && REVMIDLNKG(sptr)) {
+    SPTR scalar_sptr = (SPTR)REVMIDLNKG(sptr);
+    if ((POINTERG(scalar_sptr) || ALLOCATTRG(scalar_sptr)) &&
+        ((STYPEG(scalar_sptr) == ST_VAR) || (STYPEG(scalar_sptr) == ST_STRUCT)))
+      return true;
+  }
+  return false;
+}
+
+/**
    \brief Check if sptr is the midnum of an array and the array has descriptor 
    \param sptr  A symbol
  */
@@ -11375,7 +11391,7 @@ process_extern_variable_sptr(SPTR sptr, ISZ_T off)
 INLINE static void
 addDebugForLocalVar(SPTR sptr, LL_Type *type)
 {
-  if (need_debug_info(sptr)) {
+  if (need_debug_info(sptr) || pointer_scalar_need_debug_info(sptr)) {
     /* Dummy sptrs are treated as local (see above) */
     if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir) &&
         ftn_array_need_debug_info(sptr)) {

@@ -3589,7 +3589,23 @@ lldbg_emit_local_variable(LL_DebugInfo *db, SPTR sptr, int findex,
     file_mdnode = get_filedesc_mdnode(db, findex);
   else
     file_mdnode = lldbg_emit_file(db, findex);
-  if (ll_feature_debug_info_ver90(&db->module->ir) &&
+
+  SPTR new_sptr = (SPTR)REVMIDLNKG(sptr);
+  /* If it's an associate statement, associating another variable
+   * take the pointer to type of associated variable.*/
+  if (new_sptr && CCSYMG(sptr) && !SDSCG(new_sptr) &&
+      ADDRTKNG(new_sptr)) {
+    type_mdnode = lldbg_emit_type(db, DTYPEG(new_sptr), sptr, findex, false,
+                                  false, false);
+    DBLINT64 align = {0};
+    DBLINT64 offset = {0};
+    offset[0] = offset[1] = 0;
+    align[1] = ((alignment(DT_CPTR) + 1) * 8);
+    type_mdnode = lldbg_create_pointer_type_mdnode(
+        db, lldbg_emit_compile_unit(db), "", ll_get_md_null(), 0,
+        (ZSIZEOF(DT_CPTR) * 8), align, offset, 0, type_mdnode);
+
+  } else if (ll_feature_debug_info_ver90(&db->module->ir) &&
       (ASSUMRANKG(sptr) || ASSUMSHPG(sptr)) && SDSCG(sptr))
     type_mdnode =
         lldbg_emit_type(db, __POINT_T, sptr, findex, false, false, false);
@@ -3629,13 +3645,15 @@ lldbg_emit_local_variable(LL_DebugInfo *db, SPTR sptr, int findex,
     } else {
       fwd = ll_get_md_null();
     }
-    if (ll_feature_debug_info_ver90(&db->module->ir)) {
+    if (ll_feature_debug_info_ver90(&db->module->ir) &&
+        !pointer_scalar_need_debug_info(sptr)) {
       if (SDSCG(sptr))
         sptr = SDSCG(sptr);
-    } else if (ftn_array_need_debug_info(sptr)) {
+    } else if (ftn_array_need_debug_info(sptr) ||
+               pointer_scalar_need_debug_info(sptr)) {
       SPTR array_sptr =(SPTR)REVMIDLNKG(sptr);
-      /* Overwrite the symname and flags to represent the user defined array
-       * instead of a compiler generated symbol of array pointer.
+      /* Overwrite the symname and flags to represent the user defined array or
+       * scalar, instead of a compiler generated symbol of array or scalar pointer
        */
       symname = (char *)lldbg_alloc(strlen(SYMNAME(array_sptr)) + 1);
       strcpy(symname, SYMNAME(array_sptr));
