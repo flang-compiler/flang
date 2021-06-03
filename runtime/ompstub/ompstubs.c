@@ -590,6 +590,12 @@ omp_get_wtick_(void)
   return 365. * 86400.;
 }
 
+int
+omp_in_final(void)
+{
+  return 1;
+}
+
 kmp_int32
 __kmpc_global_thread_num(void *id)
 {
