@@ -775,23 +775,25 @@ dinit_acl_val2(int sptr, int dtype, ACL *ict, int op)
           case AC_I_selected_real_kind:
             process_real_kind(sptr, subict, op);
             break;
+          case AC_I_selected_char_kind:
+            ast = subict->u1.ast;
+            if (A_TYPEG(ast) == A_CNST) {
+              int dty;
+              con1 = A_SPTRG(ast);
+              dty = DTY(DTYPEG(con1));
+              if (dty == TY_CHAR || dty == TY_NCHAR) {
+                conval = _selected_char_kind(con1);
+              } else {
+                interr("dinit: selected_char_kind: unexpected arg type", 0, 3);
+                break;
+              }
+            }
+            setConval(sptr, conval, op);
+            break;
+          default:
+            /* Other intrinsics are handled by backend dinit. */
+            break;
           }
-        case AC_I_selected_char_kind:
-          ast = subict->u1.ast;
-          if (A_TYPEG(ast) == A_CNST) {
-            int dty;
-            con1 = A_SPTRG(ast);
-            dty = DTY(DTYPEG(con1));
-            if (dty == TY_CHAR || dty == TY_NCHAR)
-              conval = _selected_char_kind(con1);
-            else
-              break;
-          }
-          setConval(sptr, conval, op);
-          break;
-        default:
-          error(155, 3, gbl.lineno,
-                "Invalid initialization of kind type parameter", SYMNAME(sptr));
         }
       }
       dinit_intr_call(sptr, dtype, ict);
