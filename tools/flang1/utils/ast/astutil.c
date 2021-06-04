@@ -335,7 +335,9 @@ write_ast()
 done:;
   copy_file(IN4, OUT3); /* copy intast_sym inits created by symtab */
   /* write dinit for ASTB */
-  fprintf(OUT3, "\nASTB astb = {\n");
+  fprintf(OUT3, "\n#pragma GCC diagnostic push\n");
+  fprintf(OUT3, "#pragma GCC diagnostic ignored \"-Wmissing-field-initializers\"\n");
+  fprintf(OUT3, "ASTB astb = {\n");
   fprintf(OUT3, "    {");
   /* char           *atypes[AST_MAX + 1]; */
   j = 6;
@@ -361,8 +363,9 @@ done:;
     }
   }
   fprintf(OUT3, "    },\n");
-
   fprintf(OUT3, "};\n");
+  fprintf(OUT3, "#pragma GCC diagnostic pop\n");
+
   if (checkmode) {
     char ch;
     int s, i, j, sf, x;

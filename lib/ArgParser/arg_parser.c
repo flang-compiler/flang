@@ -106,20 +106,25 @@ destroy_arg_parser(arg_parser_t **parser)
 static void
 deallocate_arg_value(hash_key_t key, hash_data_t value_ptr, void *key_context)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
+  value_t *p = (value_t *)value_ptr;
+  char *k = (char *)key;
+#pragma GCC diagnostic pop
   /* Some of the argument types require deallocation */
-  switch (((value_t *)value_ptr)->type) {
+  switch (p->type) {
   case ARG_ActionMap:
   case ARG_CombinedBoolean:
-    free(((value_t *)value_ptr)->location);
+    free(p->location);
     break;
   case ARG_ReverseBoolean:
-    free((char *)key);
+    free(k);
     break;
   default:
     /* Do nothing */
     break;
   }
-  free((value_t *)value_ptr);
+  free(p);
 }
 
 /** Register a string argument */
@@ -130,7 +135,10 @@ register_string_arg(arg_parser_t *parser, const char *arg_name, char **target,
   /* Set default value */
   *target = (char *)default_value;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   add_generic_argument(parser, arg_name, ARG_String, (void *)target);
+#pragma GCC diagnostic pop
 }
 
 /** Register a string list argument */
@@ -331,6 +339,8 @@ parse_arguments(const arg_parser_t *parser, int argc, char **argv)
     }
     ++arg; /* skip over '-' */
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
     /* All arguments need to be in the data structure */
     if (!hashmap_lookup(parser->flags, arg, (hash_data_t *)&value)) {
       if (parser->fail_on_unknown_args) {
@@ -344,6 +354,7 @@ parse_arguments(const arg_parser_t *parser, int argc, char **argv)
         continue;
       }
     }
+#pragma GCC diagnostic pop
 
     /* Parse argument type */
     switch (value->type) {

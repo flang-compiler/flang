@@ -98,7 +98,10 @@ static void
 free_iterator(hash_key_t key, void *context)
 {
   (void)context;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   free((void *)key);
+#pragma GCC diagnostic pop
 }
 
 void
@@ -507,8 +510,11 @@ ll_destroy_module(LLVMModuleRef module)
   free(module->constants);
   hashmap_free(module->constants_map);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   for (i = 0; i < module->mdstrings_count; i++)
     free((char *)module->mdstrings[i]);
+#pragma GCC diagnostic pop
   free(module->mdstrings);
   hashmap_free(module->mdstrings_map);
 
@@ -1074,14 +1080,16 @@ ll_get_pointer_addrspace(LL_Type *ptr)
 static struct LL_Type_ *
 unique_type(LLVMModuleRef module, const struct LL_Type_ *type)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   hash_key_t existing = hashset_lookup(module->anon_types, type);
-  struct LL_Type_ *copy;
-
   if (existing)
     return (struct LL_Type_ *)existing;
+#pragma GCC diagnostic pop
 
   /* No such type exists. Save a copy. */
-  copy = (struct LL_Type_ *)ll_manage_malloc(module, sizeof(struct LL_Type_));
+  struct LL_Type_ *copy =
+      (struct LL_Type_ *)ll_manage_malloc(module, sizeof(struct LL_Type_));
   memcpy(copy, type, sizeof(*copy));
   copy->module = module;
   hashset_insert(module->anon_types, copy);
@@ -1340,7 +1348,10 @@ ll_set_struct_body(LL_Type *ctype, LL_Type *const *elements,
                    unsigned *const offsets, char *const pads,
                    unsigned num_elements, int is_packed)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   struct LL_Type_ *type = (struct LL_Type_ *)ctype; /* cast away const */
+#pragma GCC diagnostic pop
   assert(type->data_type == LL_STRUCT &&
              (type->flags & LL_TYPE_IS_NAMED_STRUCT),
          "Can only set the body on a named struct type", 0, ERR_Fatal);
@@ -1383,10 +1394,13 @@ ll_named_struct_type_exists(LLVMModuleRef module, int id, const char *format,
   va_end(ap);
   buffer[sizeof(buffer) - 1] = '\0';
   if (hashset_lookup(module->used_type_names, buffer)) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
     if (hashmap_lookup(module->user_structs_byid, INT2HKEY(id),
                        (hash_data_t *)&struct_value)) {
       return struct_value;
     }
+#pragma GCC diagnostic pop
   }
   return NULL;
 }
@@ -1441,11 +1455,14 @@ ll_create_named_struct_type(LLVMModuleRef module, int id, bool unique,
                 struct_value);
   module->num_user_structs++;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   if (id > 0) {
     hash_key_t old_id = hashmap_replace(module->user_structs_byid, INT2HKEY(id),
                                         (hash_data_t *)&struct_value);
     assert(!old_id, "Duplicate structs created for id.", id, ERR_Fatal);
   }
+#pragma GCC diagnostic pop
 
   return new_type;
 }
@@ -1476,9 +1493,12 @@ ll_get_struct_type(LLVMModuleRef module, int struct_id, int required)
 {
   LL_Value *struct_value = NULL;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   if (hashmap_lookup(module->user_structs_byid, INT2HKEY(struct_id),
                      (hash_data_t *)&struct_value))
     return struct_value->type_struct;
+#pragma GCC diagnostic pop
 
   assert(!required, "Can't find user defined struct.", struct_id, ERR_Fatal);
   return 0;
@@ -2553,8 +2573,11 @@ ll_proto_add(const char *fnname, struct LL_ABI_Info_ *abi)
   LL_FnProto *proto;
   const char *key;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   if (hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto))
     return proto;
+#pragma GCC diagnostic pop
 
   proto = (LL_FnProto *)calloc(1, sizeof(LL_FnProto));
   if (!proto)
@@ -2598,17 +2621,23 @@ void
 ll_proto_set_abi(const char *fnname, struct LL_ABI_Info_ *abi)
 {
   LL_FnProto *proto = NULL;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   /* Fortran might not yet have added this to the hash */
   if (hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto)) {
     proto->abi = abi;
   }
+#pragma GCC diagnostic pop
 }
 
 struct LL_ABI_Info_ *
 ll_proto_get_abi(const char *fnname)
 {
   LL_FnProto *proto = NULL;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto);
+#pragma GCC diagnostic pop
   return proto ? proto->abi : NULL;
 }
 
@@ -2625,8 +2654,11 @@ ll_proto_set_defined_body(const char *fnname, bool has_defined)
 {
   LL_FnProto *proto = NULL;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   if (!hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto))
     interr("ll_proto_set_defined_body: Entry not found", 0, ERR_Fatal);
+#pragma GCC diagnostic pop
 
   proto->has_defined_body = has_defined;
 }
@@ -2636,8 +2668,11 @@ ll_proto_has_defined_body(const char *fnname)
 {
   LL_FnProto *proto = NULL;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   if (!hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto))
     interr("ll_proto_has_defined_body: Entry not found", 0, ERR_Fatal);
+#pragma GCC diagnostic pop
 
   return proto->has_defined_body;
 }
@@ -2655,8 +2690,11 @@ ll_proto_set_weak(const char *fnname, bool is_weak)
 {
   LL_FnProto *proto = NULL;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   if (!hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto))
     interr("ll_proto_set_weak: Entry not found", 0, ERR_Fatal);
+#pragma GCC diagnostic pop
 
   proto->is_weak = is_weak;
 }
@@ -2666,8 +2704,11 @@ ll_proto_is_weak(const char *fnname)
 {
   LL_FnProto *proto = NULL;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   if (!hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto))
     interr("ll_proto_is_weak: Entry not found", 0, ERR_Fatal);
+#pragma GCC diagnostic pop
 
   return proto->is_weak;
 }
@@ -2684,8 +2725,11 @@ ll_proto_set_intrinsic(const char *fnname, const char *intrinsic_decl_str)
 {
   LL_FnProto *proto = NULL;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   if (!hashmap_lookup(_ll_proto_map, fnname, (hash_data_t *)&proto))
     interr("ll_proto_set_intrinsic: Entry not found", 0, ERR_Fatal);
+#pragma GCC diagnostic pop
 
   proto->intrinsic_decl_str = strdup(intrinsic_decl_str);
 }

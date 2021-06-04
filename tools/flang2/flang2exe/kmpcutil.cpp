@@ -535,6 +535,8 @@ build_kmpc_api_name(int kmpc_api, va_list va)
   #ifndef _WIN64
     assert(NULL != nm, "build_kmpc_api_name: Incorrect return value", 0, ERR_Fatal);
   #endif
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
     /* If the name has already been allocated, use that to save memory */
     if (hashmap_lookup(names, (hash_key_t)nm, (hash_data_t *)&res)) {
       free(nm);
@@ -543,6 +545,7 @@ build_kmpc_api_name(int kmpc_api, va_list va)
       hashmap_insert(names, (hash_key_t)nm, (hash_data_t)nm);
       return nm;
     }
+#pragma GCC diagnostic pop
   } else
     return KMPC_NAME(kmpc_api);
 

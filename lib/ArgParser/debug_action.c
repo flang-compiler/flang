@@ -54,6 +54,8 @@ add_action(action_map_t *map, const char *keyword, void (*action)(void))
 {
   action_list_t *action_list = NULL;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   /* Check if there is something in the map already */
   if (hashmap_lookup(map->actions, keyword, (hash_data_t *)&action_list)) {
     /* Add one more element at the end of the list */
@@ -70,6 +72,7 @@ add_action(action_map_t *map, const char *keyword, void (*action)(void))
     /* Add it to the list */
     hashmap_insert(map->actions, keyword, action_list);
   }
+#pragma GCC diagnostic pop
 }
 
 /** Execute action(s) for a given keyword */
@@ -78,6 +81,8 @@ execute_actions_for_keyword(action_map_t *map, const char *keyword)
 {
   action_list_t *action_list = NULL;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   /* Execute if there is anything for this keyword */
   if (hashmap_lookup(map->actions, keyword, (hash_data_t *)&action_list)) {
     size_t index;
@@ -85,6 +90,7 @@ execute_actions_for_keyword(action_map_t *map, const char *keyword)
       action_list->actions[index]();
     }
   }
+#pragma GCC diagnostic pop
   /* Do nothing is there is no record */
 }
 
@@ -96,6 +102,8 @@ copy_action(const action_map_t *from, const char *keyword_from,
   action_list_t *source_actions = NULL;
   action_list_t *dest_actions = NULL;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   /* Silently exit if nothing is found in source dataset */
   if (!hashmap_lookup(from->actions, keyword_from,
                       (hash_data_t *)&source_actions)) {
@@ -122,4 +130,5 @@ copy_action(const action_map_t *from, const char *keyword_from,
     /* Add it to the list */
     hashmap_insert(to->actions, keyword_to, dest_actions);
   }
+#pragma GCC diagnostic pop
 }
