@@ -2823,9 +2823,13 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
     }
     is_icall = FALSE;
     goto ret_call;
+  case I_GETARG:
   case I_GET_COMMAND:
   case I_GET_COMMAND_ARGUMENT:
-    if (optype == I_GET_COMMAND) {
+    if (optype == I_GETARG) {
+      rtlRtn = RTE_getarga;
+      nargs = 3;
+    } else if (optype == I_GET_COMMAND) {
       rtlRtn = RTE_get_cmda;
       nargs = 4;
     } else {

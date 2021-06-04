@@ -127,6 +127,7 @@ typedef enum {
   RTE_fracd,
   RTE_fracdx,
   RTE_fracx,
+  RTE_getarga,
   RTE_get_cmda,
   RTE_get_cmd_arga,
   RTE_get_env_vara,

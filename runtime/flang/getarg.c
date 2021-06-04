@@ -27,13 +27,14 @@ __INT_T
 ENTRY(IARGC, iargc)() { return __io_get_argc() - 1; }
 
 void
-ENTRY(GETARGA, getarga)(__INT_T *n, DCHAR(arg) DCLEN64(arg))
+ENTF90(GETARGA, getarga)(__INT_T *n, DCHAR(arg), __INT_T *int_kind DCLEN64(arg))
 {
   char *p;
-  __INT_T i = *n, len = CLEN(arg);
+  __INT_T i, len = CLEN(arg);
   __INT_T argc;
   char **argv;
 
+  i = I8(__fort_varying_int)(n, int_kind);
   argc = __io_get_argc();
   argv = __io_get_argv();
 
@@ -52,9 +53,9 @@ ENTRY(GETARGA, getarga)(__INT_T *n, DCHAR(arg) DCLEN64(arg))
 
 /* 32 bit CLEN version */
 void
-ENTRY(GETARG, getarg)(__INT_T *n, DCHAR(arg) DCLEN(arg))
+ENTF90(GETARG, getarg)(__INT_T *n, DCHAR(arg), __INT_T *int_kind DCLEN(arg))
 {
-  ENTRY(GETARGA, getarga)(n, CADR(arg), (__CLEN_T)CLEN(arg));
+  ENTF90(GETARGA, getarga)(n, CADR(arg), int_kind, (__CLEN_T)CLEN(arg));
 }
 
 __INT4_T

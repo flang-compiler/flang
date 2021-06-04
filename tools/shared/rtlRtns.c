@@ -122,6 +122,7 @@ FtnRteRtn ftnRtlRtns[] = {
     {"fracd", "", false, ""},
     {"fracdx", "", false, ""},
     {"fracx", "", false, ""},
+    {"getarga", "", false, ""},
     {"get_cmda", "", false, ""},
     {"get_cmd_arga", "", false, ""},
     {"get_env_vara", "", false, ""},
