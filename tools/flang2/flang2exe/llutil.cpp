@@ -3979,9 +3979,12 @@ ll_override_type_string(LL_Type *llt, const char *str)
   char *clone = llutil_alloc(strlen(str) + 1);
   strcpy(clone, str);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
   /* Cast away constness *eww gross*, gcc hates me */
   // FIXME -- this is wrong headed
   ((struct LL_Type_ *)llt)->str = clone;
+#pragma GCC diagnostic pop
 }
 
 /**

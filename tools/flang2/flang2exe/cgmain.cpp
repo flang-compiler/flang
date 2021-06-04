@@ -7945,6 +7945,8 @@ sincos_argument_valid(int ilix)
   return true;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic warning "-Wcast-qual"
 INLINE static OPERAND *
 get_last_sincos(int ilix)
 {
@@ -7954,6 +7956,7 @@ get_last_sincos(int ilix)
     return (OPERAND *)data;
   return NULL;
 }
+#pragma GCC diagnostic pop
 
 INLINE static OPERAND *
 gen_llvm_sincos_builtin(int ilix)

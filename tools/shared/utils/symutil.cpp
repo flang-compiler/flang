@@ -700,7 +700,9 @@ private:
 
     // write dinit for STB
     out3 << "\nextern STB stb;\n";  // declaration into .h file
-    out4 << "\n#include \"symacc.h\"\n"; // forward declaration of the STB type.
+    out4 << "\n#include \"symacc.h\"\n"; // forward declaration of the STB type
+    out4 << "\n#pragma clang diagnostic ignored "; // work around Clang warning
+    out4 << "\"-Wmissing-field-initializers\"\n";  // (cont'd)
     out4 << "\nSTB stb = {\n    {"; // definition  into .c file
     int j = 6, k;
     for (std::vector<Symbol>::size_type i = 0; i != symbols.size(); ++i) {
