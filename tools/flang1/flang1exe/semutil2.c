@@ -8778,7 +8778,7 @@ eval_minval_or_maxval(ACL *arg, DTYPE dtype, AC_INTRINSIC intrin)
   ACL *arg2;
   bool back = FALSE;
 
-  while (arg = arg->next) {
+  while ((arg = arg->next)) {
     if (DT_ISLOG(arg->dtype)) { /* back */
       arg2 = eval_init_expr_item(arg);
       back = arg2->conval;
