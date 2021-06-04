@@ -15,7 +15,7 @@ struct SYM;
 #include "symtab.h"
 #include "sharedefs.h"
 
-#define STB_NSIZE 5059
+#define STB_NSIZE 5060
 #define STR_LEN 4
 
 /**

@@ -1464,6 +1464,8 @@ Internal subroutine to perform a copy out of an ordinary argument.
 .AT inquiry a b
 .PD MOVE_ALLOC - -
 .AT subroutine from to
+.PD GETARG - -
+.AT subroutine pos *value
 .PD COMMAND_ARGUMENT_COUNT - -
 .AT inquiry
 .PD GET_COMMAND - -

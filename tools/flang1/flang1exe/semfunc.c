@@ -11511,6 +11511,37 @@ ref_pd_subr(SST *stktop, ITEM *list)
     REFP(pdsym, 1);
     break;
 
+  case PD_getarg:
+    if (count != 2) {
+      E74_CNT(pdsym, count, 2, 2);
+      goto call_e74_cnt;
+    }
+    if (get_kwd_args(list, 2, KWDARGSTR(pdsym)))
+      goto exit_;
+    sp = ARG_STK(0); /* pos */
+    (void)mkexpr(sp);
+    XFR_ARGAST(0);
+    dtype2 = SST_DTYPEG(sp);
+    if (!DT_ISINT(dtype2)) {
+      E74_ARG(pdsym, 0, NULL);
+      goto call_e74_arg;
+    }
+    if (dtype2 != stb.user.dt_int)
+      ARG_AST(0) = mk_convert(SST_ASTG(sp), stb.user.dt_int);
+    sp = ARG_STK(1); /* value */
+    if (!is_varref(sp)) {
+      E74_ARG(pdsym, 1, NULL);
+      goto call_e74_arg;
+    }
+    (void)mkarg(sp, &dum);
+    XFR_ARGAST(1);
+    dtype2 = SST_DTYPEG(sp);
+    if (DTY(dtype2) != TY_CHAR) {
+      E74_ARG(pdsym, 1, NULL);
+      goto call_e74_arg;
+    }
+    argt_count = 2;
+    break;
   case PD_get_command_argument:
     if (count < 1 || count > 4) {
       E74_CNT(pdsym, count, 1, 4);
