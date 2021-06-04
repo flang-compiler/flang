@@ -72,7 +72,8 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
 
     set(SRCS
       mth_yintrinsics.c
-      mth_zintrinsics.c)
+      mth_zintrinsics.c
+      kidnnt.c)
   elseif(${LIBPGMATH_SYSTEM_NAME} MATCHES "Darwin|Windows")
     add_subdirectory("sincosf")
     add_subdirectory("tanf")
@@ -112,7 +113,8 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT ${LIBPGMATH_WITH_GENER
 
     set(SRCS
       mth_yintrinsics.c
-      mth_zintrinsics.c)
+      mth_zintrinsics.c
+      kidnnt.c)
   endif()
 elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le")
   set_property(SOURCE dispatch.c APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-builtin")
