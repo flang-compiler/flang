@@ -46,7 +46,7 @@ sym_init_first(void)
     STG_ALLOC(stb, 1000);
     assert(stb.stg_base, "sym_init: no room for symtab", stb.stg_size,
            ERR_Fatal);
-    stb.n_size = 5024;
+    stb.n_size = 5025;
     NEW(stb.n_base, char, stb.n_size);
     assert(stb.n_base, "sym_init: no room for namtab", stb.n_size, ERR_Fatal);
     stb.n_base[0] = 0;
