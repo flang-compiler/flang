@@ -5958,10 +5958,7 @@ gen_dtio_args(SST *stkptr, int arg1, int iotype_ast, int vlist_ast)
       AD_UPBD(ad, 0) = astb.i0;
       AD_MLPYR(ad, 0) = astb.i1;
 
-      sptr = getcctmp_sc('d', sem.dtemps++, ST_VAR, dtype, io_sc);
-      ALLOCP(sptr, 1);
-      get_static_descriptor(sptr);
-      get_all_descriptors(sptr);
+      sptr = getcctmp_sc('d', sem.dtemps++, ST_ARRAY, dtype, io_sc);
       vlist_ast = mk_id(sptr);
       DESCUSEDP(sptr, 1);
       ARGP(sptr, 1);
