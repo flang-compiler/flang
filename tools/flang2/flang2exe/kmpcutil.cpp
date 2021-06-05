@@ -382,7 +382,7 @@ gen_null_arg()
 }
 
 DTYPE
-ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo, ISZ_T sz)
+ll_make_kmpc_struct_type(int count, const char *name, KMPC_ST_TYPE *meminfo, ISZ_T sz)
 {
   DTYPE dtype;
   int i;
@@ -429,11 +429,11 @@ ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo, ISZ_T sz)
 static DTYPE
 ll_make_kmpc_ident_type(void)
 {
-  KMPC_ST_TYPE meminfo[] = {{"reserved_1", DT_INT, 0, 0},
-                            {"flags", DT_INT, 0, 0},
-                            {"reserved_2", DT_INT, 0, 0},
-                            {"reserved_3", DT_INT, 0, 0},
-                            {"psource", DT_CPTR, 0, 0}};
+  KMPC_ST_TYPE meminfo[] = {{"reserved_1", DT_INT, 0, SPTR_NULL},
+                            {"flags", DT_INT, 0, SPTR_NULL},
+                            {"reserved_2", DT_INT, 0, SPTR_NULL},
+                            {"reserved_3", DT_INT, 0, SPTR_NULL},
+                            {"psource", DT_CPTR, 0, SPTR_NULL}};
 
   if (kmpc_ident_dtype == DT_NONE)
     kmpc_ident_dtype =
@@ -568,12 +568,11 @@ static int
 mk_kmpc_api_call(int kmpc_api, int n_args, DTYPE *arg_dtypes, int *arg_ilis,
                  ...)
 {
-  int i, r, ilix, altilix, gargs;
+  int i, ilix, altilix, gargs;
   SPTR fn_sptr;
   int *garg_ilis = ALLOCA(int, n_args);
   const char *nm;
   const ILI_OP ret_opc = KMPC_RET_ILIOPC(kmpc_api);
-  const DTYPE ret_dtype = KMPC_RET_DTYPE(kmpc_api);
   va_list va;
 
   /* Some calls will make use of this (see: KMPC_FLAG_STR_FMT) */
@@ -707,7 +706,7 @@ int
 ll_make_kmpc_fork_call(SPTR sptr, int argc, int *arglist, RegionType rt,
                        int ngangs_ili)
 {
-  int argili, args[5];
+  int args[5];
   DTYPE arg_types[] = {DT_CPTR, DT_INT, DT_CPTR, DT_NONE, DT_NONE};
   arg_types[3] = DT_CPTR;
 
@@ -739,7 +738,7 @@ ll_make_kmpc_fork_call(SPTR sptr, int argc, int *arglist, RegionType rt,
 int
 ll_make_kmpc_fork_teams(SPTR sptr, int argc, int *arglist)
 {
-  int argili, args[4];
+  int args[4];
   DTYPE arg_types[] = {DT_CPTR, DT_INT, DT_CPTR, DT_NONE};
   arg_types[3] = DT_CPTR;
   args[3] = gen_null_arg(); /* ident */
@@ -909,12 +908,10 @@ mp_to_kmpc_tasking_flags(const int mp)
 }
 
 SPTR
-ll_make_kmpc_task_arg(SPTR base, SPTR sptr, SPTR scope_sptr, SPTR flags_sptr,
-                      int uplevel_ili)
+ll_make_kmpc_task_arg(SPTR base, SPTR sptr, SPTR scope_sptr, SPTR flags_sptr)
 {
   LLTask *task;
-  LLUplevel *up;
-  int offset, size, shared_size, i, nme, call_ili, ilix, args[6];
+  int size, shared_size, nme, call_ili, ilix, args[6];
   SPTR uplevel_sym;
   DTYPE arg_types[6] = {DT_CPTR, DT_INT, DT_INT, DT_INT, DT_INT, DT_CPTR};
   DTYPE dtype;
@@ -1303,7 +1300,6 @@ ll_make_kmpc_dist_dispatch_init(const loop_args_t *inargs)
   const int upper = ld_sptr(inargs->upper);
   const int stride = ld_sptr(inargs->stride);
   SPTR last = inargs->last;
-  const int upperd = inargs->upperd;
   int chunk = ld_sptr(inargs->chunk);
   const int sched = mp_sched_to_kmpc_sched(inargs->sched);
   const int dtypesize = size_of(dtype);
@@ -1423,7 +1419,6 @@ ll_make_kmpc_threadprivate(int data_ili, int size_ili)
 int
 ll_make_kmpc_atomic_write(int *opnd, DTYPE dtype)
 {
-  char *type = "";
   int args[4];
   DTYPE arg_types[4] = {DT_CPTR, DT_INT, DT_CPTR, DT_CPTR};
   args[3] = gen_null_arg();        /* ident     */
@@ -1468,7 +1463,6 @@ ll_make_kmpc_atomic_write(int *opnd, DTYPE dtype)
 int
 ll_make_kmpc_atomic_read(int *opnd, DTYPE dtype)
 {
-  char *type = "";
   int args[4];
   DTYPE arg_types[5] = {DT_CPTR, DT_INT, DT_CPTR, DT_CPTR};
   args[3] = gen_null_arg();        /* ident     */
@@ -1555,7 +1549,7 @@ ll_make_kmpc_kernel_init_params(int ReductionScratchpadPtr)
   int args[1];
   DTYPE arg_types[1] = {DT_ADDR};
   /*size_t*/
-  args[1] = ReductionScratchpadPtr; /* Scratchpad pointer for reduction*/
+  args[0] = ReductionScratchpadPtr; /* Scratchpad pointer for reduction*/
   return mk_kmpc_api_call(KMPC_API_KERNEL_INIT_PARAMS, 1, arg_types, args);
 }
 

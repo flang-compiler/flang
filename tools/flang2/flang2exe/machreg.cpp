@@ -184,7 +184,7 @@ mr_getreg(int rtype)
 static int
 _mr_getreg(int rtype)
 {
-  register MACH_REG *mr;
+  MACH_REG *mr;
 
   if (reg[rtype].nused >= reg[rtype].max)
     return NO_REG;

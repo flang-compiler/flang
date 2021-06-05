@@ -309,9 +309,9 @@ static INT ndef, next_def;
 
 /* suffix for dependent file, usually .o */
 #ifdef TARGET_WIN
-static char *suffix = ".obj";
+static const char *suffix = ".obj";
 #else
-static char *suffix = ".o";
+static const char *suffix = ".o";
 #endif
 
 static char *prevfile = NULL;
@@ -611,22 +611,21 @@ extern void accpp(void);
 extern void setasmmode(void);
 static void delete(const char *);
 static void pbchar(int);
-static void pbstr(char *);
+static void pbstr(const char *);
 static void clreol(int);
 static int dlookup(char *);
 static void dodef(int);
 static void doincl(LOGICAL);
 static void _doincl(char *, int, LOGICAL);
-static void preincl(char *);
 static void domodule(void);
 static INT doparse(void);
 static void doundef(int);
 static int gtok(char *tokval, int expflag);
 static void ifpush(void);
-static PPSYM *lookup(char *, int);
-static void ptok(char *);
+static PPSYM *lookup(const char *, int);
+static void ptok(const char *);
 static int subst(PPSYM *);
-static INT strstore(char *);
+static INT strstore(const char *);
 static INT tobinary(char *, int *, INT *);
 static INT tobinary64(char *, int *, DBLINT64);
 static int gettoken(void);
@@ -649,7 +648,7 @@ static int nextok(char *, int);
 static int _nextline(void);
 static int mac_push(PPSYM *, char *);
 static void popstack(void);
-static void stash_paths(char *);
+static void stash_paths(const char *);
 static void dumpval(char *, FILE *);
 #ifdef DUMPTAB
 static void dumptab(void);
@@ -682,7 +681,7 @@ void
 print_and_check(FILE *ff, char *str, char end_c)
 {
   char *cp;
-  char ch, ch2;
+  char ch;
 
   for (cp = str; *cp; ++cp) {
     ch = *cp;
@@ -712,11 +711,10 @@ accpp(void)
   int done;
   int i;
   INT mon;
-  FILE *fp;
   char tokval[TOKMAX];
   char **dirp;
   static char adate[] = "\"Mmm dd yyyy\"";
-  static char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  static const char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
                              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
   static char atime[] = "\"hh:mm:ss\"";
 
@@ -1154,7 +1152,6 @@ accpp(void)
         }
         break;
       default:
-      unrec_directive:
         if (!XBIT(123, 0x200000)) {
           if (ifstack(truth))
             pperror(236, tokval, 3);
@@ -1202,7 +1199,7 @@ accpp(void)
   if (XBIT(123, 2) || XBIT(123, 8)) {
     int count;
     if (gbl.dependfil == NULL) {
-      if ((gbl.dependfil = tmpf("a")) == NULL)
+      if ((gbl.dependfil = tmpf()) == NULL)
         errfatal(5);
     }
     count = strlen(gbl.module) + strlen(gbl.src_file) + 6;
@@ -1242,7 +1239,6 @@ static void
 pr_line(char *name, int line, LOGICAL from_stdinc)
 {
   static INT last_inclev = -1;
-  char *header_origin;
 
   /* -M option:  Print list of include files to stdout */
   if (XBIT(123, 2) || XBIT(123, 0x20000000) || XBIT(123, 0x40000000))
@@ -1439,7 +1435,7 @@ static int
 dlookup(char *name)
 {
   static struct {
-    char *name;
+    const char *name;
     int val;
   } directives[] = {{"define", D_DEFINE},
                     {"elif", D_ELIF},
@@ -1923,11 +1919,9 @@ doincl(LOGICAL include_next)
 {
   int toktyp;
   char buff[MAX_PATHNAME_LEN];
-  char fullname[MAX_PATHNAME_LEN];
   char *p;
   int type;
   char tokval[TOKMAX];
-  int i;
   int missing = 0;
 
   /* parse file name */
@@ -2034,7 +2028,6 @@ static void
 add_to_incllist(char *fullname)
 {
   INT i;
-  char *cp;
 
   /* Bail early if dependency generation is not enabled. */
   if (!XBIT(123, 2) &&          /* -M / -MM    */
@@ -2080,7 +2073,6 @@ static void
 _doincl(char *name, int type, LOGICAL include_next)
 {
   char fullname[MAX_PATHNAME_LEN];
-  char *p;
   int i;
 
   NEED(inclev + 2, inclstack, INCLSTACK, incsize, incsize + MAXINC);
@@ -2289,7 +2281,7 @@ subst(PPSYM *sp)
   char *fstart;
   char tmp;
   int nlpar;
-  int i, j, waswhite, instr;
+  int i, waswhite, instr;
   char tokval[TOKMAX];
   int argbufsize, targbufsize, newsize;
   int nl;
@@ -2503,8 +2495,10 @@ subst(PPSYM *sp)
       } else
         pperror(205, &deftab[sp->name], 2);
     }
+    /* Unspecified actuals are never modified; just make sure they
+       point to an empty string. */
     for (i = nactuals; i < nformals; i++)
-      actuals[i] = "";
+      actuals[i] = (char *)"";
   }
   q = p;
   p += strlen(p); /* end of macro text */
@@ -2858,7 +2852,7 @@ ifpush(void)
 }
 
 static INT
-strstore(char *name)
+strstore(const char *name)
 {
   int i;
   int j;
@@ -2938,7 +2932,6 @@ dumpval(char *p, FILE *ff)
 static void
 dumpmac(PPSYM *sp)
 {
-  char *p;
   fprintf(stderr, "%s (%d args, %x flags, %d next): def: ", &deftab[sp->name],
           sp->nformals, sp->flags, sp->next);
   dumpval(&deftab[sp->value], stderr);
@@ -2949,7 +2942,6 @@ static void
 dumptab(void)
 {
   int i;
-  char *p;
   for (i = 1; i < next_hash; ++i) {
     fprintf(stderr, "%d: ", i);
     dumpmac(hashrec + i);
@@ -3058,7 +3050,7 @@ putunmac(char *mac)
  *             !NULL - added ok
  */
 static PPSYM *
-lookup(char *name, int insflg)
+lookup(const char *name, int insflg)
 {
   int i;
   char *cp;
@@ -3178,14 +3170,15 @@ found:
 }
 
 static void
-ptok(char *tok)
+ptok(const char *tok)
 {
   FILE *fp;
-  int space;
   static int state = 1;
   static int nchars;
   static int needspace = 0;
   static int leading = 1;
+  char *tokchr = strdup(tok);
+  char *tokptr = tokchr;
 
   /* -M option:  Print list of include files to stdout */
   if (XBIT(123, 2) || XBIT(123, 0x20000000) || XBIT(123, 0x40000000))
@@ -3193,7 +3186,7 @@ ptok(char *tok)
 
   /* keep track of where compiler thinks we are */
   fp = gbl.cppfil;
-  if (*tok == '\n') {
+  if (*tokchr == '\n') {
     if (state == 1 && !XBIT(123, 0x80000))
       return;
     state = 1; /* next token starts a new line */
@@ -3215,33 +3208,34 @@ ptok(char *tok)
     }
   }
   if (!XBIT(123, 0x20) && !XBIT(123, 0x200)) {
-    if (needspace && !iswhite(*tok) && MASK(*tok) != WHITESPACE &&
-        *tok != '\n') {
+    if (needspace && !iswhite(*tokchr) && MASK(*tokchr) != WHITESPACE &&
+        *tokchr != '\n') {
       (void)putc(' ', fp);
       ++nchars;
       needspace = 0;
     }
   }
 
-  if (MASK(*tok) == WHITESPACE) {
-    *tok = ' ';
+  if (MASK(*tokchr) == WHITESPACE) {
+    *tokchr = ' ';
   }
 
   /* Suppress duplicate whitespaces added by macro expansion */
-  if (!XBIT(123, 0x800) && !leading && !needspace && iswhite(*tok)) {
+  if (!XBIT(123, 0x800) && !leading && !needspace && iswhite(*tokchr)) {
     ++nchars;
-    if (!(*(++tok)))
+    if (!(*(++tokchr)))
       return;
   }
 
-  if (leading && !iswhite(*tok))
+  if (leading && !iswhite(*tokchr))
     leading = 0;
 
-  needspace = !(iswhite(*tok) || *tok == '\n');
-  while (*tok) {
-    (void)putc(*tok++, fp);
+  needspace = !(iswhite(*tokchr) || *tokchr == '\n');
+  while (*tokchr) {
+    (void)putc(*tokchr++, fp);
     ++nchars;
   }
+  FREE(tokptr);
 }
 
 #define Number 1
@@ -3559,12 +3553,10 @@ static int
 gettoken(void)
 {
   static int ifdef = 0;
-  int b;
   char *s;
   PPSYM *sp;
   char tokval[TOKMAX];
   int i, c;
-  int isuns;
   INT t;
 
   for (;;) {
@@ -4074,14 +4066,13 @@ findtok(char *tokval, int truth)
 static int
 nextok(char *tokval, int truth)
 {
-  int i, j;
+  int i;
   char *p, tmp;
   int delim;
   int c;
   int toktyp;
   int retval;
   char *savtokval = tokval;
-  PPSYM *sp;
   char *comment_ptr;
   int dot_seen;
 
@@ -4843,7 +4834,7 @@ pbchar(int c)
 }
 
 static void
-pbstr(char *s)
+pbstr(const char *s)
 {
   register char *p;
   p = lineptr - strlen(s);
@@ -4969,9 +4960,9 @@ predarg(char *tokval)
 }
 
 static void
-stash_paths(char *dirs)
+stash_paths(const char *dirs)
 {
-  char *path;
+  const char *path;
   int n;
 
   if (dirs == NULL)

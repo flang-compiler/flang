@@ -40,7 +40,7 @@ typedef struct {
   int lineno;      /* current source line number */
   int findex;      /* current file index */
   char *src_file;  /* name of main input source file */
-  char *curr_file; /* name of current input source file */
+  const char *curr_file; /* name of current input source file */
   char *module;    /* object module name */
   FILE *srcfil;    /* file pointer for source input file */
   FILE *cppfil;    /* file pointer for preprocessor output */
@@ -50,7 +50,7 @@ typedef struct {
   FILE *asmfil;    /* file pointer for output assembly file */
   FILE *stbfil;    /* file pointer for symbols and datatype for llvm compiler */
   int eof_flag;
-  char *ompaccfilename;	/** pointer to the device file name for openmp gpu offload */
+  const char *ompaccfilename;	/** pointer to the device file name for openmp gpu offload */
   FILE *ompaccfile;	/** file pointer for device code */
   SPTR ompoutlinedfunc;
   SPTR currsub;    /* symtab ptr to current subprogram */
@@ -92,7 +92,7 @@ typedef struct {
                          */
   int func_count;       /* function counter, current # of function being
                          * compiled, incremented by assem_init */
-  char *file_name;      /* full pathname of input file; -file may override */
+  const char *file_name; /* full pathname of input file; -file may override */
   int ftn_true;         /* value of .TRUE.; -1 (default) or 1 (-x 125 8) */
   bool has_program;  /* true if a fortran 'program' has been seen */
   bool in_include;   /* set to true if source is from an include file */
@@ -174,7 +174,7 @@ typedef struct {
   bool ucase;
   char **idir;
   char **linker_directives;
-  char *llvm_target_triple;
+  const char *llvm_target_triple;
   bool dlines;
   int extend_source;
   bool i4;
@@ -182,9 +182,9 @@ typedef struct {
   bool symbol;
   int profile;
   bool standard;
-  int dbg[96];
-  bool dalign; /* TRUE if doubles are double word aligned */
-  int astype;     /* target dependent value to support multiple asm's */
+  int dbg[256]; /* undocumented uses up to 233 are found in the code */
+  bool dalign;  /* TRUE if doubles are double word aligned */
+  int astype;   /* target dependent value to support multiple asm's */
   bool recursive;
   int ieee;
   int inliner;
@@ -208,7 +208,7 @@ typedef struct {
   bool trans_inv; /* global equiv to -Mx,7,0x10000 */
   int tpcount;
   int tpvalue[TPNVERSION]; /* target processor(s), for unified binary */
-  char *cmdline; /* contains compiler command line */
+  const char *cmdline; /* contains compiler command line */
 } FLG;
 
 extern FLG flg;

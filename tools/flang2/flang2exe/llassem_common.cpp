@@ -67,11 +67,11 @@ static void put_i16(int);
 static void put_r4(INT);
 static void put_r8(int, int);
 static void put_cmplx_n(int, int);
-static void add_ctor(char *);
+static void add_ctor(const char *);
 static void write_proc_pointer(SPTR sptr);
 
 static void
-add_ctor(char *constructor)
+add_ctor(const char *constructor)
 {
   LL_Type *ret = ll_create_basic_type(cpu_llvm_module, LL_VOID, 0);
   LL_Function *fn;
@@ -134,15 +134,14 @@ static void
 write_proc_pointer(SPTR sptr)
 {
   const char *fntype = "void()";
-  LL_Type * lt;
 
   if (PTR_INITIALIZERG(sptr) && PTR_TARGETG(sptr)) {
     sptr = (SPTR) PTR_TARGETG(sptr);
-  } 
+  }
   LL_ABI_Info *abi = ll_proto_get_abi(ll_proto_key(sptr));
   if (abi) {
     fntype = ll_abi_function_type(abi)->str;
-  } 
+  }
   fprintf(ASMFIL, "i8* bitcast(%s* @%s to i8*)", fntype, getsname(sptr));
 }
 
@@ -151,13 +150,11 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
           ISZ_T loc_base, ISZ_T *i8cnt, int *ptrcnt, char **cptr)
 {
   ISZ_T al;
-  int area, d;
+  int area;
   int size_of_item;
   int putval;
   INT skip_size;
   char str[32];
-  char *initstr = NULL;
-  DINIT_REC *item;
   area = LLVM_LONGTERM_AREA;
   const ISZ_T orig_tconval = tconval;
 
@@ -673,11 +670,11 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
 }
 
 void
-put_string_n(char *p, ISZ_T len, int size)
+put_string_n(const char *p, ISZ_T len, int size)
 {
   int n;
   char ch;
-  char *ptrch = "i8";
+  const char *ptrch = "i8";
   char chnm[10];
 
   /* check for wide string - size is given by caller */
@@ -705,9 +702,7 @@ static void
 put_ncharstring_n(char *p, ISZ_T len, int size_of_char)
 {
   int n, bytes;
-  char ch;
-  char *ptrch = "i8";
-  char chnm[10];
+  const char *ptrch = "i8";
   union {
     char a[2];
     short i;
@@ -731,7 +726,7 @@ put_ncharstring_n(char *p, ISZ_T len, int size_of_char)
       fprintf(ASMFIL, ",");
   }
 
-} /* put_string_n */
+} /* put_ncharstring_n */
 
 static void
 put_zeroes(ISZ_T len)
@@ -760,7 +755,6 @@ put_zeroes(ISZ_T len)
 static void
 put_i8(int val)
 {
-  int i;
   i8bit.i8 = (short)val;
   fprintf(ASMFIL, "i8 %u", i8bit.byte[0] & 0xff);
 }
@@ -958,7 +952,6 @@ mk_struct_for_llvm_init(const char *name, int size)
 {
   int tag;
   DTYPE dtype;
-  int gblsym;
   char sname[MXIDLN];
 
   snprintf(sname, sizeof(sname), "struct%s", name);

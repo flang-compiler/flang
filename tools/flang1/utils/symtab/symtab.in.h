@@ -372,7 +372,7 @@ SPTR get_acon3(SPTR, ISZ_T, DTYPE);
 INT get_int_cval(int);
 ISZ_T get_isz_cval(int);
 INT sign_extend(INT, int);
-int getstring(char *, int);
+int getstring(const char *, int);
 int gethollerith(int, int);
 void newimplicit(int, int, int);
 void setimplicit(int);

@@ -32,7 +32,6 @@
 
 extern STB stb;
 extern GBL gbl;
-static char buff[132];
 
 void
 sym_init_first(void)

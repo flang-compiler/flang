@@ -8,6 +8,7 @@
 #ifndef KMPC_RUNTIME_H_
 #define KMPC_RUNTIME_H_
 
+#include <string>
 #include "gbldefs.h"
 #include "global.h"
 #include "symtab.h"
@@ -95,7 +96,7 @@ typedef struct any_kmpc_struct {
   char *name;
   DTYPE dtype;
   int byval;
-  int psptr;
+  SPTR psptr;
 } KMPC_ST_TYPE;
 
 /* KMPC API macros and structs */
@@ -344,17 +345,16 @@ int ll_make_kmpc_single(void);
 /**
    \brief ...
  */
-DTYPE ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo,
-                               ISZ_T sz);
+DTYPE ll_make_kmpc_struct_type(int count, const char *name,
+                               KMPC_ST_TYPE *meminfo, ISZ_T sz);
 
 /// Return an sptr to the allocated task object:  __kmp_omp_task_alloc()
 /// \param base  sptr for storing return value from __kmpc_omp_task_alloc
 /// \param sptr  sptr representing the outlined function that is the task
-/// \param flags MP_TASK_xxx flags (see mp.h)
 /// \param scope_sptr ST_BLOCK containing the uplevel block
-/// \param uplevel_ili unused
+/// \param flags MP_TASK_xxx flags (see mp.h)
 SPTR ll_make_kmpc_task_arg(SPTR base, SPTR sptr, SPTR scope_sptr,
-                           SPTR flags_sptr, int uplevel_ili);
+                           SPTR flags_sptr);
 
 /// Return a JSR ili to __kmpc_omp_task_begin_if0.
 /// \param task_sptr sptr representing the allocated task

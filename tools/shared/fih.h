@@ -10,10 +10,10 @@
  */
 
 typedef struct {
-  char *dirname;  /**< directory name */
-  char *filename; /**< file name (only) */
-  char *fullname; /**< full file name */
-  char *funcname; /**< function name */
+  const char *dirname;  /**< directory name */
+  const char *filename; /**< file name (only) */
+  const char *fullname; /**< full file name */
+  const char *funcname; /**< function name */
   void *ccffinfo; /**< opaque pointer used for CCFF info */
   int functag;    /**< integer function tag; ilm index of the function header */
   int parent;     /**< file into which this is inlined or included */
@@ -79,7 +79,7 @@ typedef struct {
 
 extern FIHB fihb;
 
-extern int addfile(char *, char *, int, int, int, int, int);
+extern int addfile(const char *, char *, int, int, int, int, int);
 extern void setfile(int, char *, int);
 
 /*             IFIH (inline file information header)   */

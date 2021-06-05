@@ -117,7 +117,7 @@ dump_parsyms(int sptr, int isTeams)
   assert(STYPEG(sptr) == ST_BLOCK, "Invalid OpenMP region sptr", sptr,
          ERR_Fatal);
 
-  up = llmp_get_uplevel(sptr);
+  up = llmp_get_uplevel((SPTR)sptr);
   fprintf(fp,
           "\n********** OUTLINING: %s Region "
           "%d (%d variables) **********\n",
@@ -192,7 +192,7 @@ genNullArg()
 }
 
 static ISZ_T
-ll_parent_vals_count(int stblk_sptr)
+ll_parent_vals_count(SPTR stblk_sptr)
 {
   const LLUplevel *up_parent;
   const LLUplevel *up = llmp_get_uplevel(stblk_sptr);
@@ -238,7 +238,7 @@ ll_make_uplevel_type(SPTR stblk_sptr)
 {
   int i, j;
   DTYPE dtype;
-  int nmems, psyms_idx, count, presptr;
+  int nmems, count, presptr;
   const LLUplevel *up;
   KMPC_ST_TYPE *meminfo = NULL;
   ISZ_T sz;
@@ -262,7 +262,7 @@ ll_make_uplevel_type(SPTR stblk_sptr)
   }
   presptr = 0;
   for (j = 0; j < count; ++j) {
-    int sptr = up->vals[j];
+    SPTR sptr = up->vals[j];
     meminfo[i].name = strdup(SYMNAME(sptr));
     meminfo[i].dtype = DT_CPTR;
     meminfo[i].byval = false;
@@ -327,21 +327,19 @@ ll_get_outlined_funcname(int fileno, int lineno, bool isompaccel, ILM_OP opc) {
   int nmSize;
   int r;
   char *name_currfunc = getsname(GBL_CURRFUNC);
-  char *prefix = "";
+  const char *prefix = "";
+  const char *host_prefix = "__nv_";
+  const char *device_prefix = "nvkernel_";
   int plen;
-  char *host_prefix = "__nv_";
-  char *device_prefix = "nvkernel_";
-  if(isompaccel) {
+  if (isompaccel) {
     prefix = device_prefix;
   } else {
     funcCnt++;
     prefix = host_prefix;
   }
-  if(gbl.outlined) {
-    {
-      plen = strlen(host_prefix);
-      name_currfunc = strtok(&name_currfunc[plen], "_");
-    }
+  if (gbl.outlined) {
+    plen = strlen(host_prefix);
+    name_currfunc = strtok(&name_currfunc[plen], "_");
   }
   nmSize = (3 * maxDigitLen) + 5 + strlen(name_currfunc) + 1;
   name = (char *)malloc(nmSize + strlen(prefix));
@@ -395,7 +393,7 @@ int
 ll_ad_outlined_func2(ILI_OP result_opc, ILI_OP call_opc, int sptr, int nargs,
                      int *args)
 {
-  int i, arg, rg, argl, ilix;
+  int i, rg, argl, ilix;
   int *argsp = args;
 
   rg = 0;
@@ -460,7 +458,7 @@ void
 ll_make_ftn_outlined_params(int func_sptr, int paramct, DTYPE *argtype)
 {
   int count = 0;
-  int sym, dtype;
+  int sym;
   char name[MXIDLEN + 2];
   int dpdscp = aux.dpdsc_avl;
 
@@ -554,16 +552,6 @@ llGetSym(char *name, DTYPE dtype)
   return gtid;
 }
 
-static int
-findBihForGtid()
-{
-  int bih;
-  bih = BIH_NEXT(BIHNUMG(GBL_CURRFUNC));
-  if (bih == expb.curbih)
-    return 0;
-  return bih;
-}
-
 /* Return the ili representing the global thread id:
  * This value is generated from:
  * 1) Calling the kmpc api directly: kmpc_global_thread_num
@@ -599,7 +587,7 @@ ll_get_gtid_val_ili(void)
 int
 ll_get_gtid_addr_ili(void)
 {
-  int ili, nme;
+  int ili;
   char *name;
 
   if (!gtid) {
@@ -722,17 +710,21 @@ ll_make_sections_args(SPTR lbSym, SPTR ubSym, SPTR stSym, SPTR lastSym)
  * An outlined task is:      void (int32, void*); Return is ignored.
  */
 static const KMPC_ST_TYPE funcSig[3] = {
-    {NULL, DT_INT, false},
-    {NULL, DT_CPTR, false},
-    {NULL, DT_CPTR, false} /* Pass ptr directly */
+    {NULL, DT_INT, false, SPTR_NULL},
+    {NULL, DT_CPTR, false, SPTR_NULL},
+    {NULL, DT_CPTR, false, SPTR_NULL} /* Pass ptr directly */
 };
 
 static const KMPC_ST_TYPE taskSig[2] = {
-    {NULL, DT_INT, true}, {NULL, DT_CPTR, false} /* Pass ptr directly */
+    {NULL, DT_INT, true, SPTR_NULL},
+    {NULL, DT_CPTR, false, SPTR_NULL} /* Pass ptr directly */
 };
 
 static const KMPC_ST_TYPE taskdupSig[3] = {
-    {NULL, DT_CPTR, false}, {NULL, DT_CPTR, false}, {NULL, DT_INT, true}};
+    {NULL, DT_CPTR, false, SPTR_NULL},
+    {NULL, DT_CPTR, false, SPTR_NULL},
+    {NULL, DT_INT, true, SPTR_NULL}
+};
 
 void
 setOutlinedPragma(int func_sptr, int saved)
@@ -742,12 +734,9 @@ setOutlinedPragma(int func_sptr, int saved)
 static SPTR
 makeOutlinedFunc(int stblk_sptr, int scope_sptr, bool is_task, bool istaskdup, bool isompaccel, ILM_OP opc) {
   char *nm;
-  LL_ABI_Info *abi;
-  SPTR func_sptr, hostfunc_uplevel = SPTR_NULL;
-  int dtype;
+  SPTR func_sptr;
   DTYPE ret_dtype;
-  int n_args, param1, param2, param3;
-  int count = 0;
+  int n_args;
   const KMPC_ST_TYPE *args;
 
   /* Get the proper prototype dtypes */
@@ -774,16 +763,16 @@ makeOutlinedFunc(int stblk_sptr, int scope_sptr, bool is_task, bool istaskdup, b
   OUTLINEDP(func_sptr, scope_sptr);
   FUNCLINEP(func_sptr, gbl.lineno);
 
-/* Set return type and  parameters for function dtype */
+  /* Set return type and  parameters for function dtype */
   STYPEP(func_sptr, ST_ENTRY);
   DTYPEP(func_sptr, ret_dtype);
   DEFDP(func_sptr, 1);
   SCP(func_sptr, SC_STATIC);
   llMakeFtnOutlinedSignature(func_sptr, n_args, args);
   ADDRTKNP(func_sptr, 1);
-/* In Auto Offload mode, we generate every outlining function in the host and device code.
-    * We build single style ILI for host and device.
-    */
+  /* In Auto Offload mode, we generate every outlining function in the host and device code.
+   * We build single style ILI for host and device.
+   */
   update_acc_with_fn(func_sptr);
 
   if(DBGBIT(233,2))
@@ -795,11 +784,10 @@ makeOutlinedFunc(int stblk_sptr, int scope_sptr, bool is_task, bool istaskdup, b
 
 SPTR
 ll_make_outlined_func_target_device(SPTR stblk_sptr, SPTR scope_sptr, ILM_OP opc) {
-  SPTR sptr;
-  if(!eliminate_outlining(opc)) {
+  SPTR sptr = SPTR_NULL;
+  if (!eliminate_outlining(opc)) {
     // Create a func sptr for omp target device
-    sptr =
-        ll_make_outlined_omptarget_func(stblk_sptr, scope_sptr, opc);
+    sptr = ll_make_outlined_omptarget_func(stblk_sptr, scope_sptr, opc);
     // Create ABI for the func sptr
     ll_load_outlined_args(scope_sptr, sptr, gbl.outlined);
   }
@@ -845,7 +833,6 @@ llMakeTaskdupRoutine(int task_sptr)
 static outliner_states_t
 outliner_nextstate()
 {
-  static FILE *orig_ilmfil = 0;
   if(hasILMRewrite) {
     if(outl_state == outliner_not_active)
       set_outliner_state(outliner_active_host_par1);
@@ -930,7 +917,6 @@ ll_reset_parfile_(void)
   if (!savedILMFil)
     savedILMFil = gbl.ilmfil;
   if (hasILMRewrite) {
-    int i;
     if (gbl.ilmfil == par_file1) {
       gbl.ilmfil = par_file2;
       gbl.eof_flag = 0;
@@ -995,7 +981,7 @@ llCollectSymbolInfo(ILM *ilmpx)
 {
   int flen, len, opnd;
   SPTR sptr;
-  int opc, tpv;
+  int opc;
 
   opc = ILM_OPC(ilmpx);
   flen = len = ilms[opc].oprs + 1;
@@ -1148,7 +1134,6 @@ ll_write_ilm_header(int outlined_sptr, int curilm)
   ILM_T t[6];
   ILM_T t2[6];
   ILM_T t3[4];
-  ILM_T tbeg[5];
 
   if (!par_curfile)
     par_curfile = par_file1;
@@ -1218,16 +1203,12 @@ void
 ll_write_ilm_end(void) {
   int nw;
   ILM_T t[6];
-  ILM_T tend[5];
 
   t[0] = IM_BOS;
   t[1] = gbl.lineno;
   t[2] = gbl.findex;
   t[3] = 5;
   t[4] = IM_END;
-
-#if DEBUG
-#endif
 
   nw = fwrite((char *)t, sizeof(ILM_T), 5, par_curfile);
 }
@@ -1311,7 +1292,6 @@ cloneUplevel(SPTR fr_uplevel_sptr, SPTR to_uplevel_sptr, bool is_task)
 {
   int ilix, dest_nme, src_nme;
   const SPTR new_uplevel = createUplevelSptr(to_uplevel_sptr);
-  const DTYPE uplevel_dtype = DTYPEG(new_uplevel);
   ISZ_T count = ll_parent_vals_count(to_uplevel_sptr);
 
   if (gbl.internal >= 1)
@@ -1377,7 +1357,7 @@ loadCharLen(SPTR lensym)
 static int
 toUplevelAddr(SPTR taskAllocSptr, SPTR uplevel, int offset)
 {
-  int ilix, nme, addr;
+  int ilix, nme = 0, addr;
   if (taskAllocSptr != SPTR_NULL) {
     ilix = ad_acon(taskAllocSptr, 0);
     nme = addnme(NT_VAR, taskAllocSptr, 0, 0);
@@ -1388,7 +1368,7 @@ toUplevelAddr(SPTR taskAllocSptr, SPTR uplevel, int offset)
   } else {
     if (TASKFNG(GBL_CURRFUNC) && DTYPEG(uplevel) == DT_ADDR) {
       ilix = ad_acon(uplevel, 0);
-      addr = ad2ili(IL_LDA, ilix, nme);
+      addr = ad2ili(IL_LDA, ilix, nme); // FIXME: nme == 0
     } else {
       addr = ad_acon(uplevel, offset);
     }
@@ -1404,7 +1384,6 @@ handle_nested_threadprivate(LLUplevel *parent, SPTR uplevel, SPTR taskAllocSptr,
   SPTR sptr;
   int offset;
   if (parent && parent->vals_count) {
-    int count = parent->vals_count;
     for (i = 0; i < parent->vals_count; ++i) {
       sptr = (SPTR)parent->vals[i];
       if (THREADG(sptr)) {
@@ -1430,7 +1409,7 @@ static SPTR
 member_with_offset(SPTR member, int offset)
 {
   for( ; member > NOSYM && ADDRESSG(member) < offset; member = SYMLKG(member)) {
-    if (ADDRESSG(member) = offset)
+    if ((ADDRESSG(member) = offset))
       return member;	/* found the matching member */
   }
   return SPTR_NULL;	/* trouble. */
@@ -1446,7 +1425,7 @@ member_with_offset(SPTR member, int offset)
  */
 static int
 loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
-                         int uplevel_stblk_sptr)
+                         SPTR uplevel_stblk_sptr)
 {
   int i, addr, ilix, offset, val, nme, encl, based;
   DTYPE dtype;
@@ -1663,12 +1642,10 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
 int
 ll_load_outlined_args(int scope_blk_sptr, SPTR callee_sptr, bool clone)
 {
-  LLUplevel *up;
   DTYPE uplevel_dtype;
   SPTR uplevel, taskAllocSptr = SPTR_NULL;
-  int base, count, addr, val, ilix, newcount;
+  int base, count, ilix, newcount;
   const SPTR uplevel_sptr = (SPTR)PARUPLEVELG(scope_blk_sptr); // ???
-  static int n;
   bool is_task = false;
   bool pass_uplevel_byval = false;
   /* If this is not the parent for a nest of funcs just return uplevel tbl ptr
@@ -1676,12 +1653,12 @@ ll_load_outlined_args(int scope_blk_sptr, SPTR callee_sptr, bool clone)
    */
   base = 0;
   count =
-          PARSYMSG(uplevel_sptr) ? llmp_get_uplevel(uplevel_sptr)->vals_count : 0;
+      PARSYMSG(uplevel_sptr) ? llmp_get_uplevel(uplevel_sptr)->vals_count : 0;
   newcount = count;
   if (gbl.internal >= 1) {
     if (count == 0 && PARSYMSG(uplevel_sptr) == 0) {
       const int key = llmp_get_next_key();
-      LLUplevel *up = llmp_create_uplevel_bykey(key);
+      llmp_create_uplevel_bykey(key);
       PARSYMSP(uplevel_sptr, key);
     }
     newcount = count + 1;
@@ -1718,7 +1695,7 @@ ll_load_outlined_args(int scope_blk_sptr, SPTR callee_sptr, bool clone)
 
     DTYPEP(uplevel, uplevel_dtype);
 
-/* Align uplevel for GPU "align 8" */
+    /* Align uplevel for GPU "align 8" */
     ll_process_routine_parameters(callee_sptr);
     sym_is_refd(callee_sptr);
     /* set alignment of last argument for GPU "align 8". It may not be the same
@@ -1753,7 +1730,7 @@ ll_get_uplevel_offset(int sptr)
 
   if (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) {
     int scope_sptr;
-    int uplevel_stblk;
+    SPTR uplevel_stblk;
     LLUplevel *uplevel;
 
     if (ISTASKDUPG(GBL_CURRFUNC)) {
@@ -1761,7 +1738,7 @@ ll_get_uplevel_offset(int sptr)
     } else {
       scope_sptr = OUTLINEDG(GBL_CURRFUNC);
     }
-    uplevel_stblk = PARUPLEVELG(scope_sptr);
+    uplevel_stblk = (SPTR)PARUPLEVELG(scope_sptr);
   redo:
     uplevel = llmp_get_uplevel(uplevel_stblk);
 
@@ -1781,7 +1758,7 @@ ll_get_uplevel_offset(int sptr)
 int
 ll_make_outlined_call(int func_sptr, int arg1, int arg2, int arg3)
 {
-  int i, ilix, altili, argili;
+  int ilix, altili, argili;
   const int nargs = 3;
   char *funcname = SYMNAME(func_sptr);
 
@@ -1801,22 +1778,20 @@ ll_get_hostprog_arg(int func_sptr, int whicharg)
 {
   int paramct, dpdscp;
   SPTR sym;
-  int uplevel, i, dtype;
 
   paramct = PARAMCTG(func_sptr);
   dpdscp = DPDSCG(func_sptr);
-
   sym = (SPTR)aux.dpdsc_base[dpdscp + (whicharg - 1)]; // ???
+
   return sym;
 }
 
 int
 ll_make_outlined_call2(int func_sptr, int uplevel_ili)
 {
-  int i, ilix, altili, argili;
+  int ilix, altili;
   int nargs = 3;
   int arg1, arg2, arg3, args[3];
-  static int n;
 
   if (!gbl.outlined) {
     /* orphaned outlined function */
@@ -1986,9 +1961,8 @@ llvmGetExpbCurIlt(void)
 SPTR
 llvmAddConcurEntryBlk(int bih)
 {
-  int newbih, arg1, arg2, arg3, symdtype;
+  int newbih;
   int asym, ili_uplevel, nme, ili;
-  SPTR funcsptr = GBL_CURRFUNC;
   SPTR display_temp = SPTR_NULL;
 
   /* add entry block */
@@ -2080,8 +2054,8 @@ llvmAddConcurExitBlk(int bih)
 void
 start_taskdup(int task_fnsptr, int curilm)
 {
-  int nw, len, noplen;
-  ILM_T t[6], t2[6], t3[6];
+  int len, noplen;
+  ILM_T t3[6];
   writeTaskdup = true;
   t3[0] = IM_BOS;
   t3[1] = gbl.lineno;
@@ -2091,7 +2065,6 @@ start_taskdup(int task_fnsptr, int curilm)
     int dupsptr = llMakeTaskdupRoutine(task_fnsptr);
     ILM_T t[6];
     ILM_T t2[6];
-    ILM_T t3[4];
 
     t[0] = IM_BOS;
     t[1] = gbl.lineno;
@@ -2198,9 +2171,8 @@ copyLastItr(int fnsptr, INT offset)
 void
 finish_taskdup_routine(int curilm, int fnsptr, INT offset)
 {
-  int nw, len;
+  int nw;
   ILM_T t[6];
-  ILM_T nop = IM_NOP;
 
   if (!TASKDUP_AVL)
     return;
@@ -2288,7 +2260,7 @@ int
 mk_function_call(DTYPE ret_dtype, int n_args, DTYPE *arg_dtypes, int *arg_ilis,
                  SPTR func_sptr)
 {
-  int i, r, ilix, altilix, gargs, *garg_ilis = ALLOCA (int, n_args);
+  int i, ilix, altilix, gargs, *garg_ilis = ALLOCA (int, n_args);
   DTYPE *garg_types = ALLOCA (DTYPE, n_args);
 
   DTYPEP(func_sptr, ret_dtype);
@@ -2339,11 +2311,9 @@ outlined_need_recompile() {
 }
 
 #ifdef OMP_OFFLOAD_LLVM
-static SPTR
+void
 llMakeFtnOutlinedSignatureTarget(SPTR func_sptr, OMPACCEL_TINFO *current_tinfo)
 {
-  SPTR sym, sptr_alloc = ((SPTR)0), ignoredsym;
-  char name[MXIDLEN + 2];
   int i, count = 0, dpdscp = aux.dpdsc_avl;
 
   PARAMCTP(func_sptr, current_tinfo->n_symbols);
@@ -2354,13 +2324,12 @@ llMakeFtnOutlinedSignatureTarget(SPTR func_sptr, OMPACCEL_TINFO *current_tinfo)
 
   for (i = 0; i < current_tinfo->n_symbols; ++i) {
     SPTR sptr = current_tinfo->symbols[i].host_sym;
-    sym = ompaccel_create_device_symbol(sptr, count);
+    SPTR sym = ompaccel_create_device_symbol(sptr, count);
     count++;
     current_tinfo->symbols[i].device_sym = sym;
     OMPACCDEVSYMP(sym, TRUE);
     aux.dpdsc_base[dpdscp++] = sym;
   }
-  return ignoredsym;
 }
 
 int
@@ -2372,8 +2341,13 @@ ll_make_outlined_ompaccel_call(SPTR parent_func_sptr, SPTR outlined_func)
   OMPACCEL_TINFO *omptinfo;
   omptinfo = ompaccel_tinfo_get(outlined_func);
   nargs = omptinfo->n_symbols;
-  int args[nargs], garg_ilis[nargs];
-  DTYPE arg_dtypes[nargs];
+
+  // Do not use variable-length arrays in C++ (-Wvla-extension).
+  // TODO: Use std::vectors.
+  int *args = (int *)malloc(sizeof(int) * nargs);
+  DTYPE *arg_dtypes = (DTYPE *)malloc(sizeof(DTYPE) * nargs);
+  memset((void *)args, 0, sizeof(int) * nargs);
+  memset((void *)arg_dtypes, 0, sizeof(DTYPE) * nargs);
 
   DTYPEP(outlined_func, DT_NONE);
   STYPEP(outlined_func, ST_PROC);
@@ -2402,6 +2376,8 @@ ll_make_outlined_ompaccel_call(SPTR parent_func_sptr, SPTR outlined_func)
   int call_ili =
       mk_function_call(DT_NONE, nargs, arg_dtypes, args, outlined_func);
 
+  free(args);
+  free(arg_dtypes);
   return call_ili;
 }
 
@@ -2548,7 +2524,7 @@ ll_make_outlined_ompaccel_func(SPTR stblk_sptr, SPTR scope_sptr, bool iskernel)
 {
   const LLUplevel *uplevel;
   SPTR func_sptr, arg_sptr;
-  int n_args = 0, max_nargs, i, j;
+  int n_args = 0, max_nargs, i;
   OMPACCEL_TINFO *current_tinfo;
 
   uplevel = llmp_has_uplevel(stblk_sptr);

@@ -236,7 +236,7 @@ extern int ag_funcptr; /* list of function pointer - should be a member
                                  LOCAL(any?) and STATIC in same list */
 
 void put_i32(int);
-void put_string_n(char *, ISZ_T, int);
+void put_string_n(const char *, ISZ_T, int);
 void put_short(int);
 void put_int4(INT);
 
@@ -281,7 +281,7 @@ void ompaccel_write_sharedvars(void);
 /**
    \brief ...
  */
-bool get_byval_from_argdtlist(const char *argdtlist);
+bool get_byval_from_argdtlist(DTLIST *argdtlist);
 
 /**
    \brief ...
@@ -321,7 +321,7 @@ char *get_ag_typename(int gblsym);
 /**
    \brief ...
  */
-char *get_argdtlist(int gblsym);
+DTLIST *get_argdtlist(int gblsym);
 
 /**
    \brief return external name for procedure
@@ -341,7 +341,7 @@ char *get_main_progname(void);
 /**
    \brief ...
  */
-char *get_next_argdtlist(char *argdtlist);
+DTLIST *get_next_argdtlist(DTLIST *argdtlist);
 
 /**
    \brief ...
@@ -416,7 +416,7 @@ int get_private_size(void);
 /**
    \brief ...
  */
-SPTR get_sptr_from_argdtlist(char *argdtlist);
+SPTR get_sptr_from_argdtlist(DTLIST *argdtlist);
 
 /**
    \brief ...
@@ -431,7 +431,7 @@ int get_stack_size(void);
 /**
    \brief ...
  */
-SPTR get_typedef_ag(char *ag_name, char *typeName);
+SPTR get_typedef_ag(const char *ag_name, const char *typeName);
 
 /**
    \brief ...
@@ -508,7 +508,7 @@ LL_Type *get_ag_return_lltype(int gblsym);
 /**
    \brief ...
  */
-LL_Type *get_lltype_from_argdtlist(char *argdtlist);
+LL_Type *get_lltype_from_argdtlist(DTLIST *argdtlist);
 
 /**
    \brief ...
@@ -557,7 +557,7 @@ void assemble_end(void);
 /**
    \brief ...
  */
-void assemble_init(int argc, char *argv[], char *cmdline);
+void assemble_init(int argc, char *argv[], const char *cmdline);
 
 /**
    \brief ...

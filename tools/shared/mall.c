@@ -52,7 +52,7 @@ sccalloc(BIGUINT64 nbytes)
     }
   }
 #endif
-  TRACE("sccalloc returns %p\n", p);
+  TRACE("sccalloc returns %p\n", (void *)p);
   return p;
 }
 
@@ -61,7 +61,7 @@ sccalloc(BIGUINT64 nbytes)
 void
 sccfree(char *ap)
 {
-  TRACE("sccfree called to free %p\n", ap);
+  TRACE("sccfree called to free %p\n", (void *)ap);
   free(ap);
 }
 
@@ -71,10 +71,10 @@ char *
 sccrelal(char *pp, BIGUINT64 nbytes)
 {
   char *q;
-  TRACE("sccrelal called to realloc %p\n", pp);
+  TRACE("sccrelal called to realloc %p\n", (void *)pp);
   q = (char*)realloc(pp, nbytes);
   if (q == NULL)
     errfatal(TOO_LARGE);
-  TRACE("sccrelal returns %p\n", q);
+  TRACE("sccrelal returns %p\n", (void *)q);
   return q;
 }

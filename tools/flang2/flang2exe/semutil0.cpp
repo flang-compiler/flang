@@ -367,8 +367,8 @@ INT
 cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp)
 {
   int to, from;
-  char *cp, buf[20];
-  int newcvlen, oldcvlen, msk, blnk;
+  char *cp;
+  int newcvlen, oldcvlen, blnk;
   INT num[4], result;
   INT num1[4];
   INT swap;
@@ -892,9 +892,10 @@ type_conv_error:
    always uppercase)
  */
 bool
-sem_eq_str(int con, char *pattern)
+sem_eq_str(int con, const char *pattern)
 {
-  char *p1, *p2;
+  char *p1;
+  const char *p2;
   int len;
   int c1, c2;
 

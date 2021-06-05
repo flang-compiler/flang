@@ -432,9 +432,10 @@ private:
                 dtypeinfo[cm][i].fval, dtypeinfo[cm][i].target_kind,
                 dtypeinfo[cm][i].target_type.c_str());
 #else
-        fprintf(out2, "        %2d, %2d, %3d, %2d, %2d", dtypeinfo[cm][i].size,
-                dtypeinfo[cm][i].align, dtypeinfo[cm][i].bits,
-                dtypeinfo[cm][i].scale, dtypeinfo[cm][i].fval);
+        fprintf(out2, "      { %2d, %2d, %3d, %2d, %2d }",
+                dtypeinfo[cm][i].size, dtypeinfo[cm][i].align,
+                dtypeinfo[cm][i].bits, dtypeinfo[cm][i].scale,
+                dtypeinfo[cm][i].fval);
 #endif
         if (i < ty_max)
           fputs(",", out2);
@@ -453,7 +454,7 @@ private:
                   dtypeinfo[cm][i].fval, dtypeinfo[cm][i].target_kind,
                   dtypeinfo[cm][i].target_type.c_str());
 #else
-          fprintf(out2, "        %2d, %2d, %3d, %2d, %2d",
+          fprintf(out2, "      { %2d, %2d, %3d, %2d, %2d }",
                   dtypeinfo[cm][i].size, dtypeinfo[cm][i].align,
                   dtypeinfo[cm][i].bits, dtypeinfo[cm][i].scale,
                   dtypeinfo[cm][i].fval);

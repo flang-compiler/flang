@@ -101,7 +101,7 @@ dinit(VAR *ivl, CONST *ict)
   ILM_T *p;
 
   if (df == NULL) {
-    if ((df = tmpf("b")) == NULL)
+    if ((df = tmpf()) == NULL)
       errfatal(F_0005_Unable_to_open_temporary_file);
   }
   ptr = (char *)ivl;
@@ -943,7 +943,7 @@ dmp_ict(CONST *ict, FILE *f)
       /*fprintf(dfil, "  next:%p\n", (void *)(ict->next));*/
       fprintf(dfil, "\n");
       dmp_ict(ict->subc, f);
-      fprintf(dfil, "    Back from most recent substructure %p\n", ict);
+      fprintf(dfil, "    Back from most recent substructure %p\n", (void *)ict);
       ict = ict->next;
     } else {
       fprintf(dfil, "  val: %6d   dt: %4d   rc: %6" ISZ_PF "d", ict->u1.conval,
@@ -1276,7 +1276,7 @@ _ddiv(INT *dividend, INT *divisor, INT *quotient)
 static int
 get_ast_op(int op)
 {
-  int ast_op;
+  int ast_op = -1;
 
   switch (op) {
   case AC_NEG:
@@ -2306,7 +2306,7 @@ eval_int(CONST *arg, DTYPE dtype)
 static CONST *
 eval_null(CONST *arg, DTYPE dtype)
 {
-  CONST c = {0};
+  CONST c = {0, NULL, NULL, 0, SPTR_NULL, SPTR_NULL, DT_NONE, 0, {0}};
   CONST *p = clone_init_const(&c, true);
   p->id = AC_CONST;
   p->repeatc = 1;
@@ -2761,7 +2761,7 @@ static int
 _huge(DTYPE dtype)
 {
   INT val[4];
-  int tmp, ast, sptr;
+  int tmp;
 
   switch (DTYG(dtype)) {
   case TY_BINT:
@@ -2812,8 +2812,7 @@ negate_const_be(INT conval, DTYPE dtype)
 {
   SNGL result, realrs, imagrs;
   DBLE dresult, drealrs, dimagrs;
-  IEEE128 qresult, qrealrs, qimagrs;
-  static INT num[4], numz[4];
+  static INT num[4];
 
   switch (DTY(dtype)) {
   case TY_BINT:
@@ -3006,7 +3005,6 @@ do_eval_minval_or_maxval(INDEX *index, DTYPE elem_dt, DTYPE loc_dt,
   unsigned locs_size;
   bool want_max = intrin == AC_I_maxloc || intrin == AC_I_maxval;
   bool want_val = intrin == AC_I_minval || intrin == AC_I_maxval;
-  CONST *result;
  
 /* vals[vals_size] contains the result for {min,max}val()
  * locs[locs_size] contains the result for {min,max}loc() */
@@ -3768,7 +3766,8 @@ static CONST *
 eval_trim(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr(arg);
-  char *p, *cp, *str;
+  const char *str;
+  char *p, *cp;
   int i, cvlen, newlen;
 
   p = stb.n_base + CONVAL1G(rslt->u1.conval);

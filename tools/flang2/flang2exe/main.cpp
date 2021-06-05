@@ -86,8 +86,8 @@ static action_map_t *phase_dump_map;
 /*
  * for reporting time
  */
-static char *who[] = {"init", "import",   "expand", "", "",
-                      "",     "assemble", "xref",   ""};
+static const char *who[] = {"init", "import",   "expand", "", "",
+                            "",     "assemble", "xref",   ""};
 #define _N_WHO (int)(sizeof(who) / sizeof(char *))
 static INT xtimes[_N_WHO];
 static char *ccff_filename = NULL;
@@ -110,10 +110,6 @@ static int dodebug = 0;
 #define DEBUGQQ 0
 #endif
 
-static char *dbg_feature = "flang";
-
-static int ipa_import_mode = 0;
-
 #define DUMP(a)
 
 #define NO_FLEXLM
@@ -126,7 +122,7 @@ static int ipa_import_mode = 0;
  * linenumber as 0
  */
 static void
-check_lineno(char *phase)
+check_lineno(const char *phase)
 {
   int block;
   int ilt;
@@ -173,7 +169,6 @@ process_input(char *argv0, bool *need_cuda_constructor)
   bool have_data_constructor = false;
   bool is_constructor = false;
   bool is_omp_recompile = false;
-  omp_recompile:
   llvm_restart:
   if (gbl.maxsev > accsev)
     accsev = gbl.maxsev;
@@ -374,10 +369,8 @@ process_input(char *argv0, bool *need_cuda_constructor)
 int
 main(int argc, char *argv[])
 {
-  static unsigned int ckey, rkey;
   bool findex = false;
   bool need_constructor = false;
-  int accel_cnt, accel_vendor = 0;
   int ilm_units_seen = 0;
 
   get_rutime();
@@ -533,28 +526,16 @@ report_area(void)
 static void
 init(int argc, char *argv[])
 {
-  int argindex;
-  int next;
-  char *argstring;
-  int indice;
   char *sourcefile;
   char *listfile;
-  char *stboutfile;
+  const char *stboutfile;
   char *cppfile;
   char *tempfile;
   char *asmfile;
-  int c;
-  int def_count = 0;  /* number of -def switches */
-  int idir_count = 0; /* number of -idir switches */
-  INT qval1;
-  INT qval2;
-  int val_follows;
   bool dbgflg;
   bool errflg;
   FILE *fd;
-  int exlib_flag = 0;
-  char *file_suffix;
-  char *idfname;
+  const char *file_suffix;
   time_t now;
 
   file_suffix = FTNFILE; /* default suffix for source files */
@@ -616,10 +597,10 @@ init(int argc, char *argv[])
   /* Need to up optimization level if we modify unroller count */
   int old_unroller_cnt = flg.x[9];
   /* Target architecture string */
-  char *tp;
+  const char *tp;
   /* OpenMP target triple architecture string */
-  char *omptp = NULL;
-  char *ompfile = NULL;
+  const char *omptp = NULL;
+  const char *ompfile = NULL;
   /* Vectorizer settings */
   int vect_val;
 
@@ -640,7 +621,7 @@ init(int argc, char *argv[])
                                     &asmfile);
 
   /* Register version arguments */
-  register_string_arg(arg_parser, "vh", (char **)&(version.host), "");
+  register_string_arg(arg_parser, "vh", &(version.host), "");
 
   /* x flags */
   register_xflag_arg(arg_parser, "x", flg.x,
@@ -687,10 +668,10 @@ init(int argc, char *argv[])
     if (flg.dbg[0] & 1) {
       gbl.dbgfil = stderr;
     } else {
-      char *s, *ss, *t;
+      const char *s, *t;
       s = NULL;
       t = gbl.file_name;
-      for (ss = gbl.file_name; *ss; ++ss) {
+      for (const char *ss = gbl.file_name; *ss; ++ss) {
         if (*ss == '.')
           s = ss;
         if ((*ss == '/'
@@ -703,7 +684,7 @@ init(int argc, char *argv[])
       }
       if (s == NULL)
         s = ".f90";
-        tempfile = mkfname(t, s, ".qdbg");
+      tempfile = mkfname(t, s, ".qdbg");
       if ((gbl.dbgfil = fopen(tempfile, "w")) == NULL)
         errfatal((error_code_t)5);
     }
@@ -791,9 +772,11 @@ init(int argc, char *argv[])
             version.lang);
   }
 
-empty_cl:
   if (sourcefile == NULL) {
-    gbl.src_file = sourcefile = "STDIN.f";
+    const char *defaultname = "STDIN.f";
+    sourcefile = (char *)malloc(strlen(defaultname) + 1);
+    strcpy(sourcefile , defaultname);
+    gbl.src_file = sourcefile;
     gbl.srcfil = stdin;
     goto do_curr_file;
   }
@@ -831,7 +814,7 @@ do_curr_file:
   gbl.ilmfil = gbl.objfil = NULL;
   if (!flg.es && (flg.object || flg.code)) {
     /* create temporary file for ilms */
-    if ((gbl.ilmfil = tmpf("b")) == NULL)
+    if ((gbl.ilmfil = tmpf()) == NULL)
       errfatal((error_code_t)5);
   }
   /* process listing file */
@@ -1093,7 +1076,7 @@ ompaccel_create_globalctor()
 static void
 ompaccel_create_reduction_wrappers()
 {
-  if (gbl.ompaccel_intarget && gbl.currsub != NULL) {
+  if (gbl.ompaccel_intarget && gbl.currsub != SPTR_NULL) {
     int nreds = ompaccel_tinfo_current_get()->n_reduction_symbols;
     if (nreds != 0) {
       SPTR cur_func_sptr = gbl.currsub;

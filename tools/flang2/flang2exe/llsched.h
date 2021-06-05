@@ -12,8 +12,6 @@
 #include "llutil.h"
 
 /**
-
-/**
    \brief ...
  */
 int enhanced_conflict(int nme1, int nme2);

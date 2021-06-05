@@ -29,7 +29,7 @@ typedef struct LLDEF {
   int sptr;
   int rank;
   unsigned flags;	/**< bitmask value. See LLDEF_Flags */
-  char *name;
+  const char *name;
   int printed;
   int addrspace;
   OPERAND *values;
@@ -84,22 +84,20 @@ get_ot_name(unsigned ot)
 
 #define DT_SBYTE DT_BINT
 
-static char *llvm_cc_names[LLCC_LAST] = {
+static const char *llvm_cc_names[LLCC_LAST] = {
     "none", "eq", "ne", "ugt", "uge", "ult", "ule", "sgt", "sge", "slt", "sle"};
 
-static char *llvm_ccfp_names[LLCCF_LAST] = {
+static const char *llvm_ccfp_names[LLCCF_LAST] = {
     "none", "false", "oeq", "ogt", "oge", "olt", "ole", "one", "ord",
     "ueq",  "ugt",   "uge", "ult", "ule", "une", "uno", "true"};
 
-/* struct definition only used in CPU llvm backend 
+/* struct definition only used in CPU llvm backend
  * accel takes a different approach */
 static LLDEF *struct_def_list = NULL;
 static LLDEF *llarray_def_list = NULL;
 /* global variable declaration for GPU llvm backend
  * CPU takes another approach, please check assemble_end in llassem_c.c. */
 static LLDEF *gblvar_def_list = NULL;
-/* not used yet */
-static LLDEF *ftn_struct_def_list = NULL;
 
 FTN_LLVM_ST ftn_llvm_st;
 FILE *LLVMFIL = NULL;
@@ -111,13 +109,13 @@ static bool LLTYPE_equiv(LL_Type *ty1, LL_Type *ty2);
 
 static int is_gpu_module = false;
 
-void 
+void
 llvm_set_acc_module(void)
 {
   is_gpu_module = true;
 }
 
-void 
+void
 llvm_set_cpu_module(void)
 {
   is_gpu_module = false;
@@ -300,7 +298,7 @@ ll_convert_basic_dtype_with_addrspace(LL_Module *module, DTYPE dtype, int addrsp
     break;
 
   default:
-    interr("ll_convert_basic_dtype: unknown data type", dtype, ERR_Fatal);
+    interr("ll_convert_basic_dtype_with_addrspace: unknown data type", dtype, ERR_Fatal);
   }
 
   type = ll_create_basic_type(module, basetype, addrspace);
@@ -362,7 +360,7 @@ ll_convert_iface_sptr(LL_Module *module, SPTR iface_sptr)
   SPTR gblsym;
   LL_Type **args, *res;
   LL_Type *llt;
-  char *dtl;
+  DTLIST *dtl;
 
   if (INMODULEG(iface_sptr))
     gblsym = find_ag(get_llvm_name(iface_sptr));
@@ -379,8 +377,8 @@ ll_convert_iface_sptr(LL_Module *module, SPTR iface_sptr)
   llt = get_ag_lltype(gblsym);
   args[0] = ll_convert_dtype(module, DTYPEG(iface_sptr));
 
-  for (i = 1, dtl = (char *)get_argdtlist(gblsym); dtl;
-       dtl = (char *)get_next_argdtlist(dtl), ++i) {
+  for (i = 1, dtl = get_argdtlist(gblsym); dtl;
+       dtl = get_next_argdtlist(dtl), ++i) {
     llt = (LL_Type *)get_lltype_from_argdtlist(dtl);
     args[i] = llt;
   }
@@ -590,8 +588,7 @@ ll_convert_struct_dtype(LL_Module *module, DTYPE dtype)
 LL_Type *
 ll_convert_array_dtype(LL_Module *module, DTYPE dtype, int addrspace)
 {
-  int len;
-  ADSC *ad;
+  int len = 0;
   LL_Type *type = NULL;
 
   if (DTY(dtype) == TY_ARRAY) {
@@ -931,13 +928,9 @@ make_lltype_from_arg(int arg)
 LL_Type *
 make_lltype_from_arg_noproto(int arg)
 {
-  DTYPE sdtype, atype;
-  int anum;
   DTYPE dtype;
   LL_Type *llt, *llt2;
   int argili;
-
-  DBGTRACEIN2(" dtype %d = %s", sdtype, stb.tynames[DTY(sdtype)])
 
   argili = ILI_OPND(arg, 1);
   dtype = ILI_DTyOPND(arg, 3);
@@ -952,7 +945,7 @@ make_lltype_from_arg_noproto(int arg)
     llt = make_lltype_from_dtype(dtype);
   }
 
-  DBGTRACEOUT2(" return type %p: %s\n", llt, llt->str);
+  DBGTRACEOUT2(" return type %p: %s\n", (void *)llt, llt->str);
 
   return llt;
 } /* make_lltype_from_dtype */
@@ -1209,15 +1202,13 @@ LL_Type *
 make_lltype_from_sptr(SPTR sptr)
 {
   DTYPE sdtype, atype;
-  int anum, midtype;
+  int anum;
   SPTR iface;
-  int len;
   int stype = 0, sc = 0;
-  LL_Type *llt, *llt2;
+  LL_Type *llt;
   int addrspace = LL_AddrSp_Default;
   ADSC *ad;
   INT d;
-  int midnum = 0;
 
   if (sptr) {
     sdtype = DTYPEG(sptr);
@@ -1280,7 +1271,7 @@ make_lltype_from_sptr(SPTR sptr)
   /* Initialize llt information, and set initial type */
   llt = ll_convert_dtype_with_addrspace(llvm_get_current_module(), sdtype, addrspace);
 
-      if (llis_integral_kind(sdtype)) {
+  if (llis_integral_kind(sdtype)) {
     /* do nothing */
   } else if (llis_pointer_kind(sdtype)) {
     /* make it i8* - use i32* or i64*  */
@@ -1371,7 +1362,7 @@ make_lltype_from_sptr(SPTR sptr)
   }
 
   DBGDUMPLLTYPE("returned type is ", llt)
-  DBGTRACEOUT1(" return type address %p", llt)
+  DBGTRACEOUT1(" return type address %p", (void *)llt)
 
   if ((llt->data_type == LL_ARRAY) || (llt->data_type == LL_PTR)) {
     LLDEF *def = (LLDEF *)llutil_alloc(sizeof(LLDEF));
@@ -1755,7 +1746,7 @@ print_space_tobuf(int num, char *buf)
    \brief Write any line which does not need a tab
  */
 void
-print_line(char *ln)
+print_line(const char *ln)
 {
   if (ln != NULL)
     fprintf(LLVMFIL, "%s\n", ln);
@@ -1857,7 +1848,6 @@ write_vconstant_value(int sptr, LL_Type *type, unsigned long long undef_bitmask)
   int vsize = type->sub_elements;
   int i;
   int edtype;
-  char *vctype, *constant;
 
   edtype = CONVAL1G(sptr);
 
@@ -2177,7 +2167,7 @@ should_preserve_param(const DTYPE dtype)
 OPERAND *
 make_param_op(SPTR sptr)
 {
-  OPERAND *oper;
+  OPERAND *oper = nullptr;
   DTYPE dtype = DTYPEG(sptr);
 
   switch (DTY(dtype)) {
@@ -2225,19 +2215,16 @@ make_param_op(SPTR sptr)
 void
 write_operand(OPERAND *p, const char *punc_string, int flags)
 {
-  int nme, dtype, ct;
-  char cnst[MAXIDLEN];
   OPERAND *new_op;
-  LL_Type *llt;
   LL_Type *pllt;
-  char *name;
+  const char *name;
   const bool uns = (flags & FLG_AS_UNSIGNED) != 0;
   int sptr = p->val.sptr;
   if (p->flags & OPF_CONTAINS_UNDEF) {
     sptr = p->val.sptr_undef.sptr;
   }
 
-  DBGTRACEIN2(" operand %p (%s)", p, OTNAMEG(p))
+  DBGTRACEIN2(" operand %p (%s)", (void *)p, OTNAMEG(p))
   DBGDUMPLLTYPE(" with type ", p->ll_type)
 
   switch (p->ot_type) {
@@ -2448,9 +2435,8 @@ void
 write_operands(OPERAND *operand, int flags)
 {
   OPERAND *p;
-  int i_name, sptr;
 
-  DBGTRACEIN1(" starting at operand %p", operand)
+  DBGTRACEIN1(" starting at operand %p", (void *)operand)
 
   /* write out the operands to the instructions */
   for (p = operand; p; p = p->next)
@@ -2467,7 +2453,7 @@ static int metadata_id = 0;
 void
 set_metadata_string(TMPS *t, char *string)
 {
-  DBGTRACEIN2(" TMPS* %p, string %s", t, string)
+  DBGTRACEIN2(" TMPS* %p, string %s", (void *)t, string)
 
   t->id = -1;
   t->info.string = string;
@@ -2481,7 +2467,7 @@ set_metadata_string(TMPS *t, char *string)
 void
 init_metadata_index(TMPS *t)
 {
-  DBGTRACEIN1(" TMPS* %p", t)
+  DBGTRACEIN1(" TMPS* %p", (void *)t)
 
   if (!t->id)
     t->id = ++metadata_id;
@@ -2497,7 +2483,7 @@ print_metadata_name(TMPS *t)
 {
   char tmp[50];
 
-  DBGTRACEIN1(" TMPS* %p", t)
+  DBGTRACEIN1(" TMPS* %p", (void *)t)
 
   if (!t->id)
     t->id = ++metadata_id;
@@ -2600,13 +2586,13 @@ get_param_equiv_dtype(DTYPE dtype)
 /**
    \brief return string for a first class type
  */
-char *
+const char *
 llvm_fc_type(DTYPE dtype)
 {
-  char *retc;
+  const char *retc = "";
   ISZ_T sz;
 
-  switch (DTY(dtype)) {
+  switch ((int)DTY(dtype)) {
   case TY_NONE:
     retc = "void"; /* TODO need to check where it is be used */
     break;
@@ -2679,7 +2665,7 @@ llvm_fc_type(DTYPE dtype)
     retc = "struct";
     break;
   default:
-    DBGTRACE2("###llvm_fc_type(): unhandled data type: %ld (%s), might not be "
+    DBGTRACE2("###llvm_fc_type(): unhandled data type: %d (%s), might not be "
               "first class ?",
               DTY(dtype), (stb.tynames[DTY(dtype)]))
     assert(0, "llvm_fc_type: unhandled data type", DTY(dtype), ERR_Fatal);
@@ -2718,7 +2704,7 @@ gen_copy_list_op(OPERAND *operands)
 }
 
 static LLDEF *
-make_def(DTYPE dtype, int sptr, int rank, char *name, int flags)
+make_def(DTYPE dtype, int sptr, int rank, const char *name, int flags)
 {
   LLDEF *new_def;
 
@@ -2756,7 +2742,7 @@ write_alt_struct_def(LLDEF *def)
 {
   char buf[80];
   DTYPE dtype = def->dtype;
-  int struct_sz, field_count, field_sz;
+  int struct_sz, field_sz;
 
   print_token(def->name);
   print_token(".alt = type ");
@@ -2924,8 +2910,6 @@ write_alt_field_types(LL_Type *llty)
 static void
 write_def(LLDEF *def, int check_type_in_struct_def_type)
 {
-  char buf[80];
-  DTYPE dtype = def->dtype;
   LLDEF *lltypedef = NULL;
 
   print_token(def->name);
@@ -3050,7 +3034,7 @@ void
 write_ftn_typedefs(void)
 {
   LLDEF *cur_def;
-  int gblsym;
+  SPTR gblsym;
 
   cur_def = struct_def_list;
   while (cur_def) {
@@ -3140,9 +3124,8 @@ process_symlinked_sptr(int sptr, int total_init_sz, int is_union,
   OPERAND *cur_op;
   OPERAND head;
   int pad, field_sz, sptr_sz, max_sz, update_union;
-  int cur_addr, prev_addr, base_addr;
+  int cur_addr, prev_addr;
   OPERAND *union_from = NULL, *union_to = NULL;
-  int total_field_sz;
 
   if (sptr > NOSYM)
     prev_addr = ADDRESSG(sptr);
@@ -3210,10 +3193,10 @@ process_symlinked_sptr(int sptr, int total_init_sz, int is_union,
   return head.next;
 }
 
-char *
+const char *
 process_dtype_struct(DTYPE dtype)
 {
-  char *d_name;
+  const char *d_name;
   SPTR tag;
   TY_KIND dty;
   LLDEF *def;
@@ -3235,7 +3218,7 @@ process_dtype_struct(DTYPE dtype)
     return def->name;
   }
   /* Use consistent struct type names. */
-  d_name = (char *)ll_convert_struct_dtype(llvm_get_current_module(), dtype)->str;
+  d_name = ll_convert_struct_dtype(llvm_get_current_module(), dtype)->str;
   if (ZSIZEOF(dtype) == 0 && DTyAlgTyMember(dtype) == 0)
     def = make_def(dtype, 0, 0, d_name,
                    LLDEF_IS_TYPE | LLDEF_IS_EMPTY | LLDEF_IS_STRUCT);
@@ -3267,7 +3250,7 @@ process_dtype_struct(DTYPE dtype)
    printed out to the .ll output file.  If true, write_ftn_typedefs() will not
    print the type out (assuming that it has already been 'printed').
  */
-char *
+const char *
 process_ftn_dtype_struct(DTYPE dtype, char *tname, bool printed)
 {
   int tag;
@@ -3692,7 +3675,7 @@ process_ll_abi_func_ftn_mod(LL_Module *mod, SPTR func_sptr, bool update)
 {
   int i, ty;
   DTYPE ret_dtype;
-  char *param;
+  DTLIST *param;
   LL_ABI_Info *abi;
   LL_Type *llt;
   int gblsym = 0;
@@ -3922,7 +3905,6 @@ visit_flattened_dtype(dtype_visitor visitor, void *context, DTYPE dtype,
 {
   int retval = 0;
   SPTR sptr;
-  unsigned dim, i, size;
 
   if (DTY(dtype) == TY_STRUCT || DTY(dtype) == TY_UNION) {
     /* TY_STRUCT sptr tag size align. */
@@ -4057,7 +4039,7 @@ get_ftn_static_lltype(SPTR sptr)
     return get_ag_lltype(gblsym);
 
   if (ACCINITDATAG(sptr) && (CFUNCG(sptr) || CUDAG(gbl.currsub))) {
-    if (DDTG(dtype) != TY_CHAR) {
+    if (DDTG(dtype) != (DTYPE)TY_CHAR) {
       dtype = mk_struct_for_llvm_init(getsname(sptr), 0);
       llt = make_lltype_from_dtype(dtype);
       gblsym = get_typedef_ag(getsname(sptr), 0);
@@ -4171,10 +4153,11 @@ get_ftn_cbind_lltype(SPTR sptr)
 {
   DTYPE dtype = DTYPEG(sptr);
   DTYPE sdtype;
-  int tag, numdim, gblsym, d, iface, gs;
-  ISZ_T anum;
+  int tag, numdim, gblsym, d;
+  ISZ_T anum = 0;
   LL_Type *llt = NULL;
-  char *typed, *name;
+  const char *typed;
+  char *name;
   char tname[MXIDLN];
   ADSC *ad;
 

@@ -43,10 +43,10 @@ ll_manage_mem(LLVMModuleRef module, void *space)
   return space;
 }
 
-static const char *
+static char *
 ll_manage_strdup(LLVMModuleRef module, const char *str)
 {
-  return (const char *)ll_manage_mem(module, strdup(str));
+  return (char *)ll_manage_mem(module, strdup(str));
 }
 
 static void *
@@ -228,14 +228,14 @@ static const hash_functions_t types_hash_functions = {types_hash, types_equal};
  * 3. Insert new pointer into names.
  * 4. Return malloced pointer.
  */
-static const char *
+static char *
 unique_name(hashset_t names, char prefix, const char *format, va_list ap)
 {
   char buffer[256] = {prefix, 0};
   size_t prefix_length;
   unsigned count = 0;
   int reseeded = 0;
-  const char *unique_name;
+  char *unique_name;
 
   /* The return value from vsnprintf() is useless because Microsoft Visual
    * Studio doesn't follow the standard. */
@@ -1678,7 +1678,7 @@ ll_get_calling_conv_str(enum LL_CallConv cc)
  * Like ll_create_value_from_type() with uniquing.
  * Return an index into module->constants */
 static unsigned
-intern_constant(LLVMModuleRef module, LL_Type *type, const char *data)
+intern_constant(LLVMModuleRef module, LL_Type *type, char *data)
 {
   LL_Value temp;
   hash_data_t oldval;
@@ -2436,11 +2436,11 @@ ll_create_global_alias(LL_Value *aliasee_ptr, const char *format, ...)
    Returns a pointer to a unique local name in function, including the leading
    \c \%. The memory for the returned name is managed by the function.
  */
-const char *
+char *
 ll_create_local_name(LL_Function *function, const char *format, ...)
 {
   va_list ap;
-  const char *name;
+  char *name;
 
   if (!function->used_local_names)
     function->used_local_names = hashset_alloc(hash_functions_strings);
@@ -2516,19 +2516,17 @@ static LL_FnProto *_ll_proto_head;
 const char *
 ll_proto_key(SPTR func_sptr)
 {
-  const char *ifacenm;
-  const char *nm = NULL;
-
-/* This is disabled for now, we plan on enabling this soon and cleaning up the
- * macros below.
- */
+  /* This is disabled for now, we plan on enabling this soon and cleaning up the
+   * macros below.
+   */
 #if defined(TARGET_LLVM) && !defined(MATTD)
   return get_llvm_name(func_sptr);
 #endif /* TARGET_LLVM && !MATTD */
 
 #ifdef MATTD
-/* Fortran must check for interface names, C/C++ is straight forward) */
-  ifacenm = get_llvm_ifacenm(func_sptr);
+  /* Fortran must check for interface names, C/C++ is straight forward) */
+  const char *nm = NULL;
+  const char *ifacenm = get_llvm_ifacenm(func_sptr);
   if (find_ag(ifacenm))
     nm = ifacenm;
   else
@@ -2588,9 +2586,8 @@ ll_proto_add(const char *fnname, struct LL_ABI_Info_ *abi)
    * fortran will reset the name per module compilation.
    * Do not deallocate the keys unless the hashmap is deallocated.
    */
-  fnname = (char *)strdup(fnname);
-  key = (char *)strdup(fnname);
-  proto->fn_name = (char *)fnname;
+  key = strdup(fnname);
+  proto->fn_name = strdup(fnname);
   hashmap_insert(_ll_proto_map, key, (hash_data_t)proto);
 
   if (!_ll_proto_head) {
@@ -2748,7 +2745,7 @@ dump_proto(int counter, const LL_FnProto *proto)
   fprintf(fil,
           "%d) %s: abi(%p) has_defined_body(%d) is_weak(%d) "
           "intrinsic(%s)\n",
-          counter, proto->fn_name, proto->abi, proto->has_defined_body,
+          counter, proto->fn_name, (void *)proto->abi, proto->has_defined_body,
           proto->is_weak, proto->intrinsic_decl_str);
 }
 

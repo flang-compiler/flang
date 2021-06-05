@@ -25,8 +25,8 @@
 /* codes and strings for signals */
 
 struct cods {
-  int code;  /* signal code */
-  char *str; /* string */
+  int code;        /* signal code */
+  const char *str; /* string */
 };
 
 #define CODNULL ((struct cods *)0)
@@ -67,7 +67,7 @@ static struct cods codbus[] = {{BUS_ADRALN, "invalid address alignment"},
 struct sigs {
   int sig;          /* signal value */
   struct cods *cod; /* address of optional code info */
-  char *str;        /* message string */
+  const char *str;  /* message string */
 };
 
 static struct sigs sigs[] = {
@@ -182,7 +182,7 @@ __abort_trace(int skip)
   }
 
   size = backtrace(array, MAXTRACE);
-  if (skip + 1 >= size) {
+  if ((size_t)skip + 1 >= size) {
     fprintf(__io_stderr(), "  --- traceback not available\n");
     return;
   }
@@ -208,7 +208,7 @@ __abort_trace(int skip)
 static void
 __abort_sig_hand(int sig, siginfo_t *in, ucontext_t *u)
 {
-  char *p;
+  const char *p;
   char b[128];
   int n, m;
   struct sigaction new;

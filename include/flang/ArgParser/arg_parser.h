@@ -58,7 +58,7 @@ void destroy_arg_parser(arg_parser_t **parser);
  * \param default_value  value to intialize the target
  */
 void register_string_arg(arg_parser_t *parser, const char *arg_name,
-                         char **target, const char *default_value);
+                         const char **target, const char *default_value);
 
 /** \brief Register a string list argument
  *

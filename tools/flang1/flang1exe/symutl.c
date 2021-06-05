@@ -42,7 +42,7 @@ set_symutl_sc(int sc)
 }
 
 int
-get_next_sym(char *basename, char *purpose)
+get_next_sym(char *basename, const char *purpose)
 {
   int sptr;
   char *p;
@@ -121,7 +121,7 @@ get_symtype(SYMTYPE stype, SPTR first)
 }
 
 int
-sym_get_scalar(char *basename, char *purpose, int dtype)
+sym_get_scalar(const char *basename, const char *purpose, int dtype)
 {
   int sptr;
 
@@ -200,7 +200,7 @@ sym_get_offset(int base)
            filled in later.
  */
 int
-sym_get_array(char *basename, char *purpose, int dtype, int ndim)
+sym_get_array(const char *basename, const char *purpose, int dtype, int ndim)
 {
   int sptr;
   ADSC *ad;

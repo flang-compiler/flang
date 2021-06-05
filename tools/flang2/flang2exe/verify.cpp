@@ -40,7 +40,7 @@ static epoch_t current_epoch;
 static int walk_depth;
 
 /* If doing deep ILI verification, prepare for remembering which ILI have
-   already been walked.  Must be paired with end_walk(level). 
+   already been walked.  Must be paired with end_walk(level).
    No-op if level does not require any remembering. */
 static void
 begin_walk(VERIFY_LEVEL level)
@@ -147,7 +147,7 @@ is_known_bug(ILI_OP opc, int j, ILI_OP j_opc)
   if (opc == IL_ST && o == ILIO_IRLNK && r == ILIA_AR && j == 1)
     return true;
   if (opc == IL_UKNEG && o == ILIO_KRLNK && r == ILIA_IR && j == 1)
-    return true; 
+    return true;
   if ((opc == IL_KMUL || opc == IL_IADD || opc == IL_IKMV) && j_opc == IL_ACCLDSYM)
     return true;
   if ((opc == IL_ACMPZ || opc == IL_ACJMPZ || opc == IL_LDA) && o == ILIO_ARLNK && r == ILIA_KR && j == 1)
@@ -326,6 +326,7 @@ verify_ili(int ilix, VERIFY_LEVEL level)
   end_walk(level);
 }
 
+#ifdef FLANG_VERIFY_FIXME
 /** Check if iltx is store of first result of a pair of results returned by a
    JSR.  This is a helper for verify_ilt, and assumes that iltx is index of
    ILT of type ILTY_STORE and ili_throw_label(iltx)!=0. */
@@ -341,8 +342,8 @@ is_first_store_of_pair(int iltx1)
         /* At this point, we know that ilix and ilix2 are both stores of results
            from JSR/JSRA operations that can throw. Extract the JSR/JSRA
            "pointers" and check that they are equal. */
-        int throw_jsr1 = ILI_OPND(ILI_OPND(ilix1, 1), 1);
-        int throw_jsr2 = ILI_OPND(ILI_OPND(ilix2, 1), 1);
+        // int throw_jsr1 = ILI_OPND(ILI_OPND(ilix1, 1), 1);
+        // int throw_jsr2 = ILI_OPND(ILI_OPND(ilix2, 1), 1);
         /* there are cases where the following is not necessarily true; change to
            only check the equality of throw labels for now */
         /* return throw_jsr1 == throw_jsr2; */
@@ -352,6 +353,7 @@ is_first_store_of_pair(int iltx1)
   }
   return false;
 }
+#endif
 
 void
 verify_ilt(int iltx, VERIFY_LEVEL level)
@@ -375,8 +377,10 @@ verify_ilt(int iltx, VERIFY_LEVEL level)
       VERIFY(!ILT_CAN_THROW(iltx), "ILT_CAN_THROW should be false for "
                                    "ILTY_STORE that does not store result of "
                                    "JSR that can throw");
-    } /* is_first_store_of_pair() does not always reliably return the correct
-         answer.  We need to sort that out before invoking the following
+    }
+#ifdef FLANG_VERIFY_FIXME
+      /* is_first_store_of_pair() does not always reliably return the correct
+         answer.  We need to sort that out before invoking the following. */
       else if (is_first_store_of_pair(iltx)) {
       VERIFY(!ILT_CAN_THROW(iltx), "ILT_CAN_THROW should be false for "
                                    "ILTY_STORE that stores first of a pair of "
@@ -386,7 +390,8 @@ verify_ilt(int iltx, VERIFY_LEVEL level)
       VERIFY(ILT_CAN_THROW(iltx), "ILT_CAN_THROW should be true for ILTY_STORE "
                                   "that stores sole or second result of a JSR "
                                   "that can throw");
-    } */
+    }
+#endif
     break;
   case ILTY_PROC:
     throw_label = ili_throw_label(ilix);

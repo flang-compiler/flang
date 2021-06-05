@@ -34,7 +34,7 @@ extern "C" {
 #include <unistd.h> /* getcwd() */
 
 /* See tmpfile(3). */
-FILE *tmpf(char *ignored);
+FILE *tmpf();
 
 /* Copy to 'basename' the final path component, less any undesirable suffix. */
 void basenam(const char *orig_path, const char *optional_suffix,

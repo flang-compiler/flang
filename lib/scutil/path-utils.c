@@ -96,7 +96,7 @@ fndpath(const char *target, char *path, size_t max_length, const char *dirlist)
 }
 
 FILE *
-tmpf(char *ignored)
+tmpf()
 {
   return tmpfile();
 }

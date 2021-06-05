@@ -373,8 +373,8 @@ _mp_copyin_move_cpp_new(void *blk_tp, int off, int class_size,
   for(i = 0 ; i < vector_size; i++) {
     if (to != fr)
       (*assign_op)(to, fr);
-      to += class_size;
-      fr += class_size;
+    to += class_size;
+    fr += class_size;
   }
 
 } 

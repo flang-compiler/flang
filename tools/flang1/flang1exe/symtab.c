@@ -735,7 +735,7 @@ sign_extend(INT val, int width)
     return pointer to the existing entry instead.
  */
 int
-getstring(char *value, int length)
+getstring(const char *value, int length)
 {
   int sptr;    /* symbol table pointer */
   int hashval; /* index into hashtb */

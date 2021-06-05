@@ -397,7 +397,6 @@ verify_endscopes(int bih, struct scope_stack *ss)
   int ilt, i;
   int ilix;
   int lab, blk;
-  bool closed_last_opened;
 
   for (ilt = BIH_ILTFIRST(bih); ilt; ilt = ILT_NEXT(ilt)) {
     ilix = ILT_ILIP(ilt);
@@ -437,7 +436,7 @@ static void
 verify_all_blocks(void)
 {
   hashset_t locals = hashset_alloc(hash_functions_direct);
-  struct scope_stack ss = {-1, 0, 0, 0};
+  struct scope_stack ss = {-1, 0, 0, NULL, SPTR_NULL};
   int bih;
 
   dbgprintf("\nVerifying scopes\n");

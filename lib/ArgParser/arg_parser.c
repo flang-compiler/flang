@@ -40,7 +40,7 @@ typedef struct bool_string_ {
 
 /** \brief Combine input and output for action map arguments */
 typedef struct action_map_bundle_ {
-  action_map_t *input;
+  const action_map_t *input;
   action_map_t *output;
 } action_map_bundle_t;
 
@@ -129,11 +129,11 @@ deallocate_arg_value(hash_key_t key, hash_data_t value_ptr, void *key_context)
 
 /** Register a string argument */
 void
-register_string_arg(arg_parser_t *parser, const char *arg_name, char **target,
-                    const char *default_value)
+register_string_arg(arg_parser_t *parser, const char *arg_name,
+                    const char **target, const char *default_value)
 {
   /* Set default value */
-  *target = (char *)default_value;
+  *target = default_value;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Wcast-qual"
@@ -252,7 +252,7 @@ register_action_map_arg(arg_parser_t *parser, const char *arg_name,
 {
   action_map_bundle_t *value = (action_map_bundle_t*) malloc(
       sizeof(action_map_bundle_t));
-  value->input = (action_map_t *)input;
+  value->input = input;
   value->output = target;
 
   add_generic_argument(parser, arg_name, ARG_ActionMap, (void *)value);
@@ -359,8 +359,10 @@ parse_arguments(const arg_parser_t *parser, int argc, char **argv)
     /* Parse argument type */
     switch (value->type) {
     case ARG_ActionMap: {
-      action_map_t *from = ((action_map_bundle_t *)value->location)->input;
-      action_map_t *to = ((action_map_bundle_t *)value->location)->output;
+      const action_map_bundle_t *bundle =
+          (const action_map_bundle_t *)value->location;
+      const action_map_t *from = bundle->input;
+      action_map_t *to = bundle->output;
 
       /* TODO parse lists of arguments */
       char *phase_string = next_value(argv, &argindex);

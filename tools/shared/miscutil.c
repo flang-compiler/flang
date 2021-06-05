@@ -21,7 +21,7 @@
    \brief Allocate space for and make new filename using mkperm.
  */
 char *
-mkfname(char *oldname, char *oldsuf, char *newsuf)
+mkfname(const char *oldname, const char *oldsuf, const char *newsuf)
 {
   char *p;
 
@@ -137,8 +137,8 @@ static void
 stg_alloc_base(STG *stg, int dtsize, BIGUINT64 size, const char *name)
 {
   if (DBGBIT(7,0x10))
-    fprintf(gbl.dbgfil, "stg_alloc(stg=%p, dtsize=%d, size=%d, name=%s)\n",
-      stg, dtsize, size, name);
+    fprintf(gbl.dbgfil, "stg_alloc(stg=%p, dtsize=%d, size=%lu, name=%s)\n",
+            (void *)stg, dtsize, (unsigned long)size, name);
   if (dtsize > 0 && size > 0) {
     memset(stg, 0, sizeof(STG));
     stg->stg_size = size;
@@ -209,7 +209,7 @@ stg_delete(STG *stg)
 {
   if (DBGBIT(7,0x10))
     fprintf(gbl.dbgfil, "stg_delete(stg=%p, dtsize=%d, size=%d, name=%s)\n",
-      stg, stg->stg_dtsize, stg->stg_size, stg->stg_name);
+            (void *)stg, stg->stg_dtsize, stg->stg_size, stg->stg_name);
   if (stg->stg_base)
     sccfree((char *)stg->stg_base);
   memset(stg, 0, sizeof(STG));
@@ -224,7 +224,7 @@ stg_reset(STG *stg)
   STG *thisstg;
   if (DBGBIT(7,0x10))
     fprintf(gbl.dbgfil, "stg_reset(stg=%p, dtsize=%d, size=%d, name=%s)\n",
-      stg, stg->stg_dtsize, stg->stg_size, stg->stg_name);
+            (void *)stg, stg->stg_dtsize, stg->stg_size, stg->stg_name);
   for (thisstg = stg; thisstg; thisstg = (STG *)thisstg->stg_sidecar) {
     thisstg->stg_avail = 1;
     thisstg->stg_cleared = 0;
@@ -251,8 +251,9 @@ stg_need(STG *stg)
     /* reallocate stg and all its sidecars */
     for (thisstg = stg; thisstg; thisstg = (STG *)thisstg->stg_sidecar) {
       if (DBGBIT(7,0x10))
-        fprintf(gbl.dbgfil, "stg_need(stg=%p, dtsize=%d, size=%d, newsize=%d, name=%s)\n",
-          thisstg, thisstg->stg_dtsize, thisstg->stg_size, newsize, thisstg->stg_name);
+        fprintf(gbl.dbgfil, "stg_need(stg=%p, dtsize=%d, size=%d, newsize=%ld, "
+                "name=%s)\n", (void *)thisstg, thisstg->stg_dtsize,
+                thisstg->stg_size, (unsigned long)newsize, thisstg->stg_name);
       thisstg->stg_size = newsize;
       thisstg->stg_base = (void *)sccrelal(
           (char *)thisstg->stg_base, newsize * thisstg->stg_dtsize);
@@ -274,8 +275,9 @@ void
 stg_alloc_sidecar(STG *basestg, STG *stg, int dtsize, const char *name)
 {
   if (DBGBIT(7,0x10))
-    fprintf(gbl.dbgfil, "stg_alloc_sidecar(basestg=%p, name=%s, stg=%p, dtsize=%d, name=%s)\n",
-      basestg, basestg->stg_name, stg, dtsize, name);
+    fprintf(gbl.dbgfil, "stg_alloc_sidecar(basestg=%p, name=%s, stg=%p, "
+            "dtsize=%d, name=%s)\n", (void *)basestg, basestg->stg_name,
+            (void *)stg, dtsize, name);
   if (stg->stg_sidecar) {
     interrf(ERR_Fatal, "%s: %s has a sidecar, may not add as sidecar to %s",
       "stg_alloc_sidecar", stg->stg_name, basestg->stg_name);
@@ -308,8 +310,8 @@ stg_delete_sidecar(STG *basestg, STG *stg)
 {
   if (DBGBIT(7,0x10))
     fprintf(gbl.dbgfil, "stg_delete_sidecar(basestg=%p, name=%s, stg=%p, "
-            "dtsize=%d, name=%s)\n", basestg, basestg->stg_name, stg,
-            stg->stg_dtsize, stg->stg_name);
+            "dtsize=%d, name=%s)\n", (void *)basestg, basestg->stg_name,
+            (void *)stg, stg->stg_dtsize, stg->stg_name);
   if ((STG *)basestg->stg_sidecar == stg) {
     basestg->stg_sidecar = stg->stg_sidecar;
   } else {

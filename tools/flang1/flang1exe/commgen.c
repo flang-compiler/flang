@@ -26,6 +26,7 @@
 #include "rte.h"
 #include "fdirect.h"
 #include "rtlRtns.h"
+#include "ilidir.h" /* for open_pragma, close_pragma */
 
 #ifdef FLANG_COMMGEN_UNUSED
 static void generate_forall(int);
@@ -103,15 +104,13 @@ generate_get_scalar(void)
 
   int l, lsym;
   int astnew;
-  int list;
   int i, j, nargs, argt;
   int asd;
   int ndim;
-  int sptr;
   int same;
   int dest, src, dest1;
   int commstd, rt;
-  int std, ast, new;
+  int std, ast;
   int nd, a;
   int asn, lop;
 
@@ -271,9 +270,6 @@ generate_copy(int ast)
 {
   int freestd;
   int sptr;
-  int i;
-  int asd, ndim;
-  int arr;
   int std;
   int nd, nd1;
   int same;
@@ -372,7 +368,6 @@ generate_gather(int ast)
   int freestd;
   int sptr;
   int i;
-  int asd, ndim;
   int std;
   int nd, nd1;
   int same;
@@ -382,20 +377,19 @@ generate_gather(int ast)
   int nargs, argt, astnew;
   int sectm_std, sectm;
   int sectv_std, sectv;
-  int src, dest;
+  int dest;
   int asn;
   int v;
   int j;
   int mask, mask_sec_ast;
-  int rhs;
   int ndim1, asd1;
-  int nvect, npermute;
+  int npermute;
   int vsub, nvsub, vsub_ast;
   int vsubstd, nvsubstd, sectvsub, sectnvsub;
   int nvsub_ast, vsub_sec_ast, nvsub_sec_ast;
   int vec[7], vecsec[7], permute[7];
   int array_sec_ast, result_sec_ast, result_ast, array_ast;
-  int vflag, pflag, nvec, nper;
+  int vflag, pflag, nvec;
   int vdim, pdim;
   int func;
   int commstd;
@@ -583,18 +577,15 @@ generate_shift(int ast)
   int sptr;
   int i, j;
   int asd, ndim;
-  int arr;
   int std;
-  int nd, nd1;
+  int nd;
   int same;
   int cp;
   int shift;
   int nargs, argt, astnew;
   int src, dest;
   int asn;
-  int ns, ps;
   int align;
-  int subs[7];
   int type, boundary;
   int atp;
 
@@ -732,7 +723,7 @@ eliminate_redundant(void)
 {
   int std, stdnext;
   int ast;
-  int type, type1;
+  int type;
   int nd, nd1, nd2, nd3;
   int commstd, commasn, comm;
   int start;
@@ -742,7 +733,7 @@ eliminate_redundant(void)
   int forall;
   int rt, rt_std;
   int lhs, rhs;
-  int k, asn;
+  int k;
   int lhs_sptr, alloc_sptr;
   LOGICAL independent;
 
@@ -951,7 +942,6 @@ void
 outvalue_hcycliclp(int ast)
 {
   int otriple;
-  int otriple1;
   int cl, cu, cs;
   int lof0, los, lof;
 
@@ -993,7 +983,6 @@ generate_hlocalizebnds(int ast)
   int st;
   int lb, ub, i1, i2, lhs, sptr_lhs, descr;
   int dim;
-  int stdnext;
 
   assert(A_TYPEG(ast) == A_HLOCALIZEBNDS,
          "generate_hlocalizebnds: wrong ast type", 2, ast);
@@ -1098,7 +1087,7 @@ generate_hcycliclp(int ast)
   int itriple, otriple, otriple1, l, u, lhs, lop;
   int argt, nargs;
   int forall, idx;
-  int nd, nd1;
+  int nd;
   int std, stdnew;
   int astnew, astmem;
   int otripleb;
@@ -1106,7 +1095,6 @@ generate_hcycliclp(int ast)
   int st;
   int sptr_lhs, descr, descrast;
   int dim;
-  ADSC *ad;
 
   assert(A_TYPEG(ast) == A_HCYCLICLP, "generate_hcycliclp: wrong ast type", 2,
          ast);
@@ -1313,7 +1301,7 @@ fill_cyclic_1(int ast)
 static int
 fill_cyclic_k(int ast)
 {
-  int lb, ub, st;
+  int lb, ub;
   int l, u, s;
   int argt;
   int cl, cu, cs, ci;
@@ -1434,15 +1422,12 @@ rhs_cyclic(int ast, int std, int ifexpr)
 {
   int l, r, d, o;
   int l1, l2, l3;
-  int a, a1;
-  int i, nargs, argt, j;
-  int nd;
-  int header;
+  int a;
+  int i, nargs, argt;
   int forall;
   int asd;
   int ndim;
   int subs[7];
-  int sptr, align;
 
   a = ast;
   if (!a)
@@ -1576,7 +1561,6 @@ is_same_lower_dim(int sptr, int dim, int sptr1, int dim1)
   ADSC *ad;
   ADSC *ad1;
   int lb, lb1;
-  LOGICAL result;
 
   assert(DTY(DTYPEG(sptr)) == TY_ARRAY && DTY(DTYPEG(sptr1)) == TY_ARRAY,
          "is_same_lower_dim: must be array", sptr, 4);
@@ -1597,8 +1581,7 @@ rewrite_expr(int expr, int a, int b)
 {
 
   int l, r, d, o;
-  int l1, l2, l3;
-  int i, nargs, argt, j;
+  int i, nargs, argt;
 
   if (expr == a)
     return b;
@@ -1771,7 +1754,6 @@ pointer_squeezer(int ast)
   int asd;
   int numdim;
   int subs[7];
-  int arg;
   int argt;
   int argcnt;
   int argtnew;
@@ -1852,7 +1834,6 @@ pointer_squeezer(int ast)
     align = ALIGNG(sptr);
     if (!POINTERG(sptr) || A_SHAPEG(ast)) {
       for (i = 0; i < numdim; ++i) {
-        int t;
         l = pointer_squeezer((int)ASD_SUBS(asd, i));
         if (l != ASD_SUBS(asd, i))
           ++any;
@@ -1867,7 +1848,6 @@ pointer_squeezer(int ast)
     }
     assert(numdim > 0 && numdim <= 7, "pointer_squeezer: bad numdim", ast, 4);
     for (i = 0; i < numdim; ++i) {
-      int t;
       l = pointer_squeezer((int)ASD_SUBS(asd, i));
       if (l != ASD_SUBS(asd, i))
         ++any;

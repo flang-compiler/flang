@@ -348,7 +348,7 @@ static void ifpush(void);
 static INT strstore(char *name);
 static PPSYM *lookup(char *name, int insflg);
 static void delete (char *name);
-static void ptok(char *tok);
+static void ptok(const char *tok);
 static INT doparse(void);
 static INT parse(int rbp);
 static int gettoken(void);
@@ -1541,7 +1541,7 @@ found:
 }
 
 static void
-ptok(char *tok)
+ptok(const char *tok)
 {
   FILE *fp;
   static int state = 1;

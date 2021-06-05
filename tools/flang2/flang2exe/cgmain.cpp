@@ -63,29 +63,6 @@ typedef enum SincosOptimizationFlags {
 
 /* clang-format off */
 
-const int max_operands[I_LAST + 1] = {
-    1,  1,  -1, -1, /* I_NONE, I_RET, I_BR, I_SW, */
-    -1, -1, -1,     /* I_INVOKE, I_UNWIND, I_UNREACH */
-    2,  2,  2,  2,  /* I_ADD, I_FADD, I_SUB,  I_FSUB, */
-    2,  2,  2,      /* I_MUL, I_FMUL, I_UDIV */
-    2,  2,  2,  2,  /* I_SDIV, I_FDIV, I_UREM, I_SREM, */
-    2,  2,  2,      /* I_FREM, I_SHL, I_LSHR */
-    2,  2,  2,  2,  /* I_ASHR, I_AND, I_OR, I_XOR, */
-    2,  3,  3,      /* I_EXTELE, I_INSELE, I_SHUFFVEC */
-    -1, -1, -1, -1, /* I_EXTRACTVAL, I_INSERTVAL, I_MALLOC, I_FREE, */
-    -1, 1,  2,      /* I_ALLOCA, I_LOAD, I_STORE */
-    -1, 1,  1,  1,  /* I_GEP, I_TRUNC, I_ZEXT, I_SEXT, */
-    1,  1,  1,      /* I_FPTRUNC, I_FPEXT, I_FPTOUI */
-    1,  1,  1,  1,  /* I_FPTOSI, I_UITOFP, I_SITOFP, I_PTRTOINT, */
-    1,  1,  3,      /* I_INTTOPTR, I_BITCAST, I_ICMP */
-    3,  3,  3,  -1, /* I_FCMP, I_VICMP, I_VFCMP, I_PHI, */
-    3,  -1, 1,      /* I_SELECT, I_CALL, I_VA_ARG */
-    1,  2,  1,  1,  /* I_DECL, I_LANDINGPAD,  I_RESUME, I_CLEANUP, */
-    1,  1,  1,      /* I_CATCH, I_BARRIER, I_ATOMICRMW */
-    3,  -1, -1, -1, /* I_CMPXCHG, I_PICALL, I_INDBR, I_FILTER */
-    -1              /* I_NONE */
-};
-
 static const char *const llvm_instr_names[I_LAST] = {
   "none", "ret", "br", "switch", "invoke", "unwind", "unreachable",
   "add nsw",
@@ -113,13 +90,10 @@ static const char *const stmt_names[STMT_LAST] = {
 
 const int MEM_EXTRA = 500;
 
-static int fn_sig_len = MAXARGLEN;
-static char *fn_sig_ptr = NULL;
 static void insert_entry_label(int);
 static void insert_jump_entry_instr(int);
 static void store_return_value_for_entry(OPERAND *, int);
 
-static int openacc_prefix_sptr = 0;
 static unsigned addressElementSize;
 
 #define ENTOCL_PREFIX "__pgocl_"
@@ -229,9 +203,7 @@ static int fnegcc[17] = LLCCF_NEG;
 static int expr_id;
 static int entry_bih = 0;
 static int routine_count;
-static int addr_func_ptrs;
 static STMT_Type curr_stmt_type;
-static int *idxstack = NULL;
 static hashmap_t sincos_map;
 static hashmap_t sincos_imap;
 static LL_MDRef cached_loop_metadata;
@@ -282,24 +254,6 @@ static struct llvm_tag {
 
   unsigned no_debug_info : 1; /* set to emit engineering diagnostics */
 } llvm_info;
-
-typedef struct temp_buf {
-  char *buffer;
-  int size;
-} TEMP_BUF;
-static TEMP_BUF sbuf;
-
-typedef struct char_len {
-  int sptr;
-  int base_sptr;
-  struct char_len *next;
-} sclen;
-static sclen *c_len;
-
-typedef struct temp_buf_list {
-  TEMP_BUF buf;
-  struct temp_buf_list *next;
-} TEMP_BUF_LIST;
 
 static GBL_LIST *Globals;
 static GBL_LIST *recorded_Globals;
@@ -508,7 +462,7 @@ map_to_llvm_name(const char *function_name)
   if (strcmp(function_name, "__builtin_frame_address") == 0) {
     return "llvm.frameaddress";
   }
-  return (char *)function_name;
+  return function_name;
 }
 
 void
@@ -527,10 +481,10 @@ get_label_name(int sptr)
   return nm;
 }
 
-char *
+const char *
 get_llvm_sname(SPTR sptr)
 {
-  char *p = SNAME(sptr);
+  const char *p = SNAME(sptr);
   if (p == NULL) {
     process_sptr(sptr);
     p = SNAME(sptr);
@@ -539,17 +493,16 @@ get_llvm_sname(SPTR sptr)
     p = SYMNAME(sptr);
     if (p == NULL)
       return "";
-    p = (char*) map_to_llvm_name(p); // ???
+    p = map_to_llvm_name(p); // ???
     SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(p) + 1);
-    p = strcpy(SNAME(sptr), p);
-    return p;
+    return strcpy(SNAME(sptr), p);
   }
   if (*p == '@')
     p++;
   return p;
 }
 
-char *
+const char *
 get_llvm_mips_sname(SPTR sptr)
 {
   return get_llvm_sname(sptr);
@@ -1489,7 +1442,7 @@ schedule(void)
   int bihx, ilt, ilix, ilix2, nme;
   ILI_OP opc;
   int rhs_ili, lhs_ili, sptr;
-  int bih, bihprev, bihcurr, bihnext, li;
+  int bih, bihprev, bihcurr, bihnext;
   int concurBih = 0;
   bool made_return;
   bool merge_next_block;
@@ -1572,7 +1525,7 @@ restartConcur:
   if (ISNVVMCODEGEN) {
     /* for now, we generate two ll_function one for host one device. */
     /* it is kernel function in gpu module */
-    LL_Function *llfunc;
+    LL_Function *llfunc = nullptr;
     if (OMPACCFUNCKERNELG(func_sptr)) {
       llfunc = ll_create_device_function_from_type(current_module, func_type,
                                                    &(SNAME(func_sptr)[1]), 1, 0,
@@ -1784,9 +1737,8 @@ restartConcur:
             next_bih_label = t_next_bih_label;
         }
         make_stmt(STMT_BR, ilix, false, next_bih_label, ilt);
-        if ((!XBIT(69, 0x100000)) &&
-            (BIH_NODEPCHK(bih) && (!BIH_NODEPCHK2(bih)) &&
-            (!ignore_simd_block(bih))) || BIH_SIMD(bih)) {
+        if ((!XBIT(69, 0x100000) && BIH_NODEPCHK(bih) && !BIH_NODEPCHK2(bih) &&
+            !ignore_simd_block(bih)) || BIH_SIMD(bih)) {
           LL_MDRef loop_md = cons_no_depchk_metadata();
           INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
           if (i) {
@@ -2116,7 +2068,6 @@ gen_llvm_atomic_intrinsic_for_builtin(int pdnum, int sptr, int ilix,
   int arg_ili = ILI_OPND(ilix, 2);
   DTYPE call_dtype = DTYPEG(call_sptr);
   DTYPE return_dtype = DTyReturnType(call_dtype);
-  int params = DTyParamList(call_dtype);
 
   switch (pdnum) {
   default:
@@ -2178,7 +2129,7 @@ gen_call_vminmax_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
   int type_size;
   char sign = 'u';
   char type = 'i';
-  char *mstr = "maxnum";
+  const char *mstr = "maxnum";
   static char buf[MAXIDLEN];
 
   if (ILI_OPC(ilix) == IL_VMIN) {
@@ -2392,17 +2343,17 @@ msz_dtype(MSZ msz)
 }
 
 /* Begin define calling conventions */
-#define CALLCONV                         \
-  PRESENT(cc_default, "")                \
-  , PRESENT(arm_aapcscc, "arm_aapcscc"), \
-      PRESENT(arm_aapcs_vfpcc, "arm_aapcs_vfpcc")
+#define CALLCONV                                \
+    PRESENT(cc_default, ""),                    \
+    PRESENT(arm_aapcscc, "arm_aapcscc"),        \
+    PRESENT(arm_aapcs_vfpcc, "arm_aapcs_vfpcc")
 
 #define PRESENT(x, y) x
 enum calling_conventions { CALLCONV };
 #undef PRESENT
 
 #define PRESENT(x, y) y
-char *cc_as_str[] = {CALLCONV};
+const char *cc_as_str[] = { CALLCONV };
 #undef PRESENT
 
 #undef CALLCONV
@@ -2470,11 +2421,10 @@ write_I_CALL(INSTR_LIST *curr_instr, bool emit_func_signature_for_call)
   bool dbg_line_op_written = false;
   bool routine_label_written = false;
   /* Start with default calling conventions */
-  enum calling_conventions c_conv = cc_default;
   bool callRequiresTrunc = false;
   bool simple_callee = true;
   LL_Type *callee_type = call_op->ll_type;
-  int sptr, call_dtype, param, param_dtype;
+  int sptr;
   char callRequiresTruncName[32];
 
   /* operand pattern:
@@ -2775,7 +2725,6 @@ get_tbaa_metadata(LL_Module *module, int ilix, OPERAND *opnd, bool isVol)
 
   myPtr = locset_to_tbaa_info(module, omniPtr, ilix);
 
-cons_indirect:
   if (!myPtr)
     return myPtr;
 
@@ -2941,7 +2890,7 @@ should_suppress_debug_loc(INSTR_LIST *instrs)
       // call void (i8*, i8*, i8*, i8*, i8*, i8*, ...) %8(i8*
       //      %2, i8* %3, i8* %4, i8* %5, i8* %6, i8* %7)
 
-      if (char *name_str = instrs->prev->operands->string) {
+      if (const char *name_str = instrs->prev->operands->string) {
         return (!strncmp(name_str, "@fort_init", strlen("@fort_init")) ||
                 !strncmp(name_str, "@f90_", strlen("@f90_")));
       }
@@ -2959,15 +2908,11 @@ static void
 write_instructions(LL_Module *module)
 {
   INSTR_LIST *instrs;
-  OPERAND *p, *call_op, *p1;
-  DTYPE call_dtype, param_dtype;
+  OPERAND *p, *p1;
   LL_InstrName i_name;
-  int align;
   SPTR sptr;
-  int param;
   bool forceLabel = true;
   bool dbg_line_op_written;
-  bool routine_label_written;
 
   DBGTRACEIN("")
 
@@ -3974,21 +3919,17 @@ static void
 make_stmt(STMT_Type stmt_type, int ilix, bool deletable, SPTR next_bih_label,
           int ilt)
 {
-  int lhs_ili, rhs_ili, sc, nme, i, size1, size2;
+  int lhs_ili, rhs_ili, nme;
   SPTR sptr, sptr_lab;
-  int offset_to, offset_from, stype, ts;
+  int ts;
   SPTR sym, pd_sym;
   DTYPE dtype;
   int to_ili, from_ili, length_ili, opnd, bytes, from_nme, cc;
   ILI_OP opc;
-  char *name, *lname, *tmp_name, *retc;
-  TMPS *tmps, *last_tmps, *new_tmps;
-  LL_Type *llt, *op_type, *last_type, *ty1, *ty2, *load_type, *switch_type;
-  INSTR_LIST *instr;
-  OPERAND *ret_op, *store_op, *operand1, *operand2, *op_tmp, *op1, *op2;
-  OPERAND *load_op, *dst_op, *src_op, *first_label, *second_label;
-  int match, conversion_instr, d1, d2;
-  bool mark_daddr, sta, has_entries;
+  TMPS *tmps;
+  OPERAND *ret_op, *store_op, *op1;
+  OPERAND *dst_op, *src_op, *first_label, *second_label;
+  bool has_entries;
   MSZ msz;
   LL_Type *llt_expected;
   int alignment;
@@ -4075,7 +4016,7 @@ make_stmt(STMT_Type stmt_type, int ilix, bool deletable, SPTR next_bih_label,
     }
     gen_call_expr(ilix, DT_NONE, NULL, sym);
     break;
-  continue_call:
+
     /* Add instruction if it hasn't been added already by gen_call_expr(). */
     if (!Instructions || !Curr_Instr->prev)
       ad_instr(ilix, Curr_Instr);
@@ -4309,7 +4250,7 @@ make_stmt(STMT_Type stmt_type, int ilix, bool deletable, SPTR next_bih_label,
         store_flags |= VOLATILE_FLAG;
       if (IL_HAS_FENCE(ILI_OPC(ilix)))
         store_flags |= ll_instr_flags_for_memory_order_and_scope(ilix);
-      DBGTRACE2("#store_op %p, op1 %p\n", store_op, op1);
+      DBGTRACE2("#store_op %p, op1 %p\n", (void *)store_op, (void *)op1);
       if (deletable)
         store_flags |= DELETABLE;
       Curr_Instr = mk_store_instr(op1, store_op);
@@ -4364,7 +4305,7 @@ gen_va_start(int ilix)
     add_external_function_declaration(va_start_name, exfunc);
   }
 
-  DBGTRACEOUT1(" returns operand %p", call_op)
+  DBGTRACEOUT1(" returns operand %p", (void *)call_op)
 
   return call_op;
 } /* gen_va_start */
@@ -4435,7 +4376,6 @@ gen_va_arg(int ilix)
    * store argtype* %next, %ap_cast
    * return argtype %ptr
    */
-  SPTR tmp;
   OPERAND *addr_op, *result_op, *next_op;
   const int ap_ili = ILI_OPND(ilix, 1);
   const DTYPE arg_dtype = ILI_DTyOPND(ilix, 2);
@@ -4501,7 +4441,7 @@ gen_va_arg(int ilix)
     OPERAND *tmp_op, *cmplx_op, *val_op;
 
     /* Pointer to temp real */
-    tmp = make_arg_tmp(ilix, arg_dtype);
+    SPTR tmp = make_arg_tmp(ilix, arg_dtype);
     cmplx_op = tmp_op = make_var_op(tmp); /* points to {float,float} */
     tmp_op = make_bitcast(tmp_op, llt_cptr);
     tmp_op = gen_gep_index(tmp_op, llt_cptr, 0);
@@ -4580,7 +4520,7 @@ gen_va_end(int ilix)
     add_external_function_declaration(va_end_name, exfunc);
   }
 
-  DBGTRACEOUT1(" returns operand %p", call_op)
+  DBGTRACEOUT1(" returns operand %p", (void *)call_op)
 
   return call_op;
 } /* gen_va_end */
@@ -4591,9 +4531,8 @@ gen_call_to_builtin(int ilix, char *fname, OPERAND *params,
                     LL_Type *return_ll_type, INSTR_LIST *Call_Instr,
                     LL_InstrName i_name, unsigned flags)
 {
-  OPERAND *call_op, *operand = NULL;
-  char *intrinsic_name, *gname;
-  static char buf[MAXIDLEN];
+  OPERAND *operand = NULL;
+  char *intrinsic_name;
   INSTR_LIST *Curr_Instr;
 
   DBGTRACEIN1(" for ilix %d\n", ilix)
@@ -4693,7 +4632,7 @@ gen_call_llvm_intrinsic(const char *fname, OPERAND *params,
 }
 
 static OPERAND *
-gen_call_pgocl_intrinsic(char *fname, OPERAND *params, LL_Type *return_ll_type,
+gen_call_pgocl_intrinsic(const char *fname, OPERAND *params, LL_Type *return_ll_type,
                          INSTR_LIST *Call_Instr, LL_InstrName i_name)
 {
   static char buf[MAXIDLEN];
@@ -4852,7 +4791,7 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
   EXFUNC_LIST *exfunc;
   OPERAND *call_op;
   static bool dbg_declare_defined = false;
-  char *gname;
+  const char *gname;
   INSTR_LIST *Curr_Instr;
 
   Curr_Instr = make_instr(I_CALL);
@@ -4909,7 +4848,7 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
   }
 }
 
-char *
+const char *
 match_names(MATCH_Kind match_val)
 {
   char *tt;
@@ -5002,7 +4941,6 @@ gen_unary_expr(int ilix, LL_InstrName itype)
   ILI_OP opc = ILI_OPC(ilix);
   OPERAND *operand;
   LL_Type *opc_type, *instr_type;
-  TMPS *new_tmps;
 
   DBGTRACEIN2(" ilix: %d(%s) \n", ilix, IL_NAME(opc))
 
@@ -5060,7 +4998,7 @@ gen_unary_expr(int ilix, LL_InstrName itype)
       ad_csed_instr(itype, ilix, instr_type, gen_llvm_expr(op_ili, opc_type),
                     InstrListFlagsNull, true);
 
-  DBGTRACEOUT1(" return operand %p\n", operand)
+  DBGTRACEOUT1(" return operand %p\n", (void *)operand)
 
   return operand;
 } /* gen_unary_expr */
@@ -5156,7 +5094,7 @@ gen_abs_expr(int ilix)
 
   ad_instr(ilix, Curr_Instr);
 
-  DBGTRACEOUT1(" returns operand %p", operand)
+  DBGTRACEOUT1(" returns operand %p", (void *)operand)
 
   return operand;
 }
@@ -5261,7 +5199,7 @@ gen_minmax_expr(int ilix, OPERAND *op1, OPERAND *op2)
   Curr_Instr = gen_instr(I_SELECT, operand->tmps, operand->ll_type, cmp_op);
   ad_instr(ilix, Curr_Instr);
 
-  DBGTRACEOUT1(" returns operand %p", operand)
+  DBGTRACEOUT1(" returns operand %p", (void *)operand)
 
   return operand;
 }
@@ -5307,7 +5245,7 @@ gen_select_expr(int ilix)
   Curr_Instr->operands->next->next = gen_llvm_expr(rhs_ili, operand->ll_type);
   ad_instr(ilix, Curr_Instr);
 
-  DBGTRACEOUT1(" returns operand %p", operand)
+  DBGTRACEOUT1(" returns operand %p", (void *)operand)
 
   return operand;
 }
@@ -5419,7 +5357,7 @@ gen_extract_vector(OPERAND *vop, int idx)
 static OPERAND *
 gen_resized_vect(OPERAND *vop, int new_size, int start)
 {
-  OPERAND *operand, *undefop;
+  OPERAND *operand;
   LL_Type *llt;
   INSTR_LIST *Curr_Instr;
   INT v[TY_VECT_MAXLEN];
@@ -5538,7 +5476,7 @@ insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode, SPTR sptr, LL_Type *type)
 
   if (!defined) {
     EXFUNC_LIST *exfunc;
-    char *gname =
+    const char *gname =
         "declare void @llvm.dbg.value(metadata, i64, metadata, metadata)";
     exfunc = (EXFUNC_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
     memset(exfunc, 0, sizeof(EXFUNC_LIST));
@@ -5614,7 +5552,6 @@ make_store(OPERAND *sop, OPERAND *address_op, LL_InstrListFlags flags)
 static OPERAND *
 gen_convert_vector(int ilix)
 {
-  int itype;
   LL_Type *ll_src, *ll_dst;
   OPERAND *operand;
   DTYPE dtype_dst = ILI_DTyOPND(ilix, 2);
@@ -6028,7 +5965,6 @@ maybe_generate_fma(int ilix, INSTR_LIST *insn)
 #endif
 #if defined(TARGET_LLVM_X8664)
   LL_Type *vTy;
-  INSTR_LIST *mulPrev, *mulNext;
 #endif
 
   last = llvm_info.last_instr;
@@ -6136,21 +6072,14 @@ undo_recip_div(INSTR_LIST *isns)
 static OPERAND *
 gen_binary_expr(int ilix, int itype)
 {
-  int lhs_ili, rhs_ili, ret_match, size1, size2;
+  int lhs_ili, rhs_ili;
   int vect_type;
   DTYPE vect_dtype = DT_NONE;
   LL_InstrListFlags flags = InstrListFlagsNull;
   ILI_OP opc = ILI_OPC(ilix);
-  OPERAND *operand, *binops, *load_op;
-  LL_Type *opc_type, *instr_type, *ll_tmp, *load_type;
-  TMPS *new_tmps;
+  OPERAND *operand, *binops;
+  LL_Type *instr_type;
   INT val[2];
-  union {
-    double d;
-    INT tmp[2];
-  } dtmp;
-  float f;
-  double d;
 
   DBGTRACEIN2(" ilix: %d(%s)", ilix, IL_NAME(opc))
 
@@ -6192,7 +6121,7 @@ gen_binary_expr(int ilix, int itype)
     LL_Type *bit_type, *mask_type;
     OPERAND *bit_mask_of_ones;
     DTYPE vdt, ones_dtype;
-    SPTR vcon1_sptr;
+    SPTR vcon1_sptr = SPTR_NULL;
     vect_dtype = ili_get_vect_dtype(lhs_ili);
     num_elem = DTyVecLength(vect_dtype);
     switch (DTySeqTyElement(vect_dtype)) {
@@ -6335,7 +6264,7 @@ make_binary_expression:
   operand =
       ad_csed_instr((LL_InstrName)itype, ilix, instr_type, binops, flags, true);
 
-  DBGTRACEOUT1(" returns operand %p", operand)
+  DBGTRACEOUT1(" returns operand %p", (void *)operand)
 
   return operand;
 } /* gen_binary_expr */
@@ -6416,7 +6345,7 @@ make_bitcast(OPERAND *cast_op, LL_Type *rslt_type)
     }
   }
 
-  DBGTRACEIN1(" cast op: %p", cast_op)
+  DBGTRACEIN1(" cast op: %p", (void *)cast_op)
   DBGDUMPLLTYPE("result type ", rslt_type)
   DBGDUMPLLTYPE("cast_op type ", cast_op->ll_type)
 
@@ -6433,8 +6362,7 @@ make_bitcast(OPERAND *cast_op, LL_Type *rslt_type)
         if (same_op(cast_op, instr->operands) &&
             strict_match(rslt_type, instr->ll_type)) {
           operand = make_tmp_op(rslt_type, instr->tmps);
-          DBGTRACEOUT1(" returns CSE'd operand %p\n", operand)
-
+          DBGTRACEOUT1(" returns CSE'd operand %p\n", (void *)operand)
           return operand;
         }
         FLANG_FALLTHROUGH;
@@ -6452,7 +6380,7 @@ make_bitcast(OPERAND *cast_op, LL_Type *rslt_type)
   /* now build the operand */
   operand = make_tmp_op(rslt_type, new_tmps);
 
-  DBGTRACEOUT1(" returns operand %p\n", operand)
+  DBGTRACEOUT1(" returns operand %p\n", (void *)operand)
 
   return operand;
 } /* make_bitcast */
@@ -6472,7 +6400,7 @@ convert_float_size(OPERAND *convert_op, LL_Type *rslt_type)
   TMPS *new_tmps;
   INSTR_LIST *Curr_Instr;
 
-  DBGTRACEIN1(" convert op %p", convert_op)
+  DBGTRACEIN1(" convert op %p", (void *)convert_op)
   DBGDUMPLLTYPE("result type ", rslt_type)
 
   ty1 = convert_op->ll_type;
@@ -6492,7 +6420,7 @@ convert_float_size(OPERAND *convert_op, LL_Type *rslt_type)
   convert_op->next = NULL;
   ad_instr(0, Curr_Instr);
 
-  DBGTRACEOUT1(" returns operand %p", op_tmp)
+  DBGTRACEOUT1(" returns operand %p", (void *)op_tmp)
   return op_tmp;
 } /* convert_float_size */
 
@@ -6504,13 +6432,12 @@ static OPERAND *
 convert_int_size(int ilix, OPERAND *convert_op, LL_Type *rslt_type)
 {
   LL_Type *ty1, *ty2, *ll_type;
-  int size1, size2, flags1, flags2, conversion_instr;
+  int size1, size2, flags1, conversion_instr;
   enum LL_BaseDataType kind1, kind2;
   OPERAND *op_tmp;
   TMPS *new_tmps;
-  INSTR_LIST *Curr_Instr;
 
-  DBGTRACEIN1(" convert op %p", convert_op)
+  DBGTRACEIN1(" convert op %p", (void *)convert_op)
   DBGDUMPLLTYPE("result type ", rslt_type)
 
   ty1 = convert_op->ll_type;
@@ -6555,7 +6482,7 @@ convert_int_size(int ilix, OPERAND *convert_op, LL_Type *rslt_type)
     conversion_instr = I_TRUNC;
   } else {
     DBGTRACE("#conversion of same size, should be a conversion signed/unsigned")
-    DBGTRACEOUT1(" returns operand %p", convert_op)
+    DBGTRACEOUT1(" returns operand %p", (void *)convert_op)
     return convert_op;
   }
 
@@ -6567,7 +6494,7 @@ convert_int_size(int ilix, OPERAND *convert_op, LL_Type *rslt_type)
   op_tmp = ad_csed_instr((LL_InstrName)conversion_instr, ilix, ll_type,
                          convert_op, InstrListFlagsNull, true);
 
-  DBGTRACEOUT1(" returns operand %p", op_tmp)
+  DBGTRACEOUT1(" returns operand %p", (void *)op_tmp)
   return op_tmp;
 } /* convert_int_size */
 
@@ -6581,7 +6508,7 @@ convert_operand(OPERAND *convert_op, LL_Type *rslt_type,
   TMPS *new_tmps;
   INSTR_LIST *Curr_Instr;
 
-  DBGTRACEIN1(" convert op %p", convert_op)
+  DBGTRACEIN1(" convert op %p", (void *)convert_op)
   DBGDUMPLLTYPE("result type ", rslt_type)
 
   ty = convert_op->ll_type;
@@ -6591,7 +6518,7 @@ convert_operand(OPERAND *convert_op, LL_Type *rslt_type,
   op_tmp = make_tmp_op(ll_type, new_tmps);
   Curr_Instr = gen_instr(convert_instruction, new_tmps, ll_type, convert_op);
   ad_instr(0, Curr_Instr);
-  DBGTRACEOUT1(" returns operand %p", op_tmp)
+  DBGTRACEOUT1(" returns operand %p", (void *)op_tmp)
   return op_tmp;
 }
 
@@ -6599,7 +6526,6 @@ static OPERAND *
 convert_int_to_ptr(OPERAND *convert_op, LL_Type *rslt_type)
 {
   const LL_Type *llt = convert_op->ll_type;
-  OPERAND* operand;
   assert(llt,"convert_int_to_ptr(): missing incoming type",0,ERR_Fatal);
   assert(ll_type_int_bits(llt) == BITS_IN_BYTE * size_of(DT_CPTR),
          "Unsafe type for inttoptr", ll_type_int_bits(llt), ERR_Fatal);
@@ -6828,10 +6754,9 @@ static OPERAND *
 make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
           unsigned flags)
 {
-  OPERAND *operand, *fptrs_op, *cse_op;
+  OPERAND *operand, *cse_op;
   TMPS *new_tmps;
   LL_Type *load_type;
-  int array_var, array_dtype, dtype;
   INSTR_LIST *Curr_Instr;
 
   assert(((int)msz) != -1, "make_load():adding a load because of a matchmem ?",
@@ -6872,7 +6797,7 @@ make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
     load_type = load_op->ll_type;
   }
 
-  DBGTRACEIN2(" ilix %d, load op: %p", ilix, load_op)
+  DBGTRACEIN2(" ilix %d, load op: %p", ilix, (void *)load_op)
   DBGDUMPLLTYPE("result type ", rslt_type)
 
   assert(load_type->data_type == LL_PTR, "make_load(): op not ptr type",
@@ -6921,7 +6846,7 @@ make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
     }
   }
 
-  DBGTRACEOUT1(" returns operand %p", operand);
+  DBGTRACEOUT1(" returns operand %p", (void *)operand);
   return cse_op ? cse_op : operand;
 }
 
@@ -6955,7 +6880,7 @@ find_pointer_to_function(int ilix)
 static SPTR
 get_call_sptr(int ilix)
 {
-  SPTR sptr;
+  SPTR sptr = SPTR_NULL;
   int addr;
   SPTR addr_acon_ptr;
   ILI_OP opc = ILI_OPC(ilix);
@@ -7298,7 +7223,6 @@ get_next_arg(int arg_ili)
 static OPERAND *
 gen_arg_operand_list(LL_ABI_Info *abi, int arg_ili)
 {
-  bool fastcall;
   unsigned abi_arg, max_abi_arg = ~0u;
   OPERAND *first_arg_op = NULL, *arg_op = NULL;
 
@@ -7723,8 +7647,6 @@ have_masked_intrinsic(int ilix)
 }
 #endif
 
-static INSTR_LIST *Void_Call_Instr = NULL;
-
 /* LLVM extractvalue instruction:
  * Given an aggregate and index return the value at that index.
  *
@@ -7753,7 +7675,6 @@ static OPERAND *
 gen_eval_cmplx_value(int ilix, DTYPE dtype)
 {
   OPERAND *c1;
-  INSTR_LIST *Curr_Instr;
   LL_Type *cmplx_type = make_lltype_from_dtype(dtype);
 
   c1 = gen_llvm_expr(ilix, cmplx_type);
@@ -7880,7 +7801,6 @@ gen_cmplx_mul(int ilix, DTYPE dtype)
 static OPERAND *
 gen_llvm_atomicrmw_expr(int ilix)
 {
-  MEMORY_ORDER mo;
   OPERAND *result;
   ATOMIC_INFO info = atomic_info(ilix);
   LL_Type *instr_type = make_type_from_msz((MSZ)info.msz);
@@ -7915,7 +7835,6 @@ gen_llvm_cmpxchg(int ilix)
   LL_InstrListFlags flags;
   OPERAND *op1, *op2, *op3;
   LL_Type *elements[2];
-  TMPS *tmps;
   CMPXCHG_MEMORY_ORDER order;
 
   /* Construct aggregate type for result of cmpxchg. */
@@ -8176,7 +8095,7 @@ gen_comp_operand(OPERAND *operand, ILI_OP opc, int lhs_ili, int rhs_ili,
 OPERAND *
 gen_llvm_expr(int ilix, LL_Type *expected_type)
 {
-  int nme_ili, ld_ili, flags;
+  int nme_ili, ld_ili;
   SPTR sptr;
   MSZ msz;
   int lhs_ili, rhs_ili;
@@ -9240,7 +9159,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_SCMPLXNEG:
   case IL_DCMPLXNEG: {
     OPERAND *res, *op_rneg, *op_ineg, *c1, *cse1;
-    LL_Type *cmplx_ty, *cmpnt_ty;
+    LL_Type *cmpnt_ty;
     const DTYPE dt = opc == IL_SCMPLXNEG ? DT_CMPLX : DT_DCMPLX;
     const DTYPE et = opc == IL_SCMPLXNEG ? DT_FLOAT : DT_DBLE;
 
@@ -9806,9 +9725,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_VPERMUTE: {
     OPERAND *op1;
     OPERAND *mask_op;
-    LL_Type *vect_lltype, *int_type, *op_lltype;
+    LL_Type *vect_lltype, *op_lltype;
     DTYPE vect_dtype = ili_get_vect_dtype(ilix);
-    int mask_ili, num_elem;
+    int mask_ili;
     int edtype;
     unsigned long long undef_mask = 0;
 
@@ -9893,7 +9812,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         INT val[2];
         enum LL_BaseDataType bdt = expected_type->sub_types[0]->data_type;
         OPERAND *opm;
-        SPTR vcon1_sptr, constant;
+        SPTR vcon1_sptr = SPTR_NULL, constant;
         DTYPE vdt;
         switch (bdt) {
         case LL_FLOAT:
@@ -9983,7 +9902,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
 
   assert(operand, "gen_llvm_expr(): missing operand", ilix, ERR_Fatal);
   if (!operand->ll_type) {
-    DBGTRACE2("# missing type for operand %p (ilix %d)", operand, ilix)
+    DBGTRACE2("# missing type for operand %p (ilix %d)", (void *)operand, ilix)
     assert(false, "gen_llvm_expr(): missing type", ilix, ERR_Fatal);
   }
   {
@@ -10041,7 +9960,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   }
 
   DBGDUMPLLTYPE("#returned type: ", operand->ll_type);
-  DBGTRACEOUT2(" returns operand %p, count %d", operand, ILI_COUNT(ilix));
+  DBGTRACEOUT2(" returns operand %p, count %d", (void *)operand, ILI_COUNT(ilix));
   setTempMap(ilix, operand);
   return operand;
 } /* gen_llvm_expr */
@@ -10150,6 +10069,7 @@ gen_vect_compare_operand(int mask_ili)
   } else {
     assert(false, "gen_vect_compare_operand(): unsupported dtype", elem_dtype,
            ERR_Fatal);
+    return NULL;
   }
   op1 = make_operand();
   op1->ot_type = OT_CC;
@@ -10168,10 +10088,11 @@ gen_vect_compare_operand(int mask_ili)
 static char *
 vect_llvm_intrinsic_name(int ilix)
 {
-  int type, n, fsize;
+  int type, n, fsize = 0;
   DTYPE dtype;
   ILI_OP opc = ILI_OPC(ilix);
-  char *basename, *retc;
+  const char *basename = NULL;
+  char *retc;
   assert(IL_VECT(opc), "vect_llvm_intrinsic_name(): not vect ili", ilix,
          ERR_Fatal);
   dtype = ili_get_vect_dtype(ilix);
@@ -10444,10 +10365,9 @@ get_csed_operand(int ilix)
       OPERAND *p = csed->operand;
 
       if (p != NULL) {
-        int sptr = p->val.sptr;
         DBGTRACE3(
             "#get_csed_operand for ilix %d, operand found %p, with type (%s)",
-            ilix, p, OTNAMEG(p))
+            ilix, (void *)p, OTNAMEG(p))
         DBGDUMPLLTYPE("cse'd operand type ", p->ll_type)
       } else {
         DBGTRACE1("#get_csed_operand for ilix %d, operand found is null", ilix);
@@ -10532,8 +10452,6 @@ check_global_define(GBL_LIST *cgl)
 static void
 add_global_define(GBL_LIST *gitem)
 {
-  GBL_LIST *gl;
-
   DBGTRACEIN2(": '%s', (sptr %d)", gitem->global_def, gitem->sptr);
 
   /* make sure the global def for this sptr has not already been added;
@@ -10621,7 +10539,7 @@ get_intrinsic(const char *name, LL_Type *func_type, unsigned flags)
   op = make_operand();
   op->ot_type = OT_CALL;
   op->ll_type = make_ptr_lltype(func_type);
-  op->string = (char *)name;
+  op->string = name;
   return op;
 }
 
@@ -10814,10 +10732,10 @@ process_string(char *name, int pad, int string_length)
     \param dtype  dtype index
     \return string containing dtype name
  */
-char *
+const char *
 dtype_struct_name(DTYPE dtype)
 {
-  char *dtype_str = process_dtype_struct(dtype);
+  const char *dtype_str = process_dtype_struct(dtype);
   return dtype_str;
 }
 
@@ -11145,7 +11063,8 @@ process_extern_function_sptr(SPTR sptr)
   DTYPE dtype = DTYPEG(sptr);
   DTYPE return_dtype;
   EXFUNC_LIST *exfunc;
-  char *name, *gname, *extend_prefix;
+  char *name, *gname;
+  const char *extend_prefix;
   LL_Type *ll_ttype;
 
   assert(SCG(sptr) == SC_EXTERN, "Expected extern sptr", sptr, ERR_Fatal);
@@ -11367,7 +11286,7 @@ process_local_sptr(SPTR sptr)
     local =
         ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
                                "%s", get_llvm_name(sptr));
-    SNAME(sptr) = (char *)local->address.data;
+    SNAME(sptr) = local->address.data;
   }
 
   addDebugForLocalVar(sptr, type);
@@ -11392,7 +11311,7 @@ gen_name_private_sptr(SPTR sptr)
    */
   local = ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
                                  "%s", get_llvm_name(sptr));
-  SNAME(sptr) = (char *)local->address.data;
+  SNAME(sptr) = local->address.data;
   addDebugForLocalVar(sptr, type);
 }
 /* May need to be revisited */
@@ -11478,7 +11397,7 @@ process_auto_sptr(SPTR sptr)
    * emit an LLVM IR sret argument which is just a constant pointer.
    */
   if (ret_info.emit_sret && is_special_return_symbol(sptr)) {
-    SNAME(sptr) = (char *)ll_create_local_name(llvm_info.curr_func, "sretaddr");
+    SNAME(sptr) = ll_create_local_name(llvm_info.curr_func, "sretaddr");
     return;
   }
 
@@ -11491,7 +11410,7 @@ process_auto_sptr(SPTR sptr)
    * address of the local, name it "%foo.addr". */
   local = ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
                                  "%s.addr", SYMNAME(sptr));
-  SNAME(sptr) = (char *)local->address.data;
+  SNAME(sptr) = local->address.data;
 
   addDebugForLocalVar(sptr, type);
 }
@@ -11532,7 +11451,6 @@ static void
 process_sptr_offset(SPTR sptr, ISZ_T off)
 {
   SC_KIND sc;
-  DTYPE dtype;
   int midnum;
   LL_Type *ttype;
 
@@ -11544,7 +11462,7 @@ process_sptr_offset(SPTR sptr, ISZ_T off)
     return;
 
   DBGTRACEIN7(" sptr %d = '%s' (%s) SNAME(%d)=%p, sc %d, ADDRTKNG(%d)", sptr,
-              getprint(sptr), stb.scnames[sc], sptr, SNAME(sptr), sc,
+              getprint(sptr), stb.scnames[sc], sptr, (void *)SNAME(sptr), sc,
               ADDRTKNG(sptr));
 
   ttype = make_lltype_sz4v3_from_sptr(sptr);
@@ -11721,7 +11639,7 @@ static MATCH_Kind
 match_types(LL_Type *ty1, LL_Type *ty2)
 {
   MATCH_Kind ret_type;
-  int base_ty1, base_ty2, ct1, ct2;
+  int ct1, ct2;
   LL_Type *llt1, *llt2;
 
   assert(ty1 && ty2, "match_types(): missing argument", 0, ERR_Fatal);
@@ -12001,7 +11919,7 @@ make_type_from_opc(ILI_OP opc)
     llt = NULL;
   }
 
-  DBGTRACEOUT1(" returns %p", llt)
+  DBGTRACEOUT1(" returns %p", (void *)llt)
   return llt;
 } /* make_type_from_opc */
 
@@ -12020,7 +11938,6 @@ make_type_from_msz(MSZ msz)
 static LL_Type *
 make_vtype(DTYPE dtype, int sz)
 {
-  LL_Type *llt;
   DTYPE vect_dtype;
   vect_dtype = get_vector_dtype(dtype, sz);
   return make_lltype_from_dtype(vect_dtype);
@@ -12077,8 +11994,7 @@ static OPERAND *
 gen_sptr(SPTR sptr)
 {
   SC_KIND sc;
-  DTYPE dtype;
-  OPERAND *sptr_operand, *operand2;
+  OPERAND *sptr_operand;
 
   DBGTRACEIN2(" sptr %d (%s)", sptr, SYMNAME(sptr))
 
@@ -12118,7 +12034,7 @@ gen_sptr(SPTR sptr)
   }
 #ifdef OMP_OFFLOAD_LLVM
 #endif
-  DBGTRACEOUT1(" returns operand %p", sptr_operand)
+  DBGTRACEOUT1(" returns operand %p", (void *)sptr_operand)
   return sptr_operand;
 } /* gen_sptr */
 
@@ -12402,11 +12318,10 @@ maybe_do_gep_folding(int aadd, int idxOp, LL_Type *ty)
 static OPERAND *
 gen_base_addr_operand(int ilix, LL_Type *expected_type)
 {
-  OPERAND *operand = NULL, *base_op, *index_op, *cast_op;
+  OPERAND *operand = NULL, *base_op, *index_op;
   OPERAND **csed_operand;
   LL_Type *ty1, *ty2;
   int opnd = 0;
-  int nme;
 
   DBGTRACEIN2(" for ilix: %d(%s), expected_type ", ilix, IL_NAME(ILI_OPC(ilix)))
   DBGDUMPLLTYPE("expected type ", expected_type)
@@ -12578,8 +12493,8 @@ _exit_gen_base_addr_operand:
     set_csed_operand(csed_operand, operand);
   ILI_COUNT(ilix)++;
 
-  DBGTRACEOUT4(" returns operand %p, tmps %p, count %d for ilix %d", operand,
-               operand->tmps, ILI_COUNT(ilix), ilix)
+  DBGTRACEOUT4(" returns operand %p, tmps %p, count %d for ilix %d",
+               (void *)operand, (void *)operand->tmps, ILI_COUNT(ilix), ilix)
   setTempMap(ilix, operand);
   return operand;
 }
@@ -12628,7 +12543,7 @@ gen_vconstant(const char *ctype, int sptr, DTYPE tdtype, int flags)
   int i;
   int edtype;
   static char tmp_vcon_buf[2000];
-  char *vctype, *constant;
+  char *constant;
 
   vdtype = DTySeqTyElement(tdtype);
   vsize = DTyVecLength(tdtype);
@@ -12683,8 +12598,8 @@ gen_constant(SPTR sptr, DTYPE tdtype, INT conval0, INT conval1, int flags)
     double d;
     INT tmp[2];
   } dtmp, dtmp2;
-  char *constant, *constant1, *constant2;
-  char *ctype = "";
+  char *constant = NULL, *constant1, *constant2;
+  const char *ctype = "";
   int size = 0;
 
   static char d[MAXIDLEN];
@@ -12708,7 +12623,7 @@ gen_constant(SPTR sptr, DTYPE tdtype, INT conval0, INT conval1, int flags)
     ctype = llvm_fc_type(dtype);
     size += strlen(ctype) + 1; /* include room for space after the type */
   }
-/* Use an enum's underlying type. */
+  /* Use an enum's underlying type. */
 
   if (dtype && DTY(dtype) == TY_VECT)
     return gen_vconstant(ctype, sptr, dtype, flags);
@@ -12808,7 +12723,7 @@ gen_constant(SPTR sptr, DTYPE tdtype, INT conval0, INT conval1, int flags)
       xx.ww = conval0;
     xdble(xx.ww, dtmp2.tmp);
     xdtomd(dtmp2.tmp, &dtmp.d);
-    snprintf(d, 200, "%.8e", dtmp.d);
+    snprintf(d, MAXIDLEN-1, "%.8e", dtmp.d);
     size += 19;
     constant = (char *)getitem(
         LLVM_LONGTERM_AREA,
@@ -13127,9 +13042,10 @@ process_formal_arguments(LL_ABI_Info *abi)
     bool ftn_byval = false;
 
     assert(arg->sptr, "Unnamed function argument", i, ERR_Fatal);
-    if (!ll_feature_debug_info_ver90(&cpu_llvm_module->ir))
+    if (!ll_feature_debug_info_ver90(&cpu_llvm_module->ir)) {
       assert(SNAME(arg->sptr) == NULL, "Argument sptr already processed",
              arg->sptr, ERR_Fatal);
+    }
     if ((SCG(arg->sptr) != SC_DUMMY) && formalsMidnumNotDummy(arg->sptr)) {
       process_sptr(arg->sptr);
       continue;
@@ -13200,7 +13116,7 @@ process_formal_arguments(LL_ABI_Info *abi)
 
     /* Make a name for the real LLVM IR argument. This will also be used by
      * build_routine_and_parameter_entries(). */
-    arg_op->string = (char *)ll_create_local_name(
+    arg_op->string = ll_create_local_name(
         llvm_info.curr_func, "%s%s", SYMNAME(arg->sptr), suffix);
 
     /* Emit code in the entry block that saves the argument into the local
@@ -13353,7 +13269,6 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
                          bool print_arg_names)
 {
   unsigned i;
-  const char *param;
   bool need_comma = false;
 
   /* Fortran treats functions with unknown prototypes as varargs,
@@ -13408,7 +13323,7 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
 
     if (print_arg_names && arg->sptr) {
       int key;
-      OPERAND *coerce_op = NULL;
+      const OPERAND *coerce_op = NULL;
       print_space(1);
       key = arg->sptr;
       if (SCG(arg->sptr) == SC_BASED && MIDNUMG(arg->sptr))
@@ -13492,8 +13407,8 @@ build_routine_and_parameter_entries(SPTR func_sptr, LL_ABI_Info *abi,
                                     LL_Module *module)
 {
   const char *linkage = NULL;
-  int reductionsize = 0;
 #ifdef OMP_OFFLOAD_LLVM
+  int reductionsize = 0;
   if (OMPACCFUNCKERNELG(func_sptr)) {
     OMPACCEL_TINFO *tinfo = ompaccel_tinfo_get(func_sptr);
     if (tinfo->n_reduction_symbols == 0) {
@@ -13625,7 +13540,6 @@ char_type(DTYPE dtype, SPTR sptr)
 static void
 update_llvm_sym_arrays(void)
 {
-  const int new_size = stb.stg_avail + MEM_EXTRA;
   if ((flg.debug || XBIT(120, 0x1000)) && cpu_llvm_module) {
     lldbg_update_arrays(cpu_llvm_module->debug_info, llvm_info.last_dtype_avail,
                         stb.dt.stg_avail + MEM_EXTRA);
@@ -13635,7 +13549,7 @@ update_llvm_sym_arrays(void)
 void
 cg_llvm_init(void)
 {
-  int i, dtype, return_dtype;
+  int i;
   const char *triple = "";
   enum LL_IRVersion ir_version;
 

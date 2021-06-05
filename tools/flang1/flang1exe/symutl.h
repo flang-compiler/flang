@@ -19,14 +19,14 @@
 #define BLOCK_ENDPROLOG_STD(sptr) (ENTSTDG(ENCLFUNCG(sptr)))
 #define BLOCK_EXIT_STD(sptr)  (LABSTDG(ENDLABG(ENCLFUNCG(sptr))))
 
-int get_next_sym(char *, char *);
+int get_next_sym(char *, const char *);
 SPTR get_symtype(SYMTYPE, SPTR);
 int get_next_user_sym(char *, char *);
-int sym_get_scalar(char *, char *, int);
+int sym_get_scalar(const char *, const char *, int);
 int sym_get_ptr(int);
 int sym_get_ptr_name(char *);
 int sym_get_offset(int);
-int sym_get_array(char *, char *, int, int);
+int sym_get_array(const char *, const char *, int, int);
 int sym_mkfunc(char *, int);
 int sym_mkfunc_nodesc(char *, int);
 int sym_mkfunc_nodesc_nocomm(char *, int);

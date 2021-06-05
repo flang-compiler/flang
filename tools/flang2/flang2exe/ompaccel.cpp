@@ -456,7 +456,7 @@ mk_ompaccel_function_end(SPTR func_sptr)
 }
 
 static SPTR
-mk_ompaccel_function(char *name, int n_params, const SPTR *param_sptrs,
+mk_ompaccel_function(const char *name, int n_params, const SPTR *param_sptrs,
                      bool isDeviceFunc)
 {
   /* Create a function symbol along with parameters */
@@ -636,6 +636,7 @@ ompaccel_nvvm_mk_barrier(nvvm_barriers btype)
     return ll_ad_outlined_func2(IL_NONE, IL_JSR, sptr, 0, nullptr);
   }
   static_assert(true, "Other nvvm intrinsics are not implemented yet.");
+  return 0;
 }
 
 int
@@ -782,10 +783,10 @@ ompaccel_create_device_symbol(SPTR sptr, int count)
   return sym;
 }
 
-INLINE static SPTR
+INLINE static void
 add_symbol_to_function(SPTR func, SPTR sym)
 {
-  int dpdscp, paramct;
+  int paramct;
   paramct = PARAMCTG(func);
   paramct += 1;
   aux.dpdsc_base[paramct] = sym;
@@ -1205,7 +1206,7 @@ dumpomptarget(OMPACCEL_TINFO *tinfo)
 void
 dumpomptargets()
 {
-  int i, j;
+  int i;
   if (gbl.dbgfil == NULL)
     return;
   fprintf(gbl.dbgfil, "------------OpenMP Target Regions ---------------\n");
@@ -1241,13 +1242,13 @@ dumptargetsymbols(OMPACCEL_SYM *targetsyms, int n)
 }
 
 void
-ompaccel_msg_interr(char *id, const char *message)
+ompaccel_msg_interr(const char *id, const char *message)
 {
   interr(message, MSGOMPACCEL, ERR_Fatal);
 }
 
 void
-ompaccel_msg_info(char *id, const char *message)
+ompaccel_msg_info(const char *id, const char *message)
 {
   ccff_info(MSGOMPACCEL, id, gbl.findex, gbl.lineno, message, NULL);
 }
@@ -1269,7 +1270,7 @@ ompaccel_emit_tgt_register()
 {
   int ilix;
   SPTR sptrFn;
-  char *name = "ompaccel.register";
+  const char *name = "ompaccel.register";
   sptrFn = mk_ompaccel_function(name, 0, NULL, false);
   CONSTRUCTORP(sptrFn, 1);
   TEXTSTARTUPP(sptrFn, 1);
@@ -1289,7 +1290,6 @@ ompaccel_nvvm_emit_reduce(OMPACCEL_RED_SYM *ReductionItems, int NumReductions)
   SPTR sptrFn, sptrRhs, sptrReduceData, func_params[2];
   DTYPE dtypeReductionItem, dtypeReduceData;
   int nmeReduceData, nmeRhs;
-  int params_dtypes[2] = {DT_ADDR, DT_ADDR};
   char name[30];
 
   /* Generate function parameters */
@@ -1730,7 +1730,6 @@ exp_ompaccel_mploop(ILM *ilmp, int curilm)
 {
   SPTR nlower, nupper, nstride;
   int sched, ili;
-  char *doschedule;
   loop_args_t loop_args;
 #if LLVM_YKT
   /* frontend generates two MPLOOP ILM, one for distribute, other for parallel
@@ -1773,10 +1772,9 @@ exp_ompaccel_mploop(ILM *ilmp, int curilm)
   case KMP_SCH_STATIC:
   case KMP_SCH_STATIC_CHUNKED:
     if ((ILM_OPND(ilmp, 7) & 0xff00) == MP_SCH_CHUNK_1) {
-      doschedule = "static cyclic";
       ccff_info(MSGOPENMP, "OMP014", gbl.findex, gbl.lineno,
                 "Parallel loop activated with %schedule schedule",
-                "schedule=%s", doschedule, NULL);
+                "schedule=%s", "static cyclic", NULL);
     }
     FLANG_FALLTHROUGH;
   case KMP_DISTRIBUTE_STATIC_CHUNKED:
@@ -1809,10 +1807,9 @@ exp_ompaccel_btarget(ILM *ilmp, int curilm, SPTR uplevel_sptr, SPTR scopeSptr,
                      int(incrOutlinedCnt()), SPTR *targetfunc_sptr,
                      int *isTargetDevice)
 {
-  int ili, outlinedCnt;
   SPTR sptr;
   /* lexically nested begin parallel */
-  outlinedCnt = incrOutlinedCnt();
+  int outlinedCnt = incrOutlinedCnt();
   if (outlinedCnt > 1) {
     ll_rewrite_ilms(-1, curilm, 0);
     return;
@@ -1838,6 +1835,9 @@ exp_ompaccel_btarget(ILM *ilmp, int curilm, SPTR uplevel_sptr, SPTR scopeSptr,
     if (!PARENCLFUNCG(scopeSptr))
       PARENCLFUNCP(scopeSptr, sptr);
     ll_write_ilm_header(sptr, curilm);
+  } else {
+    ompaccel_msg_interr("XXX", "Unexpected number of outlined regions.\n");
+    return;
   }
   ccff_info(MSGOPENMP, "OMP020", gbl.findex, gbl.lineno,
             "Target region activated for offload", NULL);
@@ -1988,7 +1988,7 @@ void
 exp_ompaccel_bteams(ILM *ilmp, int curilm, int outlinedCnt, SPTR uplevel_sptr,
                     SPTR scopeSptr, int(incrOutlinedCnt()))
 {
-  int ili, opc;
+  int ili;
   SPTR sptr;
   if (flg.opt != 0) {
     wr_block();
@@ -2037,8 +2037,8 @@ exp_ompaccel_bteams(ILM *ilmp, int curilm, int outlinedCnt, SPTR uplevel_sptr,
 void
 exp_ompaccel_map(ILM *ilmp, int curilm, int outlinedCnt)
 {
-  int label, argilm;
-  SPTR sptr;
+  int label = 0, argilm;
+  SPTR sptr = SPTR_NULL;
   if (outlinedCnt >= 2)
     return;
   argilm = ILM_OPND(ilmp, 1);

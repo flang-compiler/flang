@@ -371,7 +371,7 @@ ui64toax(DBLINT64 from, char *to, int size, int is_unsigned, int radix)
     snprintf(to, size, "%" PRIx64, x);
     break;
   default:
-    assert(!"bad radix");
+    assert(false && "bad radix");
   }
 }
 
@@ -2282,7 +2282,7 @@ get_int_literal(const char *s, int n, char *buffer, size_t buffer_length,
     return NULL;
   if (!memchr(s, '\0', n)) {
     /* copy to ensure null termination */
-    if (n > buffer_length + 1)
+    if (((size_t) n - 1) > buffer_length)
       return NULL;
     memcpy(buffer, s, n);
     buffer[n] = '\0';

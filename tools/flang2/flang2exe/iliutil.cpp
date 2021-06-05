@@ -67,7 +67,6 @@ extern bool ishft;
 static int addarth(ILI *);
 static int red_iadd(int, INT);
 static int red_kadd(int, INT[2]);
-static int red_eiadd(int, INT[2]);
 static int red_aadd(int, SPTR, ISZ_T, int);
 static int red_damv(int, int, int);
 static int red_minmax(ILI_OP, int, int);
@@ -83,7 +82,7 @@ static int new_ili(ILI *);
 static int ad1altili(ILI_OP, int, int);
 static int ad2altili(ILI_OP, int, int, int);
 static int ad3altili(ILI_OP, int, int, int, int);
-static int ad2func_int(ILI_OP, char *, int, int);
+static int ad2func_int(ILI_OP, const char *, int, int);
 static int gen_sincos(ILI_OP, int, ILI_OP, ILI_OP, MTH_FN, DTYPE, ILI_OP);
 #if defined(TARGET_X8664) || defined(TARGET_POWER)
 static int _newton_fdiv(int, int);
@@ -96,7 +95,7 @@ static int _xpowi(int, int, ILI_OP);
 #if defined(TARGET_X8664) || defined(TARGET_POWER) || !defined(TARGET_LLVM_ARM)
 static int _frsqrt(int);
 #endif
-static int _mkfunc(char *);
+static int _mkfunc(const char *);
 static int DblIsSingle(SPTR dd);
 static int _lshift_one(int);
 static int cmpz_of_cmp(int, CC_RELATION);
@@ -185,9 +184,9 @@ ili_cleanup(void)
 int
 addili(ILI *ilip)
 {
-  ILI_OP opc; /* opcode of ili  */
-  int ilix;   /* ili area index where ili was added  */
-  int tmp;    /* temporary  */
+  ILI_OP opc;   /* opcode of ili  */
+  int ilix = 0; /* ili area index where ili was added  */
+  int tmp;      /* temporary  */
   int cons1;
   INT numi[2];
 
@@ -471,7 +470,7 @@ ad2altili(ILI_OP opc, int opn1, int opn2, int alt)
  * \param opc must be a function call ili opcode: QJSR, JSR
  */
 static int
-ad2func_int(ILI_OP opc, char *name, int opn1, int opn2)
+ad2func_int(ILI_OP opc, const char *name, int opn1, int opn2)
 {
   int tmp, tmp1, tmp2;
   tmp1 = ad1ili(IL_NULL, 0);
@@ -699,7 +698,7 @@ ad2mathfunc_cmplx(MTH_FN fn, ILI_OP opc, int op1, int op2, DTYPE res_dt,
  * WARNING - the arguments to ad_func are in lexical order
  */
 static int
-ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
+ad_func(ILI_OP result_opc, ILI_OP call_opc, const char *func_name, int nargs, ...)
 {
   va_list vargs;
   int rg;
@@ -708,8 +707,7 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
   int func;
   int argl;
   int ilix;
-  int pos;
-  int n, i;
+  int i;
   struct {
     ILI_OP opc;
     int arg;
@@ -818,7 +816,7 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
       argl = ad3ili(args[i].opc, args[i].arg, args[i].reg, argl);
     } else {
       if (IL_VECT(ILI_OPC(args[i].arg))) {
-        int arg_dtype, dtype_slot, arg_nme;
+        int arg_dtype = 0, dtype_slot, arg_nme = 0;
         switch (IL_TYPE(ILI_OPC(args[i].arg))) {
         case ILTY_CONS:
           arg_nme = 0;
@@ -889,10 +887,10 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
 
 #if defined(TARGET_X8664)
 static char *
-fmth_name(char *root)
+fmth_name(const char *root)
 {
   static char bf[64];
-  char *suf;
+  const char *suf;
   suf = "";
   if (TEST_MACH(MACH_AMD_GH)) {
     suf = "_gh";
@@ -910,7 +908,7 @@ fmth_name(char *root)
  *   [L]    - vector length, i.e., 2, 4, 8, 16
  */
 char *
-gnr_math(char *root, int widthc, int typec, char *oldname, int masked)
+gnr_math(const char *root, int widthc, int typec, const char *oldname, int masked)
 {
   static char bf[32];
 /*
@@ -935,10 +933,10 @@ gnr_math(char *root, int widthc, int typec, char *oldname, int masked)
 }
 
 static char *
-vect_math(MTH_FN fn, char *root, int nargs, DTYPE vdt, int vopc, int vdt1,
+vect_math(MTH_FN fn, const char *root, int nargs, DTYPE vdt, int vopc, int vdt1,
           int vdt2, bool mask)
 {
-  int typec;
+  int typec = 0;
   int num_elem;
   DTYPE vdt_mask = DT_NONE;
   int func;
@@ -1080,7 +1078,7 @@ vect_math(MTH_FN fn, char *root, int nargs, DTYPE vdt, int vopc, int vdt1,
  *   [L]    - vector length, i.e., 2, 4, 8, 16
  */
 char *
-fast_math(char *root, int widthc, int typec, char *oldname)
+fast_math(const char *root, int widthc, int typec, const char *oldname)
 {
   /*
    * widthc  - width indicator: 's' (scalar), 'v' (vector),
@@ -1090,7 +1088,7 @@ fast_math(char *root, int widthc, int typec, char *oldname)
    * oldname - old 'fastmath' name
    */
   static char bf[32];
-  char *suf;
+  const char *suf;
   int avxp;
   suf = "";
   avxp = 0;
@@ -1103,7 +1101,7 @@ fast_math(char *root, int widthc, int typec, char *oldname)
     }
     sprintf(bf, "%s%s", oldname, suf);
   } else {
-    char *simdw;
+    const char *simdw;
     simdw = "";
     if ((typec == 's' && widthc == 8) || (typec == 'd' && widthc == 4))
       simdw = "_256";
@@ -1157,13 +1155,13 @@ fast_math(char *root, int widthc, int typec, char *oldname)
  * -Mfprelaxed=intrinsic version of the routine.
  */
 char *
-relaxed_math(char *root, int widthc, int typec, char *oldname)
+relaxed_math(const char *root, int widthc, int typec, const char *oldname)
 {
   static char bf[32];
   /*
    * widthc - width indicator: 's' (scalar), 'v' (vector)
    */
-  char *suf;
+  const char *suf;
   int avxp;
 
   avxp = 0;
@@ -1200,7 +1198,7 @@ relaxed_math(char *root, int widthc, int typec, char *oldname)
  * \param opc must be a function call ili opcode: QJSR, JSR
  */
 int
-ad2func_kint(ILI_OP opc, char *name, int opn1, int opn2)
+ad2func_kint(ILI_OP opc, const char *name, int opn1, int opn2)
 {
   int tmp, tmp1, tmp2;
   tmp1 = ad1ili(IL_NULL, 0);
@@ -1923,7 +1921,7 @@ static int
 MULSH(int ilix, int iliy)
 {
   /* copied from the intrinsic function __muln */
-  int t1, t2, t3, t4, t5, t6, t7, t8, t9;
+  int t1, t2, t3;
 
   t1 = ad2ili(IL_KMUL, ilix, iliy);
   t2 = ICON(32);
@@ -1935,7 +1933,7 @@ static int
 KMULSH(int ilix, int iliy)
 {
   /* copied from the intrinsic function __muln */
-  int t1, t2, t3, t4, t5, t6, t7, t8, t9;
+  int t1;
 
   t1 = ad2ili(IL_KMULH, ilix, iliy);
   return t1;
@@ -1954,7 +1952,7 @@ static int
 MULUH(int ilix, int iliy)
 {
   /* copied from the intrinsic function __muln */
-  int t1, t2, t3, t4, t5, t6, t7, t8, t9;
+  int t1, t2, t3;
 
   t1 = ad2ili(IL_UKMUL, ilix, iliy);
   t2 = ICON(32);
@@ -1980,7 +1978,7 @@ static int
 MUL(int ilix, int iliy)
 {
   /* copied from the intrinsic function __muln */
-  int t1, t2, t3, t4, t5, t6, t7, t8, t9;
+  int t1;
 
   t1 = ad2ili(IL_IMUL, ilix, iliy);
 
@@ -2071,8 +2069,8 @@ test_mod_zero(int n, int d, int sgnd, int cc)
 static int
 reciprocal_division(int n, INT divisor, int sgnd)
 {
-  int l, mp, sh, N;
-  int t1, t2, q0, q3, q, recipsym;
+  int N;
+  int t1, t2, q0, q3, q;
   unsigned udiv;
 
   /* edge case, doesn't work */
@@ -2188,8 +2186,8 @@ reciprocal_division_64(int n, DBLINT64 divisor, int sgnd)
 
   /* TBD: 64-bit divides */
 
-  int l, mp, sh, N;
-  int t1, t2, q0, q3, q, recipsym;
+  int N;
+  int t1, t2, q0, q3, q;
   /*unsigned udiv;*/
   DBLUINT64 udiv;
   DBLINT64 tmp_64;
@@ -2304,7 +2302,7 @@ static int
 reciprocal_mod(int n, int d, int sgnd)
 {
   int div;
-  int mul, sub, t0;
+  int mul, sub;
 
   div = reciprocal_division(n, d, sgnd);
   if (div == 0)
@@ -2324,7 +2322,7 @@ static int
 reciprocal_mod_64(int n, DBLINT64 d, int sgnd)
 {
   int div, kcon;
-  int mul, sub, t0;
+  int mul, sub;
 
   /*
    * d[0] MSW
@@ -2386,14 +2384,13 @@ addarth(ILI *ilip)
                   /* 3 => both are constants	 */
       ilix,       /* ili result			 */
       mask_ili,   /* for potential mask with vector intrinsics */
-      rshfct,     /* rt. shft. cnt. for shift c.f. */
       vdt1, vdt2; /* data types of args 1 & 2 for VPOW[I,K] intrinsics */
 
   ISZ_T aconoff1v, /* constant ST one aconoff	 */
       aconoff2v;   /* constant ST two aconoff	 */
 
   int is_int, pw;
-  
+
   int i, tmp, tmp1; /* temporary                 */
 
   union { /* constant value structure */
@@ -2402,7 +2399,7 @@ addarth(ILI *ilip)
     DBLE numd;
   } res, num1, num2;
   CC_RELATION cond;
-  char *root;
+  const char *root;
   char *fname;
   SPTR funcsptr;
   MTH_FN mth_fn;
@@ -4213,7 +4210,6 @@ addarth(ILI *ilip)
           return ilix;
         }
         if (XBIT(15, 0x10)) {
-          int x0;
           if (!XBIT(15, 0x20000) && ILI_OPC(op2) == IL_FSQRT) {
             /*
              * Newton's appx for recip sqrt:
@@ -5109,7 +5105,7 @@ addarth(ILI *ilip)
 
       /* Can apply DeMorgan's Law */
 
-      int tmp, demorgans_opc;
+      int tmp, demorgans_opc = 0;
 
       switch (opc) {
       case IL_AND:
@@ -6340,7 +6336,7 @@ addarth(ILI *ilip)
      * instead of making an intrinsic call to pow(). Big performance gain.
      * That is why we check specifically for the power of 2 below.
      */
-    if ((!flg.ieee || con2v2 == 1 || con2v2 == 2) && 
+    if ((!flg.ieee || con2v2 == 1 || con2v2 == 2) &&
          ncons >= 2 && !XBIT(124, 0x200)) {
       if (con2v2 == 1)
         return op1;
@@ -6361,7 +6357,7 @@ addarth(ILI *ilip)
     ilix = ad2altili(opc, op1, op2, ilix);
     return ilix;
   case IL_FPOWK:
-    if ((!flg.ieee || con2v2 == 1 || con2v2 == 2) && 
+    if ((!flg.ieee || con2v2 == 1 || con2v2 == 2) &&
          ncons >= 2 && !XBIT(124, 0x200) && con2v1 == 0) {
       if (con2v2 == 1)
         return op1;
@@ -6424,7 +6420,7 @@ addarth(ILI *ilip)
 #endif
     }
     is_int = xfisint(con2v2, &pw);
-    if ((!flg.ieee || pw == 1 || pw == 2) && 
+    if ((!flg.ieee || pw == 1 || pw == 2) &&
          ncons >= 2 && is_int && !XBIT(124, 0x40000)) {
       ilix = ad2ili(IL_FPOWI, op1, ad_icon(pw));
       return ilix;
@@ -6472,7 +6468,7 @@ addarth(ILI *ilip)
     return ilix;
 
   case IL_DPOWI:
-    if ((!flg.ieee || con2v2 == 1 || con2v2 == 2) 
+    if ((!flg.ieee || con2v2 == 1 || con2v2 == 2)
          && ncons >= 2 && !XBIT(124, 0x200)) {
       if (con2v2 == 1)
         return op1;
@@ -6493,7 +6489,7 @@ addarth(ILI *ilip)
     ilix = ad2altili(opc, op1, op2, ilix);
     return ilix;
   case IL_DPOWK:
-    if ((!flg.ieee || con2v2 == 1 || con2v2 == 2) 
+    if ((!flg.ieee || con2v2 == 1 || con2v2 == 2)
          && ncons >= 2 && !XBIT(124, 0x200) && con2v1 == 0) {
       if (con2v2 == 1)
         return op1;
@@ -6556,7 +6552,7 @@ addarth(ILI *ilip)
       GETVAL64(num2, cons2);
       is_int = xdisint(num2.numd, &pw);
     }
-    if ((!flg.ieee || pw == 1 || pw == 2) && 
+    if ((!flg.ieee || pw == 1 || pw == 2) &&
          ncons >= 2 && is_int && !XBIT(124, 0x40000)) {
       ilix = ad2ili(IL_DPOWI, op1, ad_icon(pw));
       return ilix;
@@ -6996,7 +6992,7 @@ addarth(ILI *ilip)
           vdt2 = DT_INT8;
           break;
         default:
-          assert(0, "addarth(): bad move result for operand 2", 
+          assert(0, "addarth(): bad move result for operand 2",
                  IL_RES(ILI_OPC(op2)), ERR_Fatal);
       }
     } else
@@ -7259,7 +7255,6 @@ static int
 _kpwr2(INT cv1, INT cv2, int max_pwr)
 {
   int i;
-  INT v;
   int mp;
 
   if (max_pwr > 31)
@@ -7719,7 +7714,7 @@ red_negate(int old, ILI_OP neg_opc, int mult_opc, int div_opc)
     return ad2ili(ILI_OPC(old), op1, op2); /* could be mult or divide */
   }
   if (IL_TYPE(ILI_OPC(op1)) == ILTY_CONS) {
-    if (!XBIT(15, 0x4) || 
+    if (!XBIT(15, 0x4) ||
 	(div_opc != IL_FDIV && div_opc != IL_DDIV)) {
       /* don't do if mult by recip enabled */
       op1 = ad1ili(neg_opc, op1);
@@ -7782,9 +7777,9 @@ addother(ILI *ilip)
 {
   int ilix;
   int ncons;
-  ILI_OP opc, opc1, opc2;
-  int op1, cons1, con1v1, con1v2;
-  int op2, cons2, con2v1, con2v2;
+  ILI_OP opc, opc1;
+  int op1;
+  int op2, cons2, con2v2;
   opc = ilip->opc;
   ncons = 0;
   switch (opc) {
@@ -9080,8 +9075,6 @@ mark_ilitree(int ili, int val)
 static void
 mark_nme(int nme, int val)
 {
-  int sub, n1, n2;
-
   for (; nme; nme = NME_NM(nme)) {
     if (NME_TYPE(nme) == NT_ARR && NME_SUB(nme))
       mark_ilitree(NME_SUB(nme), val);
@@ -9809,7 +9802,6 @@ void
 rewr_cln_ili(void)
 {
   int i;
-  int tree;
 
 #if DEBUG
   assert(rewrb.cnt, "rewr_cln_ili: cnt is zero", 0, ERR_Severe);
@@ -9997,7 +9989,7 @@ int
 simplified_cmp_ili(int cmp_ili)
 {
   ILI_OP opc, new_opc, jump_opc;
-  int new_ili, icon_ili;
+  int new_ili;
   CC_RELATION new_cc;
   int invert_cc;
   int label_op;
@@ -10083,10 +10075,10 @@ simplified_cmp_ili(int cmp_ili)
   return cmp_ili;
 }
 
-char *
+const char *
 dump_msz(MSZ ms)
 {
-  char *msz;
+  const char *msz;
   switch (ms) {
   case MSZ_SBYTE:
     msz = "sb";
@@ -10173,7 +10165,6 @@ atomic_rmw_op_name(ATOMIC_RMW_OP op)
 void
 dump_atomic_info(FILE *f, ATOMIC_INFO info)
 {
-  const char *s;
   if (f == NULL)
     f = stderr;
   fprintf(f, "{");
@@ -10189,9 +10180,9 @@ dump_ili(FILE *f, int i)
 {
   int j, noprs;
   ILI_OP opc;
-  static char *cond[] = {"eq",    "ne",    "lt",    "ge",    "le",    "gt",
-                         "noteq", "notne", "notlt", "notge", "notle", "notgt"};
-  static char *msz;
+  static const char *cond[] = {"eq",    "ne",    "lt",    "ge",    "le",    "gt",
+                               "noteq", "notne", "notlt", "notge", "notle", "notgt"};
+  static const char *msz;
 
   if (f == NULL)
     f = stderr;
@@ -10711,11 +10702,11 @@ optype(ILI_OP opc)
 void
 prilitree(int i)
 {
-  int k, j, opn, noprs, o;
+  int k, j, noprs, o;
   ILI_OP opc;
   int n;
-  char *opval;
-  static char *ccval[] = {
+  const char *opval;
+  static const char *ccval[] = {
       "??",    "==",    "!=",    "<",     ">=",    "<=",   ">",
       "noteq", "notne", "notlt", "notge", "notle", "notgt"};
 
@@ -11765,10 +11756,9 @@ is_llvm_local(int sptr, int funcsptr)
 static int
 ll_internref_ili(SPTR sptr)
 {
-  int mem, homeval, ili, nme, off;
+  int mem, ili, nme, off;
   INT zoff;
   SPTR asym;
-  int anme;
 
   off = 0;
   mem = get_sptr_uplevel_address(sptr);
@@ -11839,7 +11829,7 @@ ll_taskprivate_inhost_ili(SPTR sptr)
 static int
 ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
 {
-  int ilix, basenm, offset, homeval, device_sptr;
+  int ilix, basenm, offset;
   bool isLocalPriv;
 
   isLocalPriv = is_llvm_local_private(sptr);
@@ -11852,10 +11842,9 @@ ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
   /* Certain variable: SC_STATIC is set in the backend but PARREF flag may
    * have been set in the front end already.
    */
-  if (SCG(sptr) == SC_STATIC && !THREADG(sptr)
-  )
+  if (SCG(sptr) == SC_STATIC && !THREADG(sptr))
     return ad_acon(sptr, (INT)0);
-    if (SCG(aux.curr_entry->uplevel) == SC_DUMMY) {
+  if (SCG(aux.curr_entry->uplevel) == SC_DUMMY) {
     SPTR asym = mk_argasym(aux.curr_entry->uplevel);
     int anme = addnme(NT_VAR, asym, 0, (INT)0);
     ilix = ad_acon(asym, 0);
@@ -11945,12 +11934,6 @@ mk_address(SPTR sptr)
   bool is_task_priv;
 
   if (UPLEVELG(sptr) && (SCG(sptr) == SC_LOCAL || SCG(sptr) == SC_DUMMY)) {
-    int ili;
-    int nme;
-    INT zoff;
-    int off;
-    int addr;
-
     if (INTERNREFG(sptr) && gbl.internal > 1) {
       return ll_internref_ili(sptr);
     }
@@ -11970,7 +11953,7 @@ mk_address(SPTR sptr)
 
   /* Determine if sptr is a firstprivate variable in a task */
   if (ISTASKDUPG(GBL_CURRFUNC)) {
-    int taskfn = TASKDUPG(GBL_CURRFUNC);
+    SPTR taskfn = (SPTR)TASKDUPG(GBL_CURRFUNC);
     task = llmp_task_get_by_fnsptr(taskfn);
     is_task_priv = task && !!llmp_task_get_private(task, sptr, taskfn);
   } else {
@@ -11983,7 +11966,7 @@ mk_address(SPTR sptr)
   if(!(gbl.outlined && flg.omptarget && gbl.ompaccel_intarget))
 #endif
   if ((PARREFG(sptr) || TASKG(sptr)) &&
-      (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC))) 
+      (gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)))
   {
   /* If it's a host function, we skip loading from uplevel and load them directly */
   if(((SCG(sptr) != SC_EXTERN && SCG(sptr) != SC_STATIC)) || THREADG(sptr))
@@ -13101,7 +13084,7 @@ mkfunc_avx(char *nmptr, int avxp)
 }
 
 static int
-_mkfunc(char *name)
+_mkfunc(const char *name)
 {
   int ss;
   if (!XBIT(15, 0x40))
@@ -13445,11 +13428,11 @@ ilstckind(ILI_OP opc, int opnum)
   }
 } /* ilstckind */
 
-char *
+const char *
 scond(int c)
 {
-  static char *cond[] = {"..",  "eq",  "ne",  "lt",  "ge",  "le", "gt",
-                         "neq", "nne", "nlt", "nge", "nle", "ngt"};
+  static const char *cond[] = {"..",  "eq",  "ne",  "lt",  "ge",  "le", "gt",
+                               "neq", "nne", "nlt", "nge", "nle", "ngt"};
   static char B[15];
   if (c <= 0 || (size_t)c >= SIZEOF(cond)) {
     snprintf(B, 15, "%d", c);
@@ -13855,12 +13838,12 @@ char *
 make_math_name(MTH_FN fn, int vectlen, bool mask, DTYPE res_dt)
 {
   static char name[32]; /* return buffer */
-  static char *fn2str[] = {"acos", "asin",  "atan",  "atan2", "cos",    "cosh",
-                           "div",  "exp",   "log",   "log10", "pow",    "powi",
-                           "powk", "powi1", "powk1", "sin",   "sincos", "sinh",
-                           "sqrt", "tan",   "tanh",  "mod", "floor", "ceil",
-                           "aint"};
-  char *fstr;
+  static const char *fn2str[] = {"acos", "asin",   "atan",  "atan2", "cos",
+                                 "cosh", "div",    "exp",   "log",   "log10",
+                                 "pow",  "powi",   "powk",  "powi1", "powk1",
+                                 "sin",  "sincos", "sinh",  "sqrt",  "tan",
+                                 "tanh", "mod",    "floor", "ceil",  "aint"};
+  const char *fstr;
   char ftype = 'f';
   if (flg.ieee)
     ftype = 'p';
@@ -14105,15 +14088,15 @@ cmpxchg_loc(int ilix)
 
 /* clang-format off */
 
-/** \brief Table used by cmpxchg_memory_order. 
+/** \brief Table used by cmpxchg_memory_order.
 
-    Indexed by [succ][fail], it returns an weakened value for failure  
+    Indexed by [succ][fail], it returns an weakened value for failure
     per rules in C++11 standard and LLVM.  The weakenings guarantee that
     the failure value is no stronger than the succ value and has
     no "release" aspect to it.
- 
+
     Element type is char to save space.
-    
+
     this table is also used by accelerator CG, so DON'T make it as static
 */
 char memory_order_fail_table[MO_MAX_DEF + 1][MO_MAX_DEF + 1] = {
