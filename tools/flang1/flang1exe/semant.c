@@ -13343,7 +13343,18 @@ fixup_param_vars(SST *var, SST *init)
     if (AD_ADJARR(ad) || AD_DEFER(ad)) {
       error(84, 3, gbl.lineno, SYMNAME(sptr),
             "- a named constant array must have constant extents");
-      return;
+      /* recover as zero sized array */
+      int i;
+      int ndim = AD_NUMDIM(ad);
+      for (i = 0; i < ndim; i++) {
+        AD_LWBD(ad, i) = AD_LWAST(ad, i) = astb.bnd.one;
+        AD_UPBD(ad, i) = AD_UPAST(ad, i) = astb.bnd.zero;
+        AD_EXTNTAST(ad, i) = astb.bnd.zero;
+        AD_MLPYR(ad, i) = astb.bnd.zero;
+      }
+      AD_ZBASE(ad) = astb.bnd.one;
+      AD_ADJARR(ad) = AD_DEFER(ad) = AD_NOBOUNDS(ad) = 0;
+      goto param_alias;
     }
     if (AD_ASSUMSZ(ad)) {
       int i, dtype2;
@@ -13385,6 +13396,7 @@ fixup_param_vars(SST *var, SST *init)
         AD_MLPYR(ad, i) = AD_MLPYR(ad2, i);
       AD_ASSUMSZ(ad) = 0;
     }
+  param_alias:
     sptr1 = get_param_alias_var(sptr, dtype);
     STYPEP(sptr1, ST_ARRAY);
     if (sem.interface == 0) {
