@@ -1527,6 +1527,8 @@ check_pointer_type(int past, int tast, int stmt, LOGICAL is_sourced_allocation)
     assert(psdsc > NOSYM, "no descriptor for psptr", psptr, 3);
     if (STYPEG(tsptr) == ST_MEMBER) {
       tsdsc = get_member_descriptor(tsptr);
+    } else if (SCG(tsptr) == SC_DUMMY) {
+      tsdsc = get_type_descr_arg(gbl.currsub, tsptr);
     } else {
       tsdsc = SDSCG(tsptr);
     }
