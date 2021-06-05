@@ -609,7 +609,7 @@ static LOGICAL asm_mode = FALSE; /* preprocessing for assembler file */
 /*  functions defined in this file:  */
 extern void accpp(void);
 extern void setasmmode(void);
-static void delete (char *);
+static void delete(const char *);
 static void pbchar(int);
 static void pbstr(char *);
 static void clreol(int);
@@ -821,7 +821,7 @@ accpp(void)
           pperror(246, "__STDC__", 1);
           sp->flags &= ~F_PREDEF;
         }
-        delete ("__STDC__");
+        delete("__STDC__");
       }
     } else {
 #ifdef TARGET_WIN
@@ -904,7 +904,7 @@ accpp(void)
         pperror(246, *cp, 1);
         sp->flags &= ~F_PREDEF;
       }
-      delete (*cp); /* should check if IDENT */
+      delete(*cp); /* should check if IDENT */
     }
   }
 
@@ -2259,7 +2259,7 @@ doundef(int cmdline)
     if (toktyp != '\n')
       clreol(0);
   } else {
-    delete (tokval);
+    delete(tokval);
     if ((XBIT(122, 0x10000) && !cmdline) || (XBIT(122, 0x40000) && cmdline))
       putunmac(tokval);
     clreol(1);
@@ -3121,37 +3121,37 @@ lookup(char *name, int insflg)
   return &hashrec[p];
 }
 
-static void delete (char *name)
+static void
+delete(const char *name)
 {
-  int i;
+  int i, j;
   INT l, m;
   INT p, q;
-  char *cp;
+  const char *cp;
 
-  i = 0;
+  i = j = 0;
   l = m = (INT)0;
 
-  if ((int)strlen(name) > MAXIDLEN)
-    name[MAXIDLEN] = 0;
   /*
    * break name into 3 byte chunks, sum them together, take remainder
    * modulo table size
    */
   cp = name;
-  while (*cp != '\0') {
+  while (j < MAXIDLEN && *cp != '\0') {
     if (i == 3) {
       i = 0;
       m += l;
       l = (INT)0;
     }
     ++i;
+    ++j;
     l <<= 8;
     l |= *cp++;
   }
   m += l;
   i = m % HASHSIZ;
   for (q = 0, p = hashtab[i]; p != 0; q = p, p = hashrec[p].next)
-    if (strcmp(name, &deftab[hashrec[p].name]) == 0)
+    if (strncmp(name, &deftab[hashrec[p].name], MAXIDLEN) == 0)
       goto found;
   return;
 found:
