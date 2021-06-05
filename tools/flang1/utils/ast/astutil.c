@@ -99,46 +99,6 @@ main(int aargc, char *aargv[])
 }
 
 /**************************************************************/
-static int
-findfield(char *s)
-{
-  int i;
-
-  for (i = 0; i < fieldnum; ++i)
-    if (strcmp(s, fields[i].name) == 0)
-      return i;
-  put_err1(2, "Undefined field name: %s", s);
-  return 0;
-}
-
-struct template
-{
-  int fnum;
-  int hasvalue;
-  char value[32];
-};
-
-static struct template tmplt[20];
-static int ntmplt;
-
-static int
-qscmp1(int *f1, int *f2)
-{
-  int r;
-  if (fields[tmplt[*f1].fnum].flag && fields[tmplt[*f2].fnum].flag)
-    r = fields[tmplt[*f1].fnum].offs - fields[tmplt[*f2].fnum].offs;
-  else if (fields[tmplt[*f1].fnum].flag)
-    return -1;
-  else if (fields[tmplt[*f2].fnum].flag)
-    return 1;
-  else
-    r = fields[tmplt[*f1].fnum].offs - fields[tmplt[*f2].fnum].offs;
-  if (r)
-    return r;
-  return strcmp(fields[tmplt[*f1].fnum].name, fields[tmplt[*f2].fnum].name);
-}
-
-/**************************************************************/
 static int findsym();
 static int addfield(int sharedflag, int flagflag);
 
@@ -611,20 +571,6 @@ chk_overlap(int f1, int f2, int flag)
   return TRUE;
 }
 
-static void
-addsname(int *cursyms, int cursym, int symidx, char *name)
-{
-  int i;
-
-  if (symidx < 0 || symidx >= cursym) {
-    put_err(2, ".SI sname count doesn't match .SM line");
-    return;
-  }
-  i = cursyms[symidx];
-  strncpy(symbols[i].sname, name, 31);
-  symbols[i].sname[31] = 0;
-}
-
 static int
 findsym()
 {
@@ -730,15 +676,6 @@ fixup:
   fields[fieldnum].shared = FALSE;
   fields[fieldnum].flag = FALSE;
   return fieldnum++;
-}
-
-void
-put_err1(int sev, char *msg, char *str)
-{
-  char buff[132];
-
-  sprintf(buff, msg, str);
-  put_err(sev, buff);
 }
 
 /**************************************************************/

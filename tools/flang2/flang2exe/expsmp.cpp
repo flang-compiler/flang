@@ -48,7 +48,9 @@ inline SPTR GetPARUPLEVEL(SPTR sptr) {
 
 static int incrOutlinedCnt(void);
 static int decrOutlinedCnt(void);
+#ifdef FLANG2_EXPSMP_UNUSED
 static int getOutlinedTemp(char *, int);
+#endif
 static int isUnnamedCs(int);
 static int addMpUnp(void);
 static int addMpUnv(void);
@@ -259,6 +261,7 @@ sectionCreateBlock(int nextLabel, SPTR lb, SPTR ub, int myVal)
   return ili;
 }
 
+#ifdef FLANG2_EXPSMP_UNUSED
 static int
 sectionCreateLastblock(int nextLabel, SPTR lastValSym, int myVal)
 {
@@ -272,6 +275,7 @@ sectionCreateLastblock(int nextLabel, SPTR lastValSym, int myVal)
   RFCNTI(nextLabel);
   return ili;
 }
+#endif
 
 void
 section_create_endblock(SPTR endLabel)
@@ -2830,6 +2834,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
 #endif /* end #ifdef IM_BPAR */
 }
 
+#ifdef FLANG2_EXPSMP_UNUSED
 /* opc: IL_DFRDP / IL_DFRSP, depending on result type of call */
 /* Return the ili of a call to a function that returns a result, using ili
  * callili, followed by freeing of the appropriate argument registers with
@@ -2863,6 +2868,7 @@ makeCallResult(ILI_OP opc, int callili)
 
   return ili;
 }
+#endif
 
 SPTR
 lcpu_temp(SC_KIND sc)
@@ -3043,15 +3049,6 @@ exp_mp_func_prologue(bool process_tp)
   }
 }
 
-static void
-no_pad_func(char *fname)
-{
-  int sptr;
-
-  sptr = mkfunc(fname);
-  NOPADP(sptr, 1);
-}
-
 static int
 decrOutlinedCnt(void)
 {
@@ -3073,6 +3070,7 @@ incrOutlinedCnt(void)
   return outlinedCnt;
 }
 
+#ifdef FLANG2_EXPSMP_UNUSED
 static int
 getOutlinedTemp(char *pfx, int dtype)
 {
@@ -3084,6 +3082,7 @@ getOutlinedTemp(char *pfx, int dtype)
   DTYPEP(sym, DT_INT);
   return sym;
 }
+#endif
 
 static int
 isUnnamedCs(int sem)
@@ -3271,17 +3270,6 @@ get_threadprivate_origsize(int sym)
   }
 
   return size;
-}
-
-static int
-getNumSect(int *tab)
-{
-  int i;
-  if (!tab)
-    return 0;
-  for (i = 0; tab[i] != -1; i++) {
-  }
-  return i;
 }
 
 SPTR

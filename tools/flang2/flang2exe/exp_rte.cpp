@@ -62,7 +62,9 @@ static int block_str_move(STRDESC *, STRDESC *);
 static int getchartmp(int ili);
 static void _exp_smove(int, int, int, int, DTYPE);
 
+#ifdef FLANG2_EXPRTE_UNUSED
 static int has_desc_arg(int, int);
+#endif
 static int check_desc(int, int);
 static void check_desc_args(int);
 static int exp_type_bound_proc_call(int arg, SPTR descno, int vtoff,
@@ -1191,6 +1193,7 @@ exp_type_bound_proc_call(int arg, SPTR descno, int vtoff, int arglnk)
   return ad4ili(IL_JSRA, ili, arglnk, jsra_mscall_flag, fptr_iface);
 }
 
+#ifdef FLANG2_EXPRTE_UNUSED
 static int
 has_desc_arg(int func, int sptr)
 {
@@ -1206,6 +1209,7 @@ has_desc_arg(int func, int sptr)
   }
   return 0;
 }
+#endif
 
 static int
 check_desc(int func, int sptr)
@@ -1842,6 +1846,7 @@ scan_args:
   } /* end while */
 }
 
+#ifdef FLANG2_EXPRTE_UNUSED
 static int
 get_frame_off(INT off)
 {
@@ -1867,6 +1872,7 @@ get_frame_off(INT off)
   ili = ad_acon(memarg_var, off - MEMARG_OFFSET);
   return ili;
 }
+#endif
 
 /* from exp_c.c */
 static void
@@ -2805,8 +2811,8 @@ init_ainfo(ainfo_t *ap)
 static void
 end_ainfo(ainfo_t *ap)
 {
+  /* NOTHING TO DO */
 }
-#define end_ainfo(ap) /* NOTHING TO DO */
 
 void
 init_arg_ili(int n)

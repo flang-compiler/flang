@@ -313,15 +313,6 @@ ll_convert_basic_dtype_with_addrspace(LL_Module *module, DTYPE dtype, int addrsp
   return type;
 }
 
-/*
- * Convert a basic non-integer dtype to the corresponding LL_Type in module.
- */
-static LL_Type *
-ll_convert_basic_dtype(LL_Module *module, DTYPE dtype)
-{
-  return ll_convert_basic_dtype_with_addrspace(module, dtype, LL_AddrSp_Default);
-}
-
 #if defined(TARGET_LLVM_X8664)
 /**
  * \brief Convert a SIMD dtype to the corresponding LLVM type.
@@ -360,14 +351,6 @@ ll_convert_simd_dtype(LL_Module *module, DTYPE dtype)
   return ll_get_vector_type(base_type, num_elements);
 }
 #endif
-
-/* Create a dummy function type from the return type. */
-static LL_Type *
-ll_convert_func_dtype(LL_Module *module, DTYPE dtype)
-{
-  LL_Type *ret_type = ll_convert_dtype(module, dtype);
-  return ll_create_function_type(module, &ret_type, 0, true);
-}
 
 /**
    This routine is for use with fortran interfaces, specified by sptr
@@ -1429,19 +1412,6 @@ ll_get_string_buf(int string_len, char *base, int skip_quotes)
   while (len--) {
     *to++ = *from++;
   }
-  return name;
-}
-
-char *
-ll_get_cstring_buf(int sptr, int skip_quotes)
-{
-  char *name = "";
-  char *to, *from;
-  DTYPE dtype = DTYPEG(sptr);
-  int c, len, newlen, index, pos;
-  char buf[11];
-
-  dtype = DTYPEG(sptr);
   return name;
 }
 
@@ -3113,7 +3083,8 @@ get_int_dtype_from_size(int size)
   return DT_NONE;
 }
 
-static int
+#if DEBUG
+int
 struct_typedef_name(DTYPE dtype)
 {
   int sptr;
@@ -3124,7 +3095,9 @@ struct_typedef_name(DTYPE dtype)
   }
   return 0;
 } /* struct_typedef_name */
+#endif
 
+#ifdef FLANG2_LLUTIL_UNUSED
 static char *
 def_name(DTYPE dtype, int tag)
 {
@@ -3158,6 +3131,7 @@ def_name(DTYPE dtype, int tag)
     sprintf(d_name, "%%struct.%s", tag_name);
   return d_name;
 }
+#endif
 
 OPERAND *
 process_symlinked_sptr(int sptr, int total_init_sz, int is_union,
@@ -3333,6 +3307,7 @@ process_ftn_dtype_struct(DTYPE dtype, char *tname, bool printed)
   return def->name;
 }
 
+#ifdef FLANG2_LLUTIL_UNUSED
 static OPERAND *
 add_init_zero_const_op(int sptr, OPERAND *cur_op, ISZ_T *offset,
                        ISZ_T *lastoffset)
@@ -3602,6 +3577,7 @@ add_init_subzero_consts(DTYPE dtype, OPERAND *cur_op, ISZ_T *offset,
   }
   return cur_op;
 }
+#endif
 
 /* Allocate an LL_ABI_Info object with room for nargs arguments. */
 LL_ABI_Info *

@@ -138,6 +138,7 @@ mr_init()
 
 }
 
+#ifdef FLANG_MACHREG_UNUSED
 static int
 mr_isxmm(int rtype)
 {
@@ -148,6 +149,7 @@ mr_isxmm(int rtype)
 #endif
   return (reg[rtype].mach_reg->Class == 'x');
 }
+#endif
 
 void
 mr_reset_numglobals(int reduce_by)
@@ -254,12 +256,14 @@ mr_end()
 
 }
 
+#ifdef FLANG_MACHREG_UNUSED
 void
 static mr_reset_fpregs()
 {
   mach_reg[1].next_global = mach_reg[1].first_global;
   mach_reg[2].next_global = mach_reg[2].first_global;
 }
+#endif
 
 /** \brief Initialize for scanning the entire machine register set used for
  *  rtype.
@@ -337,6 +341,7 @@ int _mr_getnext(int rtype)
   return mreg;
 }
 
+#ifdef FLANG_MACHREG_UNUSED
 /*  RGSET functions   */
 static void
 mr_init_rgset()
@@ -363,6 +368,7 @@ mr_init_rgset()
     bihx = BIH_NEXT(bihx);
   }
 }
+#endif
 
 /** \brief allocate and initialize a RGSET entry.  */
 int
@@ -383,6 +389,7 @@ mr_get_rgset()
   return rgset;
 }
 
+#ifdef FLANG_MACHREG_UNUSED
 static void
 mr_dmp_rgset(int rgseti)
 {
@@ -432,3 +439,4 @@ mr_bset_xmm_rgset(int ili, int bih)
     }
   }
 }
+#endif

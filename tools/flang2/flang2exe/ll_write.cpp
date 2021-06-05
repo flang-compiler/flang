@@ -1179,6 +1179,7 @@ static const MDTemplate Tmpl_DIExpression[] = {
   { "DIExpression", TF, 0 }
 };
 
+#ifdef FLANG_DEBUGINFO_UNUSED
 static const MDTemplate Tmpl_DILocalVariable[] = {
   { "DILocalVariable", TF, 9 },
   { "tag",                      DWTagField },
@@ -1191,6 +1192,7 @@ static const MDTemplate Tmpl_DILocalVariable[] = {
   { "flags",                    UnsignedField }, /* TBD: DIFlag... */
   { "inlinedAt",                UnsignedField }  /* TBD: NodeField */
 };
+#endif
 
 static const MDTemplate Tmpl_DILocalVariable_38[] = {
   { "DILocalVariable", TF, 8 },

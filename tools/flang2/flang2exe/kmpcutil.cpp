@@ -11,7 +11,9 @@
  *
  */
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE // for vasprintf()
+#endif
 #include <stdio.h>
 #undef _GNU_SOURCE
 #include "kmpcutil.h"
@@ -420,6 +422,7 @@ ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo, ISZ_T sz)
   return dtype;
 }
 
+#ifdef FLANG_KMPC_UNUSED
 /*
  * struct ident { i32, i32, i32, i32, char* }
  */
@@ -437,6 +440,7 @@ ll_make_kmpc_ident_type(void)
         ll_make_kmpc_struct_type(5, "_pgi_kmpc_ident_t", meminfo, 0);
   return kmpc_ident_dtype;
 }
+#endif
 
 /* Name 'nm' should be formatted and passed in: use build_kmpc_api_name() */
 static SPTR
@@ -475,6 +479,9 @@ ll_make_kmpc_proto(const char *nm, int kmpc_api, int argc, DTYPE *args)
   return func_sptr;
 }
 
+// TODO: libomp may assume that a non-null ident_t pointer; we should allocate
+// this as a static global and actually pass its address to runtime calls.
+#ifdef FLANG_KMPC_UNUSED
 /* Argument instance representing location information
  * This creates a struct ptr instance (for use as an argument).
  * src/kmp.h:
@@ -510,6 +517,7 @@ make_kmpc_ident_arg(void)
 
   return ad_acon(ident, 0);
 }
+#endif
 
 /* The return value is allocated and maintained locally, please do not call
  * 'free' on this, bad things will probably happen.
