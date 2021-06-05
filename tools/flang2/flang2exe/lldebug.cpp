@@ -998,6 +998,7 @@ lldbg_create_aggregate_members_type(LL_DebugInfo *db, SPTR first, int findex,
   }
 }
 
+#ifdef FLANG_DEBUGINFO_UNUSED
 static bool
 map_sptr_to_mdnode(LL_MDRef *mdnode, LL_DebugInfo *db, int sptr)
 {
@@ -1013,6 +1014,7 @@ map_sptr_to_mdnode(LL_MDRef *mdnode, LL_DebugInfo *db, int sptr)
   }
   return false;
 }
+#endif
 
 /**
    \brief Fill in extra data about a symbol
@@ -1043,6 +1045,7 @@ get_extra_info_for_sptr(const char **display_name, LL_MDRef *scope_mdnode,
 
 }
 
+#ifdef FLANG_DEBUGINFO_UNUSED
 static LL_MDRef
 lldbg_create_enumeration_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
                                      char *name, LL_MDRef fileref, int line,
@@ -1096,6 +1099,7 @@ lldbg_create_enumerator_list(LL_DebugInfo *db, int element)
 
   return llmd_finish(mdb);
 }
+#endif
 
 static LL_MDRef
 lldbg_create_vector_type_mdnode(LL_DebugInfo *db, LL_MDRef context, ISZ_T sz,
@@ -1126,6 +1130,7 @@ lldbg_create_vector_type_mdnode(LL_DebugInfo *db, LL_MDRef context, ISZ_T sz,
   return llmd_finish(mdb);
 }
 
+#ifdef FLANG_DEBUGINFO_UNUSED
 static LL_MDRef
 lldbg_create_derived_type_mdnode(LL_DebugInfo *db, int dw_tag, LL_MDRef context,
                                  char *name, LL_MDRef fileref, int line,
@@ -1155,6 +1160,7 @@ lldbg_create_derived_type_mdnode(LL_DebugInfo *db, int dw_tag, LL_MDRef context,
 
   return llmd_finish(mdb);
 }
+#endif
 
 static LL_MDRef
 lldbg_create_subroutine_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
@@ -2649,6 +2655,7 @@ lldbg_emit_modified_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex)
                          false, false, false);
 }
 
+#ifdef FLANG_DEBUGINFO_UNUSED
 static LL_MDRef
 lldbg_emit_accel_cmblk_type(LL_DebugInfo *db, int cmblk, int findex)
 {
@@ -2698,6 +2705,7 @@ lldbg_emit_accel_function_static_type(LL_DebugInfo *db, SPTR first, int findex)
                                       members_mdnode, type_mdnode);
   return type_mdnode;
 }
+#endif
 
 INLINE static void
 dtype_array_check_set(LL_DebugInfo *db, unsigned at, LL_MDRef md)
@@ -3439,6 +3447,7 @@ lldbg_emit_global_variable(LL_DebugInfo *db, SPTR sptr, ISZ_T off, int findex,
   db->scope_is_global = savedScopeIsGlobal;
 }
 
+#ifdef FLANG_ACCEL
 static char *
 lldbg_get_addrspace_suffix(int addrspace)
 {
@@ -3451,6 +3460,7 @@ lldbg_get_addrspace_suffix(int addrspace)
     return "_gen";
   }
 }
+#endif
 
 static void
 lldbg_cancel_value_call(LL_DebugInfo *db, SPTR sptr)

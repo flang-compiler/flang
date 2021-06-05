@@ -625,7 +625,9 @@ create_atomic_capture_seq(int update_ili, int read_ili, int capture_first)
   ILI_OP st_opcode, arg_opcode;
   int store_pt, store_nme, arg, garg;
   int store_symbol;
+#if defined(TARGET_X8664)
   int argreg = 0;
+#endif
   int update_operand;
   int load_pt1, load_pt2;
   int op1, op2, opc;
@@ -817,7 +819,9 @@ create_atomic_write_seq(int store_ili)
   int store_pt, store_nme;
   ILI_OP arg_opcode;
   ILI_OP intarg_opcode, floatarg_opcode, doublearg_opcode, longarg_opcode;
+#if defined(TARGET_X8664)
   int argreg;
+#endif
   int arg_dt = 0;
 
 #if defined(TARGET_X8664)
@@ -2026,6 +2030,7 @@ typedef struct auto_temp {
   int expr; /**< An ilix for a store into a temporary, or ilix of a constant. */
 } auto_temp;
 
+#ifdef PD_IS_ATOMIC
 /** \brief Generate ILI so that value of an ILI expression can be retrieved
    later.
 
@@ -2073,6 +2078,7 @@ auto_retrieve(auto_temp *temp)
     return temp->expr;
   }
 }
+#endif
 
 #if TARGET_GNU_ATOMICS
 #define MAX_ATOMIC_ARGS 6
@@ -2394,6 +2400,7 @@ ll_make_atomic_compare_xchg(int size_ili, int lhs, int expected,
   return result;
 }
 
+#ifdef FLANG2_EXPATOMICS_UNUSED
 static int
 ll_make_atomic_xchg(int lhs, int expected, int desired, int mem_order)
 {
@@ -2415,6 +2422,7 @@ ll_make_atomic_xchg(int lhs, int expected, int desired, int mem_order)
 
   return result;
 }
+#endif
 
 static int
 _exp_mp_atomic_read(int stc, DTYPE dtype, int* opnd, int* nme)

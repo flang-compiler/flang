@@ -641,7 +641,9 @@ static int findtok(char *, int);
 static int macro_recur_check(PPSYM *);
 static int predarg(char *);
 static void predicate(char *);
+#ifdef ATT_PREDICATE
 static void add_predicate(char *);
+#endif
 static ptrdiff_t realloc_linebuf(ptrdiff_t);
 static int nextok(char *, int);
 static int _nextline(void);
@@ -649,7 +651,9 @@ static int mac_push(PPSYM *, char *);
 static void popstack(void);
 static void stash_paths(char *);
 static void dumpval(char *, FILE *);
+#ifdef DUMPTAB
 static void dumptab(void);
+#endif
 static void dumpmac(PPSYM *sp);
 static void putmac(PPSYM *);
 static void putunmac(char *);
@@ -1969,6 +1973,7 @@ doincl(LOGICAL include_next)
 
 }
 
+#ifdef FLANG1_ACCPP_UNUSED
 /** \brief
  * Check if fullname is a file in a standard include directory.
  */
@@ -2011,6 +2016,7 @@ is_in_stdinc(const char *fullname)
   }
   return FALSE;
 }
+#endif
 
 /** \brief
  * Add fullname to the list of include files in incllist.
@@ -2144,6 +2150,7 @@ found:
   add_to_incllist(fullname);
 }
 
+#ifdef FLANG1_ACCPP_UNUSED
 static void
 preincl(char *prename)
 {
@@ -2220,6 +2227,7 @@ found:
   pr_line(fullname, 1, inclstack[inclev].from_stdinc);
   add_to_incllist(fullname);
 } /* preincl */
+#endif
 
 static void
 domodule(void)
@@ -2936,6 +2944,7 @@ dumpmac(PPSYM *sp)
   dumpval(&deftab[sp->value], stderr);
 }
 
+#ifdef DUMPTAB
 static void
 dumptab(void)
 {
@@ -2946,6 +2955,7 @@ dumptab(void)
     dumpmac(hashrec + i);
   }
 }
+#endif
 
 /*
  * output macro value in human readable form
@@ -4889,6 +4899,7 @@ static char *predtab[NPRED];
 static int prednum = 1;
 static int pred = 0;
 
+#ifdef ATT_PREDICATE
 static void
 add_predicate(char *str)
 {
@@ -4918,6 +4929,7 @@ add_predicate(char *str)
     *q = 0;
   }
 }
+#endif
 
 static void
 predicate(char *tokval)

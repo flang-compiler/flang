@@ -318,7 +318,6 @@ static ComplexResultList_t complexResultList;
 
 /* ---  static prototypes (exported prototypes belong in cgllvm.h) --- */
 
-static void gen_store_instr(SPTR, TMPS *, LL_Type *);
 static void fma_rewrite(INSTR_LIST *isns);
 static void undo_recip_div(INSTR_LIST *isns);
 static char *set_local_sname(int sptr, const char *name);
@@ -326,7 +325,9 @@ static int is_special_return_symbol(int sptr);
 static bool cgmain_init_call(int);
 static OPERAND *gen_call_llvm_intrinsic(const char *, OPERAND *, LL_Type *,
                                         INSTR_LIST *, LL_InstrName);
+#ifdef FLANG_GEN_LLVM_ATOMIC_INTRINSICS
 static OPERAND *gen_llvm_atomicrmw_instruction(int, int, OPERAND *, DTYPE);
+#endif
 static void gen_llvm_fence_instruction(int ilix);
 static const char *get_atomicrmw_opname(LL_InstrListFlags);
 static const char *get_atomic_memory_order_name(int);
@@ -337,17 +338,19 @@ static SPTR get_call_sptr(int);
 static LL_Type *make_function_type_from_args(LL_Type *return_type,
                                              OPERAND *first_arg_op,
                                              bool is_varargs);
-static bool match_prototypes(LL_Type *ty1, LL_Type *ty2);
 static MATCH_Kind match_types(LL_Type *, LL_Type *);
+#ifdef FLANG2_CGMAIN_UNUSED
 static int decimal_value_from_oct(int, int, int);
+#endif
 static char *vect_llvm_intrinsic_name(int);
-static const char *vect_power_intrinsic_name(int);
 static void build_unused_global_define_from_params(void);
 static void print_function_signature(int func_sptr, const char *fn_name,
                                      LL_ABI_Info *abi, bool print_arg_names);
 static void write_global_and_static_defines(void);
 static char *gen_constant(SPTR, DTYPE, INT, INT, int);
+#ifdef FLANG2_CGMAIN_UNUSED
 static char *process_string(char *, int, int);
+#endif
 static void make_stmt(STMT_Type, int, bool, SPTR next_bih_label, int ilt);
 static INSTR_LIST *make_instr(LL_InstrName);
 static INSTR_LIST *gen_instr(LL_InstrName, TMPS *, LL_Type *, OPERAND *);
@@ -360,10 +363,15 @@ static INSTR_LIST *gen_switch(int ilix);
 static OPERAND *gen_unary_expr(int, LL_InstrName);
 static OPERAND *gen_binary_vexpr(int, int, int, int);
 static OPERAND *gen_binary_expr(int, int);
-static OPERAND *gen_va_start(int);
 static OPERAND *gen_va_arg(int);
+#ifdef FLANG2_CGMAIN_UNUSED
+/* FIXME: gen_va_arg is used, but gen_va_start/gen_va_end are not. */
+static OPERAND *gen_va_start(int);
 static OPERAND *gen_va_end(int);
+#endif
+#ifdef TARGET_POWER
 static OPERAND *gen_gep_index(OPERAND *, LL_Type *, int);
+#endif
 static OPERAND *gen_insert_value(OPERAND *aggr, OPERAND *elem, unsigned index);
 static char *gen_vconstant(const char *, int, DTYPE, int);
 static LL_Type *make_vtype(DTYPE, int);
@@ -386,8 +394,10 @@ static OPERAND *make_load(int, OPERAND *, LL_Type *, MSZ, unsigned flags);
 static OPERAND *convert_operand(OPERAND *convert_op, LL_Type *rslt_type,
                                 LL_InstrName convert_instruction);
 static OPERAND *convert_float_size(OPERAND *, LL_Type *);
+#ifdef FLANG2_CGMAIN_UNUSED
 static int follow_sptr_hashlk(SPTR sptr);
 static DTYPE follow_ptr_dtype(DTYPE);
+#endif
 static bool same_op(OPERAND *, OPERAND *);
 static void write_instructions(LL_Module *);
 static LLIntegerConditionCodes convert_to_llvm_intcc(CC_RELATION cc);
@@ -405,8 +415,12 @@ static bool exprjump(ILI_OP);
 static OPERAND *gen_resized_vect(OPERAND *, int, int);
 static bool is_blockaddr_store(int, int, int);
 static SPTR process_blockaddr_sptr(int, int);
+#if defined(TARGET_LLVM_X8664)
 static bool is_256_or_512_bit_math_intrinsic(int);
+#endif
+#ifdef FLANG2_CGMAIN_UNUSED
 static bool have_masked_intrinsic(int);
+#endif
 static OPERAND *make_bitcast(OPERAND *, LL_Type *);
 static void update_llvm_sym_arrays(void);
 static bool need_debug_info(SPTR sptr);
@@ -742,6 +756,7 @@ on_prescan_complex_list(int ilix)
   return false;
 }
 
+#ifdef LONG_DOUBLE_FLOAT128
 static void
 add_prescan_complex_list(int ilix)
 {
@@ -758,6 +773,7 @@ add_prescan_complex_list(int ilix)
   }
   complexResultList.list[complexResultList.entries++] = ilix;
 }
+#endif
 
 INLINE static void
 clear_prescan_complex_list(void)
@@ -1982,6 +1998,7 @@ gen_llvm_instr(int ilix, ILI_OP opc, LL_Type *return_type,
   return operand;
 }
 
+#ifdef FLANG_GEN_LLVM_ATOMIC_INTRINSICS
 static OPERAND *
 gen_llvm_atomic_intrinsic_for_builtin(int pdnum, int sptr, int ilix,
                                       INSTR_LIST *Call_Instr)
@@ -2048,22 +2065,7 @@ gen_llvm_atomic_intrinsic_for_builtin(int pdnum, int sptr, int ilix,
 
   return gen_llvm_atomicrmw_instruction(ilix, pdnum, operand, return_dtype);
 }
-
-static OPERAND *
-gen_llvm_intrinsic_for_builtin(int sptr, int arg_ili, INSTR_LIST *Call_Instr)
-{
-  OPERAND *operand;
-  int call_sptr = sptr;
-  int call_dtype;
-  int return_dtype;
-  int params, param_dtype;
-  int pd_sym;
-  LL_Type *return_type;
-  char routine_name[MAXIDLEN];
-  int base_dtype;
-  int first_arg_ili;
-  return operand;
-}
+#endif
 
 static OPERAND *
 gen_call_vminmax_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
@@ -3506,19 +3508,6 @@ gen_insert_value(OPERAND *aggr, OPERAND *elem, unsigned index)
                        false);
 }
 
-static void
-gen_store_instr(SPTR sptr_lhs, TMPS *tmp, LL_Type *tmp_type)
-{
-  INSTR_LIST *Curr_Instr;
-  OPERAND *addr = make_operand();
-
-  addr->val.sptr = sptr_lhs;
-  addr->ot_type = OT_VAR;
-  addr->ll_type = make_ptr_lltype(make_lltype_from_dtype(DTYPEG(sptr_lhs)));
-  Curr_Instr = mk_store_instr(make_tmp_op(tmp_type, tmp), addr);
-  set_llvm_sptr_name(addr);
-}
-
 /**
    \brief Construct an \c INSTR_LIST object
 
@@ -4203,6 +4192,8 @@ end_make_stmt:;
   DBGTRACEOUT("")
 } /* make_stmt */
 
+// FIXME: gen_va_arg is used, but gen_va_start is never used.
+#ifdef FLANG2_CGMAIN_UNUSED
 static OPERAND *
 gen_va_start(int ilix)
 {
@@ -4243,6 +4234,7 @@ gen_va_start(int ilix)
 
   return call_op;
 } /* gen_va_start */
+#endif
 
 /**
    \brief Create a variable of type \p dtype
@@ -4414,6 +4406,8 @@ gen_va_arg(int ilix)
   return result_op;
 } /* gen_va_arg */
 
+// FIXME: gen_va_arg is used, but gen_va_end is never used.
+#ifdef FLANG2_CGMAIN_UNUSED
 static OPERAND *
 gen_va_end(int ilix)
 {
@@ -4454,6 +4448,7 @@ gen_va_end(int ilix)
 
   return call_op;
 } /* gen_va_end */
+#endif
 
 OPERAND *
 gen_call_to_builtin(int ilix, char *fname, OPERAND *params,
@@ -4540,12 +4535,14 @@ get_atomic_memory_order_name(int instr_flags)
   }
 }
 
+#ifdef FLANG_GEN_LLVM_ATOMIC_INTRINSICS
 static OPERAND *
 gen_llvm_atomicrmw_instruction(int ilix, int pdnum, OPERAND *params,
                                DTYPE return_dtype)
 {
-  return NULL;
+  return NULL; // TODO?
 }
+#endif
 
 static OPERAND *
 gen_call_llvm_intrinsic(const char *fname, OPERAND *params,
@@ -5242,6 +5239,7 @@ gen_insert_vector(OPERAND *vop, OPERAND *sop, int idx)
  * So in LLVM it will tranlate into:
  * %0 = extractelement <<sz> x <ty>> <vop>, i32 <idx>
  */
+#if defined(TARGET_LLVM_X8632) || defined(TARGET_LLVM_X8664)
 static OPERAND *
 gen_extract_vector(OPERAND *vop, int idx)
 {
@@ -5259,6 +5257,7 @@ gen_extract_vector(OPERAND *vop, int idx)
 
   return operand;
 }
+#endif
 
 /**
    \brief Create a new vector
@@ -5353,6 +5352,7 @@ gen_scalar_to_vector(int ilix, LL_Type *ll_vecttype)
   return gen_scalar_to_vector_helper(ilix, from_ili, ll_vecttype);
 }
 
+#if defined(TARGET_LLVM_X8632) || defined(TARGET_LLVM_X8664)
 static OPERAND *
 gen_scalar_to_vector_no_shuffle(int ilix, LL_Type *ll_vecttype)
 {
@@ -5362,6 +5362,7 @@ gen_scalar_to_vector_no_shuffle(int ilix, LL_Type *ll_vecttype)
   OPERAND *operand = gen_insert_vector(undefop, arg, 0);
   return operand;
 }
+#endif
 
 INLINE static OPERAND *
 gen_temp_to_vector(int from_ili, LL_Type *ll_vecttype)
@@ -5377,11 +5378,13 @@ gen_gep_op(int ilix, OPERAND *base_op, LL_Type *llt, OPERAND *index_op)
   return ad_csed_instr(I_GEP, ilix, llt, base_op, InstrListFlagsNull, true);
 }
 
+#ifdef TARGET_POWER
 INLINE static OPERAND *
 gen_gep_index(OPERAND *base_op, LL_Type *llt, int index)
 {
   return gen_gep_op(0, base_op, llt, make_constval32_op(index));
 }
+#endif
 
 void
 insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode, SPTR sptr, LL_Type *type)
@@ -5720,6 +5723,7 @@ get_mac_name(int *swap, int *fneg, int ilix, int matches, int l, int r)
 }
 #endif
 
+#ifndef USE_FMA_EXTENSIONS
 /**
    \brief Put the candidate in proper canonical form
 
@@ -5802,6 +5806,7 @@ fused_multiply_add_canonical_form(INSTR_LIST *addInsn, int matches, ILI_OP opc,
     *l = newMul; /* l ::= (n * b) = (-a * b) */
   }
 }
+#endif // !USE_FMA_EXTENSIONS
 
 /**
    \brief Does this multiply op have more than one use?
@@ -7377,6 +7382,7 @@ gen_call_expr(int ilix, DTYPE ret_dtype, INSTR_LIST *call_instr, int call_sptr)
   return result_op;
 } /* gen_call_expr */
 
+#if defined(TARGET_LLVM_X8664)
 static bool
 is_256_or_512_bit_math_intrinsic(int sptr)
 {
@@ -7505,7 +7511,9 @@ is_256_or_512_bit_math_intrinsic(int sptr)
 
   return (!strcmp(sptrName, "256")); /* strcmp: check for trailing garbage */
 }
+#endif
 
+#ifdef FLANG2_CGMAIN_UNUSED
 static bool
 have_masked_intrinsic(int ilix)
 {
@@ -7561,6 +7569,7 @@ have_masked_intrinsic(int ilix)
   }
   return false;
 }
+#endif
 
 static INSTR_LIST *Void_Call_Instr = NULL;
 
@@ -9248,7 +9257,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_VRSQRT: {
     int vsize;
+#if defined(TARGET_LLVM_POWER) || defined(TARGET_LLVM_X8632) || defined(TARGET_LLVM_X8664)
     const int arg = ILI_OPND(ilix, 1);
+#endif
     dtype = ili_get_vect_dtype(ilix); /* get the vector dtype */
     intrinsic_type = make_lltype_from_dtype(dtype);
     assert(TY_ISVECT(DTY(dtype)), "gen_llvm_expr(): expected vect type",
@@ -9285,7 +9296,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   } break;
   case IL_VRCP: {
     int vsize;
+#if defined(TARGET_LLVM_POWER) || defined(TARGET_LLVM_X8632) || defined(TARGET_LLVM_X8664)
     const int arg = ILI_OPND(ilix, 1);
+#endif
     dtype = ili_get_vect_dtype(ilix); /* get the vector dtype */
     intrinsic_type = make_lltype_from_dtype(dtype);
     assert(TY_ISVECT(DTY(dtype)), "gen_llvm_expr(): expected vect type",
@@ -10459,6 +10472,7 @@ get_intrinsic_call_ops(const char *name, LL_Type *return_type, OPERAND *args)
   return op;
 }
 
+#ifdef FLANG2_CGMAIN_UNUSED
 #define OCTVAL(v) ((v >= 48) && (v <= 55))
 
 static int
@@ -10623,6 +10637,7 @@ process_string(char *name, int pad, int string_length)
 
   return new_name;
 } /* process_string */
+#endif
 
 /**
     \brief Get string name for a struct type
@@ -11477,6 +11492,7 @@ process_sptr(SPTR sptr)
   process_sptr_offset(sptr, variable_offset_in_aggregate(sptr, 0));
 }
 
+#ifdef FLANG2_CGMAIN_UNUSED
 /* ipa sometimes makes additional symbol entries for external variables (I have
  * noticed this mainly on globally-defined anonymous structures). However, since
  * LLVM requires all references to be declared within the file that they are
@@ -11509,21 +11525,12 @@ follow_ptr_dtype(DTYPE dtype)
     dty = DTySeqTyElement(dty);
   return dty;
 }
+#endif
 
 bool
 strict_match(LL_Type *ty1, LL_Type *ty2)
 {
   return (ty1 == ty2);
-}
-
-/*
- * both ty1 & ty2 are of kind LLT_FUNCTION
- * check that protoypes are matchings
- */
-INLINE static bool
-match_prototypes(LL_Type *ty1, LL_Type *ty2)
-{
-  return strict_match(ty1, ty2);
 }
 
 /**
@@ -12704,6 +12711,7 @@ gen_constant(SPTR sptr, DTYPE tdtype, INT conval0, INT conval1, int flags)
   return constant;
 } /* gen_constant */
 
+#ifdef FLANG2_CGMAIN_UNUSED
 static char *
 add_tmp_buf_list_item(TEMP_BUF_LIST **tempbuflist_ptr, int sz)
 {
@@ -12727,6 +12735,7 @@ add_tmp_buf_list_item(TEMP_BUF_LIST **tempbuflist_ptr, int sz)
   *last->buf.buffer = '\0';
   return last->buf.buffer;
 }
+#endif
 
 #ifdef OMP_OFFLOAD_LLVM
 INLINE static bool

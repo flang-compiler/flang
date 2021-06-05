@@ -66,8 +66,10 @@ static void shape_comm(int cstd, int fstd, int forall);
 static int sequentialize_mask_call(int forall, int stdnext);
 static int sequentialize_stmt_call(int forall, int stdnext);
 static int sequentialize_call(int cstd, int stdnext, int forall);
+#ifdef FLANG_COMM_UNUSED
 static int gen_shape_comm(int arg, int forall, int std, int nomask);
 static int reference_for_pure_temp(int sptr, int lhs, int arg, int forall);
+#endif
 static void init_pertbl(void);
 static void free_pertbl(void);
 static int get_pertbl(void);
@@ -77,9 +79,11 @@ static void init_opt_tables(void);
 static LOGICAL is_scatter(int std);
 static void opt_overlap(void);
 static int insert_forall_comm(int ast);
+#ifdef FLANG_COMM_UNUSED
 static int construct_list_for_pure(int arg, int mask, int list);
 static LOGICAL is_pure_temp_too_large(int list, int arg);
 static int handle_pure_temp_too_large(int expr, int std);
+#endif
 static int forall_2_sec(int a, int forall);
 static int make_sec_ast(int arr, int std, int allocstd, int sectflag);
 static int temp_copy_section(int std, int forall, int lhs, int rhs, int dty,
@@ -3338,6 +3342,7 @@ shape_comm(int cstd, int fstd, int forall)
   }
 }
 
+#ifdef FLANG_COMM_UNUSED
 /* The function of this routine is to handle communication of arg.
  * This arg is from PURE function and it has shape. It will try to
  * bring to lhs of forall. Distribution of TMP will be based on LHS.
@@ -3355,7 +3360,6 @@ shape_comm(int cstd, int fstd, int forall)
  * is_pure_temp_too_large() decides whether tmp will have more dimension than
  * arg. if it is, tmp will be replication of arg.
  */
-
 static int
 gen_shape_comm(int arg, int forall, int std, int nomask)
 {
@@ -3636,6 +3640,7 @@ handle_pure_temp_too_large(int expr, int std)
     return expr;
   }
 }
+#endif
 
 static void
 insert_call_comm(int std, int forall)
