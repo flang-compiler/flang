@@ -470,7 +470,7 @@ __f90io_unf_read(int type,    /* Type of data */
 unf_read_do_resid:
   resid = 0;
   if (!Fcb->binary) {
-    if (unf_rec.u.s.bytecnt + nbytes > rec_len) {
+    if (unf_rec.u.s.bytecnt + nbytes > (size_t)rec_len) {
       /* Not enough data in the current record to satisfy the request.
          If data continues in the next record, get the residual there. */
       if (!continued) {
@@ -488,7 +488,7 @@ unf_read_do_resid:
 
   /* read directly into item if possible  (consecutive items) */
 
-  if ((stride == 0) || (stride == item_length)) {
+  if ((stride == 0) || ((__CLEN_T)stride == item_length)) {
     unf_rec.u.s.bytecnt += nbytes;
     if (Fcb->asy_rw) { /* XXXXXX XX */
       if (Fio_asy_read(Fcb->asyptr, item, nbytes) == -1) {
@@ -547,7 +547,7 @@ unf_read_do_resid:
     unf_rec.u.s.bytecnt += read_length;
     nbytes -= read_length;
     offset += read_length;
-    if (offset == item_length) {
+    if ((__CLEN_T)offset == item_length) {
       item += stride;
       offset = 0;
     }
@@ -773,7 +773,7 @@ __f90io_unf_write(int type,   /* data type of data (see above). */
                   __CLEN_T item_length)
 {
   long i;        /* loop index */
-  int j;         /* loop index */
+  __CLEN_T j;    /* loop index */
   size_t nbytes; /* # of bytes to write for this call */
   int ret_val;
 
@@ -795,12 +795,12 @@ __f90io_unf_write(int type,   /* data type of data (see above). */
   io_transfer = TRUE;
 
   nbytes = (size_t)count * item_length;
-  if (Fcb->acc == FIO_DIRECT && unf_rec.u.s.bytecnt + nbytes > rec_len) {
+  if (Fcb->acc == FIO_DIRECT && unf_rec.u.s.bytecnt + nbytes > (size_t)rec_len) {
     ret_val = __fortio_error(FIO_ETOOBIG);
     goto unf_write_err;
   }
 
-  if (item_length == stride || count == 1) {
+  if (item_length == (size_t)stride || count == 1) {
     /*  optimize if we have consecutive items  */
     size_t resid; /* # of bytes spilled to next record */
 
@@ -1457,7 +1457,7 @@ __f90io_usw_read(int type,   /* Type of data */
 usw_read_do_resid:
   resid = 0;
   if (!Fcb->binary) {
-    if (unf_rec.u.s.bytecnt + nbytes > rec_len) {
+    if (unf_rec.u.s.bytecnt + nbytes > (size_t)rec_len) {
       /* Not enough data in the current record to satisfy the request.
          If data continues in the next record, get the residual there. */
       if (!continued) {
@@ -1475,7 +1475,7 @@ usw_read_do_resid:
 
   /* read directly into item if possible  (consecutive items) */
 
-  if (stride == item_length) {
+  if ((__CLEN_T)stride == item_length) {
     if (__io_fread(item_ptr, nbytes, 1, Fcb->fp) != 1) {
       if (__io_feof(Fcb->fp))
         ret_val = __fortio_error(FIO_EEOF);
@@ -1529,7 +1529,7 @@ usw_read_do_resid:
     unf_rec.u.s.bytecnt += read_length;
     nbytes -= read_length;
     offset += read_length;
-    if (offset == item_length) {
+    if ((__CLEN_T)offset == item_length) {
         __fortio_swap_bytes(item_ptr, type, 1);
       item += stride;
       offset = 0;
@@ -1687,7 +1687,7 @@ __f90io_usw_write(int type,   /* data type of data (see above). */
                   __CLEN_T item_length)
 {
   long i;        /* loop index */
-  int j;         /* loop index */
+  __CLEN_T j;    /* loop index */
   size_t nbytes; /* # of bytes to write for this call */
   int bs_tmp;
   int ret_val;
@@ -1710,12 +1710,12 @@ __f90io_usw_write(int type,   /* data type of data (see above). */
 
   nbytes = (size_t)count * item_length;
 
-  if (Fcb->acc == FIO_DIRECT && unf_rec.u.s.bytecnt + nbytes > rec_len) {
+  if (Fcb->acc == FIO_DIRECT && unf_rec.u.s.bytecnt + nbytes > (size_t)rec_len) {
     ret_val = __fortio_error(FIO_ETOOBIG);
     goto unf_write_err;
   }
 
-  if (item_length == stride) {
+  if (item_length == (__CLEN_T)stride) {
     /*  optimize if we have consecutive items  */
     size_t resid;
 

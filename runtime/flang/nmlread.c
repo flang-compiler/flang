@@ -78,7 +78,7 @@ static int vrf_cur;
 
 static FIO_FCB *f;
 static bool accessed; /* file has been read */
-static int byte_cnt;  /* number of bytes read */
+static unsigned int byte_cnt;  /* number of bytes read */
 static int n_irecs;   /* number of internal file records */
 static bool internal_file;
 static int rec_len;

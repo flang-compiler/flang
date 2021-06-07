@@ -30,8 +30,8 @@ void
 ENTRY(GETARGA, getarga)(__INT_T *n, DCHAR(arg) DCLEN64(arg))
 {
   char *p;
-  __CLEN_T i = *n, len = CLEN(arg);
-  int argc;
+  __INT_T i = *n, len = CLEN(arg);
+  __INT_T argc;
   char **argv;
 
   argc = __io_get_argc();
