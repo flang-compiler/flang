@@ -93,7 +93,7 @@ dumpregs(void *mc)
  *  fault_addr 0x0000000000000000                    0      ........
  */
 
-  for (i = 0 ; i < sizeof xregs / sizeof *xregs ; ++i) {
+  for (i = 0 ; (size_t)i < sizeof(xregs) / sizeof(*xregs); ++i) {
     fprintf(__io_stderr(), "%-8s 0x%016" PRIx64 " %20" PRId64 "\t",
       xregs[i].s, regs[xregs[i].ro], regs[xregs[i].ro]);
     pc = (char *)&(regs[xregs[i].ro]);

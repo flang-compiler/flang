@@ -1713,7 +1713,7 @@ static bool call_format_double(int *result, int width, int format_char,
     char *malloced_buffer = NULL;
     char *pos;
     memset(stack_buffer, ' ', 256);
-    if (width > sizeof stack_buffer &&
+    if ((size_t)width > sizeof(stack_buffer) &&
         !(emit = malloced_buffer = malloc(width))) {
       *result = __fortio_error(FIO_ENOMEM);
     } else {
@@ -2411,7 +2411,7 @@ fw_Bwritenum(char *item, int type, __CLEN_T item_length)
 {
   char *p;
   G *g = gbl;
-  int w, m, k, offset;
+  __CLEN_T m, w, k, offset;
 
   OZbase = 2;
 
@@ -2662,19 +2662,19 @@ fw_write_record(void)
     FIO_FCB *f = g->fcb;
 
     if (f->acc == FIO_DIRECT) {
-      if (FWRITE(g->rec_buff, 1, g->rec_len, f->fp) != (int)g->rec_len)
+      if ((long)FWRITE(g->rec_buff, 1, g->rec_len, f->fp) != g->rec_len)
         return __io_errno();
     } else { /* sequential write */
       if (g->nonadvance) {
         if (g->curr_pos >= g->max_pos) {
           g->max_pos = g->curr_pos;
           fw_check_size(g->max_pos);
-          if (FWRITE(g->rec_buff, 1, g->max_pos, f->fp) != (int)g->max_pos)
+          if ((long)FWRITE(g->rec_buff, 1, g->max_pos, f->fp) != g->max_pos)
             return __io_errno();
         } else if (g->curr_pos < g->max_pos) {
           long len = g->max_pos - g->curr_pos;
 
-          if (FWRITE(g->rec_buff, 1, g->curr_pos, f->fp) != (int)g->curr_pos)
+          if ((long)FWRITE(g->rec_buff, 1, g->curr_pos, f->fp) != g->curr_pos)
             return __io_errno();
           g->fcb->skip = len;
           g->fcb->skip_buff = malloc(len);
@@ -2682,7 +2682,7 @@ fw_write_record(void)
         }
         f->nonadvance = TRUE; /* do it later */
       } else {
-        if (FWRITE(g->rec_buff, 1, g->max_pos, f->fp) != (int)g->max_pos)
+        if ((long)FWRITE(g->rec_buff, 1, g->max_pos, f->fp) != g->max_pos)
           return __io_errno();
         f->nonadvance = FALSE; /* do it now */
         if (!(g->suppress_crlf)) {

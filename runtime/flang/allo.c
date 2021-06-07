@@ -253,9 +253,9 @@ I8(__fort_alloc)(__INT_T nelem, dtype kind, size_t len, __STAT_T *stat,
   size_t ALN_MAXADJ = 4096;
 
 #define ALN_THRESH (ALN_MAXADJ / ALN_UNIT)
-  static int aln_n = 0;
+  static size_t aln_n = 0;
   static int env_checked = 0;
-  int myaln;
+  size_t myaln;
 
   sizeof_hdr = AUTOASZ;
 
@@ -413,9 +413,9 @@ I8(__alloc04)(__NELEM_T nelem, dtype kind, size_t len,
   size_t ALN_MAXADJ = 4096;
 
 #define ALN_THRESH (ALN_MAXADJ / ALN_UNIT)
-  static int aln_n = 0;
+  static size_t aln_n = 0;
   static int env_checked = 0;
-  int myaln;
+  size_t myaln;
 
   sizeof_hdr = AUTOASZ;
 
@@ -1715,8 +1715,8 @@ I8(__auto_alloc)(__NELEM_T nelem, __INT_T sz,
   char msg[80];
 
 #define AUTO_ALN_THRESH (AUTO_ALN_MAXADJ / AUTO_ALN_UNIT)
-  static int aln_n = 0;
-  int myaln;
+  static size_t aln_n = 0;
+  size_t myaln;
 
   if (nelem > 0)
     need = nelem * sz;

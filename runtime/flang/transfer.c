@@ -118,7 +118,7 @@ void ENTFTN(TRANSFER, transfer)(void *rb,         /* result base */
     ssize *= extent;
   }
   ptemp = (char *)&temp;
-  if (*ms > sizeof(temp)) {
+  if ((size_t)*ms > sizeof(temp)) {
     ptemp = __fort_malloc(*ms);
   }
   while (ssize > 0 && rsize > 0) {

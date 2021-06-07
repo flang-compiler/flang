@@ -232,7 +232,7 @@ __io_ispipe(void *f)
  * This is o.k. to be ANSI since pgcc is always used to compile it.
  */
 
-int
+size_t
 __io_fwrite(char *ptr, size_t size, size_t nitems, FILE *stream)
 {
 #ifdef BROKEN_FWRITE

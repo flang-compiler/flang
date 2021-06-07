@@ -69,7 +69,7 @@ ENTFTN(NULLIFY_CHARA, nullify_chara)(DCHAR(pb), F90_Desc *pd DCLEN64(pb))
   if (F90_TAG_G(pd) == __NONE)
     return; /* already disassociated */
   else if (F90_TAG_G(pd) == __DESC) {
-    if (F90_KIND_G(pd) != __STR || F90_LEN_G(pd) != CLEN(pb))
+    if (F90_KIND_G(pd) != __STR || (size_t)F90_LEN_G(pd) != CLEN(pb))
       __fort_abort("NULLIFY: pointer type or length error");
   } else if (!ISSCALAR(pd))
     __fort_abort("NULLIFY: invalid descriptor");
@@ -270,7 +270,7 @@ I8(ptr_assign)(char *pb, F90_Desc *pd, dtype kind, __CLEN_T len, char *tb,
     F90_TAG_P(pd, F90_TAG_G(td));
   }
 
-  if (F90_LEN_G(pd) != len) {
+  if ((__CLEN_T)F90_LEN_G(pd) != len) {
     /* final multiplier must be contiguous */
     F90_FLAGS_P(pd, (F90_FLAGS_G(pd) & ~__SEQUENTIAL_SECTION));
   }
@@ -456,7 +456,7 @@ ENTFTN(PTR_ASSIGN_CHARXA, ptr_assign_charxa)
 
   I8(ptr_assign)(CADR(pb), pd, kind, len, CADR(tb), td, *sectflag);
   if (!(F90_FLAGS_G(td) & __SEQUENTIAL_SECTION) ||
-      (targetlen && F90_LEN_G(pd) != *targetlen)) {
+      (targetlen && (__CLEN_T)F90_LEN_G(pd) != *targetlen)) {
     F90_FLAGS_P(pd, (F90_FLAGS_G(pd) & ~__SEQUENTIAL_SECTION));
   }
   F90_KIND_P(pd, *targettype);
@@ -796,7 +796,7 @@ I8(ptr_assn)(char *pb, F90_Desc *pd, dtype kind, __CLEN_T len, char *tb,
     F90_TAG_P(pd, F90_TAG_G(td));
   }
 
-  if (F90_LEN_G(pd) != len) {
+  if ((__CLEN_T)F90_LEN_G(pd) != len) {
     /* final multiplier must be contiguous */
     F90_FLAGS_P(pd, (F90_FLAGS_G(pd) & ~__SEQUENTIAL_SECTION));
   }
@@ -1048,7 +1048,7 @@ ENTFTN(PTR_ASSNXA, ptr_assnxa)
 
   res = I8(ptr_assn)(pb, pd, kind, len, tb, td, *sectflag);
   if (!(F90_FLAGS_G(td) & __SEQUENTIAL_SECTION) ||
-      (targetlen && F90_LEN_G(pd) != *targetlen)) {
+      (targetlen && (__CLEN_T)F90_LEN_G(pd) != *targetlen)) {
     F90_FLAGS_P(pd, (F90_FLAGS_G(pd) & ~__SEQUENTIAL_SECTION));
   }
   F90_KIND_P(pd, *targettype);
@@ -1092,7 +1092,7 @@ ENTFTN(PTR_ASSN_CHARXA,
 
   res = I8(ptr_assn)(CADR(pb), pd, kind, len, CADR(tb), td, *sectflag);
   if (!(F90_FLAGS_G(td) & __SEQUENTIAL_SECTION) ||
-      (targetlen && F90_LEN_G(pd) != *targetlen)) {
+      (targetlen && (__CLEN_T)F90_LEN_G(pd) != *targetlen)) {
     F90_FLAGS_P(pd, (F90_FLAGS_G(pd) & ~__SEQUENTIAL_SECTION));
   }
   F90_KIND_P(pd, *targettype);
@@ -1137,7 +1137,7 @@ ENTFTN(PTR_ASSN_DCHARXA, ptr_assn_dcharxa)
   */
   res = I8(ptr_assn)(CADR(pb), pd, kind, len, CADR(tb), td, *sectflag);
   if (!(F90_FLAGS_G(td) & __SEQUENTIAL_SECTION) ||
-      (targetlen && F90_LEN_G(pd) != *targetlen)) {
+      (targetlen && (__CLEN_T)F90_LEN_G(pd) != *targetlen)) {
     F90_FLAGS_P(pd, (F90_FLAGS_G(pd) & ~__SEQUENTIAL_SECTION));
   }
   F90_KIND_P(pd, *targettype);

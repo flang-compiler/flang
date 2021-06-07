@@ -25,11 +25,7 @@ __fort_bcopysl(char *to, char *fr, size_t cnt, size_t tostr, size_t frstr,
 {
   size_t i, j;
   unsigned long n;
-#if !defined(WIN64)
-  long k;
-#else
-  long long k;
-#endif
+  size_t k;
 
   if (tostr == 1 && frstr == 1) {
     __fort_bcopy(to, fr, cnt * len);

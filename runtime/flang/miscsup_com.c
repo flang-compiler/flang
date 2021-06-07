@@ -2831,7 +2831,8 @@ __CLEN_T
 ENTF90(REPEATA, repeata)
 (DCHAR(res), DCHAR(expr), void *ncopies, __INT_T *size DCLEN64(res) DCLEN64(expr))
 {
-  __CLEN_T i, len;
+  __CLEN_T len;
+  int i;
   int _ncopies;
 
   len = CLEN(expr);

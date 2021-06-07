@@ -1912,7 +1912,7 @@ void ENTF90(INIT_FROM_DESC, init_from_desc)(void *object,
       for (j = 0; j < rank; ++j) {
         offset += index[j] * desc->dim[j].lstride;
         if (do_increment) {
-          if (++index[j] >= desc->dim[j].extent)
+          if (++index[j] >= (size_t)desc->dim[j].extent)
             index[j] = 0;
           else
             do_increment = 0;
