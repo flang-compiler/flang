@@ -60,9 +60,11 @@ static void scan_ind_uses(int);
 static void scan_def(int, int);
 
 static int find_fam(int);
+#ifdef FLANG_INDUC_UNUSED
 static DU *get_du(int, int, int, int, int);
 static void add_du(DU *, int);
 static int add_def(int, int, int, DU *, DU *);
+#endif
 static void do_branch(void);
 static int conv_to_int(int);
 
@@ -137,9 +139,11 @@ static int mark_invb; /* remember first available invariant tbl ent*/
 static int lastval_cnt;         /* ili of loop count computed by induction
                                  * to be used to compute last values
                                  */
+#ifdef FLANG_INDUC_UNUSED
 static LOGICAL cr_lastval_uses; /* True if compute_last_values must record
                                  * uses of lastval_cnt
                                  */
+#endif
 static Q_ITEM *cr_lastval_q;    /* queue of lastval_cnt uses in preheader
                                     * or exit for which new uses (add_new_uses())
                                     * must be created.
@@ -1045,6 +1049,7 @@ not_iuse:
   return TRUE; /* stop the traverse */
 }
 
+#ifdef FLANG_INDUC_UNUSED
 static DU *
 get_du(int nme, int fgx, int iltx, int ilix, int cse)
 {
@@ -1061,7 +1066,9 @@ get_du(int nme, int fgx, int iltx, int ilix, int cse)
   du->use = i;
   return du;
 }
+#endif
 
+#ifdef FLANG_INDUC_UNUSED
 static void
 add_du(DU *du, int ind)
 {
@@ -1089,7 +1096,9 @@ add_du(DU *du, int ind)
     DEF_DU(def) = du;
   }
 }
+#endif
 
+#ifdef FLANG_INDUC_UNUSED
 static int
 add_def(int nme, int fgx, int iltx, DU *csel, DU *du)
 {
@@ -1107,6 +1116,7 @@ add_def(int nme, int fgx, int iltx, DU *csel, DU *du)
   NME_DEF(nme) = i;
   return i;
 }
+#endif
 
 static void
 do_branch(void)
@@ -1336,6 +1346,7 @@ check_alias(int store)
   return TRUE;
 }
 
+#ifdef FLANG_INDUC_UNUSED
 /*     Compute last values for induction variables.                */
 
 static void
@@ -1354,6 +1365,7 @@ last_values(void)
   cr_lastval_uses = FALSE;
 
 }
+#endif
 
 static void
 dump_ind(void)
