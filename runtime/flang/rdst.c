@@ -261,6 +261,7 @@ I8(is_nonsequential_section)(F90_Desc *a, __INT_T dim)
 #define EXPAND 0x080
 #define RECOPY 0x100
 
+#ifdef FLANG_RDST_UNUSED
 static void
 invalid_flags(int flags)
 {
@@ -270,6 +271,7 @@ invalid_flags(int flags)
 #endif
   __fort_abort("COPY_IN: internal error, invalid flags");
 }
+#endif
 
 static void
 copy_in_abort(char *msg)
@@ -2829,7 +2831,10 @@ ENTF90(EXECCMDLINE, execcmdline)(DCHAR(command), __LOG_T *wait,
                                  __INT_T *cmdstat_int_kind 
                                  DCLEN64(command) DCLEN64(cmdmsg)) {
   char *cmd, *cmdmes;
-  int cmdmes_len, stat;
+  int cmdmes_len;
+#if (defined(TARGET_LINUX_X8664) || defined(TARGET_OSX_X8664) || defined(TARGET_LINUX_POWER) || defined(TARGET_LINUX_ARM32) || defined(TARGET_LINUX_ARM64)) && !defined(TARGET_WIN)
+  int stat;
+#endif
   int cmdflag = 0;
   enum CMD_ERR{NO_SUPPORT_ERR=-1, FORK_ERR=1, EXECL_ERR=2, SIGNAL_ERR=3};
   
