@@ -2330,6 +2330,7 @@ in_save_scope(SPTR sptr)
   return CONSTRUCTSYMG(sptr) ? SAVEG(ENCLFUNCG(sptr)) : sem.savall;
 }
 
+#ifdef FLANG_SEMUTIL_UNUSED
 /* returns 1 if array dtype has one too many subscripts and the first
    subscript in the list is a S_TRIPLE.  Otherwise, returns 0;
 */
@@ -2362,6 +2363,7 @@ is_substring(ITEM *list, int dtype)
 
   return 0;
 }
+#endif
 
 /** \brief Check if a stack entry represents a constant or an expression
            evaluated to a constant.

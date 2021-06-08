@@ -1516,6 +1516,7 @@ compute_dotrip(int std, int initincsame, int doinitilm, int doendilm, int doinc,
   return dotripilm;
 } /* compute_dotrip */
 
+#ifdef FLANG_LOWERILM_UNUSED
 /* Hacked compute_dotrip() where the dotripilm is not converted to DT_INT4 */
 static int
 compute_dotrip8(int std, int initincsame, int doinitilm, int doendilm,
@@ -1546,6 +1547,7 @@ compute_dotrip8(int std, int initincsame, int doinitilm, int doendilm,
   }
   return dotripilm;
 } /* compute_dotrip8 */
+#endif
 
 static int
 dotemp(char letter, int dtype, int std)
@@ -1987,8 +1989,10 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
  * use cyclic (if chunk size is one) or block-cyclic (otherwise)
  * scheduling;  otherwise, use static block scheduling (for now)
  */
+#ifdef FLANG_LOWERILM_UNUSED
 static int lcpu2(int);
 static int ncpus2(int);
+#endif
 
 static void
 lower_do_stmt(int std, int ast, int lineno, int label)
@@ -2475,6 +2479,7 @@ lower_do_stmt(int std, int ast, int lineno, int label)
   }
 } /* lower_do_stmt */
 
+#ifdef FLANG_LOWERILM_UNUSED
 static int
 lcpu2(int dt)
 {
@@ -2484,7 +2489,9 @@ lcpu2(int dt)
     ilm = plower("oi", "ITOI8", ilm);
   return ilm;
 }
+#endif
 
+#ifdef FLANG_LOWERILM_UNUSED
 static int
 ncpus2(int dt)
 {
@@ -2494,6 +2501,7 @@ ncpus2(int dt)
     ilm = plower("oi", "ITOI8", ilm);
   return ilm;
 }
+#endif
 
 static void
 llvm_lower_enddo_stmt(int lineno, int label, int std, int ispdo)
@@ -2771,6 +2779,7 @@ lower_enddo_stmt(int lineno, int label, int std, int ispdo)
 
 } /* lower_enddo_stmt */
 
+#ifdef FLANG_LOWERILM_UNUSED
 static void
 lower_omp_atomic_read(int ast, int lineno)
 {
@@ -2789,6 +2798,7 @@ lower_omp_atomic_read(int ast, int lineno)
   }
   plower("oin", "MP_ATOMICREAD", rilm, mem_order);
 }
+#endif
 
 static void
 lower_omp_atomic_write(int ast, int lineno)

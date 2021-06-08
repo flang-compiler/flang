@@ -39,7 +39,9 @@ static void accel_pragmagen(int, int, int);
 
 static int sched_type(char *);
 static void set_iftype(int, char *, char *, char *);
+#ifdef FLANG_SEMSMP_UNUSED
 static void validate_if(int, char *);
+#endif
 static int cancel_type(char *);
 static int emit_bpar(void);
 static int emit_btarget(int);
@@ -72,7 +74,9 @@ static void check_crit(char *);
 static int check_cancel(int);
 static void check_targetdata(int, char *);
 static void check_valid_data_sharing(int);
+#ifdef FLANG_SEMSMP_UNUSED
 static LOGICAL check_map_data_sharing(int);
+#endif
 static void cray_pointer_check(ITEM *, int);
 static void other_firstlast_check(ITEM *, int);
 static void copyprivate_check(ITEM *, int);
@@ -545,7 +549,9 @@ static LOGICAL has_team = FALSE;
 
 static LOGICAL any_pflsr_private = FALSE;
 
+#ifdef FLANG_SEMSMP_UNUSED
 static void add_pragmasyms(int pragmatype, int pragmascope, ITEM *itemp, int);
+#endif
 static void add_pragma(int pragmatype, int pragmascope, int pragmaarg);
 
 #define OPT_OMP_ATOMIC !XBIT(69,0x1000)
@@ -5818,6 +5824,7 @@ add_pragma(int pragmatype, int pragmascope, int pragmaarg)
   (void)add_stmt(ast);
 }
 
+#ifdef FLANG_SEMSMP_UNUSED
 static void
 add_pragma2(int pragmatype, int pragmascope, int pragmaarg, int pragmaarg2)
 {
@@ -5830,7 +5837,9 @@ add_pragma2(int pragmatype, int pragmascope, int pragmaarg, int pragmaarg2)
   A_ROPP(ast, pragmaarg2);
   (void)add_stmt(ast);
 }
+#endif
 
+#ifdef FLANG_SEMSMP_UNUSED
 static void
 add_pragma3(int pragmatype, int pragmascope, int pragmaarg, int pragmaarg2,
             int pragmaarg3)
@@ -5845,7 +5854,9 @@ add_pragma3(int pragmatype, int pragmascope, int pragmaarg, int pragmaarg2,
   A_PRAGMAARGP(ast, pragmaarg3);
   (void)add_stmt(ast);
 }
+#endif
 
+#ifdef FLANG_SEMSMP_UNUSED
 static void
 add_pragmasyms(int pragmatype, int pragmascope, ITEM *itemp, int docopy)
 {
@@ -5870,7 +5881,9 @@ add_pragmasyms(int pragmatype, int pragmascope, ITEM *itemp, int docopy)
       add_pragma2(prtype, pragmascope, itemp->ast, ast_devcopy);
   }
 }
+#endif
 
+#ifdef FLANG_SEMSMP_UNUSED
 static void
 add_reduction_pragmas(void)
 {
@@ -5949,7 +5962,9 @@ add_reduction_pragmas(void)
     }
   }
 }
+#endif
 
+#ifdef FLANG_SEMSMP_UNUSED
 static void
 add_wait_pragmas(ITEM *itemp)
 {
@@ -5962,6 +5977,7 @@ add_wait_pragmas(ITEM *itemp)
   }
   CL_PRESENT(CL_WAIT) = 0;
 } /* add_wait_pragmas */
+#endif
 
 static void
 accel_pragmagen(int pragma, int pragma1, int pragma2)
@@ -6095,6 +6111,7 @@ set_iftype(int argcnt, char *nm, char *nm2, char *nm3)
   mp_iftype = mp_iftype | type;
 }
 
+#ifdef FLANG_SEMSMP_UNUSED
 static void
 validate_if(int type, char *nm)
 {
@@ -6160,6 +6177,7 @@ validate_if(int type, char *nm)
     }
   }
 }
+#endif
 
 static int
 get_stblk_uplevel_sptr()
@@ -10265,6 +10283,7 @@ check_valid_data_sharing(int sptr)
   }
 }
 
+#ifdef FLANG_SEMSMP_UNUSED
 static LOGICAL
 check_map_data_sharing(int sptr)
 {
@@ -10298,6 +10317,7 @@ check_map_data_sharing(int sptr)
 
   return TRUE;
 }
+#endif
 
 static LOGICAL is_in_omptarget_data(int d)
 {

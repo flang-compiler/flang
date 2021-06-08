@@ -1946,6 +1946,7 @@ get_next_parent(int astptr, int myparent)
   return astptr;
 }
 
+#ifdef FLANG_OPTUTIL_UNUSED
 /*  All of following should consider true
  *  astptr is                          p%p1%p2%p3
  *  astx may be one of the following:  p, p%p1, p%p1, p%p1%p2%p3
@@ -1997,6 +1998,7 @@ is_this_astptr(int astptr, int astx, int std)
 
   return FALSE;
 }
+#endif
 
 /*
  *  it check if astc is a child of astp, ignoring subscript
@@ -2196,6 +2198,7 @@ is_ptrast_arg(int ptrast, int ast)
   return FALSE;
 }
 
+#ifdef FLANG_OPTUTIL_UNUSED
 /* 1) a=>b return 1
  * 2) call(a) return 2
  * 3) all else return 0
@@ -2213,6 +2216,7 @@ isstd_ptrdef(int std)
   }
   return 0;
 }
+#endif
 
 /*
  * is a ptr def in the path <srch_ae.start.fg, srch_ae.start.stmt>,
@@ -2503,6 +2507,7 @@ ptrdefs_has_lhsconflict(int nme, int std, int def)
   return FALSE;
 }
 
+#ifdef FLANG_OPTUTIL_UNUSED
 static LOGICAL
 is_member_ast(int ast)
 {
@@ -2521,6 +2526,7 @@ is_member_ast(int ast)
   }
   return FALSE;
 }
+#endif
 
 static void
 _find_rhs_def_conflict(int ast, int *args)
@@ -2721,6 +2727,7 @@ add_lhs_nme(int nme, int std, int isdummy)
 }
 
 #if DEBUG
+#ifdef FLANG_OPTUTIL_UNUSED
 static void
 dump_lhs_nme(int nme, int std, int isdummy)
 {
@@ -2730,6 +2737,7 @@ dump_lhs_nme(int nme, int std, int isdummy)
     print_nme(nme);
   }
 }
+#endif
 #endif
 
 /* find all origin of lhs defs */

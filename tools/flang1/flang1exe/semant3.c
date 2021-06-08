@@ -41,7 +41,9 @@ static int do_label;
 static int construct_name;
 static int last_std;
 
+#ifdef FLANG_SEMANT3_UNUSED
 static void add_nullify(int);
+#endif
 static void check_do_term();
 static int gen_logical_if_expr(SST *);
 static int dealloc_tmp(int);
@@ -51,7 +53,9 @@ static int gen_derived_arr_init(int arr_dtype, int strt_std, int end_std);
 static int convert_to_block_forall(int old_forall_ast);
 
 static int find_non_tbp(char *);
+#ifdef FLANG_SEMANT3_UNUSED
 static int gen_sourced_allocation(int astdest, int astsrc);
+#endif
 
 static int construct_association(int lhs_sptr, SST *rhs, int stmt_dtype,
                                  LOGICAL is_class);
@@ -5677,12 +5681,14 @@ get_construct_name(void)
   return construct_name;
 }
 
+#ifdef FLANG_SEMANT3_UNUSED
 static void
 add_nullify(int sptr)
 {
   int ast = add_nullify_ast(mk_id(sptr));
   (void)add_stmt(ast);
 }
+#endif
 
 /* error checking: this is called at a statement that cannot
  * terminate a DO statement. */
@@ -6476,6 +6482,7 @@ gen_init_unl_poly_desc(int dest_sdsc_ast, int src_sdsc_ast, int std)
   }
 }
 
+#ifdef FLANG_SEMANT3_UNUSED
 static int
 gen_sourced_allocation(int astdest, int astsrc)
 {
@@ -6567,6 +6574,7 @@ again:
 
   return std2;
 }
+#endif
 
 /* Predicate: is the right-hand side of an association in an ASSOCIATE
  * or SELECT TYPE statement suitable for a direct association (as

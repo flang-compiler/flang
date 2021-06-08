@@ -77,7 +77,9 @@ static void replace_sdsc_in_bounds(int sdsc, ADSC *ad, int i);
 static int replace_sdsc_in_ast(int sdsc, int ast);
 static void chk_new_param_dt(int, int);
 static int get_vtoff(int, DTYPE);
+#ifdef FLANG_SEMANT_UNUSED
 static int has_length_type_parameter(int);
+#endif
 static int get_highest_param_offset(int);
 static ACL *dup_acl(ACL *src, int sptr);
 static int match_memname(int sptr, int list);
@@ -12696,6 +12698,7 @@ set_aclen(SST *stkptr, int ivl, int flag)
   }
 }
 
+#ifdef FLANG_SEMANT_UNUSED
 static int
 get_actype(SST *stkptr, int ivl)
 {
@@ -12703,6 +12706,7 @@ get_actype(SST *stkptr, int ivl)
                         lenspec[ivl].len, lenspec[ivl].propagated, 0);
   return sem.gdtype;
 }
+#endif
 
 static void
 ctte(int entry, int sptr)
@@ -15175,6 +15179,7 @@ chk_len_parm_expr(int ast, int dtype, int flag)
   return 0;
 }
 
+#ifdef FLANG_SEMANT_UNUSED
 static int
 fix_kind_parm_expr(int ast, int dtype, int offset, int value)
 {
@@ -15204,6 +15209,7 @@ fix_kind_parm_expr(int ast, int dtype, int offset, int value)
 
   return ast;
 }
+#endif
 
 int
 get_len_set_parm_by_name(char *np, int dtype, int *val)
@@ -16127,6 +16133,7 @@ has_type_parameter(int dtype)
   return has_type_parameter2(dtype, 0);
 }
 
+#ifdef FLANG_SEMANT_UNUSED
 static int
 has_length_type_parameter(int dtype)
 {
@@ -16145,6 +16152,7 @@ has_length_type_parameter(int dtype)
 
   return 0;
 }
+#endif
 
 int
 has_length_type_parameter_use(int dtype)

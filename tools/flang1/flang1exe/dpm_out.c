@@ -38,9 +38,11 @@
 #define NO_DERIVEDPTR XBIT(58, 0x40000)
 
 static void handle_nonalloc_template(void);
+#ifdef FLANG_DPM_OUT_UNUSED
 static int exist_test(int, int);
 
 static void add_adjarr_bounds_extr_f77(int, int, int);
+#endif
 static bool allocate_one_auto(int);
 static void component_init_allocd_auto(int, int);
 static int bnd_assn_precedes(int, int, int);
@@ -48,8 +50,10 @@ static void add_auto_bounds(int, int);
 static void mk_allocate_scalar(int memberast, int sptr, int before);
 static void mk_deallocate_scalar(int memberast, int sptr, int after);
 static void dealloc_dt_auto(int, int, int);
+#ifdef FLANG_DPM_OUT_UNUSED
 static int find_actual(int, int, int);
 static void set_actual(int, int, LOGICAL);
+#endif
 
 static void open_entry_guard(int);
 static void close_entry_guard(void);
@@ -68,16 +72,22 @@ static void change_mk_id(int sptr, int sptr1);
 static void do_change_mk_id(void);
 
 static void finish_fl(void);
+#ifdef FLANG_DPM_OUT_UNUSED
 static void add_fl(int);
+#endif
 static bool emit_alnd(int sptr, int memberast, LOGICAL free_flag,
                       LOGICAL for_allocate, int allocbounds);
 static void emit_secd(int sptr, int memberast, LOGICAL free_flag,
                       LOGICAL for_allocate);
+#ifdef FLANG_DPM_OUT_UNUSED
 static void construct_align_sc(int, int, int);
+#endif
 static void fix_sdsc_sc(int, int, int);
 static void emit_redim(int arg);
 static void emit_kopy_in(int, int, int);
+#ifdef FLANG_DPM_OUT_UNUSED
 static LOGICAL is_f77_adjustable(int sptr);
+#endif
 static void emit_scalar_kopy_in(int, int);
 static int gen_ptr_in(int, int);
 static int gen_ptr_out(int, int);
@@ -94,9 +104,11 @@ static void update_dist(int);
 static int get_scalar_in_expr(int expr, int std, LOGICAL astversion);
 static int emit_get_scalar_sub(int, int);
 
+#ifdef FLANG_DPM_OUT_UNUSED
 static void update_with_actual(int);
 static void update_bounds_with_actual(int);
 static void emit_bcst_scalar(int sptr, int std);
+#endif
 
 static int get_arg_table(void);
 static void put_arg_table(int);
@@ -192,6 +204,7 @@ finish_fl(void)
   FREE(fl.base);
 }
 
+#ifdef FLANG_DPM_OUT_UNUSED
 static void
 add_fl(int a)
 {
@@ -224,6 +237,7 @@ add_fl(int a)
     fl.base[nd] = a;
   }
 }
+#endif
 
 /**
    \brief Stub
@@ -507,6 +521,7 @@ make_alnd(int sptr)
   return nd;
 }
 
+#ifdef FLANG_DPM_OUT_UNUSED
 static void
 construct_align_sc(int alnd, int alignee, int target)
 {
@@ -626,6 +641,7 @@ construct_align_sc(int alnd, int alignee, int target)
     return;
   }
 }
+#endif
 
 static LOGICAL
 is_set(int flag, int value)
@@ -2665,6 +2681,7 @@ newargs_for_entry(int this_entry)
   return new_dscptr;
 }
 
+#ifdef FLANG_DPM_OUT_UNUSED
 /* This routine generate IFTHEN to test static descriptor
  * initilaized. "if(a$sd(1) .eq. 0)
  */
@@ -2683,6 +2700,7 @@ exist_test(int sdsc, int memberast)
   A_IFEXPRP(astnew, ifexpr);
   return astnew;
 }
+#endif
 
 static int *orderargs; /* List of arguments in dependence order. */
 
@@ -3284,6 +3302,7 @@ emit_kopy_in(int arg, int this_entry, int actual)
   gbitable.unconditional = 1;
 } /* emit_kopy_in */
 
+#ifdef FLANG_DPM_OUT_UNUSED
 /* Return TRUE if the arry given by sptr is adjustable according to
  * Fortran-77. */
 static LOGICAL
@@ -3320,6 +3339,7 @@ is_f77_adjustable(int sptr)
   }
   return TRUE;
 }
+#endif
 
 /* pghpf_copy_out_(void *db, void *sb, section *ds,
  *			  section *ss, int intent);
@@ -4521,6 +4541,7 @@ redimension(int sptr, int memberast)
   add_stmt_before(astnew, EntryStd);
 }
 
+#ifdef FLANG_DPM_OUT_UNUSED
 static void
 add_adjarr_bounds_extr_f77(int sym, int entry, int call_ast)
 {
@@ -4662,6 +4683,7 @@ set_actual(int entry, int call_ast, LOGICAL arrays)
     }
   }
 }
+#endif
 
 #undef BND_ASSN_PRECEDES
 

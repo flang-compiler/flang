@@ -220,7 +220,9 @@ lower_unset_symbols(void)
   }
 } /* lower_unset_symbols */
 
+#ifdef FLANG_LOWERSYM_UNUSED
 static void save_vol_descriptors(int);
+#endif
 
 /* call this first so the symbol count and datatype count won't change later */
 static void
@@ -385,6 +387,7 @@ lower_make_all_descriptors(void)
   }
 } /* lower_make_all_descriptors */
 
+#ifdef FLANG_LOWERSYM_UNUSED
 static void
 save_vol_descriptors(int sptr)
 {
@@ -422,6 +425,7 @@ save_vol_descriptors(int sptr)
     VOLP(sptr, 0);
   }
 }
+#endif
 
 static int
 remove_list(int list, int sym)
@@ -2346,6 +2350,7 @@ lower_use_datatype(int dtype, int usage)
   }
 } /* lower_use_datatype */
 
+#ifdef FLANG_LOWERSYM_UNUSED
 /* Return TRUE if this dtype was not already marked used */
 static int
 lower_unused_datatype(int dtype)
@@ -2358,6 +2363,7 @@ lower_unused_datatype(int dtype)
     return 0;
   return 1;
 } /* lower_unused_datatype */
+#endif
 
 static int
 eval_con_expr(int ast, int *val, int *dtyp)
@@ -3237,7 +3243,9 @@ lower_clear_visit_fields(void)
 } /* lower_clear_visit_fields */
 
 static int lower_cmptrvar(char *, int, int, int *);
+#ifdef FLANG_LOWERSYM_UNUSED
 static int get_cmptrvar(char *, int, int, int *);
+#endif
 
 /** \brief Add common blocks to hold various zeros
 
@@ -3365,6 +3373,7 @@ lower_cmptrvar(char *name, int stype, int dtype, int *bsym)
   return sym;
 }
 
+#ifdef FLANG_LOWERSYM_UNUSED
 static int
 get_cmptrvar(char *name, int stype, int dtype, int *bsym)
 {
@@ -3399,6 +3408,7 @@ get_cmptrvar(char *name, int stype, int dtype, int *bsym)
 
   return sym;
 }
+#endif
 
 #if TY_MAX != 36
 #error "Need to edit lowersym.c to add new TY_... data types"

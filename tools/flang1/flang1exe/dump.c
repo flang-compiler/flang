@@ -72,6 +72,7 @@ putint(char *s, int d)
   putit();
 } /* putint */
 
+#ifdef FLANG_DUMP_UNUSED
 static void
 putintstar(char *s, int d, int star, char *starstring)
 {
@@ -82,6 +83,7 @@ putintstar(char *s, int d, int star, char *starstring)
   }
   putit();
 } /* putintstar */
+#endif
 
 static void
 put2int(char *s, int d1, int d2)
@@ -204,6 +206,7 @@ putsym1(int sptr)
   putit();
 } /* putsym1 */
 
+#ifdef FLANG_DUMP_UNUSED
 static void
 putintsym1(int d, int sptr)
 {
@@ -216,6 +219,7 @@ putintsym1(int d, int sptr)
   }
   putit();
 } /* putintsym1 */
+#endif
 
 static void
 putsymilist(int symi)
@@ -499,6 +503,7 @@ dumplists()
   }
 } /* dumplists */
 
+#ifdef FLANG_DUMP_UNUSED
 static void
 putsymflags()
 {
@@ -577,6 +582,7 @@ putsymflags()
     putit();
   }
 } /* putsymflags */
+#endif
 
 static void
 putbit(char *s, int b)
@@ -605,6 +611,7 @@ check(char *s, int v)
   }
 } /* check */
 
+#ifdef FLANG_DUMP_UNUSED
 static void
 putmap(char *s, int m)
 {
@@ -624,6 +631,7 @@ putmap(char *s, int m)
     putit();
   }
 } /* putmap */
+#endif
 
 void
 putasttype(char *s, int opc)

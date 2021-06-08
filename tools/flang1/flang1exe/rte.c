@@ -30,8 +30,10 @@
 
 static int get_per_dim_member(int, int, int);
 static int get_header_member(int sdsc, int info);
+#ifdef FLANG_RTE_UNUSED
 static int divmod(LOGICAL bIsDiv, int astNum, int astDen, int astRecip,
                   int astShift, int std);
+#endif
 static char* mangleUnderscores(char* str);
 static int lenWithUnderscores(char* str);
 
@@ -859,7 +861,7 @@ get_header_member_with_parent(int parent, int sdsc, int info)
   return ast;
 }
 
-
+#ifdef FLANG_RTE_UNUSED
 static int
 get_array_rank(int sdsc)
 {
@@ -884,6 +886,7 @@ get_array_rank(int sdsc)
 
   return rank;
 }
+#endif
 
 static int
 get_per_dim_member(int sdsc, int dim, int info)
@@ -902,6 +905,7 @@ get_per_dim_member(int sdsc, int dim, int info)
   return ast;
 }
 
+#ifdef FLANG_RTE_UNUSED
 /* If bIsDiv is TRUE, add statements to compute astNum/astDen before std.
  * If bIsDiv is FALSE, add statements to compute astNum%astDen before std.
  * astRecip is the reciprocal of astDen. If astShift is nonzero,
@@ -986,3 +990,4 @@ divmod(LOGICAL bIsDiv, int astNum, int astDen, int astRecip, int astShift,
 
   return astRes;
 }
+#endif

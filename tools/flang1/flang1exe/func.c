@@ -115,6 +115,7 @@ gen_scalar_mask(int ast, int list)
   return 0;
 } /* gen_scalar_mask */
 
+#ifdef FLANG_FUNC_UNUSED
 /*
  * SUM and PRODUCT reductions use a longer datatype for
  * the reduction temporary; for instance, they use
@@ -160,7 +161,9 @@ reduction_type(DTYPE dtype)
     return dtype;
   }
 } /* reduction_type */
+#endif
 
+#ifdef FLANG_FUNC_UNUSED
 static int
 assign_result(int sptr, int ast, DTYPE dtype, DTYPE dtyperes, int stdnext,
               int lineno)
@@ -182,6 +185,7 @@ assign_result(int sptr, int ast, DTYPE dtype, DTYPE dtyperes, int stdnext,
   STD_KERNEL(std) = STD_KERNEL(stdnext);
   return tsclrAst;
 } /* assign_result */
+#endif
 
 /* this will check whether cshift or eoshift needs any communication. */
 static LOGICAL

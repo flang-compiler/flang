@@ -53,7 +53,9 @@ static void find_descrs(void);
 static void collapse_allocates(LOGICAL bDescr);
 static void report_collapse(int lp);
 #if DEBUG
+#ifdef FLANG_OUTCONV_UNUSED
 static void dump_collapse(void);
+#endif
 #endif
 static int position_finder(int forall, int ast);
 static void find_calls_pos(int std, int forall, int must_pos);
@@ -3400,6 +3402,7 @@ is_same_mask_in_fused(int std, int *pos)
   return TRUE;
 }
 
+#ifdef FLANG_OUTCONV_UNUSED
 /* Register the barrier at stdBar for all FORALL statements fused with
  * astForall. If bBefore = TRUE, the barrier occurs before the loop. */
 static void
@@ -3424,6 +3427,7 @@ record_fused_barriers(LOGICAL bBefore, int astForall, int stdBar)
     record_barrier(bBefore, astFused, stdBar);
   }
 }
+#endif
 
 int
 conv_forall(int std)
@@ -4685,6 +4689,7 @@ report_collapse(int lp)
 
 #if DEBUG
 
+#ifdef FLANG_OUTCONV_UNUSED
 /* Dump the COLLAPSE table. */
 static void
 dump_collapse(void)
@@ -4709,6 +4714,7 @@ dump_collapse(void)
     dbg_print_ast(COLLAPSE_ASTSCLR(ci), gbl.dbgfil);
   }
 }
+#endif
 #endif
 
 /* END OF ARRAY COLLAPSING */

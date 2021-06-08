@@ -40,9 +40,11 @@ static char *contained_char = NULL;
 static int *outerflags = NULL;
 
 #define STB_LOWER() ((gbl.outfil == lowersym.lowerfile) && gbl.stbfil)
+#ifdef FLANG_LOWER_UNUSED
 static void lower_directives_llvm(void);
 
 static int docount, funccount;
+#endif
 
 #if DEBUG
 void
@@ -917,6 +919,7 @@ check_return(int retdtype)
     return CLASS_INT4; /* something not CLASS_MEM */
 }
 
+#ifdef FLANG_LOWER_UNUSED
 static void
 lower_directives_llvm(void)
 {
@@ -938,4 +941,5 @@ lower_directives_llvm(void)
   }
   fprintf(gbl.stbfil, "end\n");
 } /* lower_directives_llvm */
+#endif
 

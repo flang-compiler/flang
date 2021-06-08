@@ -34,8 +34,10 @@ static int _transform_func(int, int);
 static LOGICAL stride_1_dummy(int, int, int);
 static LOGICAL stride_1_section(int, int, int, int);
 static LOGICAL dev_section_ignore_c(int, int, int, int, int);
+#ifdef FLANG_REST_UNUSED
 static LOGICAL is_expr_has_function(int);
 static void transform_extrinsic(int, int);
+#endif
 void remove_alias(int, int);
 static int first_element_from_section(int);
 static void copy_arg_to_seq_tmp(int, int, int, int, int, int, int *, int *,
@@ -44,7 +46,9 @@ static int temp_type_descriptor(int ast, int std);
 static LOGICAL is_seq_dummy(int, int, int);
 static LOGICAL needs_type_in_descr(SPTR, int);
 static LOGICAL is_optional_char_dummy(int, int, int);
+#ifdef FLANG_REST_UNUSED
 static void check_nonseq_element(int, int, int, int);
+#endif
 static void check_pure_interface(int, int, int);
 static void handle_seq_section(int, int, int, int, int *, int *, LOGICAL, int);
 static int mk_descr_from_section(int, DTYPE, int);
@@ -489,6 +493,7 @@ transform_ast(int std, int ast)
   }
 }
 
+#ifdef FLANG_REST_UNUSED
 /* This routine is to search function from expression. */
 
 static LOGICAL
@@ -580,6 +585,7 @@ is_expr_has_function(int expr)
     return FALSE;
   }
 }
+#endif
 
 int pghpf_type_sptr = 0;
 
@@ -2458,6 +2464,7 @@ is_optional_char_dummy(int entry, int arr, int pos)
   return FALSE;
 }
 
+#ifdef FLANG_REST_UNUSED
 /*
  * A scalar element of a non-sequence array can be passed as an actual
  * argument if and only if the dummy is scalar.  pghpf should enforce
@@ -2479,6 +2486,7 @@ check_nonseq_element(int std, int entry, int arr, int pos)
   if (dummy_sptr && is_array_type(dummy_sptr))
     error(472, 3, STD_LINENO(std), SYMNAME(sptr), CNULL);
 }
+#endif
 
 static int
 pure_procedure(int ast)
