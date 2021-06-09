@@ -36,6 +36,10 @@ static int curr_ifihx = 0;
 extern bool in_auto_reinline;
 #endif
 
+#ifdef _WIN32
+#include <direct.h>
+#endif
+
 int bu_auto_inline(void);
 
 static int anyunits = 0;
