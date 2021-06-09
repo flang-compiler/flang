@@ -33,7 +33,7 @@
 #endif
 #include "cgllvm.h"
 #include "cgmain.h"
-#ifndef _WIN32
+#ifndef _WIN64
 #include <unistd.h>
 #else
 #include "asprintf.h"

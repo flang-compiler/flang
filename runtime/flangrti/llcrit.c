@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#ifndef _WIN32
+#ifndef _WIN64
 #include <pthread.h>
 #endif
 #include <stdioInterf.h>
@@ -88,7 +88,7 @@ _mp_bcs_nest(void)
   if (!is_init_nest) {
     _mp_p(&nest_sem);
     if (!is_init_nest) {
-#ifndef _WIN32
+#ifndef _WIN64
       if (!is_atfork_registered) {
         if (pthread_atfork(NULL, NULL, __llcrit_atfork))
           fprintf(__io_stderr(), "Could not register atfork handler!\n");
@@ -125,7 +125,7 @@ _mp_bcs_nest_red(void)
   if (!is_init_nest_red) {
     _mp_p(&nest_sem_red);
     if (!is_init_nest_red) {
-#ifndef _WIN32
+#ifndef _WIN64
       if (!is_atfork_registered) {
         if (pthread_atfork(NULL, NULL, __llcrit_atfork))
           fprintf(__io_stderr(), "Could not register atfork handler!\n");

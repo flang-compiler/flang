@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
+#ifdef _WIN64
 #include <mmintrin.h>
 #endif
 
@@ -75,7 +75,7 @@ configure_denormals(bool denorms_are_zeros, bool flush_to_zero)
   if (fegetenv(&fenv) != 0)
     fprintf(stderr, "fegetenv() failed: %s\n", strerror(errno));
 #ifdef __x86_64__
-#ifdef _WIN32
+#ifdef _WIN64
   unsigned int mxcsr = _mm_getcsr();
 #else
   unsigned int mxcsr = fenv.__mxcsr;
@@ -86,13 +86,13 @@ configure_denormals(bool denorms_are_zeros, bool flush_to_zero)
   mxcsr &= ~0x8000;
   if (flush_to_zero)
     mxcsr |= 0x8000;
-#ifdef _WIN32
+#ifdef _WIN64
   _mm_setcsr( mxcsr );
 #else
   fenv.__mxcsr = mxcsr;
 #endif
 #endif
-#ifndef _WIN32
+#ifndef _WIN64
   if (fesetenv(&fenv) != 0)
     fprintf(stderr, "fesetenv() failed: %s\n", strerror(errno));
 #endif

@@ -13,7 +13,7 @@
 #include "legacy-util-api.h"
 #include <stddef.h>
 #include <string.h>
-#ifndef _WIN32
+#ifndef _WIN64
 #include <unistd.h> /* access() */
 #endif
 

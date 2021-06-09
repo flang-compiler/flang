@@ -17,7 +17,7 @@
 
 int ENT3F(FSTAT, fstat)(int *lu, int *statb)
 {
-#ifdef WIN32
+#ifdef _WIN64
   struct _stat32 b;
   char *p;
   int i;

@@ -11,7 +11,7 @@
 
 #include "ent3f.h"
 
-#ifdef WIN32
+#ifdef _WIN64
 #define y1 _y1
 #endif
 

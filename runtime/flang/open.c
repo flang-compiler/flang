@@ -20,7 +20,7 @@
 #include "async.h"
 #include <fcntl.h>
 
-#ifdef _WIN32
+#ifdef _WIN64
 #define access _access
 #define unlink _unlink
 #endif

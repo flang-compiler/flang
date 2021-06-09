@@ -36,7 +36,7 @@ static int curr_ifihx = 0;
 extern bool in_auto_reinline;
 #endif
 
-#ifdef _WIN32
+#ifdef _WIN64
 #include <direct.h>
 #endif
 
