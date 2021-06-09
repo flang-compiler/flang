@@ -580,7 +580,7 @@ ll_create_module(const char *module_name, const char *target_triple,
   compute_ir_feature_vector(new_module, llvm_ir_version);
   compute_datalayout(new_module);
    
-#ifdef _WIN32
+#ifdef _WIN64
   if (flg.linker_directives) {
     add_linker_directives(new_module);
   }
