@@ -60,6 +60,9 @@ static char *udir = NULL;
  */
 static long uwaiting;
 
+#ifdef _WIN32
+#define pid_t int
+#endif
 int
 __pg_make_lock_file(char *dir)
 {
