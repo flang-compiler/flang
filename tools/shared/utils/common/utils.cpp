@@ -39,7 +39,7 @@ std::list<std::string> includePaths;
 inline bool
 isPathSeparator(char c)
 {
-#ifdef __WIN
+#ifdef WIN32
   return  c=='\\' || c =='/'? true: false;
 #else
   return c =='/'? true: false;
