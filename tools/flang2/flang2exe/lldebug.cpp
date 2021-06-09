@@ -1806,7 +1806,7 @@ lldbg_emit_compile_unit(LL_DebugInfo *db)
     lang_tag = DW_LANG_Fortran90;
     db->comp_unit_mdnode = lldbg_create_compile_unit_mdnode(
         db, lang_tag, get_filename(1), get_currentdir(), db->producer, 1,
-        flg.opt >= 1/*isOptimized Flag*/, "",
+        flg.opt >= 1/*isOptimized Flag*/, flg.cmdline,
         0, &db->llvm_dbg_enum, &db->llvm_dbg_retained, &db->llvm_dbg_sp,
         &db->llvm_dbg_gv, &db->llvm_dbg_imported);
   }
