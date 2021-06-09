@@ -90,7 +90,6 @@ static char *who[] = {"init", "import",   "expand", "", "",
                       "",     "assemble", "xref",   ""};
 #define _N_WHO (sizeof(who) / sizeof(char *))
 static INT xtimes[_N_WHO];
-static char *cmdline = NULL;
 static char *ccff_filename = NULL;
 #include "ccffinfo.h"
 
@@ -669,7 +668,7 @@ init(int argc, char *argv[])
   register_integer_arg(arg_parser, "astype", &flg.astype, 0);
   register_boolean_arg(arg_parser, "recursive", &flg.recursive, false);
   register_integer_arg(arg_parser, "vect", &vect_val, 0);
-  register_string_arg(arg_parser, "cmdline", &cmdline, NULL);
+  register_string_arg(arg_parser, "cmdline", &flg.cmdline, NULL);
   register_boolean_arg(arg_parser, "debug", &flg.debug, false);
 
   flg.linker_directives = (char **)getitem(8, argc * sizeof(char *));
@@ -866,7 +865,7 @@ do_curr_file:
 #if DEBUG
   assert(flg.es == 0, "init:flg.esA", 0, ERR_unused);
 #endif
-  assemble_init(argc, argv, cmdline);
+  assemble_init(argc, argv, flg.cmdline);
 
   gbl.func_count = 0;
   gbl.multi_func_count = gbl.func_count;
@@ -879,7 +878,7 @@ do_curr_file:
 
   if (ccff_filename) {
     ccff_open(ccff_filename, gbl.file_name ? gbl.file_name : gbl.src_file);
-    ccff_build(cmdline, "F90");
+    ccff_build(flg.cmdline, "F90");
   }
 
 }
