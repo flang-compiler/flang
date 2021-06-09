@@ -694,7 +694,7 @@ init(int argc, char *argv[])
         if (*ss == '.')
           s = ss;
         if ((*ss == '/'
-#if defined(HOST_WIN)
+#ifdef _WIN64
              || *ss == '\\'
 #endif
              ) &&

@@ -11,7 +11,7 @@
  * GNU-C-compatible compilers implement these with the same names, thus we
  * don't have to do anything
  */
-#ifdef _WIN32
+#ifdef _WIN64
 
 #include <stdlib.h>
 #include <stdio.h>

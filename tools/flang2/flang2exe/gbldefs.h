@@ -186,7 +186,7 @@ void ipasave_extractor_end(void);                  /* extractor.h */
 void extractor(void);                              /* extractor.h */
 void carry(void);                                  /* carry.c */
 void xcarry(void);                                 /* carry.c */
-#if defined(HOST_WIN)
+#ifdef _WIN64
 #define snprintf _snprintf
 #define ALLOCA(type, number)  (type *) _alloca(sizeof(type) * (number))
 #else

@@ -11,7 +11,7 @@
  *  since the most recent call.  Very much not thread-safe.
  */
 
-#ifndef _WIN32
+#ifndef _WIN64
 
 #include <sys/times.h>
 #include <unistd.h>

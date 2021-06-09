@@ -18,7 +18,7 @@
 #include "io3f.h"
 #include "ent3f.h"
 
-#ifdef WIN32
+#ifdef _WIN64
 #define chdir _chdir
 #endif
 

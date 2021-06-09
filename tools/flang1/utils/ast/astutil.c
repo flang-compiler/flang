@@ -13,7 +13,7 @@
 #include "gbldefs.h"
 
 #include "utils.h"
-#ifndef _WIN32
+#ifndef _WIN64
 #include <unistd.h>
 #endif
 
