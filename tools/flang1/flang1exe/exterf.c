@@ -676,7 +676,10 @@ export_some_procedure(int sptr)
   if (fval) {
     dpdsc = DPDSCG(sptr);
     DTYPEP(sptr, DTYPEG(fval));
-    if (aux.dpdsc_base[dpdsc] == FVALG(sptr)) {
+    /* If PARAMCT equals zero, it is illegal to access the beginning of the
+     * argument list of the function.
+     */
+    if (PARAMCTG(sptr) > 0 && aux.dpdsc_base[dpdsc] == FVALG(sptr)) {
       DPDSCP(sptr, dpdsc + 1);
       PARAMCTP(sptr, PARAMCTG(sptr) - 1);
     }
