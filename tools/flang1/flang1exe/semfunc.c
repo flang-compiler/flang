@@ -12,6 +12,7 @@
 
 #include "gbldefs.h"
 #include "global.h"
+#include "gramtk.h"
 #include "error.h"
 #include "symtab.h"
 #include "symutl.h"
@@ -1251,8 +1252,41 @@ func_call2(SST *stktop, ITEM *list, int flag)
     goto exit_;
   }
   ii = 0;
-  /* before processing arguments, add derived type return values if needed */
-  argt = mk_argt(argt_count); /* mk_argt stuffs away count */
+  /* An assumed-length character function is handled as if it is a subroutine.
+   * Implicit temporary variables are created for the return value and its
+   * length, and passed to the function as output arguments.
+   */
+  if ((DTY(dtype) == TY_CHAR) && ADJLENG(func_sptr)) {
+    int functmp;
+    int functmp_ast, alloc_ast, len_ast;
+    int alloc_stmt, len_stmt;
+
+    functmp = getcctmp_sc('d', sem.dtemps++, ST_VAR, DT_DEFERCHAR, SC_BASED);
+    functmp_ast = mk_id(functmp);
+    get_static_descriptor(functmp);
+    get_all_descriptors(functmp);
+    ALLOCDESCP(functmp, 1);
+    ALLOCP(functmp, 1);
+    len_ast = DTY(dtype + 1);
+    len_stmt = mk_assn_stmt(get_len_of_deferchar_ast(functmp_ast), len_ast, A_DTYPEG(len_ast));
+    /* Allocate the temporary */
+    alloc_ast = mk_stmt(A_ALLOC, 0);
+    A_TKNP(alloc_ast, TK_ALLOCATE);
+    A_SRCP(alloc_ast, functmp_ast);
+    alloc_stmt = add_stmt(alloc_ast);
+    sem.alloc_std = alloc_stmt;
+    add_stmt_before(len_stmt, alloc_stmt);
+    add_auto_dealloc(functmp);
+    /* add the temporary and length of character to ARGT list */
+    return_value = functmp_ast;
+    argt_count = argt_count + 2;
+    argt = mk_argt(argt_count);
+    ARGT_ARG(argt, 0) = return_value;
+    ARGT_ARG(argt, 1) = mk_convert(len_ast, stb.user.dt_int);
+    ii = ii + 2;
+  } else {
+    argt = mk_argt(argt_count); /* mk_argt stuffs away count */
+  }
 
   for (itemp = list; itemp != ITEM_END; itemp = itemp->next) {
     sp = itemp->t.stkp;
@@ -1361,8 +1395,17 @@ func_call2(SST *stktop, ITEM *list, int flag)
     }
     dtype = DTYPEG(mem);
   }
-  ast = mk_func_node(A_FUNC, (callee) ? callee : mk_id(func_sptr), argt_count,
-                     argt);
+  /* Use A_CALL instead of A_FUNC for an assumed-length character function. */
+  if ((DTY(dtype) == TY_CHAR) && ADJLENG(func_sptr)) {
+    ast = mk_func_node(A_CALL, (callee) ? callee : mk_id(func_sptr),
+                       argt_count, argt);
+    sem.arrfn.call_std = add_stmt(ast);
+    sem.arrfn.sptr = func_sptr;
+    ast = return_value;
+  } else {
+    ast = mk_func_node(A_FUNC, (callee) ? callee : mk_id(func_sptr),
+                       argt_count, argt);
+  }
   A_DTYPEP(ast, dtype);
   A_SHAPEP(ast, mkshape(dtype));
   if (dtype == DT_ASSCHAR || dtype == DT_ASSNCHAR)

@@ -14213,6 +14213,16 @@ add_autobj(int sptr)
 {
   static int last_autobj;
 
+  if (last_autobj > NOSYM && AUTOBJG(last_autobj) > NOSYM) {
+    /* last_autobj is invalid */
+    int next;
+    last_autobj = 0;
+    next = gbl.autobj;
+    while (next > NOSYM) {
+      last_autobj = next;
+      next = AUTOBJG(next);
+    }
+  }
   if (gbl.autobj == NOSYM)
     /* first automatic array */
     gbl.autobj = sptr;

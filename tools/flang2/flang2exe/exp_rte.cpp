@@ -3273,7 +3273,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   int argopc;
   int cfunc;
   int cfunc_nme;
-  DTYPE dtype;
+  DTYPE dtype, dtype1;
   int val_flag;
   int arglnk;
   int func_addr;
@@ -3297,6 +3297,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
     /* Q&D for the absence of prototypes/signatures for our run-time
      * routines. -- 9/19/14, do it for user functions too!
      */
+    dtype1 = DTYPEG(exp_call_sym);
     DTYPEP(exp_call_sym, DT_NONE);
     break;
   case IM_CHFUNC:
@@ -3999,6 +4000,17 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
 
     default:
       gargili = ILM_RESULT(ilm1);
+      /* As for function which return assumed-length character,
+         use A_CALL and process its second argument(length of character) here */
+      if ((opc == IM_CALL) && (dtype1 == DT_ASSCHAR) && (nargs == (ngargs - 2))) {
+        if (CHARLEN_64BIT) {
+          gargili = sel_iconv(gargili, 1);
+          add_to_args(IL_ARGKR, gargili);
+        } else {
+          add_to_args(IL_ARGIR, gargili);
+        }
+        break;
+      }
       if (ILM_RESTYPE(ilm1) == ILM_ISCHAR) {
         str1 = getstr(ilm1);
         if (str1->next)
