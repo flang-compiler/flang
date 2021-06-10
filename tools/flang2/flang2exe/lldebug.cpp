@@ -2830,7 +2830,6 @@ lldbg_create_deferred_len_string_type_mdnode(LL_DebugInfo *db, SPTR sptr,
   if (SDSCG(REVMIDLNKG(sptr)) && (DTY(DTYPEG(sptr)) == TY_PTR)) {
     /* get the array descriptor */
     SPTR sdscsptr = SDSCG(REVMIDLNKG(sptr));
-    LL_Type *dataloctype = LLTYPE(sdscsptr);
     BLKINFO *blk_info = get_lexical_block_info(db, sdscsptr, true);
     LL_MDRef file_mdnode;
     if (ll_feature_debug_info_need_file_descriptions(&db->module->ir))
@@ -2919,7 +2918,7 @@ lldbg_create_deferred_len_string_type_mdnode(LL_DebugInfo *db, SPTR sptr,
 
       /* emit an @llvm.dbg.declare with required !DIExpression */
       LL_MDRef expr_mdnode = lldbg_emit_expression_mdnode(db, 2, add, v1);
-      insert_llvm_dbg_declare(mdLen, sdscsptr, dataloctype,
+      insert_llvm_dbg_declare(mdLen, sdscsptr, (LL_Type *) NULL,
                             make_mdref_op(expr_mdnode), OPF_NONE);
 
       mdLenExp = lldbg_emit_empty_expression_mdnode(db);

@@ -2038,6 +2038,24 @@ mkvarref(SST *stktop, ITEM *list)
         SST_SYMP(stktop, sptr);
         goto really_an_entry;
       }
+      if (STYPEG(sptr) == ST_IDENT && SCG(sptr) == SC_LOCAL && AUTOBJG(sptr)) {
+        /* Remove from automatic data list */
+        int curr = gbl.autobj;
+        if (curr == sptr) {
+          gbl.autobj = AUTOBJG(sptr);
+        } else {
+          while (curr > NOSYM) {
+            int next = AUTOBJG(curr);
+            if (next == sptr)
+              break;
+            curr = next;
+          }
+          if (curr > NOSYM) {
+            AUTOBJP(curr, AUTOBJG(sptr));
+          }
+        }
+        AUTOBJP(sptr, 0);
+      }
       /* must be a function reference */
       STYPEP(sptr, ST_PROC);
       FWDREFP(sptr, 1); /* FS1551, see resolve_fwd_refs() below */
