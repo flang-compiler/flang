@@ -12889,7 +12889,7 @@ write_extern_fndecl(struct LL_FnProto_ *proto)
       if (proto->intrinsic_decl_str) {
         print_token(proto->intrinsic_decl_str);
         if (proto->abi && proto->abi->is_pure)
-          print_token(" nounwind readnone");
+          print_token(" nounwind readnone willreturn");
         print_nl();
       } else {
         print_token("declare");
@@ -12897,9 +12897,7 @@ write_extern_fndecl(struct LL_FnProto_ *proto)
           print_token(" extern_weak");
         print_function_signature(0, proto->fn_name, proto->abi, false);
         if (proto->abi->is_pure)
-          print_token(" nounwind");
-        if (proto->abi->is_pure)
-          print_token(" readnone");
+          print_token(" nounwind readnone willreturn");
         if ((!flg.ieee || XBIT(216, 1)) && proto->abi->fast_math)
           print_token(" \"no-infs-fp-math\"=\"true\" "
                       "\"no-nans-fp-math\"=\"true\" "
