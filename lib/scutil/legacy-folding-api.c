@@ -1940,7 +1940,7 @@ xqfixu64(IEEE128 q, DBLUINT64 u)
   float128_t y;
   unwrap_q(&y, q);
   check(fold_uint64_from_real128(&x, &y));
-  wrap_l(u, &x);
+  wrap_u(u, &x);
 }
 
 void
