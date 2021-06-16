@@ -58,12 +58,8 @@ set(GENERIC_SRCS
   dtanh.c
   exp.c
   fabs.c
-  idnint.c
-  knint.c
   log10.c
   log.c
-  mthi64.c
-  nint.c
   remainder.c
   round.c
   rpowr.c

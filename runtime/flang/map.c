@@ -9,7 +9,9 @@
 #include "fioMacros.h"
 #include <string.h>
 #include <memory.h>
+#ifndef _WIN64
 #include <sys/time.h>
+#endif
 
 extern char *__fort_getopt();
 

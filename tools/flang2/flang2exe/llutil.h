@@ -265,7 +265,7 @@ typedef enum LL_InstrListFlags {
   CALL_FUNC_PTR_FLAG  = (1 << 1),
   CALL_INTRINSIC_FLAG = (1 << 2),
   HIDDEN_ARG_FLAG     = (1 << 3),
-  SIMD_BACKEDGE_FLAG  = (1 << 4), /**< I_BR only */
+  LOOP_BACKEDGE_FLAG  = (1 << 4), /**< I_BR only */
   FAST_MATH_FLAG      = (1 << 4), /**< I_CALL only */
   VOLATILE_FLAG       = (1 << 4), /**< I_LOAD, I_STORE, I_ATOMICRMW,
                                        I_CMPXCHG only */
@@ -1591,6 +1591,11 @@ bool llis_array_kind(DTYPE dtype);
 bool llis_vector_kind(DTYPE dtype);
 bool llis_struct_kind(DTYPE dtype);
 bool llis_function_kind(DTYPE dtype);
+
+/**
+   \brief return whether param debug info should be preserved
+ */
+bool should_preserve_param(const DTYPE dtype);
 
 #ifdef OMP_OFFLOAD_LLVM
 /**

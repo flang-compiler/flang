@@ -33,7 +33,11 @@
 #endif
 #include "cgllvm.h"
 #include "cgmain.h"
+#ifndef _WIN32
 #include <unistd.h>
+#else
+#include "asprintf.h"
+#endif
 #include "regutil.h"
 #include "dtypeutl.h"
 #include "llassem.h"
@@ -527,7 +531,10 @@ build_kmpc_api_name(int kmpc_api, va_list va)
 
     /* Construct the name */
     vasprintf(&nm, KMPC_NAME(kmpc_api), va);
-
+  // FIXME: Add check for win32
+  #ifndef _WIN64
+    assert(NULL != nm, "build_kmpc_api_name: Incorrect return value", 0, ERR_Fatal);
+  #endif
     /* If the name has already been allocated, use that to save memory */
     if (hashmap_lookup(names, (hash_key_t)nm, (hash_data_t *)&res)) {
       free(nm);

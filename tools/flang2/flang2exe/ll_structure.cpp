@@ -12,6 +12,7 @@
 
 #include "gbldefs.h"
 #include "error.h"
+#include "ll_builder.h"
 #include "ll_structure.h"
 #include "lldebug.h"
 #include "global.h"
@@ -394,10 +395,12 @@ compute_ir_feature_vector(LLVMModuleRef module, enum LL_IRVersion vers)
     module->ir.dwarf_version = LL_DWARF_Version_2;
   } else if (XBIT(120, 0x4000)) {
     module->ir.dwarf_version = LL_DWARF_Version_3;
-  } else if (true) { // FIXME - need a new bit
+  } else if (XBIT(120, 0x1000000)) {
     module->ir.dwarf_version = LL_DWARF_Version_4;
-  } else {
+  } else if (XBIT(120, 0x2000000)) {
     module->ir.dwarf_version = LL_DWARF_Version_5;
+  } else { // DWARF 4 is the default
+    module->ir.dwarf_version = LL_DWARF_Version_4;
   }
 
   if (ll_feature_versioned_dw_tag(&module->ir)) {
@@ -434,6 +437,8 @@ ll_feature_dwarf_version(const LL_IRFeatures *feature)
     return 3;
   case LL_DWARF_Version_4:
     return 4;
+  case LL_DWARF_Version_5:
+    return 5;
   }
 }
 
@@ -568,7 +573,62 @@ ll_create_module(const char *module_name, const char *target_triple,
 
   compute_ir_feature_vector(new_module, llvm_ir_version);
   compute_datalayout(new_module);
+   
+#ifdef _WIN32
+  if (flg.linker_directives) {
+    add_linker_directives(new_module);
+  }
+#endif
+
   return new_module;
+}
+
+void
+add_linker_directives(LLVMModuleRef module) {
+  if (get_llvm_version() < LL_Version_5_0) {
+    LLMD_Builder mdb = llmd_init(module);
+    char* linker_directive;
+    for (int i = 0; (linker_directive = flg.linker_directives[i]); ++i) {
+      LLMD_Builder submdb = llmd_init(module);
+
+      llmd_add_string(submdb, linker_directive);
+      LL_MDRef submd = llmd_finish(submdb);
+
+      llmd_add_md(mdb, submd);
+    }
+    LL_MDRef md = llmd_finish(mdb);
+
+    LLMD_Builder boilerplate_mdb = llmd_init(module);
+
+    llmd_add_i32(boilerplate_mdb, 6);
+    llmd_add_string(boilerplate_mdb, "Linker Options");
+    llmd_add_md(boilerplate_mdb, md);
+
+    LL_MDRef boilerplate_md = llmd_finish(boilerplate_mdb);
+    ll_extend_named_md_node(module, MD_llvm_module_flags, boilerplate_md);
+
+    LLMD_Builder debug_mdb = llmd_init(module);
+
+    const int mdVers = ll_feature_versioned_dw_tag(&module->ir) ? 1 :
+      module->ir.debug_info_version;
+
+    llmd_add_i32(debug_mdb, 1);
+    llmd_add_string(debug_mdb, "Debug Info Version");
+    llmd_add_i32(debug_mdb, mdVers);
+
+    LL_MDRef debug_md = llmd_finish(debug_mdb);
+
+    ll_extend_named_md_node(module, MD_llvm_module_flags, debug_md);
+  } else {
+    int i;
+    char *linker_directive;
+    LLMD_Builder mdb = llmd_init(module);
+    for (i = 0; (linker_directive = flg.linker_directives[i]); ++i) {
+      llmd_add_string(mdb, linker_directive);
+    }
+    LL_MDRef linker_md = llmd_finish(mdb);
+    ll_extend_named_md_node(module, MD_llvm_linker_options, linker_md);
+  }
 }
 
 struct LL_Function_ *

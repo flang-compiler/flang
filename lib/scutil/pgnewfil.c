@@ -23,6 +23,7 @@
 #include <direct.h>
 #include <io.h>
 extern unsigned long getpid(void);
+#define S_ISDIR(mode)  (((mode) & _S_IFMT) == _S_IFDIR) 
 #else
 #include <unistd.h>
 #endif

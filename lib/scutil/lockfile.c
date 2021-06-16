@@ -33,7 +33,13 @@
  *	Clean up by deleting the uniquely named file we had created earlier.
  */
 
-#include <unistd.h>
+#ifndef _WIN32
+  #include <unistd.h>
+#else
+  #include <Winsock2.h>
+  #include <process.h>
+  #define pid_t int
+#endif
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/types.h>

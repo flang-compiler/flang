@@ -173,6 +173,8 @@ typedef struct {
   UINT xon;
   bool ucase;
   char **idir;
+  char **linker_directives;
+  char *llvm_target_triple;
   bool dlines;
   int extend_source;
   bool i4;

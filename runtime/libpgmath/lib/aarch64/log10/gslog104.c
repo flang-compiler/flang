@@ -7,7 +7,7 @@
 
 #include "mth_intrinsics.h"
 
-#if defined(TARGET_LINUX_ARM64)
+#if defined(TARGET_ARM64)
 vrs4_t
 __gs_log10_4(vrs4_t x)
 {

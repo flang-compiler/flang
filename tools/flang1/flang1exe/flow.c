@@ -26,7 +26,7 @@
 #include "flow_util.h"
 #include "pragma.h"
 #include "symutl.h"
-#include "direct.h"
+#include "fdirect.h"
 #include "extern.h"
 #include "rtlRtns.h"
 

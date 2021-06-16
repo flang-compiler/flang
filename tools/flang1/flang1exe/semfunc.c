@@ -2098,8 +2098,7 @@ gen_pointer_result(int array_value, int dscptr, int nactuals,
     get_all_descriptors(arr_tmp);
     /* need to have different MIDNUM than arr_value */
     /* otherwise multiple declaration */
-    pvar = sym_get_ptr(arr_tmp);
-    MIDNUMP(arr_tmp, pvar);
+    MIDNUMP(arr_tmp, 0);
     NODESCP(arr_tmp, 0);
     ddt = DDTG(dt);
     if ((DTY(dt) == TY_CHAR && dt != DT_DEFERCHAR) ||
@@ -7411,7 +7410,8 @@ ref_pd(SST *stktop, ITEM *list)
       XFR_ARGAST(3);
       dtype2 = SST_DTYPEG(stkp);
       if (!DT_ISINT(DTY(dtype2 + 1)) ||
-          count != get_int_cval(sym_of_ast(AD_NUMELM(AD_DPTR(dtype2))))) {
+          ((STYPEG(sym_of_ast(AD_NUMELM(AD_DPTR(dtype2)))) == ST_CONST) && 
+          count != get_int_cval(sym_of_ast(AD_NUMELM(AD_DPTR(dtype2)))))) {
         E74_ARG(pdsym, 3, NULL);
         goto call_e74_arg;
       }
@@ -9683,7 +9683,8 @@ ref_pd(SST *stktop, ITEM *list)
         if (!sym)
           sym = memsym_of_ast(ast);
         if (ADJLENG(sym)) {
-          clen = mk_id(CVLENG(sym));
+          //Convert if return type of len differs from len attribute of string
+          clen = convert_int(mk_id(CVLENG(sym)),dtyper);
         } else {
           clen = DTY(dtype1 + 1);
         }
@@ -10309,7 +10310,11 @@ ref_pd(SST *stktop, ITEM *list)
     if (!SDSCG(i)) {
       get_static_descriptor(i);
     }
-    ARG_AST(1) = mk_id(SDSCG(i));
+    if (STYPEG(SDSCG(i)) == ST_MEMBER) {
+      ARG_AST(1) = check_member(ast, mk_id(SDSCG(i)));
+    } else {
+      ARG_AST(1) = mk_id(SDSCG(i));
+    }
     break;
 
   case PD_ranf:
@@ -10764,6 +10769,7 @@ ref_pd(SST *stktop, ITEM *list)
     }
     break;
   case PD_leadz:
+  case PD_trailz:
   case PD_popcnt:
   case PD_poppar:
     if (count != 1) {

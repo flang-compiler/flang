@@ -19,7 +19,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
-#if !defined(TARGET_WIN_X8664)
+#if !defined(TARGET_WIN)
 #include <unistd.h>
 #endif
 
@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 {
 	VRS_T expd_res = {0.99745f, 0.99778f, 0.99805f, 0.99827f, 0.99846f, 0.99862f, 0.99875f, 0.99887f, 0.99897f, 0.99905f, 0.99913f, 0.99920f, 0.99926f, 0.99931f, 0.99936f, 0.99941f};
   VIS_T vmask __attribute__((aligned(64))) = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-#if !defined(TARGET_WIN_X8664)
+#if !defined(TARGET_WIN)
 	parseargs(argc, argv);
 #endif
 

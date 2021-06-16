@@ -3703,6 +3703,7 @@ lower_symbol(int sptr)
     if (stype == ST_ARRAY || stype == ST_DESCRIPTOR) {
       putbit("adjustable", ADJARRG(sptr));
       putbit("afterentry", AFTENTG(sptr));
+      putbit("assumedrank", ASSUMRANKG(sptr));
       putbit("assumedshape", ASSUMSHPG(sptr));
       putbit("assumedsize", ASUMSZG(sptr));
       putbit("autoarray",
@@ -5419,7 +5420,7 @@ llvm_check_retval_inargs(int sptr)
   if (fval) {
     int dtype;
     int ent_dtype = DTYPEG(sptr);
-    llvm_fix_args(sptr, dtype != DT_NONE);
+    llvm_fix_args(sptr);
     dtype = DTYPEG(fval);
     fix_class_args(sptr);
     if (DTYPEG(sptr) != DT_NONE && makefvallocal(RU_FUNC, fval)) {

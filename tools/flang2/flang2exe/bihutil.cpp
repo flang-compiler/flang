@@ -216,6 +216,7 @@ merge_bih_flags(int to_bih, int fm_bih)
   BIH_INVIF(to_bih) = BIH_INVIF(to_bih) | BIH_INVIF(fm_bih);
   BIH_NOINVIF(to_bih) = BIH_NOINVIF(to_bih) | BIH_NOINVIF(fm_bih);
   BIH_SIMD(to_bih) = BIH_SIMD(to_bih) | BIH_SIMD(fm_bih);
+  BIH_NOSIMD(to_bih) = BIH_NOSIMD(to_bih) | BIH_NOSIMD(fm_bih);
   BIH_RESID(to_bih) = BIH_RESID(to_bih) | BIH_RESID(fm_bih);
   BIH_VCAND(to_bih) = BIH_VCAND(to_bih) | BIH_VCAND(fm_bih);
   BIH_MIDIOM(to_bih) = BIH_MIDIOM(to_bih) | BIH_MIDIOM(fm_bih);
@@ -224,6 +225,9 @@ merge_bih_flags(int to_bih, int fm_bih)
   BIH_LDVOL(to_bih) = BIH_LDVOL(to_bih) | BIH_LDVOL(fm_bih);
   BIH_STVOL(to_bih) = BIH_STVOL(to_bih) | BIH_STVOL(fm_bih);
   BIH_NODEPCHK(to_bih) = BIH_NODEPCHK(to_bih) | BIH_NODEPCHK(fm_bih);
+  BIH_UNROLL(to_bih) = BIH_UNROLL(to_bih) | BIH_UNROLL(fm_bih);
+  BIH_UNROLL_COUNT(to_bih) = BIH_UNROLL_COUNT(to_bih) | BIH_UNROLL_COUNT(fm_bih);
+  BIH_NOUNROLL(to_bih) = BIH_NOUNROLL(to_bih) | BIH_NOUNROLL(fm_bih);
 
   if (BIH_TAIL(fm_bih))
     BIH_TAIL(to_bih) = 1;

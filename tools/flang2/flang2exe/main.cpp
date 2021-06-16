@@ -40,7 +40,7 @@
 #include "upper.h"
 #include "semant.h"
 #include "dwarf2.h"
-#include "direct.h"
+#include "fdirect.h"
 #include "expand.h"
 #include "scope.h"
 #include <stdbool.h>
@@ -379,6 +379,7 @@ main(int argc, char *argv[])
   bool findex = false;
   bool need_constructor = false;
   int accel_cnt, accel_vendor = 0;
+  int ilm_units_seen = 0;
 
   get_rutime();
   init(argc, argv);
@@ -428,9 +429,19 @@ main(int argc, char *argv[])
     if (!process_input(argv[0], &need_constructor))
       break;
 
+    // We cannot reuse gbl.func_count here since gbl.func_count must be
+    // incremented before calling process_input().
+    ilm_units_seen++;
+
   } while (!gbl.eof_flag);
 
-  cg_llvm_end();
+  if (ilm_units_seen == 0)
+    errwarn((error_code_t)6);
+
+  // Finalize IR generation only if the output file has been initialized
+  // by cg_llvm_init or assemble.
+  if (FTN_HAS_INIT())
+    cg_llvm_end();
 
   if (flg.smp) {
     ll_unlink_parfiles();
@@ -553,6 +564,9 @@ init(int argc, char *argv[])
                           * issued:
                           */
   errini();
+  if (argc <= 1)
+    errfatal((error_code_t)1);
+
   gbl.curr_file = NULL;
   sym_init();
 
@@ -657,6 +671,10 @@ init(int argc, char *argv[])
   register_integer_arg(arg_parser, "vect", &vect_val, 0);
   register_string_arg(arg_parser, "cmdline", &cmdline, NULL);
   register_boolean_arg(arg_parser, "debug", &flg.debug, false);
+
+  flg.linker_directives = (char **)getitem(8, argc * sizeof(char *));
+  register_string_list_arg(arg_parser, "linker", flg.linker_directives);
+  register_string_arg(arg_parser, "target", &(flg.llvm_target_triple), NULL);
 
   /* Run argument parser */
   parse_arguments(arg_parser, argc, argv);
@@ -940,7 +958,7 @@ finish()
   } else {
     if (gbl.objfil != NULL)
       fclose(gbl.objfil);
-    if (!flg.es)
+    if (!flg.es && FTN_HAS_INIT())
       assemble_end();
   }
   if (gbl.asmfil != NULL && gbl.asmfil != stdout)
@@ -964,7 +982,8 @@ finish()
     ccff_close();
 
   freearea(8); /* temporary filenames and pathnames space  */
-  destroy_action_map(&phase_dump_map);
+  if (phase_dump_map != NULL)
+    destroy_action_map(&phase_dump_map);
   free_getitem_p();
   if (maxfilsev >= 3)
     exit(1);
@@ -976,6 +995,7 @@ static void
 process_stb_file()
 {
   bool wrote_llvm = false;
+  int stb_units_seen = 0;
 
   if (!STB_UPPER())
     return;
@@ -993,6 +1013,10 @@ process_stb_file()
     if (gbl.eof_flag)
       break;
 
+    // We cannot reuse gbl.func_count here since gbl.func_count must be
+    // incremented before calling upper().
+    stb_units_seen++;
+
     upper_assign_addresses();
 
     cg_llvm_init();
@@ -1005,6 +1029,9 @@ process_stb_file()
     add_aguplevel_oldsptr();
 
   } while (!gbl.eof_flag);
+
+  if (stb_units_seen == 0)
+    errwarn((error_code_t)6);
 
   /* LLVM init needs to be called so we end up with a valid LLVM module
    * that we can compile (even if there is no user code) */

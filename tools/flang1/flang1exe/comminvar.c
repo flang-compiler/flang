@@ -23,7 +23,7 @@
 #include "extern.h"
 #include "commopt.h"
 #include "ccffinfo.h"
-#include "direct.h"
+#include "fdirect.h"
 
 /* Compiler switches:
     -x 49 0x20000:	Inhibit invariant communication hoisting
@@ -641,7 +641,7 @@ move_invar_std(int std, int fg)
   A_CONDP(astStmt, astCond);
   /*
    * This is where fgPost needs be associated with astCond & saved
-   * in a data strucutre for mk_ztrips(int lp).  Problably need to
+   * in a data structure for mk_ztrips(int lp).  Probably need to
    * repurpose A_COND.
 fprintf(STDERR,
 "XXX lp:%d, fgPre:%d, fgPost:%d, fgPost_stdfirst:%d\n",

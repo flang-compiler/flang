@@ -36,11 +36,11 @@
 #endif
 
 #ifdef UTILSYMTAB
-STB stb;
+extern STB stb;
 GBL gbl;
 #else
 extern STB stb;
-extern GBL gbl;
+GBL gbl;
 #endif
 static char buff[132];
 

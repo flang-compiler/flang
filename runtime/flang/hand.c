@@ -5,6 +5,7 @@
  *
  */
 
+#ifndef _WIN64
 #include <sys/signal.h>
 #include "stdioInterf.h"
 #include "fioMacros.h"
@@ -119,3 +120,11 @@ __fort_sethand()
     }
   }
 }
+
+#else
+void
+// TODO: implement __fort_sethand
+__fort_sethand()
+{
+}
+#endif

@@ -27,7 +27,7 @@
 #include "ccffinfo.h"
 #include "dinit.h"
 #include "rte.h"
-#include "direct.h"
+#include "fdirect.h"
 #ifdef TARGET_X86
 #include "x86.h"
 #endif
@@ -7113,8 +7113,7 @@ mmul_arg(int arr, int transpose, MMUL *mm)
   }
   /* ldim must be before any tranpose */
   if (STYPEG(sptr) == ST_MEMBER) {
-    ldim = ADD_EXTNTAST(DTYPEG(sptr), 0);
-    ldim = check_member(mm->addr, ldim);
+    return FALSE;
   }
 #ifdef NOEXTENTG
   else if (HCCSYMG(sptr) && SCG(sptr) == SC_LOCAL && ALLOCG(sptr) &&
@@ -7135,9 +7134,8 @@ mmul_arg(int arr, int transpose, MMUL *mm)
     ldim = mk_extent_expr(AD_LWBD(tad, 0), AD_UPBD(tad, 0));
   }
 #endif
-  else {
-    ldim = ADD_EXTNTAST(DTYPEG(sptr), 0);
-  }
+  else
+    return FALSE;
   if (transpose) {
     /*  extents are post-tranposed */
     m = mm->extent[0];

@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.9.0)
 
 if(POLICY CMP0042)
   cmake_policy(SET CMP0042 NEW) # Set MACOSX_RPATH=YES by default
@@ -33,9 +33,9 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 if (LIBPGMATH_STANDALONE_BUILD)
-  include(FindPythonInterp)
-  if( NOT PYTHONINTERP_FOUND )
-    message(WARNING "Failed to find python interpreter. "
+  include(FindPython3)
+  if( NOT Python3_Interpreter_FOUND )
+    message(WARNING "Failed to find Python 3 interpreter. "
                     "Libpgmath test suite will be disabled.")
     set(LLVM_INCLUDE_TESTS OFF)
   endif()
@@ -50,6 +50,8 @@ set(LIBPGMATH_SYSTEM_PROCESSOR "${CMAKE_SYSTEM_PROCESSOR}")
 if ("${LIBPGMATH_SYSTEM_PROCESSOR}" STREQUAL "AMD64" OR
     "${LIBPGMATH_SYSTEM_PROCESSOR}" STREQUAL "amd64" )
     set(LIBPGMATH_SYSTEM_PROCESSOR "x86_64")
+elseif ("${LIBPGMATH_SYSTEM_PROCESSOR}" STREQUAL "ARM64")
+    set(LIBPGMATH_SYSTEM_PROCESSOR "aarch64")
 endif ()
 
 if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")

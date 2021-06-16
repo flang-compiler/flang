@@ -12,6 +12,8 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/platform.h
   @ONLY)
 
+file(MAKE_DIRECTORY ${FLANG1_DOC_BIN_DIR})
+
 # Generate error message headers
 
 add_custom_command(

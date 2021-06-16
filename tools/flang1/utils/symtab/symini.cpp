@@ -43,7 +43,7 @@
  * out5 -  output file which will contain ILMs (ilmtp.h)
  *---------------------------------------------------------------------*/
 
-STB stb;
+extern STB stb;
 
 /**
  * .IN name pcnt atyp dtype ILM pname arrayf
@@ -3308,6 +3308,7 @@ const char *SyminiFE90::init_names3[] = {
     "ieee_set_halting_mode",
     "ieee_set_status",
     "leadz",
+    "trailz",
     "popcnt",
     "poppar",
 };

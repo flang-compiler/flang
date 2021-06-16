@@ -240,7 +240,7 @@ EXTERN_EFUNC2k1(powk1);
 
 int32_t mask_sp[1<<VLS][VLS] __attribute__((aligned(64)));
 int64_t mask_dp[1<<VLD][VLD] __attribute__((aligned(64)));
-#if !defined(TARGET_WIN_X8664)
+#if !defined(TARGET_WIN)
 int32_t verbose = 0;
 #else
 #if VERBOSE == 0
@@ -251,7 +251,7 @@ int32_t verbose = 1;
 #endif
 
 
-#if !defined(TARGET_WIN_X8664)
+#if !defined(TARGET_WIN)
 static void
 parseargs(int argc, char *argv[])
 {

@@ -869,7 +869,8 @@ enum FieldType {
   DWLangField,
   DWVirtualityField,
   DWEncodingField,
-  DWEmissionField
+  DWEmissionField,
+  SignedOrMDField
 };
 
 enum FieldFlags {
@@ -1377,7 +1378,7 @@ static const MDTemplate Tmpl_DICompositeType_pre34[] = {
 };
 
 static const MDTemplate Tmpl_DICompositeType[] = {
-  { "DICompositeType", TF, 15 },
+  { "DICompositeType", TF, 19 },
   { "tag",                      DWTagField },
   { "file",                     NodeField },
   { "scope",                    NodeField },
@@ -1392,7 +1393,11 @@ static const MDTemplate Tmpl_DICompositeType[] = {
   { "runtimeLang",              DWLangField },
   { "vtableHolder",             NodeField },
   { "templateParams",           NodeField },
-  { "identifier",               StringField }
+  { "identifier",               StringField },
+  { "dataLocation",             NodeField},
+  { "associated",               NodeField},
+  { "allocated",                NodeField},
+  { "rank",                     NodeField}
 };
 
 static const MDTemplate Tmpl_DIFortranArrayType[] = {
@@ -1406,11 +1411,27 @@ static const MDTemplate Tmpl_DIFortranArrayType[] = {
   { "elements",                 NodeField }
 };
 
-static const MDTemplate Tmpl_DISubrange[] = {
+static const MDTemplate Tmpl_DISubrange_pre11[] = {
   { "DISubrange", TF, 3 },
   { "tag",                      DWTagField, FlgHidden },
   { "lowerBound",               SignedField },
   { "count",                    SignedField, FlgMandatory }
+};
+
+static const MDTemplate Tmpl_DISubrange[] = {
+  { "DISubrange", TF, 4 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "lowerBound",               SignedOrMDField },
+  { "upperBound",               SignedOrMDField },
+  { "stride",                   SignedOrMDField }
+};
+
+static const MDTemplate Tmpl_DIGenericSubrange[] = {
+  { "DIGenericSubrange", TF, 4 },
+  { "tag",                      DWTagField, FlgHidden },
+  { "lowerBound",               SignedOrMDField },
+  { "upperBound",               SignedOrMDField, FlgMandatory },
+  { "stride",                   SignedOrMDField, FlgMandatory }
 };
 
 static const MDTemplate Tmpl_DISubrange_pre37[] = {
@@ -1568,8 +1589,8 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
   switch (LL_MDREF_kind(mdref)) {
   case MDRef_Node:
     if (value) {
-      assert(tmpl->type == NodeField, "metadata elem should not be a mdnode",
-             tmpl->type, ERR_Fatal);
+      assert(tmpl->type == NodeField || tmpl->type == SignedOrMDField,
+             "metadata elem should not be a mdnode", tmpl->type, ERR_Fatal);
       fprintf(out, "%s%s: !%u", prefix, tmpl->name, value);
     } else if (mandatory) {
       fprintf(out, "%s%s: null", prefix, tmpl->name);
@@ -1619,6 +1640,7 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
       }
       break;
 
+    case SignedOrMDField:
     case SignedField: {
       bool doOutput = true;
       const char *dv = module->constants[value]->data;
@@ -1646,6 +1668,7 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
     switch (tmpl->type) {
     case UnsignedField:
     case SignedField:
+    case SignedOrMDField:
       fprintf(out, "%s%s: %u", prefix, tmpl->name, value);
       break;
 
@@ -1755,6 +1778,8 @@ get_metadata_name(LL_MDName name)
     return "!llvm.module.flags";
   case MD_llvm_dbg_cu:
     return "!llvm.dbg.cu";
+  case MD_llvm_linker_options:
+    return "!llvm.linker.options";
   case MD_opencl_kernels:
     return "!opencl.kernels";
   case MD_nvvm_annotations:
@@ -1795,6 +1820,7 @@ static void emitDIGlobalVariableExpression(FILE *, LLVMModuleRef, MDNodeRef,
                                            unsigned);
 static void emitDIImportedEntity(FILE *, LLVMModuleRef, MDNodeRef, unsigned);
 static void emitDICommonBlock(FILE *, LLVMModuleRef, MDNodeRef, unsigned);
+static void emitDIGenericSubRange(FILE *, LLVMModuleRef, MDNodeRef, unsigned);
 
 typedef void (*MDDispatchMethod)(FILE *out, LLVMModuleRef mod, MDNodeRef mdnode,
                                  unsigned mdi);
@@ -1832,6 +1858,7 @@ static MDDispatch mdDispTable[LL_MDClass_MAX] = {
     {emitDIBasicStringType},          // LL_DIBasicType_string - deprecated
     {emitDIStringType},               // LL_DIStringType
     {emitDICommonBlock},              // LL_DICommonBlock
+    {emitDIGenericSubRange},          // LL_DIGenericSubRange
 };
 
 INLINE static void
@@ -1977,11 +2004,22 @@ static void
 emitDISubRange(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                unsigned mdi)
 {
+  if (ll_feature_debug_info_ver90(&mod->ir)) {
+    emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubrange);
+    return;
+  }
   if (!ll_feature_debug_info_subrange_needs_count(&mod->ir)) {
     emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubrange_pre37);
     return;
   }
-  emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubrange);
+  emitTmpl(out, mod, mdnode, mdi, Tmpl_DISubrange_pre11);
+}
+
+static void
+emitDIGenericSubRange(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
+                      unsigned mdi)
+{
+  emitTmpl(out, mod, mdnode, mdi, Tmpl_DIGenericSubrange);
 }
 
 static void
@@ -2148,6 +2186,14 @@ ll_dw_op_to_name(LL_DW_OP_t op)
     return "DW_OP_constu";
   case LL_DW_OP_plus_uconst:
     return "DW_OP_plus_uconst";
+  case LL_DW_OP_push_object_address:
+    return "DW_OP_push_object_address";
+  case LL_DW_OP_mul:
+    return "DW_OP_mul";
+  case LL_DW_OP_over:
+    return "DW_OP_over";
+  case LL_DW_OP_and:
+    return "DW_OP_and";
   default:
     break;
   }

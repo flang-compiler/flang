@@ -51,7 +51,7 @@ build: ${ALL_OBJS}
 kernel_driver.o: $(SRC_DIR)/kernel_driver.f90 rrtmg_sw_rad.o kgen_utils.o rrtmg_sw_reftra.o rrsw_kg28.o rrsw_kg25.o rrsw_kg19.o parrrsw.o rrsw_tbl.o rrsw_kg21.o rrsw_kg23.o rrsw_con.o rrsw_wvn.o rrsw_kg27.o rrsw_kg24.o rrsw_kg16.o rrsw_vsn.o shr_kind_mod.o rrsw_kg17.o rrsw_kg20.o rrsw_kg29.o rrsw_kg22.o rrtmg_sw_taumol.o rrtmg_sw_vrtqdr.o rrsw_kg26.o rrsw_kg18.o rrtmg_sw_spcvmc.o
 	${FC} ${FC_FLAGS} -c -o $@ $<
 
-rrtmg_sw_rad.o: $(SRC_DIR)/rrtmg_sw_rad.f90 kgen_utils.o rrtmg_sw_spcvmc.o shr_kind_mod.o parrrsw.o
+rrtmg_sw_rad.o: $(SRC_DIR)/rrtmg_sw_rad.F90 kgen_utils.o rrtmg_sw_spcvmc.o shr_kind_mod.o parrrsw.o
 	${FC} ${FC_FLAGS} -c -o $@ $<
 
 rrtmg_sw_reftra.o: $(SRC_DIR)/rrtmg_sw_reftra.f90 kgen_utils.o shr_kind_mod.o rrsw_vsn.o rrsw_tbl.o

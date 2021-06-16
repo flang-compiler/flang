@@ -2115,6 +2115,52 @@ same_dtype(DTYPE d1, DTYPE d2)
   return FALSE;
 }
 
+/** \brief Similar to eq_dtype(), except all scalar integer types are compatible
+    with each other, all scalar logical types are compatible with each other,
+    all character types are compatible with each other and we allow
+    casting arrays when types fit into each other.
+ */
+LOGICAL
+cmpat_dtype_array_cast(DTYPE d1, DTYPE d2)
+{
+  int s1, s2;
+
+  if (d1 == d2)
+    return TRUE;
+  if (DTY(d1) != DTY(d2)) {
+    /* check for any logical first since logical types also have the
+     * _TY_INT attribute.
+     */
+    if (DT_ISLOG(d1) && DT_ISLOG(d2))
+      return TRUE;
+    if (DT_ISINT(d1) && DT_ISINT(d2))
+      return TRUE;
+    return FALSE;
+  }
+
+  /* At this place DTY(d1) = DTY(d2) */
+  if (DTY(d1) == TY_CHAR || DTY(d1) == TY_NCHAR)
+    return TRUE;
+
+  /* Perform checks for array casting possibilities */
+  if (DTY(d1) == TY_ARRAY) {
+    DTYPE array_type_1 = DDTG(d1);
+    DTYPE array_type_2 = DDTG(d2);
+
+    /* We want to allow all casts apart from REAL to INT without further checks */
+    if ((DT_ISINT(array_type_1)  && DT_ISINT(array_type_2)) ||
+        (DT_ISREAL(array_type_1) && DT_ISREAL(array_type_2)) ||
+        (DT_ISREAL(array_type_1) && DT_ISINT(array_type_2)))
+      return true; // cngcon will later check if numbers actually fit into each other and warn if not
+    else
+      /* Not REAL or INT, continue normal checks */
+      return cmpat_dtype(array_type_1, array_type_2);
+  }
+
+  /* Continue checks for other cases */
+  return eq_dtype(d1, d2);
+}
+
 static int
 priority(int op)
 {

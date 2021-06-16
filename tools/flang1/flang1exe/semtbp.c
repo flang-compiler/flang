@@ -28,7 +28,7 @@
 #include "rte.h"
 #include "pd.h"
 #include "interf.h"
-#include "direct.h"
+#include "fdirect.h"
 #include "fih.h"
 
 /** \brief Macro for clearing/zeroing out stale dtypes and sptrs in tbp_queue */

@@ -8,13 +8,13 @@
 
 #if defined(TARGET_LINUX_POWER)
 #include "xmm2altivec.h"
-#elif defined(TARGET_LINUX_ARM64)
+#elif defined(TARGET_ARM64)
 #include "arm64intrin.h"
 #elif defined(TARGET_X8664)
 #include <immintrin.h>
 #define USE_SLP
 #else
-#error Unknown architecture - must be one of: TARGET_LINUX_POWER, TARGET_LINUX_ARM64, or TARGET_X8664
+#error Unknown architecture - must be one of: TARGET_LINUX_POWER, TARGET_ARM64, or TARGET_X8664
 #endif
 #include "fdlog_defs.h"
 

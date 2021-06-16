@@ -15,17 +15,18 @@
 #include <string.h>
 #include <ctype.h>
 #include <memory.h>
+#ifndef _WIN64
 #include <sys/time.h>
+#endif
 
 #include "global.h"
+#include "stdioInterf.h"
 /* FIXME: HACK
- * include/pgstdio.h:#define __fort_getenv(name) __io_getenv(name)
- * include/pgstdinit.h:#define __io_getenv(name) getenv(name)
+ * include/stdioInterf.h: #define __fort_getenv(name) getenv(name)
  * changes the name of __fort_getenv defined in this file.
  */
 #undef __fort_getenv
 
-#include "stdioInterf.h"
 #include "fioMacros.h"
 
 #include "open_close.h"
@@ -34,7 +35,7 @@
 
 #if   defined(TARGET_OSX)
 #include <crt_externs.h>
-#elif defined(__win32)
+#elif defined(__WIN64)
 /* OPENTOOLS14 has changed the name.  wrap _environ for all of windowws */
 char **__io_environ();
 #else
@@ -379,7 +380,7 @@ __fort_initarg()
   }
 #if   defined(TARGET_OSX)
   env = *_NSGetEnviron();
-#elif defined(__WIN32)
+#elif defined(__WIN64)
   env = __io_environ();
 #else
   env = environ;

@@ -21,7 +21,7 @@
 #include "scan.h"
 #include "semstk.h"
 #include "ast.h"
-#include "direct.h"
+#include "fdirect.h"
 #include "pragma.h"
 #include "x86.h"
 
@@ -1509,9 +1509,15 @@ semsmp(int rednum, SST *top)
    */
   case MP_STMT41:
     clause_errchk(BT_SIMD, "OMP SIMD");
-    sem.collapse = 0;
-    if (CL_PRESENT(CL_COLLAPSE)) {
-      sem.collapse = CL_VAL(CL_COLLAPSE);
+    if (CL_PRESENT(CL_SAFELEN) || CL_PRESENT(CL_LINEAR) ||
+        CL_PRESENT(CL_ALIGNED) || CL_PRESENT(CL_PRIVATE) ||
+        CL_PRESENT(CL_LASTPRIVATE) || CL_PRESENT(CL_REDUCTION) ||
+        CL_PRESENT(CL_COLLAPSE)) {
+      errwarn((error_code_t)604);
+      sem.expect_simd_do = FALSE;
+      par_push_scope(TRUE);
+      SST_ASTP(LHS, 0);
+      break;
     }
     sem.expect_simd_do = TRUE;
     par_push_scope(TRUE);

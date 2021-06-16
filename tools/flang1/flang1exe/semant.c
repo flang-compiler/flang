@@ -28,7 +28,7 @@
 #include "rte.h"
 #include "pd.h"
 #include "interf.h"
-#include "direct.h"
+#include "fdirect.h"
 #include "fih.h"
 
 #include "atomic_common.h"
@@ -292,7 +292,7 @@ static struct {
        ET_B(ET_VALUE) | ET_B(ET_VOLATILE) | ET_B(ET_SHARED) |
        ET_B(ET_ASYNCHRONOUS) | ET_B(ET_PROTECTED) | ET_B(ET_PINNED) |
        ET_B(ET_TEXTURE) | ET_B(ET_DEVICE) | ET_B(ET_MANAGED) |
-       ET_B(ET_IMPL_MANAGED))},
+       ET_B(ET_CONTIGUOUS) | ET_B(ET_IMPL_MANAGED))},
     {"target",
      ~(ET_B(ET_ACCESS) | ET_B(ET_ALLOCATABLE) | ET_B(ET_DIMENSION) |
        ET_B(ET_INTENT) | ET_B(ET_OPTIONAL) | ET_B(ET_SAVE) | ET_B(ET_VALUE) |
@@ -10445,7 +10445,18 @@ procedure_stmt:
    */
   case RENAME1:
     add_use_stmt();
-    sptr = SST_SYMG(RHS(3));
+    sptr = sptr1 = SST_SYMG(RHS(3));
+    if (test_scope(sptr) == -1) {
+      // If symbol not in scope search for an in-scope symbol with same name.
+      for (sptr1 = first_hash(sptr); sptr1 > NOSYM; sptr1 = HASHLKG(sptr1)) {
+        if (sptr1 == sptr || NMPTRG(sptr) != NMPTRG(sptr1))
+          continue;
+        if (test_scope(sptr1) != -1) {
+          sptr = sptr1;
+          break; // Found it.
+        }
+      }
+    }
     sptr = add_use_rename((int)SST_SYMG(RHS(1)), sptr, 0);
     SST_SYMP(RHS(3), sptr);
     break;

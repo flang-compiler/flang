@@ -5,6 +5,8 @@
  *
  */
 
+// TODO: Implement for TARGET_WIN_ARM64
+#if defined(TARGET_LINUX_ARM64)
 #include "mth_intrinsics.h"
 
 vrd2_t
@@ -30,3 +32,4 @@ __gz_cos_1v(vcd1_t x)
 {
   return (__ZGVxN1v__mth_i_vc8(x, ccos));
 }
+#endif

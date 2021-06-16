@@ -320,6 +320,7 @@ add_use_rename(SPTR local, SPTR global, LOGICAL is_operator)
     SCOPEP(newglobal, curr_scope()->sptr);
     ENCLFUNCP(newglobal, SCOPEG(newglobal));
     DTYPEP(newglobal, DTYPEG(global));
+    STYPEP(newglobal, ST_ALIAS);
     SYMLKP(newglobal, SYMLKG(global));
     HIDDENP(SYMLKG(newglobal), 0);
     pr->lineno = gbl.lineno;
@@ -500,6 +501,7 @@ find_def_in_most_recent_scope(int sptr, int save_sem_scope_level)
   SCOPESTACK *scope;
 
   for (sptr1 = first_hash(sptr); sptr1; sptr1 = HASHLKG(sptr1)) {
+    int sptr1_prv_recov = PRIVATEG(sptr1); /* Store the value for recovery */
     if (NMPTRG(sptr1) != NMPTRG(sptr))
       continue;
     if (STYPEG(sptr1) == ST_ALIAS && aliased_sym_visible(sptr1)) {
@@ -545,10 +547,12 @@ find_def_in_most_recent_scope(int sptr, int save_sem_scope_level)
           in private USE or a private module variable */
       if (!is_except_in_scope(scope, sptr1) &&
           !is_private_in_scope(scope, sptr1) &&
-          (STYPEG(ng) == ST_USERGENERIC || !PRIVATEG(ng))) {
+          ((STYPEG(ng) == ST_PROC) ||
+          (STYPEG(ng) == ST_USERGENERIC || !PRIVATEG(ng)))) {
         return sptr1;
       }
     }
+    PRIVATEP(sptr1, sptr1_prv_recov); /* Put back the original value */
   }
   return NOSYM;
 }

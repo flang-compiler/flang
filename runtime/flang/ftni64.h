@@ -16,7 +16,7 @@
 
 #define __HAVE_LONGLONG_T
 
-#if defined(LINUX8664) || defined(OSX8664)
+#if defined(LINUX8664) || defined(OSX8664) || defined(TARGET_LLVM_ARM64)
 typedef long _LONGLONG_T;
 typedef unsigned long _ULONGLONG_T;
 #else
@@ -27,7 +27,7 @@ typedef unsigned long long _ULONGLONG_T;
 #define I64_MSH(t) t[1]
 #define I64_LSH(t) t[0]
 
-int __ftn_32in64_;
+extern int __ftn_32in64_; // Declared in utilsi64.c
 
 #define VOID void
 
@@ -37,7 +37,7 @@ typedef union {
   _LONGLONG_T lv;
 } INT64D;
 
-#if defined(LINUX8664) || defined(OSX8664)
+#if defined(LINUX8664) || defined(OSX8664) || defined(TARGET_LLVM_ARM64)
 #define __I8RET_T long
 #define UTL_I_I64RET(m, l)                                                     \
   {                                                                            \

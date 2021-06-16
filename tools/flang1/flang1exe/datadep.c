@@ -22,7 +22,7 @@
 #include "induc.h"
 
 #include "soc.h"
-#include "direct.h"
+#include "fdirect.h"
 #include "extern.h"
 
 #if DEBUG
@@ -451,7 +451,7 @@ build_loop_dd(int loop)
 
 /* assume mr1, mr2 in same fg node; return TRUE if mr1 comes before mr2 */
 static LOGICAL
-mr_preceeds(int mr1, int mr2)
+mr_precedes(int mr1, int mr2)
 {
   int ilt1, ilt2;
 
@@ -460,10 +460,10 @@ mr_preceeds(int mr1, int mr2)
   ilt1 = MR_ILT(mr1);
   ilt2 = MR_ILT(mr2);
   if (ilt1 == ilt2) {
-    /* if this is the same ilt, don't allow the store to preceed the
+    /* if this is the same ilt, don't allow the store to precede the
      * load */
     if (MR_TYPE(mr1) != 'l') {
-      assert(MR_TYPE(mr2) == 'l', "mr_preceeds: too may st/br", mr2, 4);
+      assert(MR_TYPE(mr2) == 'l', "mr_precedes: too may st/br", mr2, 4);
       return FALSE;
     }
     return TRUE;
@@ -507,7 +507,7 @@ chkref(int i, int j)
   fg1 = MR_FG(j);
   fg2 = MR_FG(i);
   if (fg1 == fg2) {
-    if (mr_preceeds(j, i))
+    if (mr_precedes(j, i))
       exo_dirvec_ji = dirv_exo(ddinfo.n, TRUE);
     else
       exo_dirvec_ji = dirv_exo(ddinfo.n, FALSE);
@@ -518,7 +518,7 @@ chkref(int i, int j)
 
   /** compute execution orders from i to j */
   if (fg1 == fg2) {
-    if (mr_preceeds(i, j))
+    if (mr_precedes(i, j))
       exo_dirvec_ij = dirv_exo(ddinfo.n, TRUE);
     else
       exo_dirvec_ij = dirv_exo(ddinfo.n, FALSE);
@@ -534,12 +534,12 @@ chkref(int i, int j)
    */
 
   for (p = ddinfo.dvlist; p != 0; p = p->next) {
-    /* j preceeds i */
+    /* j precedes i */
     vec = p->vec & exo_dirvec_ji;
     if (!dirv_chkzero(vec, ddinfo.n))
       dd_edge(j, i, vec);
 
-    /* i preceeds j; must invert dependence vector */
+    /* i precedes j; must invert dependence vector */
     vec = dirv_inverse(p->vec) & exo_dirvec_ij;
     if (!dirv_chkzero(vec, ddinfo.n))
       dd_edge(i, j, vec);
@@ -1486,7 +1486,7 @@ do_subscript(int nsubs)
   }
 #endif
 
-  /* gaussian elimination on the matrix */
+  /* Gaussian elimination on the matrix */
   bnd = neqns;
   if (bnd > nvars)
     bnd = nvars;

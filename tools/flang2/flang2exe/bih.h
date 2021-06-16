@@ -62,7 +62,8 @@ typedef struct {
 
       unsigned parsect : 1;   /* bih belongs to a parallel section */
       unsigned ujres : 1;     /* bih contains ujresidual start & count info */
-      unsigned simd : 1;       /* bih contains simd code */
+      unsigned simd : 1;      /* bih contains simd code */
+      unsigned nosimd : 1;    /* bih does not contain simd code */
 
       unsigned ldvol : 1; /* bih contains a load from volatile space */
       unsigned stvol : 1; /* bih contains a store to volatile space */
@@ -115,6 +116,9 @@ typedef struct {
       unsigned rpct_confl : 1; /* block contains the RPCT conflict loop */
       unsigned rt_guarded : 1; /* block contains runtime guarded loop */
       unsigned doconc : 1;     /* bih is the head of a do concurrent loop */
+      unsigned unroll : 1;     /* bih is a loop to be fully unrolled */
+      unsigned unroll_cnt : 1; /* bih has a user-specified unroll factor */
+      unsigned nounroll : 1;   /* bih is a loop that must not be unrolled */
     } bits;
   } flags2;
   int lpcntFrom;  /* When a loop count temp is created, record the induction
@@ -190,6 +194,7 @@ typedef struct {
 #define BIH_PARSECT(i) bihb.stg_base[i].flags.bits.parsect
 #define BIH_UJRES(i) bihb.stg_base[i].flags.bits.ujres
 #define BIH_SIMD(i) bihb.stg_base[i].flags.bits.simd
+#define BIH_NOSIMD(i) bihb.stg_base[i].flags.bits.nosimd
 #define BIH_LDVOL(i) bihb.stg_base[i].flags.bits.ldvol
 #define BIH_STVOL(i) bihb.stg_base[i].flags.bits.stvol
 #define BIH_ASM(i) bihb.stg_base[i].flags.bits.gasm
@@ -228,6 +233,9 @@ typedef struct {
 #define BIH_FTAG(i) bihb.stg_base[i].ftag
 #define BIH_BLKCNT(i) bihb.stg_base[i].blkCnt
 #define BIH_AVLPCNT(i) bihb.stg_base[i].aveLpCnt
+#define BIH_UNROLL(i) bihb.stg_base[i].flags2.bits.unroll
+#define BIH_UNROLL_COUNT(i) bihb.stg_base[i].flags2.bits.unroll_cnt
+#define BIH_NOUNROLL(i) bihb.stg_base[i].flags2.bits.nounroll
 
 #define EXEC_COUNT double
 #define UNKNOWN_EXEC_CNT -1.0

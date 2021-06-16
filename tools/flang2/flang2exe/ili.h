@@ -427,6 +427,7 @@ inline MSZ MSZ_ILI_OPND(int i, int opn) {
 /* Synonyms (beware conflicting case values) */
 #define MSZ_WORD MSZ_SWORD
 #define MSZ_BYTE MSZ_UBYTE
+#define MSZ_F2 MSZ_FHALF
 #define MSZ_F4 MSZ_FWORD
 #define MSZ_F8 MSZ_FLWORD
 #define MSZ_DBLE MSZ_FLWORD

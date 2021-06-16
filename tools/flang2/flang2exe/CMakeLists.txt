@@ -18,8 +18,11 @@ elseif( ${TARGET_ARCHITECTURE} STREQUAL "ppc64le" )
   )
 endif()
 
+set_source_files_properties(${UTILS_SYMTAB_BIN_DIR}/symtabdf.cpp PROPERTIES GENERATED TRUE)
+
 set(SOURCES
   ${ARCH_DEP_FILES}
+  asprintf.cpp
   bihutil.cpp
   dinitutl.cpp
   dinit.cpp
@@ -74,6 +77,7 @@ set(SOURCES
   verify.cpp
   ompaccel.cpp
   tgtutil.cpp
+  ${UTILS_SYMTAB_BIN_DIR}/symtabdf.cpp
   )
 
 set(COMMON_DEFS
@@ -88,7 +92,7 @@ set(INCLUDE_DIRS
   ${FLANG_SOURCE_DIR}/lib/scutil
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ARCHITECTURE}-${TARGET_OS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ARCHITECTURE}-Linux
   ${UTILS_SYMTAB_BIN_DIR}        # Symbol table headers
   ${UTILS_ILI_BIN_DIR}           # ILI IR headers
   ${UTILS_ILM_BIN_DIR}           # ILM IR headers
@@ -108,9 +112,15 @@ set(SHARED_SOURCES
 
 foreach(FILE ${SHARED_SOURCES})
   get_filename_component(TOFILE ${FILE} NAME)
-  add_custom_command(OUTPUT ${TOFILE}pp 
-    COMMAND ${CMAKE_COMMAND} -E create_symlink ${FILE} ${TOFILE}pp
-    MAIN_DEPENDENCY ${FILE})
+  if(WIN32)
+    add_custom_command(OUTPUT ${TOFILE}pp 
+      COMMAND ${CMAKE_COMMAND} -E copy ${FILE} ${TOFILE}pp
+      MAIN_DEPENDENCY ${FILE})
+  else()
+    add_custom_command(OUTPUT ${TOFILE}pp
+      COMMAND ${CMAKE_COMMAND} -E create_symlink ${FILE} ${TOFILE}pp
+      MAIN_DEPENDENCY ${FILE})
+  endif()
   set(SHARED_CPP_SOURCES ${SHARED_CPP_SOURCES} ${TOFILE}pp)
 endforeach()
 
@@ -129,9 +139,9 @@ target_compile_options(flang2
   )
 
 target_link_libraries(flang2
+  PRIVATE
   flangArgParser
-  ${FLANG_LIB_DIR}/scutil.a
-  -lm
+  scutil
   )
 
 add_dependencies(flang2
@@ -146,7 +156,7 @@ add_dependencies(flang2
 
 if (FLANG_INCLUDE_DOCS)
   add_dependencies(flang2
-    gen_sphinx_docs
+    flang2_gen_sphinx_docs
     )
 endif()
 
@@ -157,7 +167,7 @@ target_include_directories(flang2
 
 # Install flang2 executable
 install(TARGETS flang2
-  RUNTIME DESTINATION bin)
+        RUNTIME DESTINATION ${LLVM_TOOLS_BINARY_DIR})
 
 # Local Variables:
 # mode: cmake

@@ -5,7 +5,7 @@
  *
  */
 
-#if defined(TARGET_LINUX_ARM64)
+#if defined(TARGET_ARM64)
 #error "gsincos.c is not used on AArch64."
 #endif
 
@@ -66,7 +66,7 @@
   #define VEC_LOAD(_a)    *((VFLOAT *)(_a))
 #endif
 
-#if     ! defined(TARGET_WIN_X8664) && ! defined(TARGET_OSX_X8664)
+#if     ! defined(TARGET_WIN) && ! defined(TARGET_OSX_X8664)
 extern  void   SINCOS(FLOAT, FLOAT *, FLOAT *);
 #endif      /* #if     ! defined(TARGET_WIN_X8664) */
 extern  VFLOAT  VFLOATRETURN(VFLOAT, VFLOAT);

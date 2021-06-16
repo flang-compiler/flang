@@ -98,7 +98,7 @@ static void data_pop_const(void);
 static void data_push_const(void);
 static void read_global(void);
 static int read_CCFF(void);
-#include "direct.h"
+#include "fdirect.h"
 static void read_contained(void);
 
 typedef struct CGR_LIST {
@@ -2007,8 +2007,8 @@ read_symbol(void)
   int val[4], namelen, i, dpdsc, inmod;
   /* flags: */
   int addrtkn, adjustable, afterentry, altname, altreturn, aret, argument,
-      assigned, assumedshape, assumedsize, autoarray, blank, Cfunc, ccsym, clen,
-    cmode, common, constant, count, currsub, decl;
+      assigned, assumedrank, assumedshape, assumedsize, autoarray, blank, Cfunc,
+      ccsym, clen, cmode, common, constant, count, currsub, decl;
   SPTR descriptor;
   int intentin, texture, device, dll, dllexportmod, enclfunc, end, endlab,
     format, func, gsame, gdesc, hccsym, hollerith, init, isdesc, linenum;
@@ -2130,6 +2130,7 @@ read_symbol(void)
     if (stype == ST_ARRAY) {
       adjustable = getbit("adjustable");
       afterentry = getbit("afterentry");
+      assumedrank = getbit("assumedrank");
       assumedshape = getbit("assumedshape"); /* + */
       assumedsize = getbit("assumedsize");
       autoarray = getbit("autoarray");
@@ -2296,6 +2297,7 @@ read_symbol(void)
     }
     ORIGDIMP(newsptr, origdim);
     if (stype == ST_ARRAY) {
+      ASSUMRANKP(newsptr, assumedrank);
       ASSUMSHPP(newsptr, assumedshape);
       ASUMSZP(newsptr, assumedsize);
       ADJARRP(newsptr, adjustable);
@@ -3088,16 +3090,6 @@ read_symbol(void)
       SYMLKP(newsptr, gbl.externs);
       gbl.externs = newsptr;
     }
-#if defined(TARGET_WIN_X86)
-    if (dllexportmod) {
-      /*
-       * dllexport of a normal ST_PROC is illegal; however, it
-       * could represent a MODULE whose dllexport only occurs within
-       * a contained procedure.
-       */
-      dllexport_mod(newsptr);
-    }
-#endif
     VTOFFP(newsptr, vtoff);
     INVOBJP(newsptr, invobj);
     INVOBJINCP(newsptr, invobjinc);
@@ -6499,6 +6491,8 @@ lookup_modvar_alias(SPTR sptr)
   }
   return NULL;
 }
+
+SPTR get_symbol_start(void) { return (SPTR)(oldsymbolcount + 1); }
 
 /**
    \brief Given a alias name of a mod var sptr, create a new alias_syminfo node

@@ -9,7 +9,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include "pgstdinit.h"
 
 #ifdef PGI_BIG_ENDIAN
 union ieee {

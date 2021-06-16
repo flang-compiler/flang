@@ -50,7 +50,7 @@
 
 /* Global Declarations */
 
-struct {
+struct files_s {
   FILE *infile;
   FILE *gramin;
   FILE *tokin;
@@ -59,34 +59,39 @@ struct {
   FILE *datfil;
   FILE *dbgfil;
   FILE *semfil;
-} files;
+};
+extern struct files_s files;
 
-INT *scrtch;
-INT *hashpt;
-CHAR *linech;
-char *filnambuf;
+extern INT *scrtch;
+extern INT *hashpt;
+extern CHAR *linech;
+extern char *filnambuf;
 
-struct {
+struct s4_s {
   INT *item;
   INT *nextt;
-} s4;
+};
+extern struct s4_s s4;
 
-struct {
+struct s1_1_s{
   INT *sstore;
   INT *sthead;
-} s1_1;
+};
+extern struct s1_1_s s1_1;
 
-struct {
+struct lstcom_s {
   INT garbag;
   INT lstptr;
-} lstcom;
+};
+extern struct lstcom_s lstcom;
 
-struct {
+struct qcom_s {
   INT qhead;
   INT qtail;
-} qcom;
+};
+extern struct qcom_s qcom;
 
-struct {
+struct switches_s {
   LOGICAL listsw;
   LOGICAL runosw;
   LOGICAL xrefsw;
@@ -100,13 +105,15 @@ struct {
   LOGICAL dbgcsw;
   LOGICAL dbgdsw;
   LOGICAL dbgesw;
-} switches;
+};
+extern struct switches_s switches;
 
-struct {
+struct adqcom_s {
   INT adequt;
-} adqcom;
+};
+extern struct adqcom_s adqcom;
 
-struct {
+struct g_1_s {
   INT *lftuse;
   INT *rgtuse;
   INT *frsprd;
@@ -118,9 +125,10 @@ struct {
   INT numprd;
   INT goal;
   INT nterms;
-} g_1;
+};
+extern struct g_1_s g_1;
 
-struct {
+struct s_1_s {
   INT nstate;
   INT nxttrn;
   INT nxtred;
@@ -135,25 +143,29 @@ struct {
   INT *basis;
   INT *tran;
   INT *red;
-} s_1;
+};
+extern struct s_1_s s_1;
 
-struct {
+struct string_1_s {
   INT sstptr;
   INT shdptr;
-} string_1;
+};
+extern struct string_1_s string_1;
 
-struct {
+struct readcm_s{
   INT linbuf[81];
   INT curchr;
   INT lineno;
   INT fstchr;
-} readcm;
+};
+extern struct readcm_s readcm;
 
-struct {
+struct ptsem_s {
   INT pnum;
   INT brkflg;
   INT semnum;
-} ptsem;
+};
+extern struct ptsem_s ptsem;
 
 /*
  * a local array line is used to constuct a line of text to be written

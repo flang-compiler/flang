@@ -1226,10 +1226,10 @@ accpp(void)
 }
 
 /** \brief
- * Format of pr_line ouput:
+ * Format of pr_line output:
  * \# line "file_full_path" "from_stdinc"
  *
- * NB: -"form_stdinc" field is omitted in Fortan
+ * NB: -"form_stdinc" field is omitted in Fortran
  *     -If you modify "System_Header", make sure
  *     you modify get_line() in scan.c
  *     (both the string and its length)
@@ -2718,7 +2718,7 @@ subst(PPSYM *sp)
         /* Sanity test: Better be the SENTINEL we pushed */
         toktyp = gtok(tokval, 0);
 
-        /* Remove any litteral prefixes or the leading quote */
+        /* Remove any literal prefixes or the leading quote */
         if (*r1 == 'L')
           ++r1;
         if ((toktyp != T_SENTINEL) || *r1 != '"') {
@@ -4073,6 +4073,7 @@ nextok(char *tokval, int truth)
   char *savtokval = tokval;
   PPSYM *sp;
   char *comment_ptr;
+  int dot_seen;
 
 again:
   if ((c = inchar()) == EOF) {
@@ -4207,6 +4208,7 @@ again:
     /* must all be in buffer */
     p = lineptr;
   dotnum:
+    dot_seen=0;
     for (;;) {
       if (*p == 'E' || *p == 'e') {
         ++p;
@@ -4216,7 +4218,10 @@ again:
         ++p;
         if (*p == '+' || *p == '-')
           ++p;
-      } else if (*p == '.' || isident(*p))
+      } else if (*p == '.' && !dot_seen) {
+        ++p;
+        dot_seen=1;
+      } else if (isident(*p))
         ++p;
       else
         break;

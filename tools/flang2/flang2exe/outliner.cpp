@@ -29,11 +29,17 @@
 #include "dtypeutl.h"
 #include "ll_ftn.h"
 #include "cgllvm.h"
-#include <unistd.h>
 #include "regutil.h"
 #include "symfun.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include "asprintf.h"
 #if !defined(TARGET_WIN)
 #include <unistd.h>
+#else
+#include <io.h>
+#define ftruncate _chsize
 #endif
 #if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
 #include "ompaccel.h"
@@ -883,7 +889,7 @@ ll_reset_parfile(void)
     set_ilmfile(par_file2);
     gbl.eof_flag = 0;
     par_curfile = par_file1;
-    truncate(parFileNm1, 0);
+    ftruncate(fileno(par_file1), 0);
     hasILMRewrite = 0;
     (void)fseek(gbl.ilmfil, 0L, 0);
     (void)fseek(par_curfile, 0L, 0);
@@ -892,7 +898,7 @@ ll_reset_parfile(void)
     set_ilmfile(par_file1);
     gbl.eof_flag = 0;
     par_curfile = par_file2;
-    truncate(parFileNm2, 0);
+    ftruncate(fileno(par_file2), 0);
     hasILMRewrite = 0;
     (void)fseek(gbl.ilmfil, 0L, 0);
     (void)fseek(par_curfile, 0L, 0);
@@ -900,8 +906,8 @@ ll_reset_parfile(void)
   case outliner_reset:
     if (orig_ilmfil)
       set_ilmfile(orig_ilmfil);
-    truncate(parFileNm1, 0);
-    truncate(parFileNm2, 0);
+    ftruncate(fileno(par_file1), 0);
+    ftruncate(fileno(par_file2), 0);
     (void)fseek(par_file1, 0L, 0);
     (void)fseek(par_file2, 0L, 0);
     par_curfile = par_file1;
@@ -930,7 +936,7 @@ ll_reset_parfile_(void)
       gbl.ilmfil = par_file2;
       gbl.eof_flag = 0;
       par_curfile = par_file1;
-      truncate(parFileNm1, 0);
+      ftruncate(fileno(par_file1), 0);
       hasILMRewrite = 0;
       (void)fseek(gbl.ilmfil, 0L, 0);
       (void)fseek(par_curfile, 0L, 0);
@@ -939,7 +945,7 @@ ll_reset_parfile_(void)
       gbl.ilmfil = par_file1;
       gbl.eof_flag = 0;
       par_curfile = par_file2;
-      truncate(parFileNm2, 0);
+      ftruncate(fileno(par_file2), 0);
       hasILMRewrite = 0;
       (void)fseek(gbl.ilmfil, 0L, 0);
       (void)fseek(par_curfile, 0L, 0);
@@ -957,8 +963,8 @@ ll_reset_parfile_(void)
   } else {
     if (orig_ilmfil)
       gbl.ilmfil = orig_ilmfil;
-    truncate(parFileNm1, 0);
-    truncate(parFileNm2, 0);
+    ftruncate(fileno(par_file1), 0);
+    ftruncate(fileno(par_file2), 0);
     (void)fseek(par_file1, 0L, 0);
     (void)fseek(par_file2, 0L, 0);
     par_curfile = par_file1;
@@ -1930,13 +1936,22 @@ llRestoreSavedILFil()
 void
 ll_open_parfiles()
 {
-  int fd1, fd2;
   strcpy(parFileNm1, "pgipar1XXXXXX");
   strcpy(parFileNm2, "pgipar2XXXXXX");
+#if defined(TARGET_WIN)
+  char* result1 = _mktemp(parFileNm1);
+  char* result2 = _mktemp(parFileNm2);
+  if (result1 != NULL && result2 != NULL) {
+    fopen_s( &par_file1, result1, "w" );
+    fopen_s( &par_file2, result2, "w" );
+  }
+#else
+  int fd1, fd2;
   fd1 = mkstemp(parFileNm1);
   fd2 = mkstemp(parFileNm2);
   par_file1 = fdopen(fd1, "w+");
   par_file2 = fdopen(fd2, "w+");
+#endif
   if (!par_file1)
     errfatal((error_code_t)4);
   if (!par_file2)

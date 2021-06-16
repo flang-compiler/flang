@@ -1,0 +1,67 @@
+name: Flang build & test ARM64
+
+on:
+  push:
+    branches: [ master ]
+    paths-ignore:
+      - '**/.github/workflows/build_flang.yml'
+  pull_request:
+    branches: [ master ]
+    paths-ignore:
+      - '**/.github/workflows/build_flang.yml'
+
+jobs:
+  build_flang:
+    runs-on: self-hosted
+    env:
+      build_path: /home/github
+      install_prefix: /home/github/usr/local
+    container:
+      image: ghcr.io/${{ github.repository_owner}}/ubuntu20-flang-${{ matrix.llvm_branch }}:latest
+      credentials:
+        username: github
+    strategy:
+      matrix:
+        target: [AArch64]
+        cc: [gcc]
+        cpp: [g++]
+        version: [10]
+        llvm_branch: [release_11x, release_12x]
+
+    steps:
+      - name: Check tools
+        run: |
+          git --version
+          cmake --version
+          make --version
+
+      - name: Manual checkout to build in user's home dir (push)
+        if: github.ref == 'refs/heads/master'
+        run: |
+          cd ${{ env.build_path }}
+          git clone https://github.com/flang-compiler/flang.git
+
+      - name: Manual checkout to build in user's home dir (pull_request)
+        if: github.ref != 'refs/heads/master'
+        run: |
+          cd ${{ env.build_path }}
+          git clone https://github.com/flang-compiler/flang.git
+          cd flang
+          git fetch origin ${{github.ref}}:pr_branch
+          git checkout pr_branch
+
+      - name: Build and install flang & libpgmath
+        run: |
+          cd ${{ env.build_path }}/flang
+          ./build-flang.sh -t ${{ matrix.target }} -p ${{ env.install_prefix }} -n `nproc --ignore=1`
+
+      # Copy llvm-lit
+      - name: Copy llvm-lit
+        run: |
+          cd ${{ env.build_path }}/flang
+          cp /home/root/classic-flang-llvm-project/build/bin/llvm-lit build/bin/.
+
+      - name: Test flang
+        run: |
+          cd ${{ env.build_path }}/flang/build
+          make check-all

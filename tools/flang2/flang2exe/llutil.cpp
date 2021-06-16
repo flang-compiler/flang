@@ -1416,57 +1416,16 @@ make_constsptr_op(SPTR sptr)
 static char *
 ll_get_string_buf(int string_len, char *base, int skip_quotes)
 {
-  char *name = "";
+  char *name;
   char *from, *to;
-  int c, len, newlen;
-
-  len = string_len;
-  from = base;
-  newlen = 3;
-  while (len--) {
-    c = *from++ & 0xff;
-    if (c == '\"' || c == '\\') {
-      newlen += 3;
-    } else if (c >= ' ' && c <= '~') {
-      newlen++;
-    } else if (c == '\n' || c == '\r') {
-      newlen += 3;
-    } else {
-      newlen += 3;
-    }
-  }
-  name = (char *)llutil_alloc((newlen + 3) * sizeof(char));
+  int len;
+  name = (char *)llutil_alloc(string_len * sizeof(char));
   to = name;
-  if (!skip_quotes) {
-    *name = '\"';
-    to++;
-  }
-
   from = base;
   len = string_len;
   while (len--) {
-    c = *from++ & 0xff;
-    if (c == '\"' || c == '\\') {
-      *to++ = '\\';
-      sprintf(to, "%02X", c);
-      to += 2;
-    } else if (c >= ' ' && c <= '~') {
-      *to++ = c;
-    } else if (c == '\n' || c == '\r') {
-      *to++ = '\\';
-      sprintf(to, "%02X", c);
-      to += 2;
-    } else {
-      *to++ = '\\';
-      sprintf(to, "%02X", c);
-      to += 3;
-    }
+    *to++ = *from++;
   }
-
-  if (!skip_quotes) {
-    *to++ = '\"';
-  }
-  *to = '\0';
   return name;
 }
 
@@ -2195,6 +2154,99 @@ metadata_args_need_struct(void)
 }
 
 /**
+ * This function returns true for the types supported
+ * in function make_param_op
+ */
+bool
+should_preserve_param(const DTYPE dtype)
+{
+  switch (DTY(dtype)) {
+  // handled cases
+  case TY_ARRAY:
+    {
+      ADSC *ad = AD_DPTR(dtype);
+      SPTR size_sptr = AD_NUMELM(ad);
+      ISZ_T size = ad_val_of(size_sptr);
+      /* Do not preserve zero-sized array, which would be optimized out later */
+      if (size == 0)
+        return false;
+      else
+        return true;
+    }
+  case TY_STRUCT:
+  case TY_BLOG:
+  case TY_SLOG:
+  case TY_LOG:
+  case TY_BINT:
+  case TY_SINT:
+  case TY_INT:
+  case TY_REAL:
+  case TY_INT8:
+  case TY_LOG8:
+  case TY_DBLE:
+  case TY_QUAD:
+  case TY_CMPLX:
+  case TY_DCMPLX:
+  case TY_CHAR:
+    return true;
+  // unsupported cases
+  case TY_WORD:
+  case TY_DWORD:
+  case TY_HOLL:
+  case TY_NCHAR:
+    return false;
+  default:
+    assert(0, "should_preserve_param(dtype): unexpected DTYPE", 0, ERR_Fatal);
+    return false;
+  }
+}
+
+OPERAND *
+make_param_op(SPTR sptr)
+{
+  OPERAND *oper;
+  DTYPE dtype = DTYPEG(sptr);
+
+  switch (DTY(dtype)) {
+  // Below are the supported types, please note that two types TY_ARRAY,
+  // TY_STRUCT present in should_preserve_param but absent here that is
+  // because these two type are handled differently in function process_params.
+  case TY_BLOG:
+  case TY_SLOG:
+  case TY_LOG:
+  case TY_BINT:
+  case TY_SINT:
+  case TY_INT:
+  case TY_REAL:
+    oper = make_constval_op(make_lltype_from_dtype(dtype), CONVAL1G(sptr),
+                            CONVAL2G(sptr));
+    break;
+  case TY_INT8:
+  case TY_LOG8:
+    oper = make_constval_op(make_lltype_from_dtype(dtype),
+                            CONVAL2G(CONVAL1G(sptr)), CONVAL1G(CONVAL1G(sptr)));
+    break;
+  case TY_DBLE:
+    oper = make_constval_op(make_lltype_from_dtype(dtype),
+                            CONVAL1G(CONVAL1G(sptr)), CONVAL2G(CONVAL1G(sptr)));
+    break;
+  case TY_QUAD:
+  case TY_CMPLX:
+  case TY_DCMPLX:
+    oper = make_constsptr_op((SPTR)CONVAL1G(sptr));
+    break;
+  case TY_CHAR:
+    oper = make_conststring_op((SPTR)CONVAL1G(sptr));
+    break;
+  // TODO: to add support for other types
+  default:
+    break;
+  }
+
+  return oper;
+}
+
+/**
    \brief Write a single operand
  */
 void
@@ -2254,9 +2306,17 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
       if (p->ll_type->sub_types[0]->data_type == LL_I16) {
           print_token(p->string);
       } else {
-          print_token("c\"");
-          print_token(p->string);
-          print_token("\"");
+        char buffer[6];
+        print_token("[");
+        for (int i = 0; i < p->ll_type->sub_elements; i++) {
+          if (i)
+            print_token(", ");
+          print_token("i8 ");
+          char c = p->string[i];
+          sprintf(buffer, "%d", c);
+          print_token(buffer);
+        }
+        print_token(" ] ");
       }
     }
     break;
@@ -2376,11 +2436,14 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
         new_op = make_arg_op(p->val.sptr);
         if (p->ll_type)
           new_op->ll_type = p->ll_type;
+      } else if (STYPEG(p->val.sptr) == ST_PARAM) {
+        new_op = make_param_op(p->val.sptr);
       } else {
         new_op = make_var_op(p->val.sptr);
         if (p->ll_type)
           new_op->ll_type = ll_get_pointer_type(p->ll_type);
       }
+
       new_op->flags = p->flags;
       write_operand(new_op, "", 0);
       if (metadata_args_need_struct())

@@ -611,6 +611,8 @@ Set by Expander.
 Assumed size array.
 .FL ADJARR f10
 Adjustable array.
+.FL ASSUMRANK f37
+Assumed-rank array.
 .FL ASSUMSHP f19
 Assumed-shape array.
 .FL AFTENT f20
@@ -716,8 +718,6 @@ This is set in an F90 program for an array that is being used as a
 section descriptor with a non-stride-1 leading dimension;
 in this case, the leftmost subscript must be multiplied by the 
 stride in the section descriptor.
-.FL RESERVED_f37 f37
-reserved
 .FL LSCOPE f41
 If set, the local variable is accessed only in the function's local
 scope; any internal procedure does not access this variable.

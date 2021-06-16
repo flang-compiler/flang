@@ -4,6 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 
+set_source_files_properties(${UTILS_SYMTAB_BIN_DIR}/symtabdf.c PROPERTIES GENERATED TRUE)
+
 set(SOURCES
   accpp.c
   assem.c
@@ -88,6 +90,7 @@ set(SOURCES
   version.c
   xref.c
   vsub.c
+  ${UTILS_SYMTAB_BIN_DIR}/symtabdf.c
   )
 
 set(COMMON_DEFS
@@ -131,9 +134,12 @@ add_dependencies(flang1
   )
 
 if (FLANG_INCLUDE_DOCS)
-  add_dependencies(flang1_gen_sphinx_docs
-    flang1
+  file(MAKE_DIRECTORY ${FLANG1_DOC_BIN_DIR})
+  add_dependencies(flang1
+    flang1_gen_sphinx_docs
     )
+  # Copy the rst files, that don't need to be generated with n2rst
+  configure_file(${FLANG1_DOC_SRC_DIR}/howto_intrinsics.rst ${FLANG1_DOC_BIN_DIR}/howto_intrinsics.rst COPYONLY)
 endif()
 
 target_include_directories(flang1
@@ -147,6 +153,7 @@ target_compile_options(flang1
   )
 
 target_link_libraries(flang1
+  PRIVATE
   flangArgParser
   ${FLANG_LIB_DIR}/scutil.a
   -lm

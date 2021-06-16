@@ -6,8 +6,10 @@
  */
 
 #include <sys/types.h>
+#ifndef _WIN64
 #include <sys/param.h>
 #include <sys/utsname.h>
+#endif
 #include <stdlib.h>
 #include "stdioInterf.h"
 #include "fioMacros.h"
@@ -90,17 +92,21 @@ void __fort_getdir(curdir) char *curdir;
 
 void __fort_gethostname(host) char *host;
 {
+#ifndef _WIN64
   struct utsname un;
+#endif
   char *p;
   int s;
 
   p = __fort_getopt("-curhost");
   if (p == NULL) {
+#ifndef _WIN64
     s = uname(&un); /* get hostname */
     if (s == -1) {
       __fort_abortp("uname");
     }
     p = un.nodename;
+#endif
   }
   strcpy(host, p);
 }

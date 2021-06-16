@@ -277,4 +277,24 @@ void add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr);
  */
 bool ftn_array_need_debug_info(SPTR sptr);
 
+/**
+   \brief Insert <tt>@llvm.dbg.declare</tt> call for debug
+   \param mdnode  metadata node
+   \param sptr    symbol
+   \param llTy    preferred type of \p sptr or \c NULL
+ */
+void insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
+                             OPERAND *exprMDOp, OperandFlag_t opflag);
+
+/**
+   \brief Insert <tt>@llvm.dbg.value</tt> call for debug
+   \param OPERAND operand
+   \param sptr    symbol
+   \param llTy    preferred type of \p sptr or \c NULL
+ */
+void insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode, SPTR sptr,
+                           LL_Type *type);
+
+
+int get_parnum(SPTR sptr);
 #endif

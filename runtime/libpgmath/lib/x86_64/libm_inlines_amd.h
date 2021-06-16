@@ -1940,7 +1940,7 @@ __remainder_piby2f_inline(__UINT8_T ux, double *r, int *region)
 /* This method simulates multi-precision floating-point
    arithmetic and is accurate for all 1 <= x < infinity */
 #define bitsper 36
-  __UINT8_T res[10];
+  __UINT8_T res[10] = { 0 };
   __UINT8_T u, carry, mask, mant, nextbits;
   int first, last, i, rexp, xexp, resexp, ltb, determ, bc;
   double dx;

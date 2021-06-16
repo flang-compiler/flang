@@ -15,8 +15,10 @@
 
 #include <time.h>
 #include <string.h>
+#ifndef _WIN64
 #include <sys/time.h>
 #include <unistd.h>
+#endif
 #include "stdioInterf.h"
 #include "fioMacros.h"
 #include "llcrit.h"
@@ -806,7 +808,7 @@ ENTFTN(SYSCLK, sysclk)(__STAT_T *count, __STAT_T *count_rate,
 
   if (resol == 0) {
     int def;
-#if defined(TARGET_X8664)
+#if defined(TARGET_X8664) || defined(TARGET_LLVM_ARM64)
     def = 1000000;
 #else
     def = sizeof(__STAT_T) < 8 ? 1000 : 1000000;
@@ -2874,7 +2876,7 @@ ENTF90(TRIMA, trima)
   i = CLEN(expr);
   while (i > 0) {
     if (CADR(expr)[i - 1] != ' ') {
-#if defined(TARGET_X8664)
+#if defined(TARGET_X8664) || defined(TARGET_LLVM_ARM64)
       if (i <= 11) {
         int *rptr = ((int *)CADR(res));
         int *eptr = ((int *)CADR(expr));
@@ -3328,6 +3330,14 @@ ENTFTN(LEADZ, leadz)(void *i, __INT_T *size)
   if (ui)
     --nz;
   return nz;
+}
+
+__INT_T
+ENTFTN(TRAILZ, trailz)(void *i, __INT_T *size)
+{
+  unsigned ui= (unsigned)I8(__fort_varying_int)(i, size);
+
+  return (ui) ? __builtin_ctz(ui): (*size * 8);
 }
 
 __INT_T

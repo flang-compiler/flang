@@ -129,8 +129,23 @@ if (SPHINX_FOUND)
     @ONLY)
 
   configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/ReleaseNotes.rst"
-    "${SPHINX_BASE_DIR}/ReleaseNotes.rst"
+    "${CMAKE_CURRENT_SOURCE_DIR}/glossary.rst"
+    "${SPHINX_BASE_DIR}/glossary.rst"
+    @ONLY)
+
+   configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/introduction_to_flang.rst"
+    "${SPHINX_BASE_DIR}/introduction_to_flang.rst"
+    @ONLY)
+   
+   configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/debugging_flang.rst"
+    "${SPHINX_BASE_DIR}/debugging_flang.rst"
+    @ONLY)
+   
+   configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/libpgmath.rst"
+    "${SPHINX_BASE_DIR}/libpgmath.rst"
     @ONLY)
 
   add_custom_target(sphinx-flang ALL
@@ -141,6 +156,16 @@ if (SPHINX_FOUND)
         "${SPHINX_BASE_DIR}"
         "${SPHINX_HTML_DIR}"
     COMMENT "Building HTML documentation with Sphinx")
+
+   add_dependencies(sphinx-flang
+                    flang1_gen_sphinx_docs
+                    gen_frontend_machar
+                    gen_frontend_parsetable
+                    gen_frontend_symtab
+                    gen_frontend_symini
+                    flang2_gen_sphinx_docs
+                    gen_backend_symtab
+                    gen_backend_symini)
 endif()
 
 if (LLVM_ENABLE_SPHINX)

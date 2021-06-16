@@ -1350,7 +1350,7 @@ is_contains_ast_between(int lp, int lp1, int a)
 
 /* This routine is same as is_avail_expr except that
  * it will look at the cnt number of variables given by idx.
- * idx has varaible A_ID ast. it will decompose_expression
+ * idx has variable A_ID ast. it will decompose_expression
  * and eliminate idx variable from list.
  * it helps forall triplet variables ignored.
  */
@@ -2048,7 +2048,7 @@ is_dominator_fg(int std, int std1)
 }
 
 /*
- * if fg1 == fg2, then return TRUE if std1 preceeds std2 and FALSE otherwise
+ * if fg1 == fg2, then return TRUE if std1 precedes std2 and FALSE otherwise
  * if fg1 != fg2, then return TRUE if fg1 dominates fg2,
  *  or the postdominator of fg1 dominates fg2,
  *  or some postdominator of fg1 dominates fg2, and so on
@@ -2393,7 +2393,7 @@ eliminate_shift(int lp, int lp1, int rt_std, int rt1_std)
 
   /* has to have the same shift values */
   /* second shift has to be less than equal to first shift
-   * at all dimension negative and pozitive direction
+   * at all dimension negative and positive direction
    */
 
   srcl = left_subscript_ast(src);
@@ -3066,7 +3066,7 @@ opt_allocate(void)
       A_SRCP(allocast, new);
     }
 
-    /* optmize allocatable alignment */
+    /* optimize allocatable alignment */
   }
 
   ast_visit(1, 1);

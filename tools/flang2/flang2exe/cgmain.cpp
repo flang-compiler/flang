@@ -40,6 +40,7 @@
 #include "ccffinfo.h"
 #include "main.h"
 #include "symfun.h"
+#include "ilidir.h"
 
 #ifdef OMP_OFFLOAD_LLVM
 #include "ompaccel.h"
@@ -231,6 +232,8 @@ static int *idxstack = NULL;
 static hashmap_t sincos_map;
 static hashmap_t sincos_imap;
 static LL_MDRef cached_loop_metadata;
+static LL_MDRef cached_unroll_enable_metadata;
+static LL_MDRef cached_unroll_disable_metadata;
 
 static bool CG_cpu_compile = false;
 
@@ -329,6 +332,7 @@ static const char *get_atomicrmw_opname(LL_InstrListFlags);
 static const char *get_atomic_memory_order_name(int);
 static void insert_llvm_memcpy(int, int, OPERAND *, OPERAND *, int, int, int);
 static void insert_llvm_memset(int, int, OPERAND *, int, int, int, int);
+static void insert_llvm_prefetch(int ilix, OPERAND *dest_op);
 static SPTR get_call_sptr(int);
 static LL_Type *make_function_type_from_args(LL_Type *return_type,
                                              OPERAND *first_arg_op,
@@ -965,6 +969,24 @@ cons_novectorize_metadata(void)
 }
 
 INLINE static LL_MDRef
+cons_nounroll_metadata(void)
+{
+  LL_MDRef lvcomp[1];
+  LL_MDRef loopUnroll;
+  LL_MDRef rv;
+
+  if (LL_MDREF_IS_NULL(cached_unroll_disable_metadata)) {
+   rv = ll_create_flexible_md_node(cpu_llvm_module);
+   lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.disable");
+   loopUnroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 1);
+   ll_extend_md_node(cpu_llvm_module, rv, rv);
+   ll_extend_md_node(cpu_llvm_module, rv, loopUnroll);
+   cached_unroll_disable_metadata=rv;
+  }
+  return cached_unroll_disable_metadata;
+}
+
+INLINE static LL_MDRef
 cons_vectorize_metadata(void)
 {
   LL_MDRef lvcomp[2];
@@ -1267,10 +1289,40 @@ cons_no_depchk_metadata(void)
   return cached_loop_metadata;
 }
 
+static LL_MDRef
+cons_unroll_metadata(void) //Calls the metadata for unroll
+{
+  LL_MDRef lvcomp[1];
+  LL_MDRef unroll;
+  if (LL_MDREF_IS_NULL(cached_unroll_enable_metadata)) {
+    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.enable");
+    unroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 1);
+    LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
+    ll_extend_md_node(cpu_llvm_module, md, md);
+    ll_extend_md_node(cpu_llvm_module, md, unroll);
+    cached_unroll_enable_metadata = md;
+  }
+  return cached_unroll_enable_metadata;
+}
+
+static LL_MDRef
+cons_unroll_count_metadata(int unroll_factor)
+{
+  LL_MDRef lvcomp[2];
+  LL_MDRef unroll;
+  lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.count");
+  lvcomp[1] = ll_get_md_i32(cpu_llvm_module, unroll_factor);
+  unroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
+  LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
+  ll_extend_md_node(cpu_llvm_module, md, md);
+  ll_extend_md_node(cpu_llvm_module, md, unroll);
+  return md;
+}
+
 INLINE static bool
 ignore_simd_block(int bih)
 {
-  return (!XBIT(183, 0x4000000)) && BIH_SIMD(bih);
+  return (!XBIT(183, 0x4000000)) && BIH_NOSIMD(bih);
 }
 
 /**
@@ -1293,6 +1345,39 @@ remove_dead_instrs(void)
 }
 
 /**
+   \brief process debug info of constants with parameter attribute.
+ */
+static void
+process_params(void)
+{
+  unsigned smax = stb.stg_avail;
+  for (SPTR sptr = get_symbol_start(); sptr < smax; ++sptr) {
+    DTYPE dtype = DTYPEG(sptr);
+    if (STYPEG(sptr) == ST_PARAM && should_preserve_param(dtype)) {
+      if (DTY(dtype) == TY_ARRAY || DTY(dtype) == TY_STRUCT) {
+        /* array and derived types have 'var$ac' constant variable
+         * lets use that, by renaming that to 'var'.
+         */
+        SPTR new_sptr = (SPTR)CONVAL1G(sptr);
+        NMPTRP(new_sptr, NMPTRG(sptr));
+        CCSYMP(new_sptr, 0);
+      } else {
+        LL_DebugInfo *di = cpu_llvm_module->debug_info;
+        int fin = BIH_FINDEX(gbl.entbih);
+        LL_Type *type = make_lltype_from_dtype(dtype);
+        OPERAND *ld = make_operand();
+        ld->ot_type = OT_MDNODE;
+        ld->val.sptr = sptr;
+        LL_MDRef lcl = lldbg_emit_local_variable(di, sptr, fin, true);
+
+        /* lets generate llvm.dbg.value intrinsic for it.*/
+        insert_llvm_dbg_value(ld, lcl, sptr, type);
+      }
+    }
+  }
+}
+
+/**
    \brief Perform code translation from ILI to LLVM for one routine
  */
 void
@@ -1311,15 +1396,14 @@ schedule(void)
   SPTR func_sptr = GBL_CURRFUNC;
   bool first = true;
   CG_cpu_compile = true;
+  int unroll_factor = 0;
 
   funcId++;
   assign_fortran_storage_classes();
-  if (XBIT(183, 0x10000000)) {
-    if (XBIT(68, 0x1) && (!XBIT(183, 0x40000000)))
-      widenAddressArith();
-    if (gbl.outlined && funcHasNoDepChk())
-      redundantLdLdElim();
-  }
+  if (XBIT(68, 0x1) && (!XBIT(183, 0x40000000)))
+    widenAddressArith();
+  if (gbl.outlined && funcHasNoDepChk())
+    redundantLdLdElim();
 
 restartConcur:
   FTN_HOST_REG() = 1;
@@ -1459,6 +1543,15 @@ restartConcur:
     for (ilt = BIH_ILTFIRST(bih); ilt; ilt = ILT_NEXT(ilt))
       build_csed_list(ILT_ILIP(ilt));
 
+  /* Process variables with parameter attribute to generate debug info, if
+     debug is on. */
+  if (!XBIT(49, 0x10) && flg.debug
+#if defined(OMP_OFFLOAD_PGI) || defined(OMP_OFFLOAD_LLVM)
+      && !gbl.ompaccel_isdevice
+#endif
+  )
+    process_params();
+
   merge_next_block = false;
   bih = BIH_NEXT(0);
   if ((XBIT(34, 0x200) || gbl.usekmpc) && !processHostConcur)
@@ -1514,15 +1607,28 @@ restartConcur:
       merge_next_block = false;
     }
 
-    if (XBIT(183, 0x10000000)) {
-      if ((!XBIT(69, 0x100000)) && BIH_NODEPCHK(bih) &&
-          (!ignore_simd_block(bih))) {
-        fix_nodepchk_flag(bih);
-        mark_rw_nodepchk(bih);
-      } else {
-        clear_rw_nodepchk();
-      }
+    open_pragma(BIH_LINENO(bih));
+    BIH_NODEPCHK(bih) = !flg.depchk;
+    if (XBIT(19, 0x18))
+      BIH_NOSIMD(bih) = true;
+    else if (XBIT(19, 0x400))
+      BIH_SIMD(bih) = true;
+    if ((!XBIT(69, 0x100000)) && BIH_NODEPCHK(bih) &&
+        (!ignore_simd_block(bih))) {
+      fix_nodepchk_flag(bih);
+      mark_rw_nodepchk(bih);
+    } else {
+      clear_rw_nodepchk();
     }
+    if (flg.x[9] > 0)
+      unroll_factor = flg.x[9];
+    if (XBIT(11, 0x2) && unroll_factor)
+      BIH_UNROLL_COUNT(bih) = true;
+    else if (XBIT(11, 0x1))
+      BIH_UNROLL(bih) = true;
+    else if (XBIT(11, 0x400))
+      BIH_NOUNROLL(bih) = true;
+    close_pragma();
 
     for (ilt = BIH_ILTFIRST(bih); ilt; ilt = ILT_NEXT(ilt)) {
       if (BIH_EN(bih) && ilt == BIH_ILTFIRST(bih)) {
@@ -1567,19 +1673,41 @@ restartConcur:
             next_bih_label = t_next_bih_label;
         }
         make_stmt(STMT_BR, ilix, false, next_bih_label, ilt);
-        if (XBIT(183, 0x10000000) && (!XBIT(69, 0x100000)) &&
-            BIH_NODEPCHK(bih) && (!BIH_NODEPCHK2(bih)) &&
-            (!ignore_simd_block(bih))) {
+        if ((!XBIT(69, 0x100000)) &&
+            (BIH_NODEPCHK(bih) && (!BIH_NODEPCHK2(bih)) &&
+            (!ignore_simd_block(bih))) || BIH_SIMD(bih)) {
           LL_MDRef loop_md = cons_no_depchk_metadata();
           INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
           if (i) {
-            i->flags |= SIMD_BACKEDGE_FLAG;
+            i->flags |= LOOP_BACKEDGE_FLAG;
+            i->misc_metadata = loop_md;
+          }
+        }
+        if (BIH_UNROLL(bih)) {
+          LL_MDRef loop_md = cons_unroll_metadata();
+          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
+          if (i) {
+            i->flags |= LOOP_BACKEDGE_FLAG;
+            i->misc_metadata = loop_md;
+          }
+        } else if (BIH_UNROLL_COUNT(bih)) {
+          LL_MDRef loop_md = cons_unroll_count_metadata(unroll_factor);
+          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
+          if (i) {
+            i->flags |= LOOP_BACKEDGE_FLAG;
+            i->misc_metadata = loop_md;
+          }
+        } else if (BIH_NOUNROLL(bih)) {
+          LL_MDRef loop_md = cons_nounroll_metadata();
+          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
+          if (i) {
+            i->flags |= LOOP_BACKEDGE_FLAG;
             i->misc_metadata = loop_md;
           }
         }
         if (ignore_simd_block(bih)) {
           LL_MDRef loop_md = cons_novectorize_metadata();
-          llvm_info.last_instr->flags |= SIMD_BACKEDGE_FLAG;
+          llvm_info.last_instr->flags |= LOOP_BACKEDGE_FLAG;
           llvm_info.last_instr->misc_metadata = loop_md;
         }
       } else if ((ILT_ST(ilt) || ILT_DELETE(ilt)) &&
@@ -1636,6 +1764,9 @@ restartConcur:
         }
       } else if (opc == IL_FENCE) {
         gen_llvm_fence_instruction(ilix);
+      } else if (opc == IL_PREFETCH) {
+        LL_Type *optype = make_lltype_from_dtype(DT_CPTR);
+        insert_llvm_prefetch(ilix, gen_llvm_expr(ILI_OPND(ilix, 1), optype));
       } else {
       /* may be a return; otherwise mostly ignored */
       /* However, need to keep track of FREE* ili, to match them
@@ -2662,6 +2793,41 @@ write_verbose_type(LL_Type *ll_type)
   print_token(ll_type->str);
 }
 
+/* whether debug location should be suppressed */
+static bool
+should_suppress_debug_loc(INSTR_LIST *instrs)
+{
+  if (!instrs)
+    return false;
+
+  // return true if not a call instruction
+  switch (instrs->i_name) {
+  case I_INVOKE:
+    return false;
+  case I_CALL:
+    // f90 runtime functions fort_init and f90_* dont need debug location
+    if (instrs->prev && (instrs->operands->ot_type == OT_TMP) &&
+        (instrs->operands->tmps == instrs->prev->tmps) &&
+        (instrs->prev->operands->ot_type == OT_VAR)) {
+      // We dont need to expose those internals in prolog to user
+      // %1 = bitcast void (...)* @fort_init to void (i8*, ...)*
+      // call void (i8*, ...) %1(i8* %0)
+      // %8 = bitcast void (...)* @f90_template1_i8 to void (i8*, i8*, i8*, i8*,
+      //      i8*, i8*, ...)*
+      // call void (i8*, i8*, i8*, i8*, i8*, i8*, ...) %8(i8*
+      //      %2, i8* %3, i8* %4, i8* %5, i8* %6, i8* %7)
+
+      if (char *name_str = instrs->prev->operands->string) {
+        return (!strncmp(name_str, "@fort_init", strlen("@fort_init")) ||
+                !strncmp(name_str, "@f90_", strlen("@f90_")));
+      }
+    }
+    return false;
+  default:
+    return true;
+  }
+}
+
 /**
    \brief Write the instruction list to the LLVM IR output file
  */
@@ -3054,7 +3220,7 @@ write_instructions(LL_Module *module)
           print_token(llvm_instr_names[i_name]);
           print_space(1);
           write_operands(instrs->operands, 0);
-          if (instrs->flags & SIMD_BACKEDGE_FLAG) {
+          if (instrs->flags & LOOP_BACKEDGE_FLAG) {
             char buf[32];
             LL_MDRef loop_md = instrs->misc_metadata;
             snprintf(buf, 32, ", !llvm.loop !%u", LL_MDREF_value(loop_md));
@@ -3196,8 +3362,17 @@ write_instructions(LL_Module *module)
                ERR_Fatal);
       }
     }
-    if (!ISNVVMCODEGEN &&
-        (!LL_MDREF_IS_NULL(instrs->dbg_line_op) && !dbg_line_op_written)) {
+    /*
+     *  Do not dump debug location here if
+     *  - it is NULL
+     *  - it is already written (dbg_line_op_written) or
+     *  - it is a known internal (f90 runtime) call in prolog (fort_init &
+     * f90_*)
+     */
+    if (!(LL_MDREF_IS_NULL(instrs->dbg_line_op) || dbg_line_op_written ||
+          ((instrs->dbg_line_op ==
+            lldbg_get_subprogram_line(module->debug_info)) &&
+           should_suppress_debug_loc(instrs)))) {
       print_dbg_line(instrs->dbg_line_op);
     }
 #if DEBUG
@@ -3554,6 +3729,8 @@ ad_instr(int ilix, INSTR_LIST *instr)
 static bool
 cancel_store(int ilix, int op_ili, int addr_ili)
 {
+  if(!ENABLE_CSE_OPT)
+    return false;
   ILI_OP op_opc = ILI_OPC(op_ili);
   bool csed = false;
 
@@ -4394,6 +4571,52 @@ gen_call_pgocl_intrinsic(char *fname, OPERAND *params, LL_Type *return_ll_type,
 }
 
 static void
+insert_llvm_prefetch(int ilix, OPERAND *dest_op)
+{
+  OPERAND *call_op;
+
+  DBGTRACEIN("")
+
+  const char *intrinsic_name = "@llvm.prefetch";
+  char *fname = (char *)getitem(LLVM_LONGTERM_AREA, strlen(intrinsic_name) + 1);
+  strcpy(fname, intrinsic_name);
+  INSTR_LIST *Curr_Instr = make_instr(I_CALL);
+  Curr_Instr->flags |= CALL_INTRINSIC_FLAG;
+  Curr_Instr->operands = call_op = make_operand();
+  call_op->ot_type = OT_CALL;
+  call_op->ll_type = make_void_lltype();
+  Curr_Instr->ll_type = call_op->ll_type;
+  call_op->string = fname;
+  call_op->next = dest_op;
+
+  /* setup rest of the parameters for llvm.prefetch */
+  LL_Type *int32_type = make_int_lltype(32);
+  /* prefetch type: 0 = read, 1 = write */
+  dest_op->next = make_constval_op(int32_type, 0, 0);
+  /* temporal locality specifier: 3 = extremely local, keep in cache */
+  dest_op->next->next = make_constval_op(int32_type, 3, 0);
+  /* cache type: 0 = instruction, 1 = data */
+  dest_op->next->next->next = make_constval_op(int32_type, 1, 0);
+  ad_instr(ilix, Curr_Instr);
+
+  /* add global define of @llvm.prefetch to external function list, if needed */
+  static bool prefetch_defined = false;
+  if (!prefetch_defined) {
+    prefetch_defined = true;
+    const char *intrinsic_decl = "declare void @llvm.prefetch(i8* nocapture, i32, i32, i32)";
+    char *gname = (char *)getitem(LLVM_LONGTERM_AREA, strlen(intrinsic_decl) + 1);
+    strcpy(gname, intrinsic_decl);
+    EXFUNC_LIST *exfunc = (EXFUNC_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
+    memset(exfunc, 0, sizeof(EXFUNC_LIST));
+    exfunc->func_def = gname;
+    exfunc->flags |= EXF_INTRINSIC;
+    add_external_function_declaration(fname, exfunc);
+  }
+
+  DBGTRACEOUT("")
+} /* insert_llvm_prefetch */
+
+static void
 insert_llvm_memset(int ilix, int size, OPERAND *dest_op, int len, int value,
                    int align, int is_volatile)
 {
@@ -4489,7 +4712,7 @@ insert_llvm_memcpy(int ilix, int size, OPERAND *dest_op, OPERAND *src_op,
    \param sptr    symbol
    \param llTy    preferred type of \p sptr or \c NULL
  */
-static void
+void
 insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
                         OPERAND *exprMDOp, OperandFlag_t opflag)
 {
@@ -4518,15 +4741,19 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
     } else {
       LL_DebugInfo *di = cpu_llvm_module->debug_info;
       LL_MDRef md;
-      /* Handle the Fortran allocatable array cases. Emit expression
-       * mdnode with sigle argument of DW_OP_deref to workaround known
-       * gdb bug not able to debug array bounds.
-       */
-      if (ftn_array_need_debug_info(sptr)) {
-        const unsigned deref = lldbg_encode_expression_arg(LL_DW_OP_deref, 0);
-        md = lldbg_emit_expression_mdnode(di, 1, deref);
-      } else
+      if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir)) {
         md = lldbg_emit_empty_expression_mdnode(di);
+      } else {
+        /* Handle the Fortran allocatable array cases. Emit expression
+         * mdnode with single argument of DW_OP_deref to workaround known
+         * gdb bug not able to debug array bounds.
+         */
+        if (ftn_array_need_debug_info(sptr)) {
+          const unsigned deref = lldbg_encode_expression_arg(LL_DW_OP_deref, 0);
+          md = lldbg_emit_expression_mdnode(di, 1, deref);
+        } else
+          md = lldbg_emit_empty_expression_mdnode(di);
+      }
       call_op->next->next->next = make_mdref_op(md);
     }
   }
@@ -4599,7 +4826,10 @@ gen_const_expr(int ilix, LL_Type *expected_type)
              expected_type->data_type, ERR_Fatal);
       operand->ll_type = expected_type;
     } else {
-      operand->ll_type = make_lltype_from_dtype(DT_INT);
+       if (expected_type && expected_type->data_type == LL_PTR)
+         operand->ll_type = make_lltype_from_dtype(DT_INT8);
+       else
+         operand->ll_type = make_lltype_from_dtype(DT_INT);
       operand->val.sptr = sptr;
     }
     break;
@@ -5153,8 +5383,8 @@ gen_gep_index(OPERAND *base_op, LL_Type *llt, int index)
   return gen_gep_op(0, base_op, llt, make_constval32_op(index));
 }
 
-static void
-insertLLVMDbgValue(OPERAND *load, LL_MDRef mdnode, SPTR sptr, LL_Type *type)
+void
+insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode, SPTR sptr, LL_Type *type)
 {
   static bool defined = false;
   OPERAND *callOp;
@@ -5186,6 +5416,7 @@ insertLLVMDbgValue(OPERAND *load, LL_MDRef mdnode, SPTR sptr, LL_Type *type)
   callOp->next = oper = make_operand();
   oper->ot_type = OT_MDNODE;
   oper->tmps = load->tmps;
+  oper->val = load->val;
   oper->ll_type = type;
   oper->flags |= OPF_WRAPPED_MD;
   oper = make_constval_op(ll_create_int_type(mod, 64), 0, 0);
@@ -5210,7 +5441,7 @@ consLoadDebug(OPERAND *ld, OPERAND *addr, LL_Type *type)
     LL_DebugInfo *di = cpu_llvm_module->debug_info;
     int fin = BIH_FINDEX(gbl.entbih);
     LL_MDRef lcl = lldbg_emit_local_variable(di, sptr, fin, true);
-    insertLLVMDbgValue(ld, lcl, sptr, type);
+    insert_llvm_dbg_value(ld, lcl, sptr, type);
   }
 }
 
@@ -10875,9 +11106,22 @@ addDebugForLocalVar(SPTR sptr, LL_Type *type)
 {
   if (need_debug_info(sptr)) {
     /* Dummy sptrs are treated as local (see above) */
-    LL_MDRef param_md = lldbg_emit_local_variable(
-        cpu_llvm_module->debug_info, sptr, BIH_FINDEX(gbl.entbih), true);
-    insert_llvm_dbg_declare(param_md, sptr, type, NULL, OPF_NONE);
+    if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir) &&
+        ftn_array_need_debug_info(sptr)) {
+      SPTR array_sptr = (SPTR)REVMIDLNKG(sptr);
+      LL_MDRef array_md =
+          lldbg_emit_local_variable(cpu_llvm_module->debug_info, array_sptr,
+                                    BIH_FINDEX(gbl.entbih), true);
+      LL_Type *sd_type = LLTYPE(SDSCG(array_sptr));
+      if (sd_type && sd_type->data_type == LL_PTR)
+        sd_type = sd_type->sub_types[0];
+      insert_llvm_dbg_declare(array_md, SDSCG(array_sptr),
+                              sd_type, NULL, OPF_NONE);
+    } else {
+      LL_MDRef param_md = lldbg_emit_local_variable(
+          cpu_llvm_module->debug_info, sptr, BIH_FINDEX(gbl.entbih), true);
+      insert_llvm_dbg_declare(param_md, sptr, type, NULL, OPF_NONE);
+    }
   }
 }
 
@@ -12642,7 +12886,21 @@ INLINE static void
 formalsAddDebug(SPTR sptr, unsigned i, LL_Type *llType, bool mayHide)
 {
   if (formalsNeedDebugInfo(sptr)) {
-    LL_DebugInfo *db = cpu_llvm_module->debug_info;
+    bool is_ptr_alc_arr = false;
+    SPTR new_sptr = (SPTR)REVMIDLNKG(sptr);
+    if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir) &&
+        CCSYMG(sptr) /* Otherwise it can be a cray pointer */ &&
+        (new_sptr && (STYPEG(new_sptr) == ST_ARRAY) &&
+         (POINTERG(new_sptr) || ALLOCATTRG(new_sptr))) &&
+        SDSCG(new_sptr)) {
+      is_ptr_alc_arr = true;
+      sptr = new_sptr;
+    }
+    LL_DebugInfo *db = current_module->debug_info;
+    if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir) &&
+        STYPEG(sptr) == ST_ARRAY && CCSYMG(sptr) &&
+        !LL_MDREF_IS_NULL(get_param_mdnode(db, sptr)))
+      return;
     LL_MDRef param_md = lldbg_emit_param_variable(
         db, sptr, BIH_FINDEX(gbl.entbih), i, CCSYMG(sptr));
     if (!LL_MDREF_IS_NULL(param_md)) {
@@ -12651,6 +12909,12 @@ formalsAddDebug(SPTR sptr, unsigned i, LL_Type *llType, bool mayHide)
                               ? NULL
                               : cons_expression_metadata_operand(llTy);
       OperandFlag_t flag = (mayHide && CCSYMG(sptr)) ? OPF_HIDDEN : OPF_NONE;
+      // For pointer, allocatable, assumed shape and assumed rank arrays, pass
+      // descriptor in place of base address.
+      if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir) &&
+          (is_ptr_alc_arr || ASSUMRANKG(sptr) || ASSUMSHPG(sptr)) &&
+          SDSCG(sptr))
+        sptr = SDSCG(sptr);
       insert_llvm_dbg_declare(param_md, sptr, llTy, exprMDOp, flag);
     }
   }
@@ -12683,8 +12947,9 @@ process_formal_arguments(LL_ABI_Info *abi)
     bool ftn_byval = false;
 
     assert(arg->sptr, "Unnamed function argument", i, ERR_Fatal);
-    assert(SNAME(arg->sptr) == NULL, "Argument sptr already processed",
-           arg->sptr, ERR_Fatal);
+    if (!ll_feature_debug_info_ver90(&cpu_llvm_module->ir))
+      assert(SNAME(arg->sptr) == NULL, "Argument sptr already processed",
+             arg->sptr, ERR_Fatal);
     if ((SCG(arg->sptr) != SC_DUMMY) && formalsMidnumNotDummy(arg->sptr)) {
       process_sptr(arg->sptr);
       continue;
@@ -12997,10 +13262,15 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
   if (need_debug_info(SPTR_NULL)) {
     /* 'attributes #0 = { ... }' to be emitted later */
     print_token(" #0");
-  } else if (!XBIT(183, 0x10)) {
+  } else if (!XBIT(183, 0x10) || XBIT(14, 0x8)) {
     /* Nobody sets -x 183 0x10, besides Flang. We're disabling LLVM inlining for
      * proprietary compilers. */
+    /* 2nd XBIT - Apply noinline attribute if the pragma "noinline" is given */
     print_token(" noinline");
+  }
+  if (XBIT(191, 0x2)) {
+    /* Apply alwaysinline attribute if the pragma "forceinline" is given */
+    print_token(" alwaysinline");
   }
 
   if (func_sptr > NOSYM) {
@@ -13198,7 +13468,10 @@ cg_llvm_init(void)
 
   CHECK(TARGET_PTRSIZE == size_of(DT_CPTR));
 
-  triple = LLVM_DEFAULT_TARGET_TRIPLE;
+  if (flg.llvm_target_triple)
+    triple = flg.llvm_target_triple;
+  else
+    triple = LLVM_DEFAULT_TARGET_TRIPLE;
 
   ir_version = get_llvm_version();
 
@@ -13703,4 +13976,16 @@ is_vector_x86_mmx(LL_Type *type) {
     return true;
   }
   return false;
+}
+
+int
+get_parnum(SPTR sptr)
+{
+  for (int parnum = 1; parnum <= llvm_info.abi_info->nargs; parnum++) {
+    if (llvm_info.abi_info->arg[parnum].sptr == sptr) {
+      return parnum;
+    }
+  }
+
+  return 0;
 }

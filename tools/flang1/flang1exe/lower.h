@@ -243,15 +243,20 @@ typedef struct {
   int refd_list;       /* linked list of pointer/offset/section descriptors in the order they
                         * need to be given addresses */
 } lower_symbol_lists;
-STG_DECLARE(lsymlists, lower_symbol_lists);
+
+struct lsymlists_s {
+  STG_MEMBERS(lower_symbol_lists);
+};
+extern struct lsymlists_s lsymlists;
+
 #define LOWER_MEMBER_PARENT(x) lsymlists.stg_base[x].member_parent
 #define LOWER_SYMBOL_REPLACE(x) lsymlists.stg_base[x].symbol_replace
 #define LOWER_POINTER_LIST(x) lsymlists.stg_base[x].pointer_list
 #define LOWER_REFD_LIST(x) lsymlists.stg_base[x].refd_list
 
-int *lower_argument;
-int lower_argument_size;
-int lower_line;
+extern int *lower_argument;
+extern int lower_argument_size;
+extern int lower_line;
 
 /* only one of thenlabel and elselabel should be nonzero;
  * the other is the 'fall through' case */
@@ -259,8 +264,8 @@ typedef struct {
   int thenlabel, elselabel, endlabel;
 } iflabeltype;
 
-int lower_disable_ptr_chk;
-int lower_disable_subscr_chk;
+extern int lower_disable_ptr_chk;
+extern int lower_disable_subscr_chk;
 
 /* types of entries pushed onto the stack */
 #define STKDO 1

@@ -673,7 +673,7 @@ typedef struct {
   STG_DECLARE(astb, OAST);
 } OPT;
 
-OPT opt;
+extern OPT opt;
 
 /*****  optimize.c *****/
 void optshrd_init(void);

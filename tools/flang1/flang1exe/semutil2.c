@@ -6491,7 +6491,7 @@ dinit_getval1(int ast, DTYPE dtype)
     if (dtype == 0)
       dtype = A_DTYPEG(ast);
     aval = const_eval(ast);
-    ast = mk_cval1(aval, A_DTYPEG(ast));
+    ast = mk_cval(aval, A_DTYPEG(ast));
   }
   if (dtype == 0)
     return ast;
@@ -7292,7 +7292,7 @@ dinit_varref(SST *stkp)
 {
   VAR *ivl;
   int ast;
-  ITEM *mhd, *p;
+  ITEM *mhd, *p; /* mhd = "member of the whole array" ? */
   int i;
   int ndim;
   int subs[MAXDIMS];

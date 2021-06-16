@@ -221,7 +221,10 @@ static int global_sptr; /* use to prepend for CUDA constructor static
                            global to avoid llvm optimization problem that make
                            it read only(aM). */
 
-#ifdef TARGET_POWER
+#ifdef TARGET_WIN
+#define CACHE_ALIGN 31
+#define ALN_UNIT 32
+#elif TARGET_POWER
 #define CACHE_ALIGN 127
 #define ALN_UNIT 128
 #else
@@ -1353,16 +1356,16 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect, ISZ_T addr)
           fprintf(ASMFIL, ", ");
         if (!i8cnt) {
           ptr = put_next_member(ptr);
-          fprintf(ASMFIL, "zeroinitializer ");
-          free(cptrCopy);
-          return dsrtp;
+          fprintf(ASMFIL, "[ ");
         }
         ptrcnt = 0;
       } else if (!i8cnt) {
         if (!first_data && skip_size)
           fprintf(ASMFIL, ", ");
         ptr = put_next_member(ptr);
-        fprintf(ASMFIL, "[");
+        fprintf(ASMFIL, "zeroinitializer ");
+        free(cptrCopy);
+        return dsrtp;
       } else if (i8cnt) {
         if (!first_data && skip_size)
           fprintf(ASMFIL, ", ");
@@ -3420,18 +3423,6 @@ add_ag_fptr_name(char *ag_name)
   return nptr;
 }
 
-#if defined(TARGET_WIN)
-void
-dllexport_mod(int modu)
-{
-  int gg;
-  gg = get_ag(modu);
-  if (gg && AG_STYPE(gg) != ST_ENTRY) {
-    AG_STYPE(gg) = ST_ENTRY;
-    AG_DLL(gg) = DLL_EXPORT;
-  }
-}
-#endif
 
 // TODO: this ought to check for buffer overrun
 char *
@@ -3497,7 +3488,7 @@ getextfuncname(SPTR sptr)
   } else {
 #if defined(TARGET_WIN)
     /* we have a mix of undecorated and decorated names on win32 */
-    strcpy(name, "_MAIN_");
+    strcpy(name, "MAIN_");
     return name;
 #else
     q = "MAIN";
@@ -3791,7 +3782,7 @@ getsname(SPTR sptr)
     } else {
 #if defined(TARGET_WIN)
       /* we have a mix of undecorated and decorated names on win32 */
-      strcpy(name, "_MAIN_");
+      strcpy(name, "MAIN_");
       return name;
 #else
       q = "MAIN";
@@ -5053,7 +5044,7 @@ get_llvm_name(SPTR sptr)
     } else {
 #if defined(TARGET_WIN)
       /* we have a mix of undecorated and decorated names on win32 */
-      strcpy(name, "_MAIN_");
+      strcpy(name, "MAIN_");
       return name;
 #else
       q = "MAIN";
@@ -5500,11 +5491,11 @@ find_funcptr_name(SPTR sptr)
         goto Continue;
     } while (*sp);
     if (np - sptrnm != len)
-      continue;
+      goto Continue;
     goto Found;
   Continue:
     if (gblsym == FPTR_HASHLK(gblsym))
-      return 0;
+      interr("Broken hash link on sptr:", sptr, ERR_Fatal);
   }
   return 0;
 
@@ -5558,8 +5549,8 @@ llvm_funcptr_store(SPTR sptr, char *ag_name)
 
   sprintf(sptrnm, "%s_%d", get_llvm_name(sptr), sptr);
   hashval = name_to_hash(sptrnm, strlen(sptrnm));
-  fptr_local.hashtb[hashval] = gblsym;
   FPTR_HASHLK(gblsym) = fptr_local.hashtb[hashval];
+  fptr_local.hashtb[hashval] = gblsym;
   FPTR_SYMLK(gblsym) = ptr_local;
   nmptr = add_ag_fptr_name(sptrnm); /* fnptr_local key */
   FPTR_NMPTR(gblsym) = nmptr;

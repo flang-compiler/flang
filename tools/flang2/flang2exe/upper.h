@@ -278,4 +278,9 @@ void upper_save_syminfo(void);
  */
 const char *lookup_modvar_alias(SPTR sptr);
 
+/**
+   \brief return start symbol SPTR
+ */
+SPTR get_symbol_start(void);
+
 #endif // UPPER_H_

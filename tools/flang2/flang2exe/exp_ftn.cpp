@@ -276,6 +276,16 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
     }
     ILM_RESULT(curilm) = ilix;
     return;
+  case IM_KTRAILZ:
+    op1 = ILI_OF(ILM_OPND(ilmp, 1));
+    if (XBIT(124, 0x400))
+      ilix = ad1ili(IL_KTRAILZ, op1);
+    else {
+      op1 = kimove(op1);
+      ilix = ad1ili(IL_ITRAILZ, op1);
+    }
+    ILM_RESULT(curilm) = ilix;
+    return;
   case IM_KPOPPAR:
     op1 = ILI_OF(ILM_OPND(ilmp, 1));
     if (XBIT(124, 0x400))
@@ -3416,6 +3426,8 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
        IL_FCJMP, MSZ_F4},
       {IL_DCJMPZ, IL_CSEDP, DT_DBLE, IL_STDP, IL_LDDP, IL_DCMPZ, IL_DSUB,
        IL_DCJMP, MSZ_F8},
+      {IL_HFCJMPZ, IL_CSEHP, DT_HALF, IL_STHP, IL_LDHP, IL_HFCMPZ, IL_HFSUB,
+       IL_HFCJMP, MSZ_F2},
       {IL_KCJMPZ, IL_CSEKR, DT_INT8, IL_STKR, IL_LDKR, IL_KCMPZ, IL_KSUB,
        IL_KCJMP, MSZ_I8},
   };
@@ -3452,6 +3464,9 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
     goto comaif;
   case IM_DAIF: /* double arithmetic IF */
     type = 2;
+    goto comaif;
+  case IM_HFAIF: /* half precision arithmetic IF */
+    type = 3;
   comaif:
     /* arithmetic if processing */
     ilix = ILM_RESULT(ILM_OPND(ilmp, 1));
@@ -3957,15 +3972,8 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_PREFETCH:
     ilix = ILI_OF(ILM_OPND(ilmp, 1)); /* address */
     nme = NME_OF(ILM_OPND(ilmp, 1));
-    if (XBIT(39, 0x4000) && TEST_MACH(MACH_AMD_HAMMER)) {
-      ilix = ad3ili(IL_PREFETCHT0, ilix, 0, nme);
-    } else if (TEST_MACH(MACH_AMD_HAMMER)) {
-      ilix = ad3ili(IL_PREFETCHNTA, ilix, 0, NME_UNK);
-    } else if (TEST_MACH(MACH_AMD)) {
-      ilix = ad3ili(IL_PREFETCH, ilix, 0, nme); /* Athlon */
-    } else {
-      ilix = ad3ili(IL_PREFETCHNTA, ilix, 0, nme); /* PIII+ sse */
-    }
+    /* Use the generic LLVM prefetch intrinsic. */
+    ilix = ad3ili(IL_PREFETCH, ilix, 0, nme);
     chk_block(ilix);
     break;
   case IM_FARG:

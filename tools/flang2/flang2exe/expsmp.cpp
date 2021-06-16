@@ -3029,7 +3029,17 @@ exp_mp_func_prologue(bool process_tp)
     }
   }
 
-  ll_save_gtid_val(bih);
+  if (has_multiple_entries(GBL_CURRFUNC)) {
+    if (bih)
+      ll_save_gtid_val(bih);
+    for (func = gbl.entries; func != NOSYM; func = SYMLKG(func)) {
+      bih = expb.curbih = findEnlabBih(func);
+      if (bih)
+        ll_save_gtid_val(bih);
+    }
+  } else {
+    ll_save_gtid_val(bih);
+  }
 }
 
 static void

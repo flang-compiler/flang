@@ -1018,6 +1018,16 @@ print_ast(int ast)
       rtlRtn = RTE_leadz;
       goto make_func_name;
 #endif
+#ifdef I_TRAILZ
+    case I_TRAILZ:
+      if (XBIT(49, 0x1040000)) {
+        /* T3D/T3E or C90 Cray targets */
+        put_call(ast, 0, NULL, 0);
+        break;
+      }
+      rtlRtn = RTE_trailz;
+      goto make_func_name;
+#endif
 #ifdef I_POPCNT
     case I_POPCNT:
       if (XBIT(49, 0x1040000)) {
@@ -1131,7 +1141,7 @@ print_ast(int ast)
 
       lop = ARGT_ARG(argt, 1);
       sym = find_pointer_variable(lop);
-      put_mem_string(lop, SYMNAME(sym)); /* static desciptor */
+      put_mem_string(lop, SYMNAME(sym)); /* static descriptor */
       put_char(',');
 
       lop = ARGT_ARG(argt, 2); /* target */
@@ -3441,7 +3451,7 @@ pr_chk_arr(int arr)
 }
 
 /* 'sub' is a subscript ast, where the array is allocatable. If the output
- * is standard f77, will need to generate assigment statements which assign
+ * is standard f77, will need to generate assignment statements which assign
  * to the array's bound temporaries their respective values.  The values are
  * presented as 'triple' asts, representing the explicit shape of the array.
  * The bound temporaries are extracted from the LWAST and UPAST fields

@@ -25,7 +25,7 @@
 #define RTE_C
 #include "rte.h"
 #include "pd.h"
-#include "direct.h"
+#include "fdirect.h"
 #include "go.h"
 #include "rtlRtns.h"
 

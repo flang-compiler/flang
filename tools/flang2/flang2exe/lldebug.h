@@ -273,4 +273,9 @@ void InitializeDIFlags(const LL_IRFeatures *feature);
 
 void lldbg_reset_module(LL_DebugInfo *db);
 
+/// \brief Get the debug location mdnode of the current procedure.
+LL_MDRef lldbg_get_subprogram_line(LL_DebugInfo *db);
+
+/// \brief Get parameter mdnode for SPTR
+LL_MDRef get_param_mdnode(LL_DebugInfo *db, int sptr);
 #endif /* LLDEBUG_H_ */
