@@ -1688,14 +1688,20 @@ write_comm(void)
 
     first_data = 1;
     process_sptr(sptr);
-    if ((cmsym = get_ag(sptr)) == 0)
+    if ((cmsym = get_ag(sptr)) == 0) {
+      DSRTP(sptr, NULL);
       continue; /* name conflict occurred */
+    }
 
-    if (!DINITG(sptr)) /* process this only when dinit */
+    if (!DINITG(sptr)) { /* process this only when dinit */
+      DSRTP(sptr, NULL);
       continue;
+    }
 
-    if (AG_DSIZE(cmsym))
+    if (AG_DSIZE(cmsym)) {
+      DSRTP(sptr, NULL);
       continue; /* already init'd, get_ag issues error */
+    }
 
     AG_DSIZE(cmsym) = SIZEG(sptr);
 

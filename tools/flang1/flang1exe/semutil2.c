@@ -5534,7 +5534,7 @@ clean_struct_default_init(int sptr)
   }
 }
 
-static int
+int
 has_init_value(SPTR sptr)
 {
   if (sptr < DTC_DEFAULT_CNT) {

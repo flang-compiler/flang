@@ -1010,6 +1010,7 @@ void sem_fini(void);
 int gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before,
                  LOGICAL intrin_type);
 int mk_set_type_call(int arg0, int arg1, LOGICAL intrin_type);
+int has_init_value(SPTR);
 
 /* semant.c */
 void semant_init(int noparse);

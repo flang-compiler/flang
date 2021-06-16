@@ -30,6 +30,7 @@ static LOGICAL is_in_currsub(int sptr);
 static void expand_common_pointers(int);
 static void reorder_common_pointers(int);
 static void fix_args(int);
+static void check_derived_type_in_comm(int common);
 
 static void do_access(void);
 static LOGICAL chk_evar(int);
@@ -637,6 +638,41 @@ semfin(void)
   pop_scope_level(SCOPE_NORMAL);
 }
 
+static void
+check_derived_type_in_comm(int common)
+{
+  SPTR member_sptr;
+  if (STYPEG(common) != ST_CMBLK || MODCMNG(common))
+    return;
+  for (member_sptr = CMEMFG(common); member_sptr > NOSYM;
+       member_sptr = SYMLKG(member_sptr)) {
+    SPTR dt_sptr;
+    DTYPE dtype = DDTG(DTYPEG(member_sptr));
+    if (DTY(dtype) != TY_DERIVED )
+      continue;
+    dt_sptr = get_struct_tag_sptr(dtype);
+    if (STYPEG(dt_sptr) == ST_TYPEDEF && BASETYPEG(dt_sptr) > DT_NONE) {
+      dtype = BASETYPEG(dt_sptr);
+      dt_sptr = get_struct_tag_sptr(dtype);
+    }
+    if (!CFUNCG(dt_sptr) && !SEQG(dt_sptr))
+      error(S_0155_OP1_OP2, ERR_Severe, LINENOG(member_sptr),
+            "Derived type shall have the BIND attribute or "
+            "the SEQUENCE attribute in COMMON -",
+            SYMNAME(member_sptr));
+    if (allocatable_member(dt_sptr)) {
+      error(S_0155_OP1_OP2, ERR_Severe, LINENOG(member_sptr),
+            "Derived type cannot have allocatable attribute in COMMON -",
+             SYMNAME(member_sptr));
+    } else if (has_init_value(dt_sptr)) {
+      error(S_0155_OP1_OP2, ERR_Severe, LINENOG(member_sptr),
+            "Derived type cannot have default initialization in COMMON -",
+            SYMNAME(member_sptr));
+    } else {
+    }
+  }
+}
+
 /*
  * Put pointer member pointer/offset/descriptor into common block.
  * Assign addresses to common block elements and compute size of
@@ -657,6 +693,8 @@ do_common_blocks(void)
     } else {
       reorder_common_pointers(sptr);
     }
+
+    check_derived_type_in_comm(sptr);
 
     for (member = CMEMFG(sptr); member != NOSYM; member = SYMLKG(member)) {
       if (EQVG(member) && SOCPTRG(member)) {
