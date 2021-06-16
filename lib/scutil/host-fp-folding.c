@@ -59,7 +59,9 @@ fold_sanity_check(void)
  *  C99 feature: alert the compiler that the following code cares about
  *  the dynamic floating-point environment.
  */
+#ifndef __aarch64__
 #pragma STDC FENV_ACCESS ON
+#endif
 
 /*
  *  Configure "denormal inputs are zero" and "flush denormal results to zero"
