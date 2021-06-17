@@ -4333,7 +4333,8 @@ ast_rewrite(int ast)
       if (rank != rank1) {
         if (rank == 0)
           rank = rank1;
-        dtype = get_array_dtype(rank, DDTG(A_DTYPEG(ast)));
+        /* Make the dtype of new ast the same as the old one. */
+        dtype = dtype_with_shape(A_DTYPEG(ast), A_SHAPEG(ast));
       }
       astnew = mk_convert(lop, dtype);
     }
