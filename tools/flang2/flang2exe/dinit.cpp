@@ -579,7 +579,8 @@ dinit_varref(VAR *ivl, SPTR member, CONST *ict, DTYPE dtype,
     *repeat = ict->repeatc;
   }
   do {
-    if (no_data_components(DDTG(DTYPEG(sptr)))) {
+    if (no_data_components(DDTG(DTYPEG(sptr))) &&
+        !is_zero_size_typedef(DDTG(DTYPEG(sptr)))) {
       break;
     }
     if (ict == NULL) {
@@ -607,6 +608,8 @@ dinit_varref(VAR *ivl, SPTR member, CONST *ict, DTYPE dtype,
           if (DTY(DTYPEG(sptr)) == TY_ARRAY && offset) {
             dinit_put(DINIT_OFFSET, offset);
             dinit_data(NULL, ict->subc, ict->dtype, 0);
+          } else if (is_zero_size_typedef(DDTG(ivl->u.varref.dtype))) {
+            dinit_put(DINIT_OFFSET, offset);
           } else {
             dinit_data(NULL, ict->subc, ict->dtype, offset);
           }
@@ -5405,7 +5408,7 @@ eval_init_expr_item(CONST *cur_e)
   case AC_SCONST:
     new_e = clone_init_const(cur_e, true);
     new_e->subc = eval_init_expr(new_e->subc);
-    if (new_e->subc->dtype == cur_e->dtype) {
+    if (new_e->subc && new_e->subc->dtype == cur_e->dtype) {
       new_e->subc = new_e->subc->subc;
     }
     break;
@@ -5430,7 +5433,7 @@ eval_init_expr(CONST *e)
     case AC_SCONST:
       new_e = clone_init_const(cur_e, true);
       new_e->subc = eval_init_expr(new_e->subc);
-      if (new_e->subc->dtype == cur_e->dtype) {
+      if (new_e->subc && new_e->subc->dtype == cur_e->dtype) {
         new_e->subc = new_e->subc->subc;
       }
       break;

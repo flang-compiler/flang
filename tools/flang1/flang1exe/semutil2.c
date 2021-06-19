@@ -4794,7 +4794,7 @@ rewrite_acl(ACL *aclp, DTYPE dtype, int parent_acltype)
   ACL *prev_aclp = NULL;
   ACL *ret_aclp = aclp;
   ACL *sav_aclp = NULL;
-  if (no_data_components(dtype)) {
+  if (no_data_components(dtype) && !is_zero_size_typedef(dtype)) {
     return 0;
   }
   if (parent_acltype == AC_SCONST) {
@@ -4866,7 +4866,7 @@ rewrite_acl(ACL *aclp, DTYPE dtype, int parent_acltype)
     case AC_TYPEINIT:
       wrk_aclp->subc =
           rewrite_acl(cur_aclp->subc, cur_aclp->dtype, cur_aclp->id);
-      if (!wrk_aclp->subc) {
+      if (!wrk_aclp->subc && !is_zero_size_typedef(wrk_dtype)) {
         return 0;
       }
       if (DTY(wrk_dtype) == TY_ARRAY && parent_acltype != AC_ACONST) {

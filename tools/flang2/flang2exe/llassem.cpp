@@ -584,6 +584,10 @@ get_struct_from_dsrt2(SPTR sptr, DSRT *dsrtp, ISZ_T size, int *align8,
 
   for (; dsrtp; dsrtp = dsrtp->next) {
     loc_base = dsrtp->offset; /* assumes this is a DINIT_LOC */
+
+    if (is_zero_size_typedef(DDTG(DTYPEG(dsrtp->sptr))))
+      continue;
+
     if (dsrtp->sectionindex != DATA_SEC) {
       switch (dsrtp->sectionindex) {
       case NVIDIA_FATBIN_SEC:
@@ -1285,6 +1289,10 @@ process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect, ISZ_T addr)
     } else {
       is_char = false;
     }
+
+    if (is_zero_size_typedef(DDTG(DTYPEG(dsrtp->sptr))))
+      continue;
+
     if (dsrtp->sectionindex != DATA_SEC) {
       gbl.func_count = dsrtp->func_count;
     } else {
@@ -2833,6 +2841,11 @@ dinits(void)
           break;
         if (dsrtp->offset == item->offset) {
           int sptr = dsrtp->sptr;
+
+          if (is_zero_size_typedef(DDTG(DTYPEG(sptr))) ||
+              is_zero_size_typedef(DDTG(DTYPEG(item->sptr))))
+            continue;
+
           if (sptr && DTY(DTYPEG(sptr)) == TY_ARRAY && SCG(sptr) == SC_STATIC &&
               extent_of(DTYPEG(sptr)) == 0)
             goto Continue;
