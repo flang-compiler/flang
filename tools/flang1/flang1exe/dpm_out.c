@@ -2212,7 +2212,8 @@ set_type_in_descriptor(int descriptor_ast, int sptr, DTYPE dtype0,
     int argt = mk_argt(2), astnew;
     int func_ast = mk_id(sym_mkfunc_nodesc(mkRteRtnNm(func), DT_NONE));
     ARGT_ARG(argt, 0) = descriptor_ast;
-    ARGT_ARG(argt, 1) = type_ast;
+    ARGT_ARG(argt, 1) = (SCG(sptr) == SC_DUMMY && CLASSG(sptr)) ?
+                        mk_id(get_type_descr_arg(gbl.currsub, sptr)) : type_ast;
     astnew = mk_func_node(A_CALL, func_ast, 2, argt);
     add_stmt_before(astnew, before_std);
   }
@@ -3917,8 +3918,10 @@ make_simple_template_from_ast(int ast, int std, LOGICAL need_type_in_descr)
         glb = diff_lbnd(dtype, i, glb, descr);
         gub = diff_lbnd(dtype, i, gub, descr);
       }
-      ARGT_ARG(argt, cargs++) = astb.bnd.zero;
-      ARGT_ARG(argt, cargs++) = mk_binop(OP_SUB, gub, glb, astb.bnd.dtype);
+      ARGT_ARG(argt, cargs++) = astb.bnd.one;
+      ARGT_ARG(argt, cargs++) = mk_binop(OP_ADD, mk_binop(OP_SUB,
+                                                 gub, glb, astb.bnd.dtype),
+                                         astb.bnd.one, astb.bnd.dtype);
       ++j;
     }
   }
