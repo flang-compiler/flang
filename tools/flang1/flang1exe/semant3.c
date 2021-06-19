@@ -3825,17 +3825,17 @@ semant3(int rednum, SST *top)
         ast = rewrite_ast_with_new_dtype(ast, dtype);
         itemp->ast = rewrite_ast_with_new_dtype(itemp->ast, dtype);
         dest = memsym_of_ast(itemp->ast);
-        if (SDSCG(dest) && DTY(dtype) == TY_CHAR && is_unl_poly(dest)) {
+        if (SDSCG(dest) && DTY(DDTG(dtype)) == TY_CHAR && is_unl_poly(dest)) {
           /* FS#20580: Set up destination descriptor where
            * unlimited polymorphic object is getting allocated
            * with a string.
            */
           int val, assn, dast;
 
-          if (string_length(dtype)) {
-            val = mk_cval1(string_length(dtype), DT_INT);
+          if (string_length(DDTG(dtype))) {
+            val = mk_cval1(string_length(DDTG(dtype)), DT_INT);
           } else {
-            val = DTY(dtype + 1);
+            val = DTY(DDTG(dtype) + 1);
           }
 
           if (val) {
@@ -4079,7 +4079,8 @@ semant3(int rednum, SST *top)
                   dty2 = DTY(dty2 + 1);
                   if (DTY(dest_dtype) == TY_ARRAY) {
                     int dty = DTY(dest_dtype + 1);
-                    if (DTY(dty) == TY_DERIVED && UNLPOLYG(DTY(dty + 3))) {
+                    if (DTY(dty) == TY_DERIVED && UNLPOLYG(DTY(dty + 3)) &&
+                        dty2 != DT_DEFERCHAR) {
                       new_sym = get_unl_poly_sym(dty2);
                       chkstruct(DTYPEG(new_sym));
                       dest_dtype = dup_array_dtype(dest_dtype);
@@ -4222,7 +4223,7 @@ semant3(int rednum, SST *top)
                                  : mk_id(get_type_descr_arg(gbl.currsub, src));
 
                   gen_init_unl_poly_desc(dast, sast, 0);
-                } else if (SDSCG(dest) && DTY(src_dtype) == TY_CHAR &&
+                } else if (SDSCG(dest) && DTY(DDTG(src_dtype)) == TY_CHAR &&
                            is_unl_poly(dest)) {
 
                   /* FS#20580: Set up destination descriptor where
@@ -4231,13 +4232,12 @@ semant3(int rednum, SST *top)
                    */
                   int val, assn, dty, dast, sast;
 
-                  if (string_length(src_dtype)) {
-                    val = mk_cval1(string_length(src_dtype), DT_INT);
+                  if (string_length(DDTG(src_dtype))) {
+                    val = mk_cval1(string_length(DDTG(src_dtype)), DT_INT);
                   } else {
-                    dty = src_dtype;
+                    dty = DDTG(src_dtype);
                     val = DTY(dty + 1);
                   }
-
                   if (val) {
                     dast =
                         check_member(dest_sdsc_ast, get_byte_len(SDSCG(dest)));
@@ -4256,25 +4256,27 @@ semant3(int rednum, SST *top)
                   assn = mk_assn_stmt(dast, val, DT_INT);
                   add_stmt(assn);
 
-                  val = mk_cval1(0, DT_INT);
-                  dast =
-                      check_member(dest_sdsc_ast, get_desc_rank(SDSCG(dest)));
-                  assn = mk_assn_stmt(dast, val, DT_INT);
-                  add_stmt(assn);
-                  dast =
-                      check_member(dest_sdsc_ast, get_desc_lsize(SDSCG(dest)));
-                  assn = mk_assn_stmt(dast, val, DT_INT);
-                  add_stmt(assn);
+                  if (DTY(src_dtype) != TY_ARRAY) {
+                    val = mk_cval1(0, DT_INT);
+                    dast =
+                        check_member(dest_sdsc_ast, get_desc_rank(SDSCG(dest)));
+                    assn = mk_assn_stmt(dast, val, DT_INT);
+                    add_stmt(assn);
+                    dast =
+                        check_member(dest_sdsc_ast, get_desc_lsize(SDSCG(dest)));
+                    assn = mk_assn_stmt(dast, val, DT_INT);
+                    add_stmt(assn);
 
-                  dast =
-                      check_member(dest_sdsc_ast, get_desc_gsize(SDSCG(dest)));
-                  assn = mk_assn_stmt(dast, val, DT_INT);
-                  add_stmt(assn);
+                    dast =
+                        check_member(dest_sdsc_ast, get_desc_gsize(SDSCG(dest)));
+                    assn = mk_assn_stmt(dast, val, DT_INT);
+                    add_stmt(assn);
 
-                  val = mk_cval1(ty_to_lib[TY_CHAR], DT_INT);
-                  dast = check_member(dest_sdsc_ast, get_kind(SDSCG(dest)));
-                  assn = mk_assn_stmt(dast, val, DT_INT);
-                  add_stmt(assn);
+                    val = mk_cval1(ty_to_lib[TY_CHAR], DT_INT);
+                    dast = check_member(dest_sdsc_ast, get_kind(SDSCG(dest)));
+                    assn = mk_assn_stmt(dast, val, DT_INT);
+                    add_stmt(assn);
+                  }
                 }
 
                 if ((dest_ast && A_TYPEG(dest_ast) == A_SUBSCR) ||
