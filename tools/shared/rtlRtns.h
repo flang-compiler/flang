@@ -303,6 +303,7 @@ typedef enum {
   RTE_real16,
   RTE_real4,
   RTE_real8,
+  RTE_realloc_arr_in_impiled_do,
   RTE_repeata,
   RTE_rrspacing,
   RTE_rrspacingd,

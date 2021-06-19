@@ -298,6 +298,7 @@ FtnRteRtn ftnRtlRtns[] = {
     {"real16", "", false, ""},
     {"real4", "", false, ""},
     {"real8", "", false, ""},
+    {"realloc_arr_in_impiled_do", "", true, ""},
     {"repeata", "", false, ""},
     {"rrspacing", "", false, ""},
     {"rrspacingd", "", false, ""},
