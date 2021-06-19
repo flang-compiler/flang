@@ -17,6 +17,7 @@ int target_kind(DTYPE dtype);
 ISZ_T size_of(DTYPE dtype);
 int string_length(DTYPE dtype);
 LOGICAL is_empty_typedef(DTYPE dtype);
+LOGICAL is_zero_size_typedef(DTYPE dtype);
 LOGICAL no_data_components(DTYPE dtype);
 ISZ_T size_of_var(int sptr);
 INT size_ast(int sptr, DTYPE dtype);
