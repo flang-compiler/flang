@@ -331,9 +331,11 @@ dinit_data(VAR *ivl, ACL *ict, int dtype)
           int ni; /* number of elements consumed by a constant */
 
           ni = 1;
-          if (ivl && DTY(ivl->u.varref.dtype) == TY_DERIVED && !POINTERG(sptr))
+          if (ivl && DTY(ivl->u.varref.dtype) == TY_DERIVED &&
+              !is_zero_size_typedef(ivl->u.varref.dtype) && !POINTERG(sptr))
             dinit_data(ivl->u.varref.subt, ict->subc, ict->dtype);
-          else if (member && DTY(ict->dtype) == TY_DERIVED && !POINTERG(sptr))
+          else if (member && DTY(ict->dtype) == TY_DERIVED &&
+                   !is_zero_size_typedef(ict->dtype) && !POINTERG(sptr))
             if (ict->subc) {
               /* derived type member-by-member initialization */
               dinit_data(NULL, ict->subc, ict->dtype);

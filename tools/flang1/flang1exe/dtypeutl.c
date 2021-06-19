@@ -422,6 +422,27 @@ is_empty_typedef(DTYPE dtype)
   return FALSE;
 }
 
+/** \brief Check for special case of zero-size typedef which may nest have
+    zero-size typedef compnents or zero-size array compnents.
+ */
+LOGICAL
+is_zero_size_typedef(DTYPE dtype)
+{
+  if (dtype <= DT_NONE)
+    return FALSE;
+  dtype = is_array_dtype(dtype) ? DTY(dtype + 1) : dtype;
+
+  switch (DTY(dtype)) {
+  case TY_DERIVED:
+  case TY_UNION:
+  case TY_STRUCT:
+    return (DTY(dtype + 2) == 0);
+  default:
+    return FALSE;
+  }
+  return FALSE;
+}
+
 static LOGICAL
 is_recursive_dtype(int sptr, struct visit_list **visited)
 {

@@ -63,6 +63,11 @@ bool is_array_dtype(DTYPE dtype);
  */
 bool is_empty_typedef(DTYPE dtype);
 
+/** \brief Check for special case of zero-size typedef which may nest have
+    zero-size typedef compnents or zero-size array compnents.
+ */
+bool is_zero_size_typedef(DTYPE dtype);
+
 /**
    \brief ...
  */
