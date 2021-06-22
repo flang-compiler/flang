@@ -4,19 +4,9 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 
-if( ${TARGET_ARCHITECTURE} STREQUAL "x86_64" )
-  set(ARCH_DEP_FILES
-    x86_64-Linux/ll_abi.cpp
-  )
-elseif( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
-  set(ARCH_DEP_FILES
-      aarch64-Linux/ll_abi.cpp
-  )
-elseif( ${TARGET_ARCHITECTURE} STREQUAL "ppc64le" )
-  set(ARCH_DEP_FILES
-    ppc64le-Linux/ll_abi.cpp
-  )
-endif()
+set(ARCH_DEP_FILES
+  ${TARGET_ARCHITECTURE}/ll_abi.cpp
+)
 
 set_source_files_properties(${UTILS_SYMTAB_BIN_DIR}/symtabdf.cpp PROPERTIES GENERATED TRUE)
 
@@ -91,7 +81,7 @@ set(INCLUDE_DIRS
   ${FLANG_SOURCE_DIR}/lib/scutil
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ARCHITECTURE}-Linux
+  ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ARCHITECTURE}
   ${UTILS_SYMTAB_BIN_DIR}        # Symbol table headers
   ${UTILS_ILI_BIN_DIR}           # ILI IR headers
   ${UTILS_ILM_BIN_DIR}           # ILM IR headers
@@ -112,7 +102,7 @@ set(SHARED_SOURCES
 foreach(FILE ${SHARED_SOURCES})
   get_filename_component(TOFILE ${FILE} NAME)
   if(WIN32)
-    add_custom_command(OUTPUT ${TOFILE}pp 
+    add_custom_command(OUTPUT ${TOFILE}pp
       COMMAND ${CMAKE_COMMAND} -E copy ${FILE} ${TOFILE}pp
       MAIN_DEPENDENCY ${FILE})
   else()
