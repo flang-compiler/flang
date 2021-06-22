@@ -729,7 +729,7 @@ apply_use(MODULE_ID m_id)
         if (STYPEG(sptr) == ST_ALIAS && STYPEG(SYMLKG(sptr)) == ST_PROC) {
           /* hide original alias for a renamed subprogram */
           int s;
-          PRIVATEP(sptr, 1); /* hide original alias for a renamed subprogram */
+          HIDDENP(sptr, 1); /* hide original alias for a renamed subprogram */
           HIDDENP(SYMLKG(sptr), 1); /* hide subprogram itself,
                                          doesn't seem to be necessary */
           for (s = first_hash(sptr); s; s = HASHLKG(s)) {
