@@ -2708,9 +2708,10 @@ convert_template_instance(void)
     }
   }
   /* Look for pghpf_instance calls where the previous statement
-   * is a RTE_template call, and where the input descriptor to the instance
-   * is the output descriptor of the template call, and the descriptor
-   * has no other uses */
+   * is a RTE_template call, or the previous two statements are
+   * a RTE_set_intrin_type call and a RTE_template call, and where
+   * the input descriptor to the instance is the output descriptor of the
+   * template call, and the descriptor has no other uses */
   for (std = STD_NEXT(0); std; std = stdnext) {
     int ast, sptr, argcnt;
     stdnext = STD_NEXT(std);
@@ -2724,8 +2725,24 @@ convert_template_instance(void)
         stdprev = STD_PREV(std);
         astprev = STD_AST(stdprev);
         if (A_TYPEG(astprev) == A_CALL) {
-          int sptrprev;
+          int sptrprev, set_intrin_type_std = 0;
           sptrprev = A_SPTRG(A_LOPG(astprev));
+          if (STYPEG(sptrprev) == ST_PROC &&
+              strcmp(SYMNAME(sptrprev), mkRteRtnNm(RTE_set_intrin_type)) == 0) {
+            int stdtmp, asttmp;
+            stdtmp = STD_PREV(stdprev);
+            asttmp = STD_AST(stdtmp);
+            if (A_TYPEG(asttmp) == A_CALL) {
+              int sptrtmp = A_SPTRG(A_LOPG(asttmp));
+              if (STYPEG(sptrtmp) == ST_PROC &&
+                  strcmp(SYMNAME(sptrtmp), mkRteRtnNm(RTE_template)) == 0) {
+                set_intrin_type_std = stdprev;
+                stdprev = stdtmp;
+                astprev = asttmp;
+                sptrprev = sptrtmp;
+              }
+            }
+          }
           if (STYPEG(sptrprev) == ST_PROC &&
               strcmp(SYMNAME(sptrprev), mkRteRtnNm(RTE_template)) == 0) {
             /* get argument lists */
@@ -2750,6 +2767,8 @@ convert_template_instance(void)
                 ARGT_ARG(argst, 3) = ARGT_ARG(argsi, 2);
                 ARGT_ARG(argst, 4) = ARGT_ARG(argsi, 3);
                 delete_stmt(std);
+                if (set_intrin_type_std != 0)
+                  delete_stmt(set_intrin_type_std);
               } else {
                 /* replace
                  *  call RTE_template(aa$sd,1,2,0,0,1,20)
@@ -2774,6 +2793,8 @@ convert_template_instance(void)
               ARGT_ARG(argst, 3) = ARGT_ARG(argsi, 2);
               ARGT_ARG(argst, 4) = ARGT_ARG(argsi, 3);
               delete_stmt(std);
+              if (set_intrin_type_std != 0)
+                delete_stmt(set_intrin_type_std);
             }
           }
         }
