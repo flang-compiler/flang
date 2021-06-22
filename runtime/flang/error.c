@@ -829,7 +829,7 @@ win_set_binary(FIO_FCB *f)
 
   fil = f->fp;
   if (!__fort_isatty(__fort_getfd(fil))) {
-    __fortio_setmode_binary(fil);
+    __io_setmode_binary(fil);
   }
 }
 #endif
