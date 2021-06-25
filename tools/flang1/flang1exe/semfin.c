@@ -30,7 +30,6 @@ static LOGICAL is_in_currsub(int sptr);
 static void expand_common_pointers(int);
 static void reorder_common_pointers(int);
 static void fix_args(int);
-static void fix_func(void);
 
 static void do_access(void);
 static LOGICAL chk_evar(int);
@@ -101,7 +100,7 @@ incr_invobj_for_retval_add(int impl_sptr, LOGICAL addit)
 {
   int sptr2;
 
-  for (sptr2 = 1; sptr2 < stb.stg_avail; ++sptr2) {
+  for (sptr2 = 1; sptr2 < (int)stb.stg_avail; ++sptr2) {
     int bind_sptr;
     if (STYPEG(sptr2) == ST_MEMBER && CLASSG(sptr2) &&
         VTABLEG(sptr2) == impl_sptr && !NOPASSG(sptr2) &&
@@ -134,13 +133,12 @@ merge_generics(void)
   int sptr;
   int sptr1;
   int sptr_genr_curscope;
-  int sptr_alias;
   int sptr_alias_currscope;
 
   if (sem.pgphase != PHASE_CONTAIN && !sem.use_seen)
     return;
 
-  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
+  for (sptr = stb.firstusym; sptr < (int)stb.stg_avail; ++sptr) {
     sptr_genr_curscope = 0;
     if (!USER_GNRIC_OR_OPR(sptr))
       continue;
@@ -319,7 +317,7 @@ prepend_func_result_as_first_arg(int func_sptr)
 void
 semfin(void)
 {
-  int sptr, dtype, ssptr;
+  int sptr, dtype;
   int last_lineno;
   INT arg;
   int i;
@@ -629,7 +627,7 @@ semfin(void)
   gbl.lineno = last_lineno;
   queue_tbp(0, 0, 0, 0, TBP_COMPLETE_FIN);
   if (sem.which_pass) {
-    for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr) {
+    for (sptr = stb.firstosym; sptr < (int)stb.stg_avail; ++sptr) {
       fixup_reqgs_ident(sptr);
     }
   }
@@ -676,7 +674,7 @@ do_common_blocks(void)
     size = 0;
     for (member = CMEMFG(sptr); member != NOSYM; member = SYMLKG(member)) {
       ISZ_T next_off, msz;
-      int addr, dtype, ssptr;
+      int addr, dtype;
       const char *errmsg = 0;
 
       if (EQVG(member))
@@ -1025,8 +1023,6 @@ semfin_free_memory(void)
 void
 fix_class_args(int func_sptr)
 {
-  int orig_count, new_arg_position, j;
-
   if (!have_class_args_been_fixed_already(func_sptr)) {
     /* type descriptors have not yet been added, so now we add them */
     int orig_count = PARAMCTG(func_sptr);
@@ -1047,8 +1043,7 @@ fix_args(int sptr)
    * subprogram to fix stypes of the args which were not referenced or
    * to replace a derived argument with its components.
    */
-  int arg, arg1;
-  int count;
+  int arg;
   int dscptr, i;
   /*
    * use a true pointer for locating the arguments; don't reallocate
@@ -1159,8 +1154,7 @@ gen_accl_alias(int sptr, ACCL *accessp)
 static void
 do_access(void)
 {
-  int sptr, a, encl, ssptr;
-  int sptrmem;
+  int sptr, encl;
   int nsyms;
   int stype;
   ACCL *accessp;
@@ -2225,7 +2219,6 @@ nml_check_item(int sptr)
 static int
 gen_vlist(void)
 {
-  ITEM *p;
   int sptr, vlist_ast;
   ADSC *ad;
 
@@ -2259,9 +2252,8 @@ static ITEM *
 gen_dtio_arglist(int sptr, int vlist_ast)
 {
   ITEM *p, *arglist;
-  INT v[2];
   int ast_type, iostat_ast, iomsg_ast, unit_ast;
-  int tast, iotype_ast;
+  int iotype_ast;
   int tsptr, tdtype;
   int argdtyp;
   if (XBIT(124, 0x10))
@@ -2375,7 +2367,7 @@ static int static_cnt = 0;
 static void
 nml_emit_desc(int sptr)
 {
-  int cnt, dtype, ndims, a, dttype, i;
+  int cnt, dtype, ndims, dttype, i;
   ADSC *ad;
 
   if (new_nml == TRUE) {
@@ -2502,7 +2494,6 @@ nml_emit_desc(int sptr)
        * Namelist of automatic array - its pointer is to be stored at
        *  nml [static_cnt-3]
        */
-      int std = STD_NEXT(0);
       int from, astplist, ast, dest;
       from = mk_id(sptr);
       from = mk_unop(OP_LOC, from, DT_PTR);
@@ -2514,7 +2505,6 @@ nml_emit_desc(int sptr)
     }
     do {
       if (ADD_LWBD(dt, cnt)) {
-        int std = STD_NEXT(0);
         int from, astplist, ast, dest;
         ++static_cnt;
         from = mk_id(sym_of_ast(AD_LWAST(ad, cnt)));
@@ -2530,7 +2520,6 @@ nml_emit_desc(int sptr)
       }
 
       if (ADD_UPBD(dt, cnt)) {
-        int std = STD_NEXT(0);
         int from, astplist, ast, dest;
         ++static_cnt;
         from = mk_id(sym_of_ast(AD_UPAST(ad, cnt)));
@@ -2559,7 +2548,6 @@ nml_emit_desc(int sptr)
   if (DTY(dttype) == TY_DERIVED && i) {
     int rsptr, wsptr, vlist, vlistsd, dtvsd;
     ITEM *arglist;
-    SST *stkptr;
 
     vlist = gen_vlist();
     arglist = gen_dtio_arglist(sptr, vlist);
@@ -3035,13 +3023,6 @@ _available(int ast)
   return FALSE;
 } /* _available */
 
-static LOGICAL
-available(int ast, int internal)
-{
-  available_internal = internal;
-  return _available(ast);
-} /* available */
-
 /** \brief Check that sptr is declared if IMPLICIT NONE is set.
 
     Be careful about the situation where IMPLICIT NONE is in the host,
@@ -3178,11 +3159,11 @@ append_to_adjstr_list(int sptr)
 static void
 misc_checks(void)
 {
-  int sptr, a;
+  int sptr;
   int nsyms;
   int stype;
   ITEM *itemp;
-  int s, dtype, ndim, i, dist, d, circular, alignee, axis, anygenblock;
+  int dtype;
 
   /*  scan entire symbol table */
 

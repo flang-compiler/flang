@@ -38,7 +38,6 @@ static void count_formals(int);
 static void count_formal_args(int, int);
 static void check_dim_error(int, int);
 static int mk_array_type(int, int);
-static int gen_derived_arg(SST *, int, int, int);
 static int gen_pointer_result(int, int, int, LOGICAL, int);
 static int gen_allocatable_result(int, int, int, LOGICAL, int);
 static int gen_array_result(int, int, int, LOGICAL, int);
@@ -62,7 +61,6 @@ static int _repeat(int, int);
 static int _scan(int, int, int);
 static int _trim(int);
 static int _verify(int, int, int);
-static void get_byval_ref(int, int);
 static int find_byval_ref(int, int, int);
 static int cmp_mod_scope(SPTR);
 
@@ -218,7 +216,7 @@ get_type_descr_dummy(int sptr, int arg)
 int
 get_type_descr_arg(int func_sptr, int arg)
 {
-  int arg2, sptr;
+  int sptr;
 
   if (needs_descriptor(arg)) {
     if (SDSCG(arg) <= NOSYM)
@@ -257,7 +255,7 @@ get_type_descr_arg(int func_sptr, int arg)
 int
 get_type_descr_arg2(int func_sptr, int arg)
 {
-  int arg2, sptr;
+  int sptr;
   if (needs_descriptor(arg)) {
     int desc;
     if (SDSCG(arg))
@@ -433,7 +431,6 @@ static int
 inc_dummy_param(int func_sptr)
 {
   int param_sptr;
-  int arg;
 
   if (byval_func_ptr == 0) {
     byval_func_ptr = func_sptr;
@@ -462,10 +459,9 @@ get_byval(int func_sptr, int param_sptr)
 static int
 rewrite_cptr_references(int ast)
 {
-  int past, mast;
+  int mast;
   int new_ast = 0;
   int psptr;
-  int msptr = 0;
   int iso_dtype;
 
   switch (A_TYPEG(ast)) {
@@ -616,7 +612,6 @@ get_sym_from_sst_if_available(SST *sst_actual)
 {
   int sptr = 0;
   int unused;
-  int ast;
 
   if (SST_IDG(sst_actual) == S_LVALUE)
     sptr = SST_LSYMG(sst_actual);
@@ -804,7 +799,6 @@ func_call2(SST *stktop, ITEM *list, int flag)
   int psptr, msptr;
   int callee;
   int invobj;
-  int doif;
 
   return_value = 0;
   save_func_arrinfo = 0;
@@ -1376,7 +1370,6 @@ exit_:
     SST_SHAPEP(stktop, A_SHAPEG(ast));
   SST_DTYPEP(stktop, dtype);
 
-exit_2:
   if (kwd_str)
     FREE(kwd_str);
 
@@ -1442,7 +1435,7 @@ func_call(SST *stktop, ITEM *list)
    * flag only if the generic is private. We do this to turn off
    * the private error check on the resolved tbp.
    */
-  int ast, flag, sptr, sptr1 = NOSYM;
+  int ast, sptr, sptr1 = NOSYM;
   ast = SST_ASTG(stktop);
   switch (A_TYPEG(ast)) {
   case A_ID:
@@ -1958,7 +1951,6 @@ exit_:
   else
     SST_SHAPEP(stktop, A_SHAPEG(ast));
   SST_DTYPEP(stktop, dtype);
-exit_2:
   if (kwd_str)
     FREE(kwd_str);
 
@@ -2068,7 +2060,6 @@ gen_pointer_result(int array_value, int dscptr, int nactuals,
   int o_dt;
   int dt;
   int arr_tmp;
-  int pvar;
 
   o_dt = DTYPEG(array_value);
   if (DTY(o_dt) == TY_ARRAY) {
@@ -2137,8 +2128,6 @@ gen_allocatable_result(int array_value, int dscptr, int nactuals,
   int arr_tmp;
   int pvar;
   int astrslt;
-  int astnull;
-  int sptrnull;
 
   o_dt = DTYPEG(array_value);
   if (DTY(o_dt) == TY_ARRAY) {
@@ -2446,7 +2435,6 @@ gen_char_result(int fval, int dscptr, int nactuals)
 static void
 precompute_arg_intrin(int dscptr, int nactuals)
 {
-  int numdim;
   int ii;
   int dtype;
 
@@ -2488,7 +2476,6 @@ precompute_arg_intrin(int dscptr, int nactuals)
 static void
 precompute_args(int dscptr, int nactuals)
 {
-  int numdim;
   int ii;
 
   for (ii = 0; ii < nactuals; ii++) {
@@ -2511,7 +2498,6 @@ precompute_args(int dscptr, int nactuals)
 static void
 rewrite_triples(int ast_subscr, int dscptr, int nactuals)
 {
-  int numdim;
   int i, j;
   int sptr_actual;
   int ast_actual = A_LOPG(ast_subscr);
@@ -2540,7 +2526,6 @@ rewrite_triples(int ast_subscr, int dscptr, int nactuals)
         int ndim = ASD_NDIM(asd);
         int dt_formal = DTYPEG(aux.dpdsc_base[dscptr + i]);
         ADSC *ad_formal = AD_DPTR(dt_formal);
-        int changed = FALSE;
         for (j = 0; j < ndim; j++) {
           int sub = ASD_SUBS(asd, j);
           if (A_TYPEG(sub) == A_TRIPLE &&
@@ -2700,7 +2685,6 @@ replace_formal_triples(int ast, int dscptr, int nactuals)
 static void
 replace_arguments(int dscptr, int nactuals)
 {
-  int numdim;
   int ii;
 
   for (ii = 0; ii < nactuals; ii++) {
@@ -2935,7 +2919,7 @@ generic_tbp_has_pass_and_nopass(int dtype, int sptr)
    */
 
   int found_nopass, found_pass;
-  int tag, mem, rslt;
+  int tag, mem;
 
   if (STYPEG(sptr) != ST_USERGENERIC && STYPEG(sptr) != ST_OPERATOR)
     return 0;
@@ -2970,7 +2954,7 @@ get_generic_tbp_pass_or_nopass(int dtype, int sptr, int flag)
    * tbp is not available or none available from the flag criteria.
    */
   int found_nopass, found_pass;
-  int tag, mem, rslt;
+  int tag, mem;
 
   if (STYPEG(sptr) != ST_USERGENERIC && STYPEG(sptr) != ST_OPERATOR)
     return 0;
@@ -3032,7 +3016,7 @@ find_by_name_stype_arg(char *symname, int stype, int scope, int dtype, int inv,
                        int exact)
 {
   int hash, hptr, len;
-  int paramct, dpdsc, dtype2, arg;
+  int dpdsc, dtype2, arg;
   len = strlen(symname);
   HASH_ID(hash, symname, len);
   for (hptr = stb.hashtb[hash]; hptr; hptr = HASHLKG(hptr)) {
@@ -3231,7 +3215,6 @@ subr_call2(SST *stktop, ITEM *list, int flag)
   int param_dummy;
   char *kwd_str; /* where make_kwd_str saves the string */
   int tbp_mem;
-  int doif;
 
   tbp_mem = 0;
   ast = 0; /* initialize just in case error occurs */
@@ -3725,7 +3708,6 @@ fix_proc_pointer_call(SST *stktop, ITEM **list)
 
   int func, pass_sym;
   int paramct, dpdsc, iface, ast, i;
-  int arg, arg_sptr;
   int dtype, dtproc;
   SST *e1;
   ITEM *itemp, *itemp2;
@@ -3811,7 +3793,7 @@ fix_proc_pointer_call(SST *stktop, ITEM **list)
 void
 ptrsubr_call(SST *stktop, ITEM *list)
 {
-  int sptr, sptr1, stype;
+  int sptr, sptr1;
   int callee;
   ITEM *itemp;
   int count, alt_ret;
@@ -4058,7 +4040,7 @@ gen_newer_intrin(int sptrgenr, int dtype)
 {
   char *intrin_nmptr = SYMNAME(sptrgenr);
   char nmptr[STANDARD_MAXIDLEN + 3] = ".";
-  int sptr;
+  int sptr = 0;
 
   if (strcmp(intrin_nmptr, "acos") == 0 || strcmp(intrin_nmptr, "asin") == 0 ||
       strcmp(intrin_nmptr, "atan") == 0 || strcmp(intrin_nmptr, "cosh") == 0 ||
@@ -4131,13 +4113,11 @@ ref_intrin(SST *stktop, ITEM *list)
   ITEM *ip1;
   SST *sp;
   LOGICAL frozen;
-  ACL *expracl;
   int ast;
   int argt;
   int i;
   int intast;
   int shaper;
-  int cp;
   int func_ast;
   int argdtype;
   int dtyper;
@@ -4146,10 +4126,8 @@ ref_intrin(SST *stktop, ITEM *list)
   int dt_cast_word;
   int hpf_sym;
   int tmp, tmp_ast;
-  char tmpnm[64];
   FtnRtlEnum rtlRtn;
   int intrin; /* one of the I_* constants */
-  int is_real2_arg_error = 0;
 
   dtyper = 0;
   dtype1 = 0;
@@ -4538,8 +4516,6 @@ ref_intrin(SST *stktop, ITEM *list)
   if (const_cnt == count) {
 
     INT conval, con1, con2, res[4], num1[4], num2[4];
-    int q0;
-    int qhalf;
     char ch;
 
     switch (opc) {
@@ -4953,10 +4929,10 @@ ref_intrin(SST *stktop, ITEM *list)
         case I_JISIGN:
         case I_ISIGN:
           conval = con1;
-          if (conval < 0 && conval != 0x80000000)
+          if (conval < 0 && conval != (int)0x80000000)
             conval = -conval;
           con2 = GET_CVAL_ARG(1);
-          if (con2 < 0 && conval != 0x80000000)
+          if (con2 < 0 && conval != (int)0x80000000)
             conval = -conval;
           goto const_return;
         case I_KISIGN:
@@ -5566,18 +5542,15 @@ ref_pd(SST *stktop, ITEM *list)
   INT con1, con2;
   INT num1[4];
   INT res[4];
-  INT kanj[2];
   INT conval = 0;
-  INT q0, qhalf;
   char ch;
   int dtype1, dtype2, dtyper, dtyper2;
-  int count, opc;
-  int numdim;
+  int count;
   INT val[4];
   ISZ_T iszval;
   int dum;
   ITEM *ip1;
-  int ast, arg1, arg2;
+  int ast, arg1;
   int argt;
   int argt_count, argt_extra;
   int i;
@@ -5592,24 +5565,21 @@ ref_pd(SST *stktop, ITEM *list)
                 */
   int func_type;
   int arrtmp_ast;
-  char *name;
-  char tmpnm[64];
+  const char *name;
   int func_ast;
   ACL *shape_acl;
-  ACL *expracl;
-  int sptr, fsptr, baseptr;
+  int sptr = 0, fsptr, baseptr;
   LOGICAL is_whole, is_constant;
   int asumsz;
   int assumshp;
   int adjarr;
   int pvar;
   int nelems, eltype;
-  char *sname = NULL;
+  const char *sname = NULL;
   char verstr[140]; /*140, get_version_str returns max 128 char + pf90 prefix */
-  FtnRtlEnum rtlRtn;
+  FtnRtlEnum rtlRtn = 0;
   SPTR pdsym = SST_SYMG(stktop);
   int pdtype = PDNUMG(pdsym);
-  int is_real2_arg_error = 0;
 
 /* any integer type, or hollerith, or, if -x 51 0x20 not set, real/double */
 #define TYPELESS(dt)                     \
@@ -6236,9 +6206,7 @@ ref_pd(SST *stktop, ITEM *list)
       int rank;
       int ubound[7];
       int lbound[7];
-      SST bndarry;
       ACL *argacl;
-      ACL **r;
 
       stkp = ARG_STK(0);
       ad = AD_DPTR(SST_DTYPEG(stkp));
@@ -6840,7 +6808,7 @@ ref_pd(SST *stktop, ITEM *list)
         E74_CNT(pdsym, count, 3, 3);
         goto call_e74_cnt;
       }
-      if (evl_kwd_args(list, 3, "array dim shift"))
+      if (evl_kwd_args(list, 3, (char *)"array dim shift"))
         goto exit_;
       /* array dim shift --> array shift dim */
       swap = sem.argpos[1];          /* dim */
@@ -6890,7 +6858,7 @@ ref_pd(SST *stktop, ITEM *list)
         E74_CNT(pdsym, count, 3, 4);
         goto call_e74_cnt;
       }
-      if (evl_kwd_args(list, 4, "array dim shift *boundary"))
+      if (evl_kwd_args(list, 4, (char *)"array dim shift *boundary"))
         goto exit_;
       /* array dim shift boundary --> array shift boundary dim */
       swap = sem.argpos[1];          /* dim */
@@ -8494,7 +8462,7 @@ ref_pd(SST *stktop, ITEM *list)
       goto call_e74_cnt;
     }
     if (count == 2) {
-      if (evl_kwd_args(list, 2, "n x"))
+      if (evl_kwd_args(list, 2, (char *)"n x"))
         goto exit_;
 
       dtype1 = DDTG(SST_DTYPEG(ARG_STK(0)));
@@ -9163,7 +9131,6 @@ ref_pd(SST *stktop, ITEM *list)
     SST_ASTP(stktop, ast);
     return conval;
 
-  const_default_int_return:
     SST_IDP(stktop, S_CONST);
     SST_DTYPEP(stktop, dtyper);
     /* call cngcon to convert the constant from type native integer to the
@@ -9995,7 +9962,6 @@ ref_pd(SST *stktop, ITEM *list)
       INT zero[2];
       INT vval[2];
       int len;
-      int i;
 
       con1 = get_sst_cval(stkp);
       if (DTY(dtype1) == TY_INT8 || DTY(dtype1) == TY_LOG8) {
@@ -10149,7 +10115,6 @@ ref_pd(SST *stktop, ITEM *list)
     }
 
     if (CLASSG(argsptr) && STYPEG(argsptr) == ST_MEMBER) {
-      int newargt2, astnew, func;
       int src_ast, std;
       int sdsc_mem = get_member_descriptor(argsptr);
       if (CLASSG(argsptr)) {
@@ -10192,7 +10157,6 @@ ref_pd(SST *stktop, ITEM *list)
       decl2 = 0;
     }
     if (CLASSG(argsptr2) && STYPEG(argsptr2) == ST_MEMBER) {
-      int newargt2, func, astnew;
       int src_ast, std;
       int sdsc_mem = get_member_descriptor(argsptr2);
       if (CLASSG(argsptr2)) {
@@ -10523,7 +10487,6 @@ ref_pd(SST *stktop, ITEM *list)
 
   case PD_mask:
   /* Mask is a cray intrinsic */
-  like_cray_mask:
     if (count != 1) {
       E74_CNT(pdsym, count, 1, 1);
       goto call_e74_cnt;
@@ -10944,7 +10907,6 @@ const_dword_val:
   SST_ASTP(stktop, mk_cnst(tmp));
   return tmp;
 
-const_quad_val:
   tmp = getcon(val, DT_QUAD);
   EXPSTP(pdsym, 1); /* freeze predeclared */
   SST_IDP(stktop, S_CONST);
@@ -11046,7 +11008,7 @@ static int
 getMergeSym(int dt, int ikind)
 {
   int sym;
-  FtnRtlEnum rtlRtn;
+  FtnRtlEnum rtlRtn = 0;
   int localDt = dt;
 
   switch (DTY(dt)) {
@@ -11109,7 +11071,7 @@ getMergeSym(int dt, int ikind)
 static void
 ref_pd_subr(SST *stktop, ITEM *list)
 {
-  int extsym, count, pdsym, dtype;
+  int count, pdsym, dtype;
   int sptr, sptr2;
   int dtype1, dtype2;
   int shape, shape1;
@@ -11120,7 +11082,6 @@ ref_pd_subr(SST *stktop, ITEM *list)
   int argt_count;
   SST *sp;
   SST *stkp;
-  int is_real2_arg_error = 0;
 
   /* Count the number of arguments to function */
   count = 0;
@@ -11767,17 +11728,15 @@ ill_call:
 static void
 ref_intrin_subr(SST *stktop, ITEM *list)
 {
-  int extsym, count, pdsym, dtype;
+  int count, pdsym;
   int sptr;
-  int dtype1, dtype2;
-  int shape, shape1;
+  int dtype2;
   int i, dum;
   ITEM *ip1;
   int ast, lop;
   int argt;
   int argt_count;
   SST *sp;
-  SST *stkp;
 
   /* Count the number of arguments to function */
   count = 0;
@@ -11817,7 +11776,6 @@ ref_intrin_subr(SST *stktop, ITEM *list)
       E74_ARG(pdsym, 1, NULL);
       goto call_e74_arg;
     }
-  cfptr_shp:
     if ((sp = ARG_STK(2))) { /* shape */
       if (DTY(SST_DTYPEG(ARG_STK(1))) != TY_ARRAY) {
         E74_ARG(pdsym, 1, NULL);
@@ -11907,7 +11865,6 @@ call_e74_arg:
   e74_arg(_e74_sym, _e74_pos, _e74_kwd);
 exit_:
   return;
-ill_call:
   error(84, 3, gbl.lineno, SYMNAME(pdsym),
         "- attempt to CALL a function intrinsic");
 }
@@ -12144,8 +12101,8 @@ _len_trim(int string)
 static int
 _repeat(int string, int ncopies)
 {
-  char *p, *cp, *str;
-  char ch;
+  char *p, *cp;
+  const char *str;
   int i, j, cvlen, newlen, result;
   int dtyper, dtype;
   INT val[2];
@@ -12216,7 +12173,8 @@ _scan(int string, int set, int back)
 static int
 _trim(int string)
 {
-  char *p, *cp, *str;
+  char *p, *cp;
+  const char *str;
   int i, cvlen, newlen, result;
   int dtyper, dtype;
   INT val[2];

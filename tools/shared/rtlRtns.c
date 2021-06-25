@@ -773,7 +773,7 @@ dump_FtnRteRtn(FtnRtlEnum rteRtn)
 #endif
 
 /** \brief given a FtnRtlEnum, return the RTL routine name */
-char *
+const char *
 mkRteRtnNm(FtnRtlEnum rteRtn)
 {
   const char *prefixes[4] = {"f90_", "fort_", "", "ftn"};
@@ -821,7 +821,7 @@ mkRteRtnNm(FtnRtlEnum rteRtn)
 }
 
 static void
-stripI8DescrSuffix(char *inNm, char *outNm)
+stripI8DescrSuffix(const char *inNm, char *outNm)
 {
   int nmLen = strlen(inNm);
 
@@ -872,7 +872,7 @@ int
 getF90TmplSectRtn(char *rtnNm)
 {
   int l, h, m, r;
-  char *tmplSectNm;
+  const char *tmplSectNm;
   int retFtype = 0;
   int compLen;
   char cpyRtnNm[MAXIDLEN];

@@ -58,7 +58,6 @@ static void invar_mark(int);
 static void invar_end(int);
 static void invar_arrnme(int);
 static void invar_motion(int);
-static void store_ili(int);
 static void initnames(STL *);
 static void cleannames(STL *);
 
@@ -75,7 +74,7 @@ static LOGICAL mark_return; /* TRUE, if mark_value == INV */
 void
 invariant(int lp)
 {
-  int pre_bih, stdx, fgx, fg_tail, fg_tailnext;
+  int stdx, fgx, fg_tail, fg_tailnext;
   invar_init(lp);
 
   invar_mark(lp);
@@ -358,7 +357,6 @@ compute_invariant(int ast, int *dummy)
   int nme;
   int dtype;
   int i, asd;
-  int astli;
   int argt;
   int cnt;
   LOGICAL invar_flag;
@@ -569,7 +567,6 @@ static LOGICAL is_std_hoistable(int, int);
 static void
 invar_motion(int std)
 {
-  int opc, i, j;
   int ast, astd;
   LOGICAL hstable = FALSE;
   /* only STD_HSTBLE for now */
@@ -618,7 +615,7 @@ def_in_innerlp(int lpx, int def_lp)
 static LOGICAL
 has_def_inlp(int ast, int lp, int std)
 {
-  int lop, rop, def, nme, def_fg, asd, def_addr, ndim;
+  int lop, def, nme, def_fg, asd, def_addr, ndim;
   int def_count = 0;
 
   switch (A_TYPEG(ast)) {
@@ -673,10 +670,9 @@ static LOGICAL
     /* also do the hoist */
     is_hoistable(int ast, int std, int lp)
 {
-  int lop, rop, sym, nme, sptr, def_addr, ndim, def_std, i;
+  int lop, sym, nme, sptr, def_addr, ndim, def_std, i;
   int asd, du_std;
   int use_count, def_count;
-  LOGICAL can_hoist;
   int l, u, s, r, cnme, found_nme, def, def_fg, hoistme;
   STL *stl;
   DU *du;
@@ -822,7 +818,7 @@ static LOGICAL
 is_std_hoistable(int std, int lpx)
 {
   LOGICAL canhoist = FALSE;
-  LOGICAL l, r, s, u, all, sym, tmplog;
+  LOGICAL l, r, s, u, sym, tmplog;
   int shape, n, i, astd;
   int ast = STD_AST(std);
 
@@ -910,18 +906,7 @@ is_std_hoistable(int std, int lpx)
     return FALSE;
     break;
   }
-
-not_hoistable:
-
   return canhoist;
-}
-
-static void
-store_ili(int ilix)
-{
-  int temp;
-
-  /* assign temp; routine marks ILI with candidate entry */
 }
 
 static LOGICAL

@@ -3495,7 +3495,7 @@ static int
 find_member_base(int dtype)
 {
   int basesptr, dty, mem;
-  char *rtnNm = mkRteRtnNm(RTE_member_base);
+  const char *rtnNm = mkRteRtnNm(RTE_member_base);
   basesptr = lookupsymbol(rtnNm);
   if (basesptr == 0 || STYPEG(basesptr) != ST_CMBLK) {
     return NOSYM;

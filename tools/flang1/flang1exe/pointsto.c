@@ -75,22 +75,22 @@ static STG_DECLARE(gtpd, TPD) = { STG_INIT };
 
 #if DEBUG
 #define TTYPE(tpdx)                                            \
-  gtpd.stg_base[tpdx >= 0 && tpdx < gtpd.stg_avail             \
+  gtpd.stg_base[tpdx >= 0 && tpdx < (int)gtpd.stg_avail        \
                     ? tpdx                                     \
                     : (interr("bad TTYPE index", tpdx, 4), 0)] \
       .type
 #define TSYM(tpdx)                                            \
-  gtpd.stg_base[tpdx >= 0 && tpdx < gtpd.stg_avail            \
+  gtpd.stg_base[tpdx >= 0 && tpdx < (int)gtpd.stg_avail       \
                     ? tpdx                                    \
                     : (interr("bad TSYM index", tpdx, 4), 0)] \
       .sym
 #define TVAL(tpdx)                                            \
-  gtpd.stg_base[tpdx >= 0 && tpdx < gtpd.stg_avail            \
+  gtpd.stg_base[tpdx >= 0 && tpdx < (int)gtpd.stg_avail       \
                     ? tpdx                                    \
                     : (interr("bad TVAL index", tpdx, 4), 0)] \
       .val
 #define TLINK(tpdx)                                            \
-  gtpd.stg_base[tpdx >= 0 && tpdx < gtpd.stg_avail             \
+  gtpd.stg_base[tpdx >= 0 && tpdx < (int)gtpd.stg_avail        \
                     ? tpdx                                     \
                     : (interr("bad TLINK index", tpdx, 4), 0)] \
       .link
@@ -167,43 +167,43 @@ static struct {
 
 #if DEBUG
 #define PSD_TYPE(psdx)                                            \
-  gpsd.stg_base[psdx >= 0 && psdx < gpsd.stg_avail                \
+  gpsd.stg_base[psdx >= 0 && psdx < (int)gpsd.stg_avail           \
                     ? psdx                                        \
                     : (interr("bad PSD_TYPE index", psdx, 4), 0)] \
       .type
 #define PSD_PARENT(psdx)                                            \
-  gpsd.stg_base[psdx >= 0 && psdx < gpsd.stg_avail                  \
+  gpsd.stg_base[psdx >= 0 && psdx < (int)gpsd.stg_avail             \
                     ? psdx                                          \
                     : (interr("bad PSD_PARENT index", psdx, 4), 0)] \
       .parent
 #define PSD_SYM(psdx)                                            \
-  gpsd.stg_base[psdx >= 0 && psdx < gpsd.stg_avail               \
+  gpsd.stg_base[psdx >= 0 && psdx < (int)gpsd.stg_avail          \
                     ? psdx                                       \
                     : (interr("bad PSD_SYM index", psdx, 4), 0)] \
       .sym
 #define PSD_CHILD(psdx)                                            \
-  gpsd.stg_base[psdx >= 0 && psdx < gpsd.stg_avail                 \
+  gpsd.stg_base[psdx >= 0 && psdx < (int)gpsd.stg_avail            \
                     ? psdx                                         \
                     : (interr("bad PSD_CHILD index", psdx, 4), 0)] \
       .child
 #define PSD_NEXT(psdx)                                            \
-  gpsd.stg_base[psdx >= 0 && psdx < gpsd.stg_avail                \
+  gpsd.stg_base[psdx >= 0 && psdx < (int)gpsd.stg_avail           \
                     ? psdx                                        \
                     : (interr("bad PSD_NEXT index", psdx, 4), 0)] \
       .next
 #define PSD_HASHLK(psdx)                                            \
-  gpsd.stg_base[psdx >= 0 && psdx < gpsd.stg_avail                  \
+  gpsd.stg_base[psdx >= 0 && psdx < (int)gpsd.stg_avail             \
                     ? psdx                                          \
                     : (interr("bad PSD_HASHLK index", psdx, 4), 0)] \
       .hashlk
 #define PSD_SLOT(psdx)                                            \
-  gpsd.stg_base[psdx >= 0 && psdx < gpsd.stg_avail                \
+  gpsd.stg_base[psdx >= 0 && psdx < (int)gpsd.stg_avail           \
                     ? psdx                                        \
                     : (interr("bad PSD_SLOT index", psdx, 4), 0)] \
       .slot
-#define SLOT(sl)                         \
-  gpsd.slot[sl >= 0 && sl <= gpsd.nslots \
-                ? sl                     \
+#define SLOT(sl)                              \
+  gpsd.slot[sl >= 0 && sl <= (int)gpsd.nslots \
+                ? sl                          \
                 : (interr("bad SLOT index", sl, 4), 0)]
 #else
 #define PSD_TYPE(psdx) gpsd.stg_base[psdx].type
@@ -238,32 +238,32 @@ static int aptehsh[APTEHSZ];
 
 #if DEBUG
 #define APTE_HASHLK(aptex)                                            \
-  apte.stg_base[aptex >= 0 && aptex < apte.stg_avail                  \
+  apte.stg_base[aptex >= 0 && aptex < (int)apte.stg_avail             \
                     ? aptex                                           \
                     : (interr("bad APTE_HASHLK index", aptex, 4), 0)] \
       .hashlk
 #define APTE_TYPE(aptex)                                            \
-  apte.stg_base[aptex >= 0 && aptex < apte.stg_avail                \
+  apte.stg_base[aptex >= 0 && aptex < (int)apte.stg_avail           \
                     ? aptex                                         \
                     : (interr("bad APTE_TYPE index", aptex, 4), 0)] \
       .type
 #define APTE_SPTR(aptex)                                            \
-  apte.stg_base[aptex >= 0 && aptex < apte.stg_avail                \
+  apte.stg_base[aptex >= 0 && aptex < (int)apte.stg_avail           \
                     ? aptex                                         \
                     : (interr("bad APTE_SPTR index", aptex, 4), 0)] \
       .sym
 #define APTE_VAL(aptex)                                            \
-  apte.stg_base[aptex >= 0 && aptex < apte.stg_avail               \
+  apte.stg_base[aptex >= 0 && aptex < (int)apte.stg_avail          \
                     ? aptex                                        \
                     : (interr("bad APTE_VAL index", aptex, 4), 0)] \
       .val
 #define APTE_STRIDE(aptex)                                            \
-  apte.stg_base[aptex >= 0 && aptex < apte.stg_avail                  \
+  apte.stg_base[aptex >= 0 && aptex < (int)apte.stg_avail             \
                     ? aptex                                           \
                     : (interr("bad APTE_STRIDE index", aptex, 4), 0)] \
       .stride
 #define APTE_MARK(aptex)                                            \
-  apte.stg_base[aptex >= 0 && aptex < apte.stg_avail                \
+  apte.stg_base[aptex >= 0 && aptex < (int)apte.stg_avail           \
                     ? aptex                                         \
                     : (interr("bad APTE_MARK index", aptex, 4), 0)] \
       .mark
@@ -297,38 +297,38 @@ static struct {
 
 #if DEBUG
 #define TPTE_NEXT(ptex)                                            \
-  gpte.stg_base[ptex >= 0 && ptex < gpte.stg_avail                 \
+  gpte.stg_base[ptex >= 0 && ptex < (int)gpte.stg_avail            \
                     ? ptex                                         \
                     : (interr("bad TPTE_NEXT index", ptex, 4), 0)] \
       .next
 #define TPTE_APTEX(ptex)                                            \
-  gpte.stg_base[ptex >= 0 && ptex < gpte.stg_avail                  \
+  gpte.stg_base[ptex >= 0 && ptex < (int)gpte.stg_avail             \
                     ? ptex                                          \
                     : (interr("bad TPTE_APTEX index", ptex, 4), 0)] \
       .aptex
 #define TPTE_TYPE(ptex)                                                      \
-  APTE_TYPE(gpte.stg_base[ptex >= 0 && ptex < gpte.stg_avail                 \
+  APTE_TYPE(gpte.stg_base[ptex >= 0 && ptex < (int)gpte.stg_avail            \
                               ? ptex                                         \
                               : (interr("bad TPTE_TYPE index", ptex, 4), 0)] \
                 .aptex)
 #define TPTE_SPTR(ptex)                                                      \
-  APTE_SPTR(gpte.stg_base[ptex >= 0 && ptex < gpte.stg_avail                 \
+  APTE_SPTR(gpte.stg_base[ptex >= 0 && ptex < (int)gpte.stg_avail            \
                               ? ptex                                         \
                               : (interr("bad TPTE_SPTR index", ptex, 4), 0)] \
                 .aptex)
 #define TPTE_VAL(ptex)                                                     \
-  APTE_VAL(gpte.stg_base[ptex >= 0 && ptex < gpte.stg_avail                \
+  APTE_VAL(gpte.stg_base[ptex >= 0 && ptex < (int)gpte.stg_avail           \
                              ? ptex                                        \
                              : (interr("bad TPTE_VAL index", ptex, 4), 0)] \
                .aptex)
 #define TPTE_STRIDE(ptex)                                                \
   APTE_STRIDE(                                                           \
-      gpte.stg_base[ptex >= 0 && ptex < gpte.stg_avail                   \
+      gpte.stg_base[ptex >= 0 && ptex < (int)gpte.stg_avail              \
                         ? ptex                                           \
                         : (interr("bad TPTE_STRIDE index", ptex, 4), 0)] \
           .aptex)
 #define TPTE_FLAG(ptex)                                            \
-  gpte.stg_base[ptex >= 0 && ptex < gpte.stg_avail                 \
+  gpte.stg_base[ptex >= 0 && ptex < (int)gpte.stg_avail            \
                     ? ptex                                         \
                     : (interr("bad TPTE_FLAG index", ptex, 4), 0)] \
       .flag
@@ -361,37 +361,37 @@ static STG_DECLARE(as, AS) = { STG_INIT };
 
 #if DEBUG
 #define ASTYPE(asx)                                          \
-  as.stg_base[asx >= 0 && asx < as.stg_avail                 \
+  as.stg_base[asx >= 0 && asx < (int)as.stg_avail            \
                   ? asx                                      \
                   : (interr("bad ASTYPE index", asx, 4), 0)] \
       .type
 #define ASLHS(asx)                                          \
-  as.stg_base[asx >= 0 && asx < as.stg_avail                \
+  as.stg_base[asx >= 0 && asx < (int)as.stg_avail           \
                   ? asx                                     \
                   : (interr("bad ASLHS index", asx, 4), 0)] \
       .lhs
 #define ASRHS(asx)                                          \
-  as.stg_base[asx >= 0 && asx < as.stg_avail                \
+  as.stg_base[asx >= 0 && asx < (int)as.stg_avail           \
                   ? asx                                     \
                   : (interr("bad ASRHS index", asx, 4), 0)] \
       .rhs
 #define ASNODE(asx)                                          \
-  as.stg_base[asx >= 0 && asx < as.stg_avail                 \
+  as.stg_base[asx >= 0 && asx < (int)as.stg_avail            \
                   ? asx                                      \
                   : (interr("bad ASNODE index", asx, 4), 0)] \
       .node
 #define ASILT(asx)                                          \
-  as.stg_base[asx >= 0 && asx < as.stg_avail                \
+  as.stg_base[asx >= 0 && asx < (int)as.stg_avail           \
                   ? asx                                     \
                   : (interr("bad ASILT index", asx, 4), 0)] \
       .iltx
 #define ASSTRIDE(asx)                                          \
-  as.stg_base[asx >= 0 && asx < as.stg_avail                   \
+  as.stg_base[asx >= 0 && asx < (int)as.stg_avail              \
                   ? asx                                        \
                   : (interr("bad ASSTRIDE index", asx, 4), 0)] \
       .stride
 #define ASNEXT(asx)                                          \
-  as.stg_base[asx >= 0 && asx < as.stg_avail                 \
+  as.stg_base[asx >= 0 && asx < (int)as.stg_avail            \
                   ? asx                                      \
                   : (interr("bad ASNEXT index", asx, 4), 0)] \
       .next
@@ -461,9 +461,6 @@ static struct {
 #if defined(TARGET_WIN_X8664)
 static char *importname = "__imp_";
 static int importnamelen = 6;
-#else
-static char *importname = "";
-static int importnamelen = 0;
 #endif
 
 #if DEBUG
@@ -739,7 +736,7 @@ puttargets(void)
 } /* puttargets */
 
 static void
-putnodetarget(char *ch, int v, int sl)
+putnodetarget(const char *ch, int v, int sl)
 {
   int psdx;
   psdx = SLOT(sl);
@@ -757,7 +754,7 @@ putnodetarget(char *ch, int v, int sl)
 } /* puttarget */
 
 static void
-putnodetargets(char *ch, int v)
+putnodetargets(const char *ch, int v)
 {
   int sl;
 
@@ -1695,16 +1692,6 @@ copy_list(int ptelistx)
 } /* copy_list */
 
 /*
- * combine (take the meet) of the 'old' list at T
- * with the new list at N.  return the result
- */
-static int
-combine_list(int T, int N)
-{
-  return T;
-} /* combine_list */
-
-/*
  * we're at a point where we know nothing, assume worst case
  */
 static void
@@ -2089,7 +2076,6 @@ addtpte(int lhspsdx, int ptex)
 static void
 inittpte(int lhspsdx, int ptex)
 {
-  int sl;
   _addtpte(lhspsdx, ptex, 0, 1);
 } /* inittpte */
 
@@ -2102,7 +2088,6 @@ inittpte(int lhspsdx, int ptex)
 static void
 replacepte(int lhspsdx, int ptex)
 {
-  int sl;
   free_list_slot(PSD_SLOT(lhspsdx));
   addtpte(lhspsdx, ptex);
 } /* replacepte */
@@ -2177,7 +2162,7 @@ replace_tptelist(int lhspsdx, int ptelistx)
 static void
 add_target_tptelist(int lhspsdx, int ptelistx)
 {
-  int ptex, sl, psdx;
+  int sl;
   add_tptelist(lhspsdx, ptelistx);
   sl = PSD_SLOT(lhspsdx);
   if (LHEAD(sl) == TPTE_UNK) {
@@ -2262,7 +2247,7 @@ effective_rhs(int psdx)
 static void
 interpret(int asx)
 {
-  int lhspsdx, l, rhsptelistx, sl, stride;
+  int lhspsdx, rhsptelistx, sl, stride;
 #if DEBUG
   if (DBGBIT(TRACEFLAG, TRACEBIT)) {
     putassign(asx);
@@ -2740,7 +2725,7 @@ check_this_assignment(int asx, int v)
   if (ASTYPE(asx) == AS_DIRECT || ASTYPE(asx) == AS_INIT ||
       ASTYPE(asx) == AS_ADD_DIRECT) {
     ptex = ASRHS(asx);
-    if (ptex >= gpte.stg_avail) {
+    if (ptex >= (int)gpte.stg_avail) {
       fprintf(gbl.dbgfil, "TPTE(%d) is on list for node %d, assignment %d, but "
                           "past avail point %d\n",
               ptex, v, asx, gpte.stg_avail);
@@ -2771,15 +2756,15 @@ check_this_assignment(int asx, int v)
  * see that all TPTE entries are on a list somewhere
  */
 static void
-check_pte(char *ch)
+check_pte(const char *ch)
 {
   int v, sl, ptex, bad, asx, stdx;
-  for (ptex = 1; ptex < gpte.stg_avail; ++ptex)
+  for (ptex = 1; ptex < (int)gpte.stg_avail; ++ptex)
     TPTE_FLAG(ptex) = 0;
   /* mark the free list */
   bad = 0;
   for (ptex = gpte.xstg_free; ptex > 0; ptex = TPTE_NEXT(ptex)) {
-    if (ptex >= gpte.stg_avail) {
+    if (ptex >= (int)gpte.stg_avail) {
       fprintf(gbl.dbgfil, "TPTE(%d) is on free list but past avail point %d\n",
               ptex, gpte.stg_avail);
       bad = 1;
@@ -2799,7 +2784,7 @@ check_pte(char *ch)
     for (sl = 1; sl < gpsd.nslots; ++sl) {
       if (HEAD(v, sl) != TPTE_UNINIT) {
         for (ptex = HEAD(v, sl); ptex > 0; ptex = TPTE_NEXT(ptex)) {
-          if (ptex >= gpte.stg_avail) {
+          if (ptex >= (int)gpte.stg_avail) {
             fprintf(gbl.dbgfil, "TPTE(%d) is on list for node %d, slot %d, but "
                                 "past avail point %d\n",
                     ptex, v, sl, gpte.stg_avail);
@@ -2847,7 +2832,7 @@ check_pte(char *ch)
       }
     }
   }
-  for (ptex = 2; ptex < gpte.stg_avail; ++ptex) {
+  for (ptex = 2; ptex < (int)gpte.stg_avail; ++ptex) {
     if (TPTE_FLAG(ptex) == 0) {
       fprintf(gbl.dbgfil, "TPTE(%d) is not on any list\n", ptex);
       bad = 1;
@@ -2859,19 +2844,6 @@ check_pte(char *ch)
   }
 } /* check_pte */
 #endif
-
-/*
- * return TRUE if this node is critical, that is, has 0 or >1 predecessor,
- * or has a single predecessor that has >1 successor
- * also mark successor of entry BIH as critical,
- * and any block with XT as critical
- */
-static int
-critical(int v)
-{
-  int s;
-  return TRUE;
-} /* critical */
 
                    /*
                     * save the information as a list of aliases for each statement
@@ -2898,48 +2870,48 @@ static STG_DECLARE(fpsrc, FPSRC);
 
 #if DEBUG
 #define FPTE_NEXT(n)                                            \
-  fpte.stg_base[n >= 0 && n < fpte.stg_avail                    \
+  fpte.stg_base[n >= 0 && n < (int)fpte.stg_avail               \
                     ? n                                         \
                     : (interr("bad FPTE_NEXT index", n, 4), 0)] \
       .next
 #define FPTE_TYPE(n)                                            \
-  fpte.stg_base[n >= 0 && n < fpte.stg_avail                    \
+  fpte.stg_base[n >= 0 && n < (int)fpte.stg_avail               \
                     ? n                                         \
                     : (interr("bad FPTE_TYPE index", n, 4), 0)] \
       .type
 #define FPTE_SPTR(n)                                            \
-  fpte.stg_base[n >= 0 && n < fpte.stg_avail                    \
+  fpte.stg_base[n >= 0 && n < (int)fpte.stg_avail               \
                     ? n                                         \
                     : (interr("bad FPTE_SPTR index", n, 4), 0)] \
       .sptr
 #define FPTE_VAL(n)                                            \
-  fpte.stg_base[n >= 0 && n < fpte.stg_avail                   \
+  fpte.stg_base[n >= 0 && n < (int)fpte.stg_avail              \
                     ? n                                        \
                     : (interr("bad FPTE_VAL index", n, 4), 0)] \
       .val
 #define FPTE_STRIDE(n)                                            \
-  fpte.stg_base[n >= 0 && n < fpte.stg_avail                      \
+  fpte.stg_base[n >= 0 && n < (int)fpte.stg_avail                 \
                     ? n                                           \
                     : (interr("bad FPTE_STRIDE index", n, 4), 0)] \
       .stride
 
 #define FPSRC_NEXT(n)                                             \
-  fpsrc.stg_base[n >= 0 && n < fpsrc.stg_avail                    \
+  fpsrc.stg_base[n >= 0 && n < (int)fpsrc.stg_avail               \
                      ? n                                          \
                      : (interr("bad FPSRC_NEXT index", n, 4), 0)] \
       .next
 #define FPSRC_TYPE(n)                                             \
-  fpsrc.stg_base[n >= 0 && n < fpsrc.stg_avail                    \
+  fpsrc.stg_base[n >= 0 && n < (int)fpsrc.stg_avail               \
                      ? n                                          \
                      : (interr("bad FPSRC_TYPE index", n, 4), 0)] \
       .type
 #define FPSRC_SPTR(n)                                             \
-  fpsrc.stg_base[n >= 0 && n < fpsrc.stg_avail                    \
+  fpsrc.stg_base[n >= 0 && n < (int)fpsrc.stg_avail               \
                      ? n                                          \
                      : (interr("bad FPSRC_SPTR index", n, 4), 0)] \
       .sptr
 #define FPSRC_PTELIST(n)                                             \
-  fpsrc.stg_base[n >= 0 && n < fpsrc.stg_avail                       \
+  fpsrc.stg_base[n >= 0 && n < (int)fpsrc.stg_avail                  \
                      ? n                                             \
                      : (interr("bad FPSRC_PTELIST index", n, 4), 0)] \
       .ptelist
@@ -3939,7 +3911,6 @@ pta_target(int ptrstdx, int ptrsptr, int *ptag, int *pid)
 {
   static int prev_func_count = 0, prevptrstdx = 0, prevptrsptr = 0, ptrsrc = 0,
              ptrpte = 0;
-  int sptr;
   if (fpsrc.stg_base == NULL)
     return 0;
   if (prevptrstdx == ptrstdx && prevptrsptr == ptrsptr &&
@@ -4028,7 +3999,7 @@ pta_target(int ptrstdx, int ptrsptr, int *ptag, int *pid)
 static void
 init_points_to_anal(void)
 {
-  int savex6, a;
+  int a;
   STG_ALLOC(gpte, 100);
   gpte.xstg_free = TTE_NULL;
   gpte.stg_avail = 2;
@@ -4221,10 +4192,10 @@ points_to_anal(void)
 void
 points_to(void)
 {
-  int r, v, rdfohigh, nextrdfohigh, rdfolow, nextrdfolow, newinfo;
+  int r, v, rdfohigh, nextrdfohigh, rdfolow, nextrdfolow;
   PSI_P succ;
   int sl, psdx, offset, iteration, asx;
-  int stdx, cstdx, change;
+  int stdx, change;
 
   /* initialize */
   init_points_to_prop();
@@ -4250,7 +4221,7 @@ points_to(void)
   /* assign a slot number to each pointer, called a PSD or pointer source
    * descriptor.
    * For Fortran, these are pretty simple */
-  for (psdx = 1; psdx < gpsd.stg_avail; ++psdx) {
+  for (psdx = 1; psdx < (int)gpsd.stg_avail; ++psdx) {
     if (PSD_SLOT(psdx))
       SLOT(PSD_SLOT(psdx)) = psdx;
   }
@@ -4351,7 +4322,7 @@ points_to(void)
         int s, sr;
         s = PSI_NODE(succ);
         Trace(("flow edge from node %d -> %d", v, s));
-        if (1 /*critical(s)*/) {
+        if (1) {
           if (pte_changed(s)) {
             sr = RDFONUM(s);
             if (sr >= r && sr > nextrdfohigh) {

@@ -6,13 +6,13 @@
  */
 
 typedef struct {
-  char *lang;    /* language */
-  char *host;    /* host */
+  const char *lang;    /* language */
+  const char *host;    /* host */
   char *vsn;     /* version number */
   char *bld;     /* build number */
-  char *dvsn;    /* date-based version number */
-  char *target;  /* target compiler */
-  char *product; /* product designation */
+  const char *dvsn;    /* date-based version number */
+  const char *target;  /* target compiler */
+  const char *product; /* product designation */
   const char *copyright;
 } VERSION;
 

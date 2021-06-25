@@ -476,11 +476,11 @@ typedef struct {
  * Temp management
  */
 typedef struct {
-  int iavl;      /* available pointer */
-  int iavl_max;  /* high-water for this function */
-  int iavl_base; /* base for this function */
-  char *pfx;     /* prefix for this temp */
-  int dtype;     /* data type for this temp */
+  int iavl;        /* available pointer */
+  int iavl_max;    /* high-water for this function */
+  int iavl_base;   /* base for this function */
+  const char *pfx; /* prefix for this temp */
+  int dtype;       /* data type for this temp */
 } VTMP;
 
 #define VT_INT 0 /* integer temp */

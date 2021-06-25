@@ -17,7 +17,8 @@
 const char COPYRIGHT[128] =
     "";
 
-VERSION version = {LANGUAGE, VHOST, VSN, BLD, DVSN, TARGET, PRODUCT, COPYRIGHT};
+VERSION version = {LANGUAGE, VHOST, (char *)VSN, (char *)BLD,
+                   DVSN, TARGET, PRODUCT, COPYRIGHT};
 
 const char *
 get_version_string(void)

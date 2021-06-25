@@ -66,11 +66,13 @@ static void
 putentry(int elem)
 {
   char buf[200];
-  char *ptr, *sc_p;
+  const char *ptr;
+  const char *sc_p;
   int stype, dtype;
   char hyp;
-  static char *scs[] = {"n/a",    "local",  "static", "dummy",
-                        "common", "extern", "based",  "seven"};
+  static const char *scs[] = {"n/a", "local", "static",
+                              "dummy", "common", "extern",
+                              "based",  "seven"};
 
   stype = STYPEG(elem);
 

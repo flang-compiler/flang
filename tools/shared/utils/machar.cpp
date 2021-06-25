@@ -416,7 +416,7 @@ private:
     fputs("    short         fval;\n", out2);
 #ifdef FE90
     fputs("    short         target_kind;\n", out2);
-    fputs("    char         *target_type;\n", out2);
+    fputs("    const char   *target_type;\n", out2);
 #endif
     fputs("} DTYPEINFO;\n", out2);
 
@@ -426,7 +426,7 @@ private:
       fputs("    /* size, alignment, bits, scale, fval for... */\n", out2);
       for (int i = 0; i <= ty_max; i++) {
 #ifdef FE90
-        fprintf(out2, "        %2d, %2d, %3d, %2d, %2d, %2d, \"%s\"",
+        fprintf(out2, "        { %2d, %2d, %3d, %2d, %2d, %2d, \"%s\" }",
                 dtypeinfo[cm][i].size, dtypeinfo[cm][i].align,
                 dtypeinfo[cm][i].bits, dtypeinfo[cm][i].scale,
                 dtypeinfo[cm][i].fval, dtypeinfo[cm][i].target_kind,
@@ -447,7 +447,7 @@ private:
         fputs("    /* size, alignment, bits, scale, fval for... */\n", out2);
         for (int i = 0; i <= ty_max; i++) {
 #ifdef FE90
-          fprintf(out2, "        %2d, %2d, %3d, %2d, %2d, %2d, \"%s\"",
+          fprintf(out2, "        { %2d, %2d, %3d, %2d, %2d, %2d, \"%s\" }",
                   dtypeinfo[cm][i].size, dtypeinfo[cm][i].align,
                   dtypeinfo[cm][i].bits, dtypeinfo[cm][i].scale,
                   dtypeinfo[cm][i].fval, dtypeinfo[cm][i].target_kind,

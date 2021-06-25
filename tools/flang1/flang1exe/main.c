@@ -37,6 +37,7 @@
 #include "commopt.h"
 #include "scan.h"
 #include "hlvect.h"
+#include "ilidir.h"
 
 #define IPA_ENABLED                  0
 #define IPA_NO_ASM                   0
@@ -48,17 +49,10 @@
 /* static prototypes */
 
 static void reptime(void);
-static void add_debuglist(char *phasearg, char *dumparg);
-static void do_debug(char *phase);
+static void do_debug(const char *phase);
 static void cleanup(void);
 static void init(int argc, char *argv[]);
 static void datastructure_reinit(void);
-static void set_ipa_export_file(char *name);
-static void set_ipa_import_mode(void);
-static void set_ipa_import_offset(char *offset);
-static void set_debug(LOGICAL value);
-static void set_debug_symbol(LOGICAL value);
-static void set_debug_line(LOGICAL value);
 static void do_set_tp(char *tp);
 static void fini(void);
 static void mkDwfInfoFilename(void);
@@ -78,41 +72,26 @@ static int debugfunconly = -1;
 static LOGICAL ipa_import_mode = FALSE;
 static char *ipa_export_file = NULL;
 static BIGUINT ipa_import_offset = 0;
-static char *who[] = {"init",     "parser",   "bblock", "vectorize", "optimize",
-                      "schedule", "assemble", "xref",   "unroll"};
+static const char *who[] = {"init",       "parser",   "bblock",
+                            "vectorize",  "optimize", "schedule",
+                            "assemble",   "xref",     "unroll"};
 #define _N_WHO (sizeof(who) / sizeof(char *))
 static INT xtimes[_N_WHO];
 static LOGICAL postprocessing = TRUE;
 
 /* Feature names for Fortran front-end */
 #if defined(TARGET_LINUX_X8664)
-static char *feature = "flang";
-static char *os = "lin";
-static char *accel = NULL;
+static const char *feature = "flang";
 #elif defined(TARGET_WIN_X8664)
-static char *feature2 = "pgi-f95-win64";
-static char *feature = "pgfortran";
-static char *os = "win";
-static char *accel = NULL;
+static const char *feature = "pgfortran";
 #elif defined(TARGET_OSX_X8664)
-static char *feature2 = "pgi-f95-osx64";
-static char *feature = "pgfortran";
-static char *os = "osx";
-static char *accel = NULL;
+static const char *feature = "pgfortran";
 #elif defined(OSF86)
-static char *feature = "pgi-f95-osf32";
-static char *os = NULL;
-static char *accel = NULL;
+static const char *feature = "pgi-f95-osf32";
 #elif defined(TARGET_LLVM_POWER)
-static char *feature2 = "pgi-f95-power";
-static char *feature = "pgfortran";
-static char *os = "lin";
-static char *accel = NULL;
+static const char *feature = "pgfortran";
 #else
-static char *feature2 = "pgi-f95";
-static char *feature = "pgfortran";
-static char *os = "lin";
-static char *accel = NULL;
+static const char *feature = "pgfortran";
 #endif
 
 /** Product name in debug output
@@ -264,7 +243,6 @@ main(int argc, char *argv[])
       dump_ast();
 #endif
     if (IPA_INHERIT_ENABLED && gbl.rutype != RU_BDATA) {
-      int func;
       ipa_startfunc(gbl.currsub);
       ipa_header1(gbl.currsub);
       ipa_header2(gbl.currsub);
@@ -538,7 +516,6 @@ main(int argc, char *argv[])
 static char *objectfile;
 static char *outfile_name;
 LOGICAL fpp_ = FALSE;
-static LOGICAL no_specified;
 static int preproc = -1; /* not specified */
 
 /* ***************************************************************** */
@@ -605,7 +582,7 @@ report_area(void)
   reportarea(0);
 }
 
-static char *current_phase;
+static const char *current_phase;
 
 /** \brief Dump stg statistics
  */
@@ -622,39 +599,30 @@ static void
 init(int argc, char *argv[])
 {
   int argindex;
-  char *argstring;
-  int indice, next;
   char *sourcefile;
-  char *stboutfile;
+  const char *stboutfile;
   int nosuffixcheck = 0;
-  char *listfile;
-  char *cppfile;
-  char *tempfile;
-  char *asmfile;
+  const char *listfile;
+  const char *cppfile;
+  const char *tempfile;
+  const char *asmfile;
   int i;
-  int def_count = 0;  /* number of -def switches */
-  int idir_count = 0; /* number of -idir switches */
-  INT qval1;
-  INT qval2;
-  int val_follows;
   LOGICAL dbgflg;
   char *dbgfile = NULL;
   LOGICAL errflg;
   FILE *fd;
-  int exlib_flag = 0;
-  char *file_suffix;
+  const char *file_suffix;
   int copy_curr_file = 1;
   static struct {
-    char *nm; /* name, 0 = end of list */
+    const char *nm; /* name, 0 = end of list */
     int form; /* 0 = fixed, 1 = form */
     int fpp;  /* 0 = don't preprocess, 1 = preprocess */
   } suffixes[] = {
-          {".hpf", 0, 0}, {".f", 0, 0},   {".F", 0, 1},   {".f90", 1, 0},
-          {".F90", 1, 1}, {".f95", 1, 0}, {".F95", 1, 1}, {".for", 0, 0},
-          {".fpp", 0, 1}, {0, 0, 0},
+          {".hpf", 0, 0}, {".f", 0, 0},   {".F", 0, 1},
+          {".f90", 1, 0}, {".F90", 1, 1}, {".f95", 1, 0},
+          {".F95", 1, 1}, {".for", 0, 0}, {".fpp", 0, 1},
+          {0, 0, 0},
   };
-  char *followval;
-  int followindex;
   time_t now;
 
   flg.freeform = -1;
@@ -742,21 +710,21 @@ init(int argc, char *argv[])
 
   /* Register two ways for supplying source file argument */
   register_filename_arg(arg_parser, &sourcefile);
-  register_string_arg(arg_parser, "src", &sourcefile, NULL);
+  register_string_arg(arg_parser, "src", (const char **)&sourcefile, NULL);
   /* Output file (.ilm) */
   register_combined_bool_string_arg(arg_parser, "output", (bool *)&(flg.output),
                                     &outfile_name);
   /* Other files to input or output */
-  register_string_arg(arg_parser, "stbfile", &stboutfile, NULL);
-  register_string_arg(arg_parser, "modexport", &modexport_val, NULL);
-  register_string_arg(arg_parser, "modindex", &modindex_val, NULL);
-  register_string_arg(arg_parser, "qfile", &dbgfile, NULL);
+  register_string_arg(arg_parser, "stbfile", (const char **)&stboutfile, NULL);
+  register_string_arg(arg_parser, "modexport", (const char **)&modexport_val, NULL);
+  register_string_arg(arg_parser, "modindex", (const char **)&modindex_val, NULL);
+  register_string_arg(arg_parser, "qfile",(const char **) &dbgfile, NULL);
 
   /* Optimization level */
   register_integer_arg(arg_parser, "opt", &(flg.opt), 1);
 
   /* Debug */
-  register_boolean_arg(arg_parser, "debug", &(flg.debug), 0);
+  register_boolean_arg(arg_parser, "debug", (bool *)&(flg.debug), 0);
   register_integer_arg(arg_parser, "ieee", &(flg.ieee), 0);
 
   /* Allocate space for command line macro definitions */
@@ -781,7 +749,7 @@ init(int argc, char *argv[])
 
   /* Other flags */
   register_boolean_arg(arg_parser, "mp", (bool *)&(flg.smp), false);
-  register_string_arg(arg_parser, "fopenmp-targets", &omptp, NULL);
+  register_string_arg(arg_parser, "fopenmp-targets", (const char **)&omptp, NULL);
   register_boolean_arg(arg_parser, "preprocess", &arg_preproc, true);
   register_boolean_arg(arg_parser, "reentrant", &arg_reentrant, false);
   register_integer_arg(arg_parser, "terse", &(flg.terse), 1);
@@ -791,15 +759,15 @@ init(int argc, char *argv[])
   register_boolean_arg(arg_parser, "static", (bool *)&(flg.doprelink), true);
   register_boolean_arg(arg_parser, "quad", (bool *)&(flg.quad), true);
   register_boolean_arg(arg_parser, "freeform", &arg_freeform, false);
-  register_string_arg(arg_parser, "tp", &tp, NULL);
-  register_string_arg(arg_parser, "stdinc", &(flg.stdinc), (char *)1);
+  register_string_arg(arg_parser, "tp", (const char **)&tp, NULL);
+  register_string_arg(arg_parser, "stdinc", (const char **)&(flg.stdinc), (char *)1);
   register_integer_arg(arg_parser, "vect", &(vect_val), 0);
   register_boolean_arg(arg_parser, "standard", (bool *)&(flg.standard), false);
   register_boolean_arg(arg_parser, "save", (bool *)&(flg.save), false);
   register_boolean_arg(arg_parser, "extend", &arg_extend, false);
   register_boolean_arg(arg_parser, "recursive", (bool *)&(flg.recursive),
                        false);
-  register_string_arg(arg_parser, "cmdline", &(flg.cmdline), NULL);
+  register_string_arg(arg_parser, "cmdline", (const char **)&(flg.cmdline), NULL);
   register_boolean_arg(arg_parser, "es", (bool *)&(flg.es), false);
   register_boolean_arg(arg_parser, "pp", (bool *)&(flg.p), false);
 
@@ -943,13 +911,13 @@ init(int argc, char *argv[])
   if (sourcefile == NULL) {
     if (flg.ipa & 0x0a) {
       /* for IPA propagation or when generating static$init, no sourcefile */
-      sourcefile = "pghpf.prelink.f";
+      sourcefile = (char *)"pghpf.prelink.f";
       gbl.src_file = (char *)malloc(strlen(sourcefile) + 1);
       strcpy(gbl.src_file, sourcefile);
       gbl.srcfil = NULL;
       copy_curr_file = 0;
     } else {
-      gbl.src_file = sourcefile = "STDIN.f";
+      gbl.src_file = sourcefile = (char *)"STDIN.f";
       gbl.srcfil = stdin;
     }
     goto do_curr_file;
@@ -965,7 +933,7 @@ init(int argc, char *argv[])
       strcpy(gbl.src_file, sourcefile);
       basenam(gbl.src_file, "", sourcefile);
     } else {
-      sourcefile = "STDIN.f";
+      sourcefile = (char *)"STDIN.f";
       gbl.src_file = (char *)malloc(strlen(sourcefile) + 1);
       strcpy(gbl.src_file, sourcefile);
     }
@@ -1057,14 +1025,12 @@ init(int argc, char *argv[])
       flg.debug = 0;
     }
     if (stboutfile != NULL) {
-      char *tname;
       if ((gbl.stbfil = fopen(stboutfile, "w")) == NULL)
         errfatal(9);
     } else {
       gbl.stbfil = 0;
     }
   } else {
-    char *tname;
     /* process listing file */
     if (flg.code || flg.list || flg.xref) {
       if (listfile == NULL) {
@@ -1174,14 +1140,12 @@ init(int argc, char *argv[])
 
 /* *************************************************************** */
 
-static char *uses_name;
-
 moddir_list *module_directory_list = NULL;
 
 #if DEBUG
 
 static void
-do_debug(char *phase)
+do_debug(const char *phase)
 {
   if (debugfunconly > 0 && gbl.func_count != debugfunconly) {
     /* only for some functions */
@@ -1218,7 +1182,7 @@ reptime(void)
   int tmp;
 
   total = 0;
-  for (i = 0; i < _N_WHO; i++)
+  for (i = 0; i < (int)_N_WHO; i++)
     total += xtimes[i];
 
   if (!DBGBIT(0, 8) || DBGBIT(14, 3))
@@ -1229,7 +1193,7 @@ reptime(void)
     list_line("  Timing stats:");
   } else if (gbl.dbgfil)
     fprintf(gbl.dbgfil, "  Timing stats:\n");
-  for (i = 0; i < _N_WHO; i++) {
+  for (i = 0; i < (int)_N_WHO; i++) {
     if (xtimes[i]) {
       tmp = 100 * xtimes[i];
       prct = tmp / total;
@@ -1253,7 +1217,7 @@ reptime(void)
     return;
   fprintf(stderr, "  Timing stats:\n");
 
-  for (i = 0; i < _N_WHO; i++) {
+  for (i = 0; i < (int)_N_WHO; i++) {
     if (xtimes[i]) {
       tmp = 100 * xtimes[i];
       prct = tmp / total;
@@ -1548,11 +1512,3 @@ void fill_ipasym() {}
 void ipa() {}
 void ipa_set_vestigial_host() {}
 int IPA_isnoconflict(int sptr) { return 0; }
-
-static void set_ipa_export_file(char *name) {}
-static void set_ipa_import_mode() {}
-static void set_ipa_import_offset(char *offset) {}
-static void set_debug(LOGICAL value) {}
-static void set_debug_symbol(LOGICAL value) {}
-static void set_debug_line(LOGICAL value) {}
-

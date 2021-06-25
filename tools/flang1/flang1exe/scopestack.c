@@ -267,7 +267,7 @@ pop_scope_level(SCOPEKIND kind)
     curr_kind = scope->kind;
     switch (curr_kind) {
     case SCOPE_BLOCK:
-      for (sptr = top; sptr < stb.stg_avail; ++sptr) {
+      for (sptr = top; sptr < (SPTR)stb.stg_avail; ++sptr) {
         if (!CONSTRUCTSYMG(sptr) || HIDDENG(sptr))
           continue;
         if (ST_ISVAR(STYPEG(sptr))) {

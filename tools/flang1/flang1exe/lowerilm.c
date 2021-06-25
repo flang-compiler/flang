@@ -115,11 +115,11 @@ static int plower_pdo(int, int);
           must be last, at least, anything following the m is ignored.
 */
 int
-plower(char *fmt, ...)
+plower(const char *fmt, ...)
 {
   static int pcount = -1;
   static int opcount = 0;
-  char *f;
+  const char *f;
   va_list argptr;
 
   if (lower_ilm_file == NULL)
@@ -197,7 +197,7 @@ plower(char *fmt, ...)
 #endif
         fprintf(lower_ilm_file, " s%d", d);
 #if DEBUG
-      if (d < 0 || d > stb.stg_avail) {
+      if (d < 0 || d > (int)stb.stg_avail) {
         lerror("bad sym link %d", d);
       }
 #endif
@@ -223,7 +223,7 @@ plower(char *fmt, ...)
 #endif
         fprintf(lower_ilm_file, " s%d", d);
 #if DEBUG
-      if (d <= 0 || d > stb.stg_avail) {
+      if (d <= 0 || d > (int)stb.stg_avail) {
         lerror("bad sym link %d", d);
       }
 #endif
@@ -249,7 +249,7 @@ plower(char *fmt, ...)
 #endif
         fprintf(lower_ilm_file, " s%d", d);
 #if DEBUG
-      if (d <= 0 || d > stb.stg_avail) {
+      if (d <= 0 || d > (int)stb.stg_avail) {
         lerror("bad sym link %d", d);
       }
 #endif
@@ -272,7 +272,7 @@ plower(char *fmt, ...)
 #endif
         fprintf(lower_ilm_file, " s%d", d);
 #if DEBUG
-      if (d <= 0 || d > stb.stg_avail) {
+      if (d <= 0 || d > (int)stb.stg_avail) {
         lerror("bad sym link %d", d);
       }
 #endif
@@ -283,7 +283,7 @@ plower(char *fmt, ...)
       if (d > 0 && LOWER_SYMBOL_REPLACE(d)) {
         d = LOWER_SYMBOL_REPLACE(d);
       }
-      if (d > 0 && d < stb.stg_avail) {
+      if (d > 0 && d < (int)stb.stg_avail) {
 #if DEBUG
         if (DBGBIT(47, 31) || XBIT(50, 0x10)) {
           fprintf(lower_ilm_file, "	;%s", getprint(d));
@@ -361,7 +361,7 @@ plower(char *fmt, ...)
 } /* plower */
 
 int
-plower_arg(char *fmt, int arg, int dtype, int unlpoly)
+plower_arg(const char *fmt, int arg, int dtype, int unlpoly)
 {
   int ilm;
   if (!unlpoly)
@@ -504,7 +504,7 @@ put_adjarr_bounds(int dtype, int subscripts, int *pcomputednumelm)
   mlpyrval = 1;
 
   for (i = 0; i < ndim; ++i) {
-    int m, lw, lwast, up, upast, lilm, rilm, stride, strideval, strideast;
+    int m, lw, lwast, up, upast, lilm, rilm, stride, strideval;
     ISZ_T lwval, upval;
     if (subscripts == -1) {
       lw = ADD_LWBD(dtype, i);
@@ -647,7 +647,7 @@ put_adjarr_bounds(int dtype, int subscripts, int *pcomputednumelm)
       mlpyrilm = -1;
       mlpyrbaseilm = 0;
     } else {
-      int xilm, yilm;
+      int xilm;
       if (up == 0 && lw == 0) {
         xilm =
             plower("oS", lowersym.bnd.con, lower_getiszcon(upval - lwval + 1));
@@ -773,7 +773,6 @@ fill_entry_bounds(int sptr, int lineno)
 static void
 fill_midnum(int sptr)
 {
-  static int f = 0;
   int midnum;
   midnum = getccsym('Z', sptr, ST_VAR);
   SCP(midnum, SC_LOCAL);
@@ -846,7 +845,7 @@ lower_replacement(int ast, int sym)
 static void
 add_nullify(int ast)
 {
-  int sym, sdsc, lilm, rilm, silm, ptr, dtype, is_dev_ptr;
+  int sym, sdsc, lilm, rilm, silm, ptr, dtype;
   sym = find_pointer_variable(ast);
   dtype = DTYPEG(sym);
   sdsc = SDSCG(sym);
@@ -885,7 +884,6 @@ add_nullify(int ast)
 static void
 lower_finish_subprogram(int rutype)
 {
-  int ilm;
   switch (rutype) {
   case RU_BDATA:
     break;
@@ -967,8 +965,7 @@ handle_arguments(int ast, int symfunc, int via_ptr)
   int count, args, paramcount, paramc, altreturn, i, ilm, ilm2, params;
   int dtype, dtproc, iface = 0;
   int callee;
-  int msptr, psptr, prevsptr, sptr;
-  int newast;
+  int psptr, prevsptr, sptr;
   int via_tbp, tbp_mem, tbp_pass_arg, tbp_bind;
   int tbp_nopass_arg, tbp_nopass_sdsc;
   int unlpoly; /* CLASS(*) */
@@ -1316,7 +1313,6 @@ handle_arguments(int ast, int symfunc, int via_ptr)
     int sdsc;
     paramcount = PARAMCTG(symfunc);
     if (altreturn) {
-      int sptr2, sptr3;
       ilm = plower("om", "IUVFUNCA");
       plower("nnm", count - altreturn,
              (CFUNCG(symfunc) || (iface && CFUNCG(iface))) ? 1 : 0);
@@ -1344,7 +1340,6 @@ handle_arguments(int ast, int symfunc, int via_ptr)
         plower("sm", tbp_nopass_sdsc);
       }
     } else {
-      int sptr2, sptr3, myc;
       int currsub;
 
       plower("om", "UVCALLA");
@@ -1374,7 +1369,6 @@ handle_arguments(int ast, int symfunc, int via_ptr)
       VTABLEP(tbp_mem, symfunc);
       plower("sm", tbp_mem);
       if (!NOPASSG(tbp_mem) && i >= 0) {
-        int passDescr;
         plower("im", lower_argument[i]);
         a = ARGT_ARG(args, i);
         currsub = gbl.currsub;
@@ -1574,7 +1568,7 @@ dotemp(char letter, int dtype, int std)
 static void
 set_mp_loop_var(int var, int rilm, int dtype)
 {
-  int dest, src, lilm;
+  int dest, lilm;
 
   dest = mk_id(var);
   lower_expression(dest);
@@ -1591,7 +1585,7 @@ static void
 set_loop_bound(int newupper, int oilm, int nilm, int dtype, int labo,
                int increment)
 {
-  int ilm, bilm, silm;
+  int ilm;
   /* if (increment)
    *     newupper = min(oldupper, newupper)
    *   goto labn
@@ -1706,13 +1700,13 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
                int plast, int dotrip, int doinitilm, int doinc, int doincilm,
                int doendilm, int schedtype, int lineno)
 {
-  int chunkilm, ncpusilm, lcpuilm, ostep, ostepilm, odovar, doend, newdovar;
-  int itrip, itop, ibottom, itripilm, iendilm, istepilm, iinitilm, chunkast;
-  int newend, dost, ilm, o_ub, o_lb, ub, dotripilm, oldsched, oldtop, dyn;
-  int pupperd, is_dist = 0;
+  int chunkilm, odovar, newdovar;
+  int itop, ibottom, chunkast;
+  int newend, dost, ilm, o_ub, o_lb, ub, dotripilm, dyn;
+  int is_dist = 0;
   int incr_loop = 0; /* 0: don't know, -1: decrement,  1: increment */
   int chunkone = 0;
-  int distlb, distub, tmp_distlb, dist_sched, tmpsched;
+  int tmpsched;
 
   if (doinc && STYPEG(doinc) == ST_CONST) {
     incr_loop = -1;
@@ -1826,7 +1820,7 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
    * we need this if loop index is lastprivate.
    */
   if (dyn == 1) {
-    int lilm, newbottom;
+    int lilm;
     plower("oL", "LABEL", dotop);
 
     ilm = plower("ossssd", "MPSCHED", newdovar, newend, dost, plast, dtype);
@@ -1993,11 +1987,11 @@ static int ncpus2(int);
 static void
 lower_do_stmt(int std, int ast, int lineno, int label)
 {
-  int doinitast, doendast, doincast, plast, plastdt;
-  int dotop, dobottom, dotrip, doinc, dovar, dost, p_lb, p_ub;
+  int doinitast, doendast, doincast, plast;
+  int dotop, dobottom, dotrip, doinc, dovar;
   int doinitilm, doendilm, doincilm, dotripilm, lop, lilm, ilm;
   int dtype, schedtype;
-  int hack, rilm, dest, src;
+  int hack;
 
   plast = A_LASTVALG(ast);
   if (!plast) {
@@ -2155,7 +2149,6 @@ lower_do_stmt(int std, int ast, int lineno, int label)
     }
     if (!XBIT(34, 0x8000000) && STD_ZTRIP(std) && A_M4G(ast)) {
       /* lower condition ilm */
-      int tilm;
       int cilm = A_M4G(ast);
       if (cilm) {
         lower_expression(cilm);
@@ -2419,7 +2412,6 @@ lower_do_stmt(int std, int ast, int lineno, int label)
      *  dovar = dovar + step
      *  DOEND(lab,lab)
      */
-    int ncpusilm, lcpuilm, chunkast, chunkilm;
     schedtype = (MP_SCH_ATTR_CHUNKED | MP_SCH_CHUNK_1);
     if (A_SCHED_TYPEG(ast) == MP_SCH_DIST_STATIC) {
       schedtype = schedtype | MP_SCH_DIST_STATIC;
@@ -2437,8 +2429,6 @@ lower_do_stmt(int std, int ast, int lineno, int label)
      *  dovar = dovar + step
      *  DOEND(lab,lab)
      */
-    int ldotrip, ldotripilm, ncpusilm, lcpuilm, labo, dox, dovarilm, chunkast,
-        chunkilm;
     schedtype = 0x000;
     if (A_SCHED_TYPEG(ast) == MP_SCH_DIST_STATIC) {
       schedtype = MP_SCH_DIST_STATIC;
@@ -2464,8 +2454,6 @@ lower_do_stmt(int std, int ast, int lineno, int label)
      *  odovar = odovar + ostep
      *  DOEND(lab,lab)
      */
-    int chunkilm, ncpusilm, lcpuilm, ostep, ostepilm, odovar, doend;
-    int itrip, itop, ibottom, itripilm, iendilm, istepilm, iinitilm, chunkast;
     schedtype = (MP_SCH_ATTR_CHUNKED | MP_SCH_BLK_CYC);
     if (A_SCHED_TYPEG(ast) == MP_SCH_DIST_STATIC) {
       schedtype = schedtype | MP_SCH_DIST_STATIC;
@@ -2597,8 +2585,6 @@ llvm_lower_enddo_stmt(int lineno, int label, int std, int ispdo)
 
   /* do while loop */
   if ((ischedtype != 0) && (ischedtype != MP_SCH_DIST_STATIC)) {
-    int oneilm;
-
     lower_start_stmt(lineno, label, TRUE, std);
     if (dyn == 0) {
       lilm = lower_sptr(dovar, VarBase);
@@ -2724,7 +2710,6 @@ lower_enddo_stmt(int lineno, int label, int std, int ispdo)
     lower_enddo_stmt(lineno, 0, std, ispdo);
 
     if (ispdo && !dotrip) {
-      int oneilm;
       lower_start_stmt(lineno, label, TRUE, std);
 
       lilm = lower_sptr(dovar, VarBase);
@@ -2793,7 +2778,7 @@ lower_omp_atomic_read(int ast, int lineno)
 static void
 lower_omp_atomic_write(int ast, int lineno)
 {
-  int sptr, lilm, rilm;
+  int lilm, rilm;
   int lop, rop;
   int mem_order;
 
@@ -2813,7 +2798,7 @@ lower_omp_atomic_write(int ast, int lineno)
 
 void static lower_omp_atomic_update(int ast, int lineno)
 {
-  int sptr, lilm, rilm;
+  int lilm, rilm;
   int lop, rop;
   int mem_order;
   int aop;
@@ -2836,7 +2821,7 @@ void static lower_omp_atomic_update(int ast, int lineno)
 static void
 lower_omp_atomic_capture(int ast, int lineno)
 {
-  int sptr, lilm, rilm;
+  int lilm, rilm;
   int lop, rop;
   int aop;
   int mem_order;
@@ -2923,8 +2908,7 @@ void
 lower_stmt(int std, int ast, int lineno, int label)
 {
   int dtype, lop, rop, lilm, rilm, ilm = 0, ilm2 = 0, asd, silm;
-  int ndim, i, sptr, devsptr, args, arg, count, lab, nlab, fmt, labnum, tyilm,
-      nullilm;
+  int ndim, i, sptr, args, count, lab, nlab, fmt, labnum, tyilm, nullilm;
   int astli, src, nextstd, dest, ilm3, ilm4;
   int dotop, dobottom, doit, stblk;
   int symfunc, symargs[30], num, sym, secnum;
@@ -2973,8 +2957,8 @@ lower_stmt(int std, int ast, int lineno, int label)
     if (A_TKNG(ast) == TK_ALLOCATE) {
       /* generate assignments to fill in bounds, zbase, ... */
       int src, object, sptr, dtype, eltype, silm, numilm, size, isarray,
-          sizeilm, lilm, is_pinned, pilm, symhandle, handilm, cntilm, errmsg,
-          errilm, firstilm, aln, alnilm, src_dtype;
+          sizeilm, lilm, is_pinned, symhandle, errmsg, errilm, firstilm,
+          aln, alnilm, src_dtype;
 
       src_dtype = A_DTYPEG(ast); /* set by sourced/typed allocation */
 
@@ -3525,8 +3509,8 @@ lower_stmt(int std, int ast, int lineno, int label)
                  silm, lilm, nullilm, firstilm, alnilm, errilm, alloc_func);
       }
     } else { /* DEALLOCATE */
-      int src, object, sptr, silm, ailm, lilm, symhandle, handilm, ptrilm,
-          errmsg, errilm, firstilm, poly_dsc, dealloc_poly_func, poly_dsc_ast;
+      int src, object, sptr, silm, ailm, lilm, symhandle, errmsg, errilm,
+          firstilm, poly_dsc, dealloc_poly_func, poly_dsc_ast;
       poly_dsc = 0;
       poly_dsc_ast = 0;
       symhandle = 0;
@@ -3570,9 +3554,7 @@ lower_stmt(int std, int ast, int lineno, int label)
                 dty = DTY(dty + 1);
               poly_dsc = get_static_type_descriptor(DTY(dty + 3));
             } else {
-              int dty = ENCLDTYPEG(sptr);
               int sdsc_mem = SYMLKG(sptr);
-              int tag = DTY(dty + 3);
               if (sdsc_mem == MIDNUMG(sptr) || PTRVG(sdsc_mem)) {
                 sdsc_mem = SYMLKG(sdsc_mem);
                 if (PTRVG(sdsc_mem) || !DESCARRAYG(sdsc_mem))
@@ -3905,8 +3887,6 @@ lower_stmt(int std, int ast, int lineno, int label)
         return;
       }
       if (A_TYPEG(rop) == A_INTR && A_OPTYPEG(rop) == I_NULL) {
-        int lopsdsc, off;
-
         /* <ptr>$p = 0 */
         lower_start_stmt(lineno, label, TRUE, std);
         lower_disable_ptr_chk = 1;
@@ -3985,7 +3965,7 @@ lower_stmt(int std, int ast, int lineno, int label)
         lower_end_stmt(std);
       } else {
         int ropsym = memsym_of_ast(rop);
-        int ptrsym, dscsym, targsym;
+        int ptrsym, dscsym;
 
         if (A_TYPEG(lop2) == A_SUBSCR) { /* ptr reshape */
           int bounds, rank;
@@ -4100,7 +4080,6 @@ lower_stmt(int std, int ast, int lineno, int label)
           lop = ARGT_ARG(args, count - 1);
           if (lop == astb.bnd.zero) {
             /* not a section => whole array */
-            char *name;
             int base;
             dtype = DTYPEG(ropsym);
             ndim = ADD_NUMDIM(dtype);
@@ -5669,7 +5648,7 @@ lower_sptr(int sptr, int pointerval)
 static int
 lower_base_address(int ast, int pointerval)
 {
-  int base, lbase, sptr, ilm, lilm, rilm, lop, save_disable_ptr_chk;
+  int base = 0, lbase, sptr, ilm, lilm, rilm, lop, save_disable_ptr_chk;
   switch (A_TYPEG(ast)) {
   case A_ID:
     base = lower_sptr(A_SPTRG(ast), pointerval);
@@ -6332,7 +6311,7 @@ export_data_stmt(VAR *ivl, ACL *ict)
 void
 lower_data_stmts(void)
 {
-  int nw, lineno, fileno, cnt, astplist, in_defined_io, tsptr, fsptr, sptr;
+  int nw, lineno, fileno, cnt, astplist, in_defined_io, tsptr, fsptr;
   VAR *ivl; /* variable list */
   ACL *ict; /* constant tree */
   DREC *drec;
@@ -6483,7 +6462,7 @@ lower_data_stmts(void)
         if (in_defined_io == 7)
           in_defined_io = 0;        /* done defined io */
       } else if (dinitval == -98) { /* start defined io */
-        int sptr;
+        int sptr = 0;
         if (DT_PTR == DT_INT8) {
           int v[4], sptr;
           v[2] = v[3] = 0;
@@ -6548,7 +6527,6 @@ lower_data_stmts(void)
         } else {
           fprintf(lower_ilm_file, "Init value:%d datatype:%d\n", -99, DT_PTR);
         }
-      assign_dummy:
         lower_use_datatype(DT_INT, 1);
         lower_use_datatype(DT_PTR, 1);
 

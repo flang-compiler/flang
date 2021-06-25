@@ -96,7 +96,7 @@ static void fix_module_common(void);
 static void export_public_used_modules(int scopelevel);
 static void add_to_common(int cmidx, int mem, int atstart);
 static void export_all(void);
-static void make_rte_descriptor(int obj, char *suffix);
+static void make_rte_descriptor(int obj, const char *suffix);
 static SPTR get_submod_sym(SPTR ancestor_module, SPTR submodule);
 static void dbg_dump(const char *, int);
 /* ------------------------------------------------------------------ */
@@ -158,7 +158,7 @@ reinit_refsymbol(int symavl)
 void
 set_modusename(int local, int global)
 {
-  if (dbgref_symbol.size <= stb.stg_avail) {
+  if (dbgref_symbol.size <= (int)stb.stg_avail) {
     allocate_refsymbol(stb.stg_avail);
   }
 
@@ -474,7 +474,7 @@ apply_use_stmts(void)
         usedb.ipasave_sz = usedb.sz;
         NEW(usedb.ipasave_modname, int, usedb.ipasave_sz);
       } else {
-        NEED(usedb.ipasave_avl + usedb.avl, usedb.ipasave_modname, int,
+        NEED((int)(usedb.ipasave_avl + usedb.avl), usedb.ipasave_modname, int,
              usedb.ipasave_sz, usedb.ipasave_sz + usedb.avl + 10);
       }
       for (m_id = FIRST_USER_MODULE; m_id < usedb.avl; ++m_id) {
@@ -612,7 +612,7 @@ apply_use(MODULE_ID m_id)
   /* mark syms that are not accessible based on the USE ONLY list */
   /* step1: set up NOT_IN_USEONLYP flags to 1 for all syms from the used module */
   if (used->rename) {  
-    for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
+    for (sptr = stb.firstusym; sptr < (int)stb.stg_avail; ++sptr) {
       if (SCOPEG(sptr) == used->module)
         NOT_IN_USEONLYP(sptr, 1);
     }
@@ -636,7 +636,7 @@ apply_use(MODULE_ID m_id)
    
     /* mark syms that are not accessible based on the USE ONLY list */
     /* step2: reverse NOT_IN_USEONLYP flag to 0 for syms on the USE ONLY list*/
-    for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
+    for (sptr = stb.firstusym; sptr < (int)stb.stg_avail; ++sptr) {
       if (sptr == newglobal && SCOPEG(sptr) == used->module)
         NOT_IN_USEONLYP(sptr, 0);
     }
@@ -958,7 +958,7 @@ open_module(SPTR use)
   } else {
     module_id = usedb.avl++;
   }
-  NEED(usedb.avl, usedb.base, USED, usedb.sz, usedb.sz + 8);
+  NEED((int)usedb.avl, usedb.base, USED, usedb.sz, usedb.sz + 8);
   usedb.base[module_id].module = use;
   usedb.base[module_id].unrestricted = FALSE;
   usedb.base[module_id].submodule = FALSE;
@@ -1184,7 +1184,7 @@ handle_mod_syms_dllexport(void)
     return;
   }
 
-  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
+  for (sptr = stb.firstusym; sptr < (int)stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_MODULE:
       if (sptr == gbl.currmod) {
@@ -1308,7 +1308,7 @@ end_module(void)
   exportb.ieee_arith_library = FALSE;
 
   /* check for undefined module subprograms */
-  for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
+  for (sptr = stb.firstusym; sptr < (int)stb.stg_avail; ++sptr) {
     if (!IGNOREG(sptr) && STYPEG(sptr) == ST_MODPROC && SYMLKG(sptr) == 0) {
       error(155, 2, gbl.lineno, "MODULE PROCEDURE not defined:", SYMNAME(sptr));
     }
@@ -1775,7 +1775,7 @@ fix_module_common(void)
   BZERO(mod_cmn, char, sizeof(mod_cmn));
   BZERO(mod_cmn_naln, char, sizeof(mod_cmn_naln));
 
-  for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
+  for (sptr = stb.firstusym; sptr < (int)stb.stg_avail; sptr++) {
     if (IGNOREG(sptr))
       continue;
     switch (STYPEG(sptr)) {
@@ -1867,7 +1867,7 @@ fix_module_common(void)
     }
   }
   /* make sure all overlapped variables are listed in the module common */
-  for (i = 0; i < N_MOD_CMN; ++i) {
+  for (i = 0; i < (int)(N_MOD_CMN); ++i) {
     if (mod_cmn[i] <= 0)
       continue;
     for (sptr = CMEMFG(mod_cmn[i]); sptr != NOSYM; sptr = SYMLKG(sptr)) {
@@ -2096,7 +2096,7 @@ mod_fini(void)
  * dynamic, pointer, etc.) which is denoted by 'suffix'.
  */
 static void
-make_rte_descriptor(int obj, char *suffix)
+make_rte_descriptor(int obj, const char *suffix)
 {
   int acc, idx, islong, initd, dev, con, cpyin, link;
   int s;
@@ -2322,7 +2322,7 @@ mod_init()
   init_use_tree();
   restore_module_state();
   limitsptr = stb.stg_avail;
-  if (exportb.hmark.maxast >= astb.stg_avail) {
+  if (exportb.hmark.maxast >= (int)astb.stg_avail) {
     /*
      * The max ast read from the module file is greater than the
      * the last ast created; allocate asts so that the available
@@ -2473,7 +2473,7 @@ mod_end_subprogram_two(void)
   if (sem.mod_cnt == 1) {
     /* go through symbols, see if any should be private */
     if (!sem.mod_public_flag) {
-      for (sptr = limitsptr; sptr < stb.stg_avail; ++sptr) {
+      for (sptr = limitsptr; sptr < (int)stb.stg_avail; ++sptr) {
         switch (STYPEG(sptr)) {
         case ST_UNKNOWN:
         case ST_NML:
@@ -2505,7 +2505,7 @@ mod_end_subprogram_two(void)
       }
     }
     /* see if any should be marked public or private */
-    for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
+    for (sptr = stb.firstusym; sptr < (int)stb.stg_avail; ++sptr) {
       switch (STYPEG(sptr)) {
       case ST_MODPROC:
       case ST_ALIAS:
@@ -2553,7 +2553,7 @@ void rw_mod_state(RW_ROUTINE, RW_FILE)
         NEW(usedb.base, USED, usedb.sz);
         BZERO(usedb.base, USED, usedb.avl);
       } else {
-        NEED(usedb.avl, usedb.base, USED, usedb.sz, usedb.avl + 5);
+        NEED((int)usedb.avl, usedb.base, USED, usedb.sz, usedb.avl + 5);
       }
     }
     RW_FD(usedb.base, USED, usedb.avl);
@@ -2588,7 +2588,7 @@ dusedb()
     fprintf(stderr, "%d: sym=%d:%s", id, used.module, SYMNAME(used.module));
     if (used.unrestricted) fprintf(stderr, " unrestricted");
     if (used.submodule) fprintf(stderr, " submodule");
-    if (used.rename) fprintf(stderr, " rename=%s", used.rename);
+    if (used.rename) fprintf(stderr, " rename=%s", (char *)used.rename);
   }
 }
 #endif

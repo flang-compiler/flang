@@ -1090,7 +1090,7 @@ private:
 
     fprintf(out1, "char *intrinsic_kwd[%d] = {\n", (int)intr_kwd.size());
     for (int i = 0; i != (int)intr_kwd.size(); ++i)
-      fprintf(out1, "    /*%5d */  \"%s\",\n", i, intr_kwd[i].c_str());
+      fprintf(out1, "    /*%5d */  (char *)\"%s\",\n", i, intr_kwd[i].c_str());
     fprintf(out1, "\n};\n");
 
     oldsyms(init_names0, init_names0_size, 0);

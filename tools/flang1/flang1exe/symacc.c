@@ -32,7 +32,6 @@
 
 extern STB stb;
 extern GBL gbl;
-static char buff[132];
 
 void
 sym_init_first(void)
@@ -295,7 +294,7 @@ putsname(const char *name, int length)
     unsigned n = 2u * stb.n_size;
     if (n > MAX_NMPTR) {
       n = MAX_NMPTR;
-      if (stb.namavl > n)
+      if ((unsigned int)stb.namavl > n)
         symini_errfatal(7); /* names table overflow */
     }
     NEED(stb.namavl, stb.n_base, char, stb.n_size, n);
@@ -343,7 +342,9 @@ void
 add_fp_constants(void)
 {
   INT tmp[4];
+#ifdef LONG_DOUBLE_FLOAT128
   INT res[4];
+#endif
 
   tmp[0] = 0;
   atoxf("0.0", &tmp[1], 3);

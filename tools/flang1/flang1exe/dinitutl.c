@@ -20,7 +20,7 @@
 static char mode;
 static FILE *df = NULL;
 #if DEBUG
-static void dump_buff(char *);
+static void dump_buff(const char *);
 #endif
 static DREC t;
 
@@ -91,7 +91,7 @@ dinit_read(void)
 
 #if DEBUG
 static void
-dump_buff(char *str)
+dump_buff(const char *str)
 {
   char buf[32];
 

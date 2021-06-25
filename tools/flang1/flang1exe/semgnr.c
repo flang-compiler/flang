@@ -68,8 +68,8 @@ static int resolved_to_self = 0;
  * to the intrinsic and the assignment operators.
  */
 static struct optabstruct {
-  int opr;    /* if non-zero, locates the ST_OPERATOR symbol */
-  char *name; /* name of the corresponding ST_OPERATOR symbol */
+  int opr;          /* if non-zero, locates the ST_OPERATOR symbol */
+  const char *name; /* name of the corresponding ST_OPERATOR symbol */
 } optab[] = {
     {0, ""},       /* OP_NEG	0 */
     {0, "+"},      /* OP_ADD	1 */
@@ -155,8 +155,6 @@ int
 generic_tbp_call(int gnr, SST *stktop, ITEM *list, ITEM *chevlist)
 {
   int sptr;
-  int dtype;
-  int mem;
 
 #if DEBUG
   if (DBGBIT(3, 256))
@@ -611,7 +609,6 @@ args_match(int ext, int count, int distance_sz, ITEM *list, LOGICAL elemental,
     int dum;
     int actual;
     int arg;
-    int distance_dx;
     sp = ARG_STK(i);
     if (sp) {
       (void)chkarg(sp, &dum);
@@ -649,7 +646,6 @@ tkr_match(int formal, SST *opnd, int actual, int elemental)
   int ddum, dact, elddum, eldact;
   int rank;
   int sptr;
-  LOGICAL match_found;
   int mng_match;
   LOGICAL formal_assumesz = FALSE;
 
@@ -1324,7 +1320,7 @@ void rw_gnr_state(RW_ROUTINE, RW_FILE)
 } /* rw_gnr_state */
 
 static void
-defined_io_error(char *proc, int is_unformatted, char *msg, int func)
+defined_io_error(const char *proc, int is_unformatted, const char *msg, int func)
 {
 
   char *buf;
@@ -1339,15 +1335,14 @@ defined_io_error(char *proc, int is_unformatted, char *msg, int func)
 }
 
 static void
-check_defined_io2(char *proc, int silentmode, int chk_dtype)
+check_defined_io2(const char *proc, int silentmode, int chk_dtype)
 {
   int gnr, sptr, sptrgen;
   LOGICAL gnr_in_active_scope;
-  int gn_cnt;
   int gndsc, nmptr;
-  int func, paramct, dpdsc, iface, i;
+  int func, paramct, dpdsc, iface;
   int psptr, dtype, tag;
-  int mem, is_unformatted, func2;
+  int is_unformatted, func2;
   int seen_error, dtv_dtype;
   int extensible, found;
   int bind, dt_int;

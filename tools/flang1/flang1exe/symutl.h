@@ -19,7 +19,7 @@
 #define BLOCK_ENDPROLOG_STD(sptr) (ENTSTDG(ENCLFUNCG(sptr)))
 #define BLOCK_EXIT_STD(sptr)  (LABSTDG(ENDLABG(ENCLFUNCG(sptr))))
 
-int get_next_sym(char *, char *);
+int get_next_sym(const char *, char *);
 SPTR get_symtype(SYMTYPE, SPTR);
 int get_next_user_sym(char *, char *);
 int sym_get_scalar(char *, char *, int);
@@ -27,13 +27,13 @@ int sym_get_ptr(int);
 int sym_get_ptr_name(char *);
 int sym_get_offset(int);
 int sym_get_array(char *, char *, int, int);
-int sym_mkfunc(char *, int);
-int sym_mkfunc_nodesc(char *, int);
-int sym_mkfunc_nodesc_nocomm(char *, int);
-int sym_mkfunc_nodesc_expst(char *nmptr, int dtype);
+int sym_mkfunc(const char *, int);
+int sym_mkfunc_nodesc(const char *, int);
+int sym_mkfunc_nodesc_nocomm(const char *, int);
+int sym_mkfunc_nodesc_expst(const char *nmptr, int dtype);
 int sym_mknproc(void);
 int sym_get_tmplate(int);
-int sym_get_sec(char *, int);
+int sym_get_sec(const char *, int);
 int sym_get_cp(void);
 int sym_get_xfer(void);
 int sym_get_arg_sec(int);
@@ -41,13 +41,13 @@ int sym_get_formal(int);
 int get_temp_forall(int, int, int, int, int, int);
 int get_temp_copy_section(int, int, int, int, int, int);
 int get_temp_pure_replicated(int, int, int, int);
-int mk_assign_sptr(int, char *, int *, int, int *);
-int chk_assign_sptr(int, char *, int *, int, int, int *);
+int mk_assign_sptr(int, const char *, int *, int, int *);
+int chk_assign_sptr(int, const char *, int *, int, int, int *);
 int mk_shape_sptr(int, int *, int);
-int chk_reduc_sptr(int, char *, int *, int, int, int, int *);
-int mk_spread_sptr(int, char *, int *, int, int, int, int, int *);
-int mk_matmul_sptr(int, int, char *, int *, int, int *);
-int mk_transpose_sptr(int, char *, int *, int, int *);
+int chk_reduc_sptr(int, const char *, int *, int, int, int, int *);
+int mk_spread_sptr(int, const char *, int *, int, int, int, int, int *);
+int mk_matmul_sptr(int, int, const char *, int *, int, int *);
+int mk_transpose_sptr(int, const char *, int *, int, int *);
 int mk_pack_sptr(int, int);
 int mk_maxloc_sptr(int, int);
 int search_forall_var(int, int);
@@ -65,7 +65,7 @@ int first_hash(int sptr);
 int find_dummy(int, int);
 int find_array(int ast, int *returnast);
 LOGICAL has_allocattr(int);
-char *mangle_name_dt(char *, char *, int);
+char *mangle_name_dt(const char *, const char *, int);
 void fixup_srcalloc_bounds(int *, int *, int);
 
 void check_alloc_ptr_type(int, int, DTYPE, int, int, int, int); /* func.c */
@@ -77,7 +77,7 @@ LOGICAL inline_RTE_set_type(int, int, int, int, DTYPE, int); /* outconv.c */
 int get_forall_subscr(int, int, int *, int);
 
 void set_symutl_sc(int);
-int get_next_sym_dt(char *, char *, int);
+int get_next_sym_dt(const char *, const char *, int);
 void trans_mkdescr(int);
 int first_element(int ast);
 int mk_forall_sptr_gatherx(int forall_ast, int lhs, int rhs, int *subscr,

@@ -32,6 +32,7 @@
 #include "x86.h"
 #endif
 #include "rtlRtns.h"
+#include "ilidir.h" /* for open_pragma, close_pragma */
 
 static LOGICAL matmul_use_lhs(int, int, int);
 static int triplet_extent(int);
@@ -60,7 +61,6 @@ static int reshape(int, int, int);
 static int _reshape(int, DTYPE, int);
 
 static int inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove);
-static int inline_reduction_craft(int, int, int);
 
 static void nop_dealloc(int, int);
 static void handle_shift(int s);
@@ -108,12 +108,6 @@ gen_islocal_index(int ast, int sptr, int dim, int subAst)
   A_DTYPEP(newast, DT_LOG);
   return newast;
 } /* gen_islocal_index */
-
-static int
-gen_scalar_mask(int ast, int list)
-{
-  return 0;
-} /* gen_scalar_mask */
 
 /*
  * SUM and PRODUCT reductions use a longer datatype for
@@ -354,7 +348,7 @@ handle_shift(int s)
           x = 1;
         }
       } else {
-        int ast, expr;
+        int ast;
         x = 1;
         ast = mk_stmt(A_ELSE, 0);
         add_stmt_before(ast, arg_gbl.std);
@@ -397,7 +391,7 @@ handle_shift(int s)
         add_stmt_before(ast, arg_gbl.std);
       }
       if (A_TYPEG(ss[s].m) != A_CNST) {
-        int ast, expr;
+        int ast;
         ast = mk_stmt(A_ENDIF, 0);
         add_stmt_before(ast, arg_gbl.std);
       }
@@ -436,7 +430,7 @@ handle_shift(int s)
 static int
 _makezero(DTYPE dtype)
 {
-  int v[4], w[4], sptr;
+  int v[4], sptr;
   INT V;
   int sub, ndims, i;
   int firstast, lastast, ast, member;
@@ -1217,8 +1211,6 @@ contiguous_section_array(int arr_ast)
 {
   int asd, ss;
   int ndims, dim;
-  int astsub;
-  int sptr;
   int ast1 = A_TYPEG(arr_ast) == A_MEM ? A_MEMG(arr_ast) : arr_ast;
 
   if (!ast1)
@@ -1286,8 +1278,8 @@ extract_shape_from_args(int func_ast)
   return shape;
 }
 
-static int alloc_char_temp(int, char *, int, int, int);
-static int get_charintrin_temp(int, char *);
+static int alloc_char_temp(int, const char *, int, int, int);
+static int get_charintrin_temp(int, const char *);
 
 static struct {
   int continue_std, func_std;
@@ -1303,7 +1295,7 @@ check_pointer_type(int past, int tast, int stmt, LOGICAL is_sourced_allocation)
    */
 
   int psptr, tsptr, dt1, dt2, desc1, type2;
-  int newargt, func, astnew, is_inline, intrin_type;
+  int astnew, is_inline, intrin_type;
   static int tmp = 0;
   int nullptr;
   bool isNullAssn = false;
@@ -1641,7 +1633,6 @@ check_alloc_ptr_type(int psptr, int stmt, DTYPE dt1, int flag, LOGICAL after,
         DESCUSEDP(psptr, TRUE);
     }
     if (desc1_sptr) {
-      int newargt = 0;
       int type2_sptr = 0, type2_ast = 0;
       if (intrin_type) {
         type2_ast = mk_cval1(dtype_to_arg(dt1), DT_INT);
@@ -1786,7 +1777,7 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
   int dim, ndims, cdim;
   int shift;
   int newsym;
-  int temp_arr;
+  int temp_arr = 0;
   int newargt;
   int srcarray;
   int rank;
@@ -1799,7 +1790,7 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
   int is_back_true;
   int vector;
   FtnRtlEnum rtlRtn;
-  char *root;
+  const char *root;
   int i;
   int subscr[MAXSUBS];
   int sptr;
@@ -2998,13 +2989,12 @@ take_out_user_def_func(int func_ast)
  * added before 'std'; the temp's deallocate statement is added after 'std'.
  */
 static int
-alloc_char_temp(int basetype, char *basename, int len, int std,
+alloc_char_temp(int basetype, const char *basename, int len, int std,
                 int use_basetype)
 {
   int dtype;
   int tempsptr;
   int tempast;
-  int newasn;
   int tempbase, templen, alloc, lenasn;
 
   if (!use_basetype)
@@ -3057,7 +3047,7 @@ alloc_char_temp(int basetype, char *basename, int len, int std,
 }
 
 static int
-get_charintrin_temp(int arg, char *nm)
+get_charintrin_temp(int arg, const char *nm)
 {
   int adt;
   int dtype;
@@ -3126,9 +3116,6 @@ check_assumed_size(int arr, int arg_ast, int argn)
 {
   /* In the presence of an interface, need to check if the formal
    * argument is assumed-size, and mark the array sequential. */
-  int dp, iface;
-  int ext;
-  int arg1;
 }
 
 static int rewrite_sub_args(int arg_ast, int lc);
@@ -3182,7 +3169,7 @@ leave_arg(int ast, int i, int *parg, int lc)
       (A_OPTYPEG(ast) == I_EOSHIFT || A_OPTYPEG(ast) == I_CSHIFT) && (i == 0) &&
       (arg) && (A_TYPEG(arg) == A_INTR) &&
       (A_OPTYPEG(arg) == I_EOSHIFT || A_OPTYPEG(arg) == I_CSHIFT)) {
-    int astarglist, argarglist, astdim, argdim, save;
+    int astarglist, argarglist, astdim = 0, argdim = 0, save;
     astarglist = A_ARGSG(ast);
     argarglist = A_ARGSG(arg);
 
@@ -3307,7 +3294,7 @@ leave_elemental_argument(int func_ast, int argnum)
 static int
 copy_scalar_intent_in(int arg, int dummy_sptr, int std)
 {
-  int dtype, sptr, newsptr, destast, asnast, newstd;
+  int dtype, sptr, newsptr, destast, asnast;
   if (!dummy_sptr)
     return arg;
   if (INTENTG(dummy_sptr) != INTENT_IN)
@@ -3806,14 +3793,12 @@ rewrite_calls(void)
 {
   int std, stdnext, stdnew;
   int ast, rhs, lhs, astnew;
-  int sptr;
   int args, a;
   int type;
   int sptr_lhs;
   int prevstd, src;
   int parallel_depth;
   int task_depth;
-  int doif;
   /*
    * Transform subroutine/function call arguments.
    * 1. If they contain array expressions, a temp must be allocated and
@@ -4302,7 +4287,7 @@ static int
 mk_result_sptr(int func_ast, int func_args, int *subscr, int elem_dty, int lhs,
                int *retval)
 {
-  int temp_sptr;
+  int temp_sptr = 0;
   int dim;
   int shape;
   int shape1;
@@ -4560,7 +4545,7 @@ transform_associated(int std, int ast)
   int ast1;
   int argt, nargs;
   int pv, arr;
-  int pv_sptr, arr_sptr;
+  int pv_sptr = 0, arr_sptr;
   int arr_desc, static_desc;
   int dtype;
   int func;
@@ -4961,7 +4946,6 @@ transform_move_alloc(int func_ast, int func_args)
 {
   int std;
   int pvar, pvar2;
-  int shape, shape2;
   int desc, desc2;
   SPTR sptr, sptr2;
   int func, nargs, newast, newargt;
@@ -5018,7 +5002,7 @@ transform_c_f_pointer(int func_ast, int func_args)
   int rank;
   int fptr;
   int cptr, newcptrarg;
-  int pvar;
+  int pvar = 0;
   int shape;
   int desc;
   int fty;
@@ -5139,7 +5123,7 @@ transform_c_f_procpointer(int func_ast, int func_args)
   int stdnext, std;
   int newast;
   int fptr;
-  int pvar;
+  int pvar = 0;
   int dtype;
   int func;
   int nargs;
@@ -5460,7 +5444,6 @@ inline_small_matmul(int ast, int dest)
   int shape1, shape2;
   int stdnext, lineno;
   int i, j, k;
-  int subscr[MAXSUBS];
   int mulop, addop;
   int stdprev;
   if (XBIT(47, 0x200))
@@ -5691,15 +5674,12 @@ inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove)
   int allocobj;
   int sptrtmp, asttmp, astsubscrtmp;
   int tmpndim;
-  int descr;
   int i, j, n;
   int triplet_list, index_var;
   int triplet;
-  int align;
   int shape;
   int dest_shape;
   int sptr;
-  int argt, nargs;
   int ndim, asd;
   int list;
   int endif_ast, ifastnew;
@@ -5708,14 +5688,13 @@ inline_reduction_f90(int ast, int dest, int lc, LOGICAL *doremove)
   int astInit;
   int operator, operand;
   int ifast, endif;
-  int i1, i2, dovar;
+  int dovar;
   int subs[MAXSUBS];
   int loopidx[MAXSUBS];
   int DOs[MAXSUBS];
   int curloop;
   int tmpidx[MAXSUBS];
   int nbrloops;
-  int dimdo;
   int destndim;
   int destsub;
   int destsptr;
@@ -6647,8 +6626,6 @@ matmul(int func_ast, int func_args, int lhs)
    */
   int shape;
   DTYPE dtype;
-  int dim, ndims;
-  int proc;
   int newsym;
   int temp_arr;
   int newargt;
@@ -6656,19 +6633,10 @@ matmul(int func_ast, int func_args, int lhs)
   int retval;
   int ast;
   int nargs;
-  char *name;
-  FtnRtlEnum rtlRtn;
-  int i;
+  const char *name;
+  FtnRtlEnum rtlRtn = RTE_no_rtn;
   int subscr[MAXSUBS];
-  int argt;
-  int std;
-  int indx;
-  int sptr;
-  int astnew;
-  int temp_sptr, temp_ast, func;
   int arg1, arg2;
-  int arg1_sptr, arg2_sptr;
-  int arg1_rank, arg2_rank;
   LOGICAL tmp_lhs_array;
   LOGICAL matmul_transpose;
 
@@ -6890,7 +6858,6 @@ mmul(int func_ast, int func_args, int lhs)
    */
   int shape, rank;
   int dtype, elem_dty;
-  int proc;
   int newsym;
   int temp_arr;
   int newargt;
@@ -6903,7 +6870,6 @@ mmul(int func_ast, int func_args, int lhs)
   int ast;
   int nargs;
   int subscr[MAXSUBS];
-  int sptr;
   FtnRtlEnum rtlRtn;
 
   retval = -1;
@@ -7051,7 +7017,7 @@ mmul_arg(int arr, int transpose, MMUL *mm)
   int sptr;
   int shape;
   int ldim;
-  int rank, dt, i;
+  int rank, i;
   int lb, ub, stride;
   int m;
 
@@ -7160,8 +7126,6 @@ mmul_array(int arr_ast)
 {
   int asd, ss;
   int ndims, dim;
-  int astsub;
-  int sptr;
   int ast1;
   LOGICAL any;
 
@@ -7212,7 +7176,6 @@ static int
 reshape(int func_ast, int func_args, int lhs)
 {
   int dtype;
-  int proc;
   int newsym;
   int temp_arr;
   int newargt;
@@ -7221,14 +7184,8 @@ reshape(int func_ast, int func_args, int lhs)
   int ast;
   int nargs;
   FtnRtlEnum rtlRtn;
-  int i;
   int subscr[MAXSUBS];
-  int argt;
-  int std;
-  int sptr;
-  int astnew;
   int ast_from_len;
-  int temp_sptr, temp_ast, func;
   LOGICAL tmp_lhs_array;
 
   dtype = A_DTYPEG(func_ast);
@@ -7318,7 +7275,6 @@ _reshape(int func_args, DTYPE dtype, int lhs)
   int subs, subs_dt, stride;
   int ast, ast2, asn;
   int subscr[MAXSUBS];
-  int resdt;
   int temp;
   int temp_p;
   ADSC *ad;

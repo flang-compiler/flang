@@ -29,6 +29,7 @@
 #include "state.h"
 #include "ccffinfo.h"
 #include "rtlRtns.h"
+#include "llmputil.h"
 
 /*
  * before the END for the subprogram is generated, check how/where
@@ -999,17 +1000,19 @@ static void _dinit_acl(ACL *, LOGICAL);
 
 static int acl_array_num = 0;
 
-static char *_iexpr_op[] = {
-    "?0?",       "ADD",      "SUB",       "MUL",  "DIV",    "EXP",  "NEG",
-    "INTR_CALL", "ARRAYREF", "MEMBR_SEL", "CONV", "CAT",    "EXPK", "LEQV",
-    "LNEQV",     "LOR",      "LAND",      "EQ",   "GE",     "GT",   "LE",
-    "LT",        "NE",       "LNOT",      "EXPX", "TRIPLE",
+static const char *_iexpr_op[] = {
+    "?0?",  "ADD",  "SUB",        "MUL",      "DIV",
+    "EXP",  "NEG",  "INTR_CALL",  "ARRAYREF", "MEMBR_SEL",
+    "CONV", "CAT",  "EXPK",       "LEQV",     "LNEQV",
+    "LOR",  "LAND", "EQ",         "GE",       "GT",
+    "LE",   "LT",   "NE",         "LNOT",     "EXPX",
+    "TRIPLE",
 };
 
-static char *
+static const char *
 iexpr_op(int op)
 {
-  if (op <= sizeof(_iexpr_op) / sizeof(char *))
+  if ((size_t)op <= (sizeof(_iexpr_op) / sizeof(char *)))
     return _iexpr_op[op];
   return "?N?";
 }
@@ -1126,7 +1129,7 @@ _printacl(int in_array, ACL *aclp, FILE *f)
 }
 
 void
-printacl(char *s, ACL *aclp, FILE *f)
+printacl(const char *s, ACL *aclp, FILE *f)
 {
   if (f == NULL)
     f = stderr;
@@ -1185,7 +1188,7 @@ _dumpacl(int nest, ACL *aclp, FILE *f)
       case S_IDENT:
         sptr = SST_SYMG(stkp);
         fprintf(f, "expr ident %d=%s, dtype %d", sptr,
-                (sptr > 0 && sptr < stb.stg_avail) ? SYMNAME(sptr) : "", dtype);
+                (sptr > 0 && sptr < (int)stb.stg_avail) ? SYMNAME(sptr) : "", dtype);
         break;
       default:
         fprintf(f, "expr unknown, dtype %d", dtype);
@@ -1262,7 +1265,7 @@ _dumpacl(int nest, ACL *aclp, FILE *f)
 }
 
 void
-dumpacl(char *s, ACL *aclp, FILE *f)
+dumpacl(const char *s, ACL *aclp, FILE *f)
 {
   if (f == NULL)
     f = stderr;
@@ -1802,13 +1805,15 @@ compute_size_expr(bool add_flag, ACL *aclp, DTYPE dtype)
     /* need to change the type for the first element too */
     if (specified_dtype && acs.eltype == 0 &&
         add_flag) { /* if we're in a struct, don't do */
-      if (DTY(dt) == TY_CHAR && DTY(dtype) == TY_CHAR)
-        if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR)
+      if (DTY(dt) == TY_CHAR && DTY(dtype) == TY_CHAR) {
+        if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR) {
           dtype = SST_DTYPEG(stkp);
-      else if (DTY(dt) == TY_NCHAR && DTY(dtype) == TY_NCHAR)
-        if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR)
+        }
+      } else if (DTY(dt) == TY_NCHAR && DTY(dtype) == TY_NCHAR) {
+        if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR) {
           dtype = SST_DTYPEG(stkp);
-      else if (DTY(dtype) == TY_ARRAY) {
+        }
+      } else if (DTY(dtype) == TY_ARRAY) {
         if (DDTG(dtype) != dt) {
           errsev(95);
         }
@@ -1831,13 +1836,15 @@ compute_size_expr(bool add_flag, ACL *aclp, DTYPE dtype)
      * causes S_CONST to become S_EXPR.
      */
     if (add_flag) { /* if we're in a struct, don't do */
-      if (DTY(dt) == TY_CHAR && DTY(dtype) == TY_CHAR)
-        if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR)
+      if (DTY(dt) == TY_CHAR && DTY(dtype) == TY_CHAR) {
+        if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR) {
           dtype = SST_DTYPEG(stkp);
-      else if (DTY(dt) == TY_NCHAR && DTY(dtype) == TY_NCHAR)
-        if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR)
+        }
+      } else if (DTY(dt) == TY_NCHAR && DTY(dtype) == TY_NCHAR) {
+        if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR) {
           dtype = SST_DTYPEG(stkp);
-      else if (DTY(dtype) == TY_ARRAY) {
+        }
+      } else if (DTY(dtype) == TY_ARRAY) {
         if (!eq_dtype(DDTG(dtype), acs.eltype)) {
           errsev(95);
         }
@@ -3189,7 +3196,7 @@ mk_ulbound_intrin(AC_INTRINSIC intrin, int ast)
   int argast = ARGT_ARG(argt, 0);
   int shape = A_SHAPEG(argast);
   int rank = SHD_NDIM(shape);
-  int dtyper, dtyper2;
+  int dtyper;
 
   for (i = 0; i < rank; i++) {
     if (A_TYPEG(argast) == A_ID) {
@@ -3949,7 +3956,7 @@ construct_intrinsic_acl(int ast, DTYPE dtype, int parent_acltype)
 static int
 get_ast_op(int op)
 {
-  int ast_op;
+  int ast_op = 0;
 
   switch (op) {
   case AC_NEG:
@@ -4017,7 +4024,7 @@ get_ast_op(int op)
 static int
 get_ac_op(int ast)
 {
-  int ac_op;
+  int ac_op = 0;
 
   switch (A_OPTYPEG(ast)) {
   case OP_NEG:
@@ -4123,7 +4130,7 @@ eval_do_idx(int ast)
 ACL *
 construct_acl_from_ast(int ast, DTYPE dtype, int parent_acltype)
 {
-  ACL *aclp, *subscr_aclp;
+  ACL *aclp = NULL, *subscr_aclp;
   ACL *u, *l, *s;
   ACL *prev;
   int lParent_acltype;
@@ -7765,9 +7772,9 @@ need_alloc_ch_temp(DTYPE dtype)
            \a pattern is all lower case.
  */
 int
-sem_strcmp(char *str, char *pattern)
+sem_strcmp(const char *str, const char *pattern)
 {
-  char *p1, *p2;
+  const char *p1, *p2;
   int ch;
 
   p1 = str;
@@ -7789,9 +7796,10 @@ sem_strcmp(char *str, char *pattern)
            (pattern is always uppercase).
   */
 LOGICAL
-sem_eq_str(int con, char *pattern)
+sem_eq_str(int con, const char *pattern)
 {
-  char *p1, *p2;
+  char *p1;
+  const char *p2;
   int len;
   int c1, c2;
 
@@ -8030,7 +8038,7 @@ _nchar_cmp(int l, int r)
            if so, issue an error message.
 */
 LOGICAL
-not_in_forall(char *stmttype)
+not_in_forall(const char *stmttype)
 {
   if (sem.doif_depth > 0 && DI_ID(sem.doif_depth) == DI_FORALL) {
     error(441, 3, gbl.lineno, stmttype, CNULL);
@@ -8043,7 +8051,7 @@ not_in_forall(char *stmttype)
           Otherwise issue an error message and return FALSE.
  */
 LOGICAL
-cuda_enabled(char *at_or_near)
+cuda_enabled(const char *at_or_near)
 {
   error(34, 3, gbl.lineno, at_or_near, CNULL);
   return FALSE;
@@ -8783,7 +8791,7 @@ eval_minval_or_maxval(ACL *arg, DTYPE dtype, AC_INTRINSIC intrin)
     } else if (DT_ISINT(arg->dtype)) { /* dim */
       arg2 = eval_init_expr_item(arg);
       dim = arg2->conval;
-      assert(dim == arg2->conval, "DIM value must be an integer!", 0,
+      assert(dim == (unsigned int)arg2->conval, "DIM value must be an integer!", 0,
              ERR_Fatal);
     } else { //(DT_ISLOG_ARR(arg->dtype))
       mask = eval_init_expr_item(arg);
@@ -9274,7 +9282,7 @@ eval_transfer(ACL *arg, DTYPE dtype)
 
   /* Be sure we have enough space. */
   need = (rsize > ssize ? rsize : ssize) * 2;
-  if (sizeof(value) < need) {
+  if ((int)sizeof(value) < need) {
     NEW(buffer, char, need);
     return 0;
   }
@@ -9633,7 +9641,8 @@ static ACL *
 eval_trim(ACL *arg, DTYPE dtype)
 {
   ACL *rslt;
-  char *p, *cp, *str;
+  char *p, *cp;
+  const char *str;
   int i, cvlen, newlen;
 
   rslt = eval_init_expr(arg);
@@ -11436,7 +11445,6 @@ check_alloc_clauses(ITEM *list, ITEM *spec, int *srcast, int *mold_or_src)
 {
   ITEM *itemp;
   int stat = 0;
-  int pinned = 0;
   int errmsg = 0;
   int source = 0;
 
@@ -11479,7 +11487,7 @@ gen_alloc_dealloc(int stmtyp, int object, ITEM *spec)
 {
   int ast;
   ITEM *itemp;
-  int sptr, objectsptr, sptr1;
+  int sptr, objectsptr;
   DTYPE dtype;
   int stmt;
   int store_stat = 0;
@@ -12868,7 +12876,7 @@ void
 dummy_program()
 {
   if (sem.scope_level == 0) {
-    char *tname;
+    const char *tname;
     int sptr;
     /* get a symbol to be the outer scope */
     tname = "MAIN";
@@ -12968,7 +12976,7 @@ save_host_state(int wherefrom)
   if (wherefrom & 0x2) {
     /* clear the SECD field of ST_ARRDSC symbols */
     int sptr;
-    for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
+    for (sptr = stb.firstusym; sptr < (int)stb.stg_avail; ++sptr) {
       if (STYPEG(sptr) == ST_ARRDSC) {
         /* clear SECD field */
         SECDP(sptr, 0);
@@ -12990,7 +12998,7 @@ fix_invobj(int sptr)
    * procedure due to fix_symtab() removing result argument of function.
    */
   int sptr2;
-  for (sptr2 = 1; sptr2 < stb.stg_avail; ++sptr2) {
+  for (sptr2 = 1; sptr2 < (int)stb.stg_avail; ++sptr2) {
     int bind_sptr;
     if (STYPEG(sptr2) == ST_MEMBER && CLASSG(sptr2) && VTABLEG(sptr2) == sptr &&
         !NOPASSG(sptr2) && (bind_sptr = BINDG(sptr2)) > NOSYM &&
@@ -13181,7 +13189,7 @@ restore_host_state(int whichpass)
       interr("unknown state file error", 0, 4);
     }
     /* import the contained subprogram symbols */
-    import_host_subprogram(state_append_file, "state file", saved_symavl,
+    import_host_subprogram(state_append_file, (char *)"state file", saved_symavl,
                            saved_astavl, saved_dtyavl, 0, 0);
     state_still_pass_one = 1;
     /* move file for read and write to end of file */
@@ -13233,7 +13241,7 @@ restore_internal_subprograms(void)
     if (nw == 7 && strcmp(Mname, MMname) == 0 && strcmp(Sname, SSname) == 0) {
       moddiff = nmodbase - modbase;
       /* this is the information for this routine */
-      import_host(state_append_file, "state file", saved_symavl, saved_astavl,
+      import_host(state_append_file, (char *)"state file", saved_symavl, saved_astavl,
                   saved_dtyavl, modbase, moddiff, saved_scope, stb.curr_scope);
       state_file_position = ftell(state_append_file);
     }
@@ -13379,7 +13387,7 @@ restore_module_state()
 
     /* Next, import the module-contained subprogram */
     fseek(modstate_append_file, 0L, 0);
-    import_host(modstate_append_file, "module state file", modsaved_symavl,
+    import_host(modstate_append_file, (char *)"module state file", modsaved_symavl,
                 modsaved_astavl, modsaved_dtyavl, 0, 0, 0, 0);
   }
   if (module_must_hide_this_symbol_sptr) {
@@ -13721,7 +13729,7 @@ mp_create_bscope(int reuse)
   int astid;
   int uplevel_sptr = 0;
   int scope_sptr = 0;
-  SPTR parent_sptr, parent_uplevel;
+  SPTR parent_sptr;
 
   if (reuse) {
     i = sem.scope_level;
@@ -13832,7 +13840,7 @@ exit_lexical_block(int gen_debug)
   }
 }
 
-static char *di_name[] = { // order by DI_KIND enum in semant.h
+static const char *di_name[] = { // order by DI_KIND enum in semant.h
     "block IF",
     "IFELSE",
     "DO",
@@ -13897,12 +13905,12 @@ static char *di_name[] = { // order by DI_KIND enum in semant.h
 };
 
 void
-sem_err104(int df, int lineno, char *str)
+sem_err104(int df, int lineno, const char *str)
 {
   if (df) {
     int id;
     id = DI_ID(df);
-    if (id < sizeof(di_name) / sizeof(char *)) {
+    if ((size_t)id < (sizeof(di_name) / sizeof(char *))) {
       char buff[256];
       sprintf(buff, "- %s %s", str, di_name[id]);
       error(104, 3, lineno, buff, CNULL);
@@ -13918,7 +13926,7 @@ sem_err105(int df)
   if (df) {
     int id;
     id = DI_ID(df);
-    if (id < sizeof(di_name) / sizeof(char *)) {
+    if ((size_t)id < (sizeof(di_name) / sizeof(char *))) {
       sem_err104(df, gbl.lineno, "unterminated");
       return;
     }
@@ -13934,7 +13942,7 @@ _dmp_doif(int df, FILE *f)
   if (f == NULL)
     f = stderr;
   id = DI_ID(df);
-  if (id >= sizeof(di_name) / sizeof(char *)) {
+  if ((size_t)id >= (sizeof(di_name) / sizeof(char *))) {
     fprintf(f, "Unknown DI_ID(%d) == %d\n", df, id);
     return;
   }

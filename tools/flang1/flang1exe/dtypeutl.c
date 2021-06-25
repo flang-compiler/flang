@@ -26,11 +26,11 @@ static LOGICAL get_kind_set_parm(int, DTYPE, int *);
 static int get_len_set_parm(int, DTYPE, int *);
 static DTYPE get_iso_derivedtype(DTYPE);
 static DTYPE get_cuf_derivedtype(DTYPE);
-static int ic_strcmp(char *str, char *pattern);
+static int ic_strcmp(const char *str, const char *pattern);
 
 static int size_sym = 0;
 
-char *
+const char *
 target_name(DTYPE dtype)
 {
   TY_KIND ty = get_ty_kind(dtype);
@@ -999,7 +999,7 @@ fix_dtype(int sptr, DTYPE dtype)
       DTYPE dt = get_array_dtype(ndim, elemdt);
       int i;
       for (i = 0; i < ndim; ++i) {
-        int lw, up, ext;
+        int up, ext;
         ADD_MLPYR(dt, i) = 0;
         ADD_LWBD(dt, i) = ADD_LWBD(dtype, i);
         ADD_LWAST(dt, i) = ADD_LWAST(dtype, i);
@@ -1554,7 +1554,6 @@ same_parameterized_dt(DTYPE d1, DTYPE d2)
    * parameterized derived type
    */
   int base_type1, base_type2, mem1, mem2, val1, val2;
-  int mem_dtype1, mem_dtype2;
   int rslt;
 
   if (d1 == d2)
@@ -1872,8 +1871,6 @@ is_or_has_derived_allo(SPTR sptr)
 LOGICAL
 cmpat_dtype(DTYPE d1, DTYPE d2)
 {
-  int s1, s2;
-
   if (d1 == d2)
     return TRUE;
   if (DTY(d1) != DTY(d2)) {
@@ -2123,8 +2120,6 @@ same_dtype(DTYPE d1, DTYPE d2)
 LOGICAL
 cmpat_dtype_array_cast(DTYPE d1, DTYPE d2)
 {
-  int s1, s2;
-
   if (d1 == d2)
     return TRUE;
   if (DTY(d1) != DTY(d2)) {
@@ -2262,7 +2257,7 @@ rightparens(int ast, int astright)
 static void
 getop(int op, char *string)
 {
-  char *s;
+  const char *s;
   switch (op) {
   case OP_CMP:
     s = ".cmp.";
@@ -2919,7 +2914,7 @@ pr_dent(DTYPE dt, FILE *f)
 }
 
 #if DEBUG
-static void
+void
 dumpdtype(DTYPE dtype)
 {
   dmp_dent(dtype);
@@ -3700,7 +3695,7 @@ has_tbp_or_final(DTYPE dtype)
 int
 chk_kind_parm_set_expr(int ast, DTYPE dtype)
 {
-  int sptr, rslt, newast1, newast2, i, val;
+  int sptr, newast1, newast2, i, val;
 
   switch (A_TYPEG(ast)) {
   case A_INTR:
@@ -3794,7 +3789,7 @@ get_kind_set_parm(int sptr, DTYPE dtype, int *val)
 static int
 get_len_set_parm(int sptr, DTYPE dtype, int *val)
 {
-  int rslt, tag, parent, mem;
+  int rslt, mem;
 
   if (DTY(dtype) != TY_DERIVED)
     return 0;
@@ -4020,7 +4015,7 @@ get_cuf_derivedtype(DTYPE d_dtype)
 }
 
 DTYPE
-get_iso_ptrtype(char *name)
+get_iso_ptrtype(const char *name)
 {
   int s, sptr;
   int mod;
@@ -4058,9 +4053,9 @@ get_iso_c_ptr(void)
            \a pattern is all lower case.
  */
 static int
-ic_strcmp(char *str, char *pattern)
+ic_strcmp(const char *str, const char *pattern)
 {
-  char *p1, *p2;
+  const char *p1, *p2;
   int ch;
 
   p1 = str;

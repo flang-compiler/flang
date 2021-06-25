@@ -71,8 +71,9 @@ use_hash_key(bool high_bit, bool use_high, int high, int mid, int low)
   long long mask = ((long long)1 << USE_HASH_BITS)-1;
 
   // This only works if the number of nme, ili, and ilt are each less than 2^USE_HASH_BITS
-  if (use_high)
+  if (use_high) {
     assert(high < (int)mask, "too many ILIs to hash", high, ERR_Fatal);
+  }
   assert(mid < (int)mask, "too many NMEs to hash", mid, ERR_Fatal);
   assert(low < (int)mask, "too many ILTs to hash", low, ERR_Fatal);
 

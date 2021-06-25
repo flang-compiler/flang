@@ -119,7 +119,6 @@ lower_check_subscript(int sym, int ast, int ndim, int *ilm, int *lower,
                       int *upper)
 {
   int i, sname, ilm1, ilm2, ilm3, ilm4, ilmline, ilmname, ilmfile;
-  int lop;
 
   /* make up the symbol name, lineno, filename */
   if (sym == 0)

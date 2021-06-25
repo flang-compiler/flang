@@ -105,8 +105,6 @@ define_stfunc(int sptr, ITEM *argl, SST *estk)
   SFDSC *sfdsc;
   SST *stkptr;
   int ast;
-  int argt;
-  int i;
   static int last_stfunc; /* last ST_FUNC created */
   SFUSE *sfuse;
 
@@ -285,7 +283,6 @@ ref_stfunc(SST *stktop, ITEM *args)
   SFUSE *sfuse;
   ARGINFO *ai;
   int ast;
-  int i;
   int tmp;
   int new;
   int asn;
@@ -560,7 +557,7 @@ asn_sfuse(SFUSE *l_use)
 int
 mkarg(SST *stkptr, int *dtype)
 {
-  int sptr, cp, sp2, ast;
+  int sptr, sp2, ast;
   int dt;
 
 again:
@@ -1309,7 +1306,6 @@ ref_entry(int ent)
 {
   int fval;
   int dtype;
-  int sptr;
 
   fval = FVALG(ent);
   if (fval) {
@@ -1481,7 +1477,7 @@ make_keyword_str(int paramct, int dpdsc)
   int cnt;
   int arg; /* argument sptr */
   int i;
-  char *name;
+  const char *name;
   int optional;
   int len;
   int size;
@@ -1792,11 +1788,7 @@ LOGICAL
 evl_kwd_args(ITEM *list, int cnt, char *kwdarg)
 {
   SST *stkp;
-  int pos;
   int i, sptr;
-  char *kwd, *np;
-  int kwd_len;
-  char *actual_kwd; /* name of keyword used with the actual arg */
 
   if (get_kwd_args(list, cnt, kwdarg))
     return TRUE;
@@ -1897,7 +1889,7 @@ sum_scatter_args(ITEM *list, int cnt)
       ARG_AST(i) = SST_ASTG(stkp);
     } else {
       if (ARG_STK(pos)) {
-        char *str;
+        const char *str;
         if (pos == 0)
           str = "array";
         else if (pos == 1)
@@ -2165,7 +2157,7 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
     }
   } else {
     /* component procedure pointer with a passed-object dummy argument */
-    int pass_pos;
+    int pass_pos = 0;
     int pdum;
 
     pdum = PASSG(ext);
@@ -2206,7 +2198,6 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
     int arg;
     char buf[32];
     int sptr;
-    int doif;
 
     sprintf(buf, "%d", i + 1); /* prepare for error messages */
     if ((sp = ARG_STK(i))) {

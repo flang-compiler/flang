@@ -22,7 +22,6 @@ int
 mk_ceil_div(int num, int den)
 {
   /* compute CD(num, den) = (num + den - 1) / den */
-  int zero = mk_cval(0, DT_INT);
   int one = mk_cval(1, DT_INT);
   int a;
 
@@ -53,8 +52,6 @@ opt_unop(int opc, int op, int dtype)
 int
 opt_ast(int a)
 {
-  int b;
-
 /* optimize an AST.  Recursively search for subtrees of '+' nodes
  * and try to combine constants.  Turn '-' nodes into '+' 'U-' nodes.
  * May want to add distribution later.

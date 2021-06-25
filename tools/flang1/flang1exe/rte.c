@@ -374,7 +374,6 @@ sym_get_sdescr(int sptr, int rank)
       for (mem = DTY(dtype + 1); mem > NOSYM; mem = SYMLKG(mem)) {
         if (mem == sptr) {
           /* add descriptor to the datatype just after 'sptr' */
-          int next = SYMLKG(sptr);
           int new_mem = sdsc_mem ? sdsc_mem : sdsc;
           STYPEP(new_mem, ST_MEMBER);
           ENCLDTYPEP(new_mem, dtype);
@@ -436,11 +435,9 @@ get_all_descriptors(int sptr)
   int pvar;
   int ovar;
   int arrdsc;
-  int desc;
   int ndim;
-  int dtype, ast;
+  int ast;
   int i;
-  int s;
   ADSC *ad;
 
   /*

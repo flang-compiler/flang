@@ -593,7 +593,7 @@ update_rou_begin(void)
     df->change.vect = 1;
   if (old->depchk != older->depchk)
     df->change.depchk = 1;
-  for (i = 0; i < sizeof(flg.x) / sizeof(int); i++) {
+  for (i = 0; i < (int)(sizeof(flg.x) / sizeof(int)); i++) {
     if (is_xflag_bit(i)) {
       if (old->x[i] ^ older->x[i])
         df->change.x[i] = 1;
@@ -615,7 +615,7 @@ diff_dir(SVDIR *df, DIRSET *new, DIRSET *old)
   df->change.opt = new->opt != old->opt;
   df->change.vect = new->vect ^ old->vect;
   df->change.depchk = new->depchk != old->depchk;
-  for (i = 0; i < sizeof(flg.x) / sizeof(int); i++) {
+  for (i = 0; i < (int)(sizeof(flg.x) / sizeof(int)); i++) {
     if (is_xflag_bit(i))
       df->change.x[i] = new->x[i] ^ old->x[i];
     else
@@ -634,7 +634,7 @@ wr_dir(FILE *ff, SVDIR *dd)
     fprintf(ff, "v:%x %x\n", dd->change.vect, dd->newset.vect);
   if (dd->change.depchk)
     fprintf(ff, "d:%x %x\n", dd->change.depchk, dd->newset.depchk);
-  for (i = 0; i < sizeof(flg.x) / sizeof(int); i++)
+  for (i = 0; i < (int)(sizeof(flg.x) / sizeof(int)); i++)
     if (dd->change.x[i])
       fprintf(ff, "x%d:%x %x\n", i, dd->change.x[i], dd->newset.x[i]);
   fprintf(ff, "z\n");

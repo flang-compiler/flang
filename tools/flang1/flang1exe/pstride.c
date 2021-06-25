@@ -109,7 +109,7 @@ static void
 do_targets(int stdx, int sptr)
 {
   if (!SEEN_UNK_TARGET(sptr)) {
-    int c, t, tag, tid;
+    int c, tag, tid;
     c = 0;
     while (pta_target(stdx, sptr, &tag, &tid)) {
       int t;
@@ -262,7 +262,6 @@ static int
 _findrefs(int astx, int *pstdx)
 {
   int savederef;
-  int sptr;
   int asd, ndim, i;
   int args, argcnt, a;
 
@@ -359,7 +358,7 @@ pstride_analysis(void)
     fist.stg_avail = 1;
   }
   first = 0;
-  for (sptr = stb.firstosym; sptr < stb.stg_avail; ++sptr)
+  for (sptr = stb.firstosym; sptr < (int)stb.stg_avail; ++sptr)
     VISITP(sptr, 0);
 #if DEBUG
   if (DBGBIT(10, 0x400000)) {
@@ -404,7 +403,6 @@ pstride_analysis(void)
     OPT_ALLOC(fistlist, FISTLIST, count + 1);
     fistlist.stg_avail = 1;
     for (sptr = first; sptr > 0; sptr = info[sptr].next) {
-      int ptr, sdsc;
       if (SEEN_TARGET(sptr) && !SEEN_UNK_TARGET(sptr)) {
         FLIST_SPTR(fistlist.stg_avail) = sptr;
         FLIST_PTR(fistlist.stg_avail) = info[sptr].fistptr;

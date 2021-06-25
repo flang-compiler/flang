@@ -774,7 +774,7 @@ typedef enum {
 /**
    \brief ...
  */
-char *mkRteRtnNm(FtnRtlEnum rteRtn);
+const char *mkRteRtnNm(FtnRtlEnum rteRtn);
 
 /** \brief Returns an integer bitfield contain information about a RTL routine
  *  that creates or modifies an array descriptor.  If the routine does not
