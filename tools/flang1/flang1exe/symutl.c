@@ -77,7 +77,7 @@ get_next_sym_dt(const char *basename, const char *purpose, int encldtype)
 int
 get_len_of_deferchar_ast(int ast)
 {
-  int sdsc, sdsc_ast;
+  int sdsc, sdsc_ast, sptr;
   int sdscofmem_ast;
   int first;
   int subs[1];
@@ -94,8 +94,13 @@ get_len_of_deferchar_ast(int ast)
     return get_byte_len(sdsc);
   }
 
-  /* this can be done partly by calling check_member() */
-  sdsc = SDSCG(A_SPTRG(A_MEMG(first)));
+  /* The length is set in type descriptor for a polymorphic derived type
+   * member, and it is set in section descriptor for other cases. */
+  sptr = A_SPTRG(A_MEMG(first));
+  if (CLASSG(sptr))
+    sdsc = get_member_descriptor(sptr);
+  else
+    sdsc = SDSCG(sptr);
   sdsc_ast = mk_id(sdsc);
   sdscofmem_ast = mk_member(A_PARENTG(first), sdsc_ast, A_DTYPEG(sdsc_ast));
 
