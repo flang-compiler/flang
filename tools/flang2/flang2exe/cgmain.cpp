@@ -2828,6 +2828,33 @@ should_suppress_debug_loc(INSTR_LIST *instrs)
   }
 }
 
+/* whether instruction is procedure argument bitcast */
+static bool
+is_proc_arg_bitcast(INSTR_LIST *instrs)
+{
+  if (!instrs)
+    return false;
+
+  if (instrs->i_name == I_BITCAST) {
+    INSTR_LIST *call_instr;
+    OPERAND *operand;
+    /* search for call function instruction */
+    for (call_instr = instrs->next; call_instr; call_instr = call_instr->next) {
+      if (call_instr->i_name == I_CALL) {
+        /* match the instruction with the procedure argument */
+        for (operand = call_instr->operands; operand; operand = operand->next) {
+          if (operand->ot_type == OT_TMP && operand->tmps == instrs->tmps &&
+              instrs->operands->ot_type == OT_VAR) {
+            return true;
+          }
+        }
+      }
+    }
+  } else {
+    return false;
+  }
+}
+
 /**
    \brief Write the instruction list to the LLVM IR output file
  */
@@ -3368,11 +3395,13 @@ write_instructions(LL_Module *module)
      *  - it is already written (dbg_line_op_written) or
      *  - it is a known internal (f90 runtime) call in prolog (fort_init &
      * f90_*)
+     *  - it is procedure argument
      */
     if (!(LL_MDREF_IS_NULL(instrs->dbg_line_op) || dbg_line_op_written ||
           ((instrs->dbg_line_op ==
             lldbg_get_subprogram_line(module->debug_info)) &&
-           should_suppress_debug_loc(instrs)))) {
+           should_suppress_debug_loc(instrs)) ||
+          ((instrs->i_name == I_BITCAST) && is_proc_arg_bitcast(instrs)))) {
       print_dbg_line(instrs->dbg_line_op);
     }
 #if DEBUG
