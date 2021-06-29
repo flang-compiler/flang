@@ -2937,28 +2937,15 @@ write_memory_order_and_alignment(INSTR_LIST *instrs)
 }
 
 INLINE static void
-write_no_depcheck_metadata(LL_Module *module, INSTR_LIST *insn)
+write_llaccgroup_metadata(LL_Module *module, INSTR_LIST *insn,
+                          LL_InstrListFlags flag_check, unsigned int val)
 {
-  if (insn->flags & LDST_HAS_METADATA) {
+  if (insn->flags & flag_check) {
     char buf[64];
     int n;
     DEBUG_ASSERT(insn->misc_metadata, "missing metadata");
     n = snprintf(buf, 64, ", !llvm.access.group !%u",
-                 LL_MDREF_value(insn->misc_metadata));
-    DEBUG_ASSERT(n < 64, "buffer overrun");
-    print_token(buf);
-  }
-}
-
-INLINE static void
-write_llaccgroup_metadata(LL_Module *module, INSTR_LIST *insn)
-{
-  if (insn->flags & LDST_HAS_ACCESSGRP_METADATA) {
-    char buf[64];
-    int n;
-    DEBUG_ASSERT(insn->misc_metadata, "missing metadata");
-    n = snprintf(buf, 64, ", !llvm.access.group !%u",
-                 LL_MDREF_value(cached_access_group_metadata));
+                 LL_MDREF_value(val));
     DEBUG_ASSERT(n < 64, "buffer overrun");
     print_token(buf);
   }
@@ -3378,8 +3365,10 @@ write_instructions(LL_Module *module)
 
         assert(p->next == NULL, "write_instructions(), bad next ptr", 0,
                ERR_Fatal);
-        write_no_depcheck_metadata(module, instrs);
-        write_llaccgroup_metadata(module, instrs);
+        write_llaccgroup_metadata(module, instrs, LDST_HAS_METADATA,
+                                  instrs->misc_metadata);
+        write_llaccgroup_metadata(module, instrs, LDST_HAS_ACCESSGRP_METADATA,
+                                  cached_access_group_metadata);
         write_tbaa_metadata(module, instrs->ilix, instrs->operands,
                             instrs->flags);
         break;
@@ -3399,8 +3388,10 @@ write_instructions(LL_Module *module)
         write_operand(p, "", 0);
 
         write_memory_order_and_alignment(instrs);
-        write_no_depcheck_metadata(module, instrs);
-        write_llaccgroup_metadata(module, instrs);
+        write_llaccgroup_metadata(module, instrs, LDST_HAS_METADATA,
+                                  instrs->misc_metadata);
+        write_llaccgroup_metadata(module, instrs, LDST_HAS_ACCESSGRP_METADATA,
+                                  cached_access_group_metadata);
         write_tbaa_metadata(module, instrs->ilix, instrs->operands->next,
                             instrs->flags & VOLATILE_FLAG);
         break;
