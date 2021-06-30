@@ -16,7 +16,7 @@
 extern unsigned long strlen(const char *);
 /* FIXME: #include <stdlib.h> , may have to keep externs for Windows */
 extern void *malloc(unsigned long);
-extern char *getenv(char *);
+extern char *getenv(const char *);
 
 static int rand;
 
@@ -77,7 +77,7 @@ gentmp(char *dir, char *pfx)
     if (tmp == NULL || tmp[0] == '\0') {
       tmp = dir;
       if (tmp == NULL || tmp[0] == '\0') {
-        tmp = P_tmpdir;
+        tmp = (char *)P_tmpdir;
       }
     }
   }
@@ -86,7 +86,7 @@ gentmp(char *dir, char *pfx)
     return (NULL);
   }
   p = add(p, tmp, -1);
-  p = add(p, "/", -1);
+  p = add(p, (char *)"/", -1);
   if (pfx != NULL) {
     p = add(p, pfx, 5);
   }

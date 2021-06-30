@@ -279,7 +279,7 @@ typedef struct {
 /*   AST data declaration:  */
 
 typedef struct {
-    char   *atypes[AST_MAX + 1];
+    const char *atypes[AST_MAX + 1];
     int     attr[AST_MAX + 1];
     int     hshtb[HSHSZ + 1];
     STG_MEMBERS(AST);

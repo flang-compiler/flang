@@ -874,7 +874,6 @@ getF90TmplSectRtn(char *rtnNm)
   int l, h, m, r;
   char *tmplSectNm;
   int retFtype = 0;
-  int compLen;
   char cpyRtnNm[MAXIDLEN];
   char cpyTmplSectNm[MAXIDLEN];
 

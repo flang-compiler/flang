@@ -67,7 +67,7 @@ void ipa_report(void); /* ipa.c */
 #define MSGOMPACCEL 0x24
 #define MSGPCAST 0x25
 
-int addfile(char *filename, char *funcname, int tag, int flags, int lineno,
+int addfile(const char *filename, char *funcname, int tag, int flags, int lineno,
             int srcline, int level);
 
 /**
@@ -83,7 +83,7 @@ int subfih(int fihindex, int tag, int flags, int lineno);
 /**
    \brief ...
  */
-void ccff_build(char *options, char *language);
+void ccff_build(const char *options, const char *language);
 
 /**
    \brief ...
@@ -121,12 +121,12 @@ void *ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char
  */
 void *_ccff_info(int msgtype, const char *msgid, int fihx, int lineno,
                  const char *varname, const char *funcname,
-                 const void *xparent, const char *message, va_list argptr);
+                 void *xparent, const char *message, va_list argptr);
 
 /**
    \brief ...
  */
-void ccff_open(char *ccff_filename, char *srcfile);
+void ccff_open(const char *ccff_filename, const char *srcfile);
 
 /**
    \brief ...

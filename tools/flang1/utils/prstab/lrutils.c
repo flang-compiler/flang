@@ -39,10 +39,10 @@ a1tos1(INT *from, INT *to, INT count)
 }
 
 void
-a4tos1(char *from, INT *to, INT count)
+a4tos1(const char *from, INT *to, INT count)
 {
   INT n;
-  char *a4; /* pointer used in letting C convert to S1 */
+  const char *a4; /* pointer used in letting C convert to S1 */
   INT *s1;
 
 #ifdef TRACE
@@ -747,16 +747,12 @@ cli(INT *swtab, INT *argtab, INT arglen, INT caller)
    * characters in the argument. The remaining row elements contain the
    * characters of the argument in S1 format
    */
-  INT arg_table_rows = ARG_TABLE_ROWS;
-  /* number of rows in arg_table */
-  INT arg_table_cols = ARG_TABLE_COLS;
-  /* number of coloms in arg_table */
   INT argtab_end_ptr; /* Pointer to the last element in
                        * argtab */
   INT cur_arg;        /* Row number to the argument in arg_table
                        * currently being processed */
   INT dash = 0x2d;    /* Used to identify a switch */
-  INT i, j;           /* Loop control variables */
+  INT i;              /* Loop control variables */
   INT num_args;       /* Number of arguments in arg_table */
   INT num_lbls;       /* Number of labels grouped with a switch */
   INT type;           /* Type for the switch being processed */
@@ -1031,7 +1027,7 @@ lower_to_upper(INT cur_arg, INT arg_table[ARG_TABLE_ROWS][ARG_TABLE_COLS])
 }
 
 void
-util_error(char *p, INT err, INT flag)
+util_error(const char *p, INT err, INT flag)
 {
   printf("%s\n", p);
   exit(0);

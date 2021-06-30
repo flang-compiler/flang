@@ -31,8 +31,6 @@ extern int auto_reinlinedepth; /* For bottom-up auto-inlining */
 #ifndef FE90
 #include "lz.h"
 #include "cgraph.h"
-static int fihlevel = 0;
-static int curr_ifihx = 0;
 extern bool in_auto_reinline;
 #endif
 
@@ -46,8 +44,8 @@ static bool anymessages;
 
 #define BUILD_VENDOR "flang-compiler"
 
-FIHB fihb = {(FIH *)0, 0, 0, 0, 0, 0, 0};
-FIHB ifihb = {(FIH *)0, 0, 0, 0, 0, 0, 0}; /* bottom-up auto-inliner */
+FIHB fihb = {(FIH *)0, 0, 0, 0, 0, 0, 0, 0};
+FIHB ifihb = {(FIH *)0, 0, 0, 0, 0, 0, 0, 0}; /* bottom-up auto-inliner */
 
 #define CCFFAREA 24
 #define ICCFFAREA 27
@@ -141,7 +139,7 @@ xmlintout2(int value1, int value2)
  * output <entity>
  */
 static void
-xmlopen(char *entity, char *shortentity)
+xmlopen(const char *entity, const char *shortentity)
 {
   if (!ccff_file)
     return;
@@ -155,7 +153,7 @@ xmlopen(char *entity, char *shortentity)
  * output <entity> without newline
  */
 static void
-xmlopenn(char *entity, char *shortentity)
+xmlopenn(const char *entity, const char *shortentity)
 {
   if (!ccff_file)
     return;
@@ -169,7 +167,8 @@ xmlopenn(char *entity, char *shortentity)
  * output <entity attr="attrval">
  */
 static void
-xmlopenattri(char *entity, char *shortentity, char *attr, int attrval)
+xmlopenattri(const char *entity, const char *shortentity, const char *attr,
+             int attrval)
 {
   if (!ccff_file)
     return;
@@ -183,7 +182,8 @@ xmlopenattri(char *entity, char *shortentity, char *attr, int attrval)
  * output <entity attr="attrval">
  */
 static void
-xmlopenattrs(char *entity, char *shortentity, char *attr, char *attrval)
+xmlopenattrs(const char *entity, const char *shortentity, const char *attr,
+             const char *attrval)
 {
   if (!ccff_file)
     return;
@@ -197,8 +197,8 @@ xmlopenattrs(char *entity, char *shortentity, char *attr, char *attrval)
  * output <entity attr1="attr1val" attr2="attr2val">
  */
 static void
-xmlopenattrs2(char *entity, char *shortentity, char *attr1, char *attr1val,
-              char *attr2, char *attr2val)
+xmlopenattrs2(const char *entity, const char *shortentity, const char *attr1,
+              const char *attr1val, const char *attr2, const char *attr2val)
 {
   if (!ccff_file)
     return;
@@ -214,7 +214,7 @@ xmlopenattrs2(char *entity, char *shortentity, char *attr1, char *attr1val,
  * output </entity>
  */
 static void
-xmlclose(char *entity, char *shortentity)
+xmlclose(const char *entity, const char *shortentity)
 {
   if (!ccff_file)
     return;
@@ -228,7 +228,7 @@ xmlclose(char *entity, char *shortentity)
  * output <entity>string</entity>
  */
 static void
-xmlentity(char *entity, char *shortentity, const char *string)
+xmlentity(const char *entity, const char *shortentity, const char *string)
 {
   if (!ccff_file)
     return;
@@ -247,7 +247,7 @@ xmlentity(char *entity, char *shortentity, const char *string)
  * output <entity>string1 string2</entity>
  */
 static void
-xmlentity2(char *entity, char *shortentity, const char *string1,
+xmlentity2(const char *entity, const char *shortentity, const char *string1,
            const char *string2)
 {
   if (!ccff_file)
@@ -267,7 +267,7 @@ xmlentity2(char *entity, char *shortentity, const char *string1,
  * output <entity>value</entity>
  */
 static void
-xmlintentity(char *entity, char *shortentity, int value)
+xmlintentity(const char *entity, const char *shortentity, int value)
 {
   if (!ccff_file)
     return;
@@ -286,7 +286,7 @@ xmlintentity(char *entity, char *shortentity, int value)
  * output <entity>value1 value2</entity>
  */
 static void
-xmlintentity2(char *entity, char *shortentity, int value1, int value2)
+xmlintentity2(const char *entity, const char *shortentity, int value1, int value2)
 {
   if (!ccff_file)
     return;
@@ -306,9 +306,9 @@ xmlintentity2(char *entity, char *shortentity, int value1, int value2)
  * called from main()
  */
 void
-ccff_open(char *ccff_filename, char *srcfile)
+ccff_open(const char *ccff_filename, const char *srcfile)
 {
-  char *cwd, ch;
+  char *cwd;
   int cwdlen;
   int i, slash;
   ccff_file = fopen(ccff_filename, "wb");
@@ -329,11 +329,12 @@ ccff_open(char *ccff_filename, char *srcfile)
   }
   xmlopen("source", "s");
   if (slash >= 0) {
+    char *srcpath = (char *)malloc(strlen(srcfile) + 1);
+    strcpy(srcpath, srcfile);
+    srcpath[slash] = '\0';
     xmlentity("sourcename", "sn", srcfile + slash + 1);
-    ch = srcfile[slash];
-    srcfile[slash] = '\0';
-    xmlentity("sourcepath", "sp", srcfile);
-    srcfile[slash] = ch;
+    xmlentity("sourcepath", "sp", srcpath);
+    free(srcpath);
   } else {
     xmlentity("sourcename", "sn", srcfile);
     xmlentity("sourcepath", "sp", ".");
@@ -369,7 +370,7 @@ ccff_close()
 /** \brief Write build information, including command line options
  */
 void
-ccff_build(char *options, char *language)
+ccff_build(const char *options, const char *language)
 {
   char sdate[50], stime[50];
   time_t now;
@@ -454,7 +455,6 @@ ccff_open_unit()
 void
 ccff_open_unit_deferred(void)
 {
-  char *abiname;
   formatbuffer = NULL;
   formatbuffersize = 0;
   if ((!ccff_file && flg.x[161] == 0 && flg.x[162] == 0))
@@ -517,16 +517,17 @@ static int messagelistsize;
 static int strngsize = 0;
 static char *strng = NULL;
 
+#if DEBUG
 /*
  * dump a message
  */
-static void
+void
 dumpmessage(MESSAGE *m)
 {
   FILE *dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   ARGUMENT *a;
-  fprintf(dfile, "ccff:%p type:%d lineno:%d order:%d id:%s", m, m->msgtype,
-          m->lineno, m->order, m->msgid);
+  fprintf(dfile, "ccff:%p type:%d lineno:%d order:%d id:%s", (void *)m,
+          m->msgtype, m->lineno, m->order, m->msgid);
   if (m->varname)
     fprintf(dfile, " varname:%s", m->varname);
   if (m->funcname)
@@ -542,12 +543,13 @@ dumpmessage(MESSAGE *m)
 /*
  * dump list of messages
  */
-static void
+void
 dumpmsglist(MESSAGE *m)
 {
   for (; m; m = m->next)
     dumpmessage(m);
 } /* dumpmsglist */
+#endif
 
 void
 dumpmessagelist(int nmessages)
@@ -890,8 +892,6 @@ sort_message_list(MESSAGE *msglist)
   for (n = 1; n < nmessages; ++n) {
     /* look for duplicate messages, with the same arguments, on the same line */
     MESSAGE *mmptr;
-    int nn;
-
     mptr = messagelist[n];
     mmptr = messagelist[n - 1];
     if (_messagecmp(mptr, mmptr, 0) != 0) {
@@ -1020,7 +1020,7 @@ __fih_message(FILE *ofile, MESSAGE *mptr, bool dolist)
 {
   char *message;
   char *chp;
-  int strnglen, n;
+  int strnglen;
   ARGUMENT *aptr, *aptr3;
   MESSAGE *mptr2, *mptr3;
   message = mptr->message;
@@ -1175,10 +1175,9 @@ fih_message(MESSAGE *mptr)
 static void
 print_func(FILE *ofile)
 {
-  char *funcname;
   if (!anymessages) {
     anymessages = true;
-    funcname = FIH_FUNCNAME(1);
+    const char *funcname = FIH_FUNCNAME(1);
     fprintf(ofile, "%s:\n", funcname);
   }
 } /* print_func */
@@ -1336,7 +1335,6 @@ ifih_message_ofile(FILE *ofile, int nest, int lineno, int childnest,
                    MESSAGE *mptr)
 {
   MESSAGE *child;
-  char *funcname;
   if (flg.x[161] != 0 || flg.x[162] != 0) {
     switch (mptr->msgtype) {
     case MSGINLINER:
@@ -1446,7 +1444,7 @@ ifih_message_ofile(FILE *ofile, int nest, int lineno, int childnest,
   }
   if (!anymessages) {
     anymessages = true;
-      funcname = IFIH_FUNCNAME(1);
+    const char *funcname = IFIH_FUNCNAME(1);
     fprintf(ofile, "%s:\n", funcname);
   }
   fprintf(ofile, "%*s  ", nest * INDENT, "");
@@ -1477,9 +1475,8 @@ static void
 fih_messages(int fihx, FILE *ofile, int nest)
 {
 #ifndef FE90
-  int child, c;
+  int child;
   MESSAGE *mptr, *firstmptr, *nextmptr;
-  char *funcname;
 
   if (ccff_file && fihx > 1) {
 
@@ -1500,7 +1497,7 @@ fih_messages(int fihx, FILE *ofile, int nest)
       xmlintentity("inlineline", "ll", FIH_LINENO(fihx));
       if (FIH_SRCLINE(fihx) > 0)
         xmlintentity("inlinesrcline", "lsl", FIH_SRCLINE(fihx));
-      funcname = FIH_FUNCNAME(fihx);
+      const char *funcname = FIH_FUNCNAME(fihx);
       xmlentity("inlinename", "ln", funcname);
       if (funcname != FIH_FUNCNAME(fihx) &&
           strcmp(funcname, FIH_FUNCNAME(fihx)) != 0) {
@@ -1594,9 +1591,8 @@ static void
 ifih_messages(int ifihx, FILE *ofile, int nest)
 {
 #ifndef FE90
-  int child, c;
+  int child;
   MESSAGE *mptr, *firstmptr;
-  char *funcname;
 
   if (ccff_file && ifihx > 0) {
 
@@ -1617,7 +1613,7 @@ ifih_messages(int ifihx, FILE *ofile, int nest)
       xmlintentity("inlineline", "ll", IFIH_LINENO(ifihx));
       if (IFIH_SRCLINE(ifihx) > 0)
         xmlintentity("inlinesrcline", "lsl", IFIH_SRCLINE(ifihx));
-      funcname = IFIH_FUNCNAME(ifihx);
+      const char *funcname = IFIH_FUNCNAME(ifihx);
       xmlentity("inlinename", "ln", funcname);
       if (funcname != IFIH_FUNCNAME(ifihx) &&
           strcmp(funcname, IFIH_FUNCNAME(ifihx)) != 0) {
@@ -2080,7 +2076,7 @@ newbuff(char *oldstring, int len, int *pl)
   l = 0;
   if (oldstring)
     l = strlen(oldstring);
-    buff = GETITEMS(CCFFAREA, char, l + len + 1);
+  buff = GETITEMS(CCFFAREA, char, l + len + 1);
   if (oldstring)
     strcpy(buff, oldstring);
   *pl = l;
@@ -2186,7 +2182,7 @@ newprintfx(char *oldstring, const char *format, int len)
  */
 void *
 _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *varname,
-           const char *funcname, const void *xparent, const char *message,
+           const char *funcname, void *xparent, const char *message,
            va_list argptr)
 {
   MESSAGE *mptr;
@@ -2204,7 +2200,6 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
       fprintf(gbl.dbgfil, ", varname=%s", varname);
     if (funcname)
       fprintf(gbl.dbgfil, ", funcname=%s", funcname);
-
     if (xparent)
       fprintf(gbl.dbgfil, ", xparent=0x%p", xparent);
     fprintf(gbl.dbgfil, "\n");
@@ -2375,10 +2370,10 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
     }
   }
   if (xparent == NULL) {
-/* just prepend onto the list */
-      mptr->next = (MESSAGE *)FIH_CCFFINFO(fihx);
-      FIH_CCFFINFO(fihx) = (void *)mptr;
-      FIH_SETFLAG(fihx, FIH_CCFF);
+    /* just prepend onto the list */
+    mptr->next = (MESSAGE *)FIH_CCFFINFO(fihx);
+    FIH_CCFFINFO(fihx) = (void *)mptr;
+    FIH_SETFLAG(fihx, FIH_CCFF);
   } else {
     /* append to child list of the parent */
     MESSAGE *parent, *child;
@@ -2394,7 +2389,7 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
 #ifndef FE90
 #if DEBUG
   if (DBGBIT(73, 2)) {
-    fprintf(gbl.dbgfil, ") returns %p\n", mptr);
+    fprintf(gbl.dbgfil, ") returns %p\n", (void *)mptr);
   }
   if (DBGBIT(73, 0x10)) {
     fprintf(gbl.dbgfil, "Message: fih:%d line:%d %s", mptr->fihx, mptr->lineno,
@@ -2470,10 +2465,10 @@ ccff_seq(int seq)
   }
 } /* ccff_seq */
 
-static char *nullname = "";
+static const char *nullname = "";
 
 int
-addfile(char *filename, char *funcname, int tag, int flags, int lineno,
+addfile(const char *filename, char *funcname, int tag, int flags, int lineno,
         int srcline, int level)
 {
   int f, len;
@@ -2526,16 +2521,18 @@ addfile(char *filename, char *funcname, int tag, int flags, int lineno,
     /* l = 12 */
     if (l == 0)
       l = 1; /* allow for /file */
-    FIH_DIRNAME(f) = getitem(8, l + 1);
-    strncpy(FIH_DIRNAME(f), pfilename, l);
-    FIH_DIRNAME(f)[l] = '\0'; /* strncpy does not terminate string */
+    char *s = getitem(8, l + 1);
+    strncpy(s, pfilename, l);
+    s[l] = '\0'; /* strncpy does not terminate string */
+    FIH_DIRNAME(f) = s;
     l = slash - pfilename;    /* recompute, in case we incremented l */
     l = len - l;
     /* len-l = 8, but we'll split off the slash,
      * leaving room for the string terminator */
-    FIH_FILENAME(f) = getitem(8, l);
-    strncpy(FIH_FILENAME(f), slash + 1, l - 1);
-    FIH_FILENAME(f)[l - 1] = '\0';
+    s = getitem(8, l);
+    strncpy(s, slash + 1, l - 1);
+    s[l - 1] = '\0';
+    FIH_FILENAME(f) = s;
   }
   if (funcname == NULL) {
     FIH_FUNCNAME(f) = nullname;
@@ -2623,16 +2620,18 @@ addinlfile(char *filename, char *funcname, int tag, int flags, int lineno,
     /* l = 12 */
     if (l == 0)
       l = 1; /* allow for /file */
-    FIH_DIRNAME(f) = getitem(8, l + 1);
-    strncpy(FIH_DIRNAME(f), pfilename, l);
-    FIH_DIRNAME(f)[l] = '\0'; /* strncpy does not terminate string */
+    char *s = getitem(8, l + 1);
+    strncpy(s, pfilename, l);
+    s[l] = '\0'; /* strncpy does not terminate string */
+    FIH_DIRNAME(f) = s;
     l = slash - pfilename;    /* recompute, in case we incremented l */
     l = len - l;
     /* len-l = 8, but we'll split off the slash,
      * leaving room for the string terminator */
-    FIH_FILENAME(f) = getitem(8, l);
-    strncpy(FIH_FILENAME(f), slash + 1, l - 1);
-    FIH_FILENAME(f)[l - 1] = '\0';
+    s = getitem(8, l);
+    strncpy(s, slash + 1, l - 1);
+    s[l - 1] = '\0';
+    FIH_FILENAME(f) = s;
   }
   if (funcname == NULL) {
     FIH_FUNCNAME(f) = nullname;

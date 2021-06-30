@@ -24,6 +24,7 @@
 #include "commopt.h"
 #include "ccffinfo.h"
 #include "fdirect.h"
+#include "ilidir.h" /* for open_pragma(), close_pragma() */
 
 /* Compiler switches:
     -x 49 0x20000:	Inhibit invariant communication hoisting
@@ -248,7 +249,6 @@ hoist_comms(int lp)
 {
   int fg, fgtail, fgend;
   int std, stdend, stdnext;
-  int ast;
   int par;
 
   bMovedComm = FALSE;
@@ -330,7 +330,7 @@ unique_allo(int allo_std, int allo_ft, int lp)
 static void
 hoist_std(int fg, int std, int lp)
 {
-  int ast, ast1, astcomm, astcont;
+  int ast, ast1, astcomm;
   int ft;
   int stdfree;
   int nme;
@@ -474,7 +474,6 @@ static LOGICAL
 check_outer_defs(int std, int lp, int nme)
 {
   int def;
-  int lpo;
 
   for (def = NME_DEF(nme); def; def = DEF_NEXT(def)) {
     if (DEF_STD(def) == std)

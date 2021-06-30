@@ -2530,7 +2530,7 @@ putdty(TY_KIND dty)
 void
 _putdtype(DTYPE dtype, int structdepth)
 {
-  TY_KIND dty;
+  int dty;
   ADSC *ad;
   int numdim;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
@@ -2538,10 +2538,10 @@ _putdtype(DTYPE dtype, int structdepth)
     fprintf(dfile, "\ndtype %d out of %d\n", dtype, stb.dt.stg_avail - 1);
     return;
   }
-  dty = DTY(dtype);
+  dty = (int)DTY(dtype);
   switch (dty) {
   default:
-    putdty(dty);
+    putdty((TY_KIND)dty);
     break;
   case TY_CHAR:
     appendstring1("char*");
@@ -2614,11 +2614,11 @@ _putdtype(DTYPE dtype, int structdepth)
     }
     DTySet(dtype, dty);
     break;
-  case -TY_STRUCT:
-  case -TY_UNION:
-    if (dty == -TY_STRUCT)
+  case -((int)TY_STRUCT):
+  case -((int)TY_UNION):
+    if (dty == -((int)TY_STRUCT))
       appendstring1("struct");
-    if (dty == -TY_UNION)
+    if (dty == -((int)TY_UNION))
       appendstring1("union");
     if (DTyAlgTyTagNeg(dtype)) {
       appendstring1(" ");
@@ -2641,7 +2641,7 @@ putdtype(DTYPE dtype)
 static int
 putdtypex(DTYPE dtype, int len)
 {
-  TY_KIND dty;
+  int dty;
   int r = 0;
   ADSC *ad;
   int numdim;
@@ -2652,10 +2652,10 @@ putdtypex(DTYPE dtype, int len)
     fprintf(dfile, "\ndtype %d out of %d\n", dtype, stb.dt.stg_avail - 1);
     return 0;
   }
-  dty = DTY(dtype);
+  dty = (int)DTY(dtype);
   switch (dty) {
   default:
-    r += putdty(dty);
+    r += putdty((TY_KIND)dty);
     break;
   case TY_CHAR:
     r += appendstring1("char*");
@@ -2908,8 +2908,6 @@ smsz(int m)
   }
   return B;
 } /* smsz */
-
-char* scond(int);
 
 static void
 putstc(ILI_OP opc, int opnum, int opnd)
@@ -4767,7 +4765,7 @@ static const char *nmetypes[] = {"unknown ", "indirect", "variable",
 void
 _dumpnme(int n, bool dumpdefsuses)
 {
-  int store, pte;
+  int pte;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   if (n <= 0 || n >= nmeb.stg_avail) {
     fprintf(dfile, "\nNME %d out of %d\n", n, nmeb.stg_avail - 1);

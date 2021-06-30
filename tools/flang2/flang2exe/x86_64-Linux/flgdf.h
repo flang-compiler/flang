@@ -64,7 +64,8 @@ FLG flg = {
     25,         /* errorlimit */
     false,      /* trans_inv */
 #ifdef TARGET_X86
-    0,                                     /* tpcount */
-    0,          0, 0, 0, 0, 0, 0, 0, 0, 0, /* tpvalue */
+    0,                                      /* tpcount */
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* tpvalue */
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 #endif
 };

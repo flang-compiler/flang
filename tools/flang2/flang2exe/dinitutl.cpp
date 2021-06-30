@@ -49,7 +49,7 @@ dinit_put(DTYPE dtype, ISZ_T conval)
   if (mode == 'e') {
     mode = 'w';
   } else if (mode == ' ') {
-    if ((df = tmpf("b")) == NULL)
+    if ((df = tmpf()) == NULL)
       errfatal(F_0005_Unable_to_open_temporary_file);
     mode = 'w';
   } else if (mode != 'w') {
@@ -90,7 +90,7 @@ dinit_put_string(ISZ_T len, char *str)
 DREC *
 dinit_read(void)
 {
-  register int n;
+  int n;
 
   if (mode == ' ' || mode == 'e' || df == NULL)
     return NULL;

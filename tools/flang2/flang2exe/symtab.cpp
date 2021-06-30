@@ -34,9 +34,9 @@ static struct {
   bool set; /* True if set by IMPLICIT stmt */
 } dtimplicit[26 + 26 + 2];
 
-static void cng_generic(char *, char *);
-static void cng_specific(char *, char *);
-static void cng_inttyp(char *, int);
+static void cng_generic(const char *, const char *);
+static void cng_specific(const char *, const char *);
+static void cng_inttyp(const char *, int);
 static void clear_vc(void);
 
 /* entry hack? */
@@ -61,7 +61,6 @@ sym_init(void)
   INT tmp[2];
   DTYPE default_int;
   DTYPE default_real;
-  DTYPE dtype;
   extern void chkstruct();
 
   /* allocate symbol table and name table space:  */
@@ -217,7 +216,7 @@ sym_init(void)
 }
 
 static void
-cng_generic(char *old, char *New)
+cng_generic(const char *old, const char *New)
 {
   int os, ns;
 
@@ -241,7 +240,7 @@ cng_generic(char *old, char *New)
 }
 
 static void
-cng_specific(char *old, char *New)
+cng_specific(const char *old, const char *New)
 {
   int os, ns;
 
@@ -263,7 +262,7 @@ cng_specific(char *old, char *New)
 }
 
 static void
-cng_inttyp(char *old, int dt)
+cng_inttyp(const char *old, int dt)
 {
   int ss;
   ss = getsym(old, strlen(old));
@@ -672,12 +671,12 @@ sign_extend(INT val, int width)
 }
 
 SPTR
-getstring(char *value, int length)
+getstring(const char *value, int length)
 {
   SPTR sptr;   /* symbol table pointer */
   int hashval; /* index into hashtb */
   char *np;    /* pointer to string characters */
-  char *p;
+  const char *p;
   int i;
 
   /*
@@ -846,7 +845,7 @@ reapply_implicit(void)
  *
  * \param sptr - symbol table pointer
  */
-char *
+const char *
 parmprint(int sptr)
 {
   DTYPE dtype;
@@ -863,7 +862,7 @@ parmprint(int sptr)
   if (DTY(dtype) == TY_SINT || DTY(dtype) == TY_BINT || DTY(dtype) == TY_HOLL ||
       DTY(dtype) == TY_WORD)
     DTYPEP(sptr, DT_INT);
-  else if (DTY(dtype) == DT_SLOG || DTY(dtype) == DT_BLOG)
+  else if (DTY(dtype) == TY_SLOG || DTY(dtype) == TY_BLOG)
     DTYPEP(sptr, DT_LOG);
   if (TY_ISWORD(DTY(dtype))) {
     CONVAL2P(sptr, CONVAL1G(sptr));
@@ -1013,7 +1012,7 @@ getprint(int sptr)
 /*
  * dump symbol table information for symbol sptr.
  */
-static void putaltname(FILE *, int, char *);
+static void putaltname(FILE *, int, const char *);
 static void putcuda(FILE *, int);
 
 #undef _PFG
@@ -1373,7 +1372,7 @@ symdentry(FILE *file, int sptr)
     break;
 
   case ST_STFUNC:
-    fprintf(dfil, "sfdsc: %x   excvlen: %d\n", SFDSCG(sptr),
+    fprintf(dfil, "sfdsc: %x   excvlen: %ld\n", SFDSCG(sptr),
             DTyCharLength(DTYPEG(sptr)));
     break;
 
@@ -1464,7 +1463,7 @@ symdentry(FILE *file, int sptr)
 #endif
 
 static void
-putaltname(FILE *dfil, int sptr, char *pref)
+putaltname(FILE *dfil, int sptr, const char *pref)
 {
   int ss, len;
   char *np;
@@ -1594,7 +1593,7 @@ set_ccflags(int sptr, SYMTYPE stype)
 }
 
 SPTR
-getccsym(int letter, int n, SYMTYPE stype)
+getccsym(char letter, int n, SYMTYPE stype)
 {
   char name[16];
   SPTR sptr;
@@ -1606,7 +1605,7 @@ getccsym(int letter, int n, SYMTYPE stype)
 }
 
 SPTR
-getnewccsym(int letter, int n, SYMTYPE stype)
+getnewccsym(char letter, int n, SYMTYPE stype)
 {
   char name[32];
   SPTR sptr;
@@ -1619,7 +1618,7 @@ getnewccsym(int letter, int n, SYMTYPE stype)
 }
 
 SPTR
-getccsym_sc(int letter, int n, SYMTYPE stype, SC_KIND sc)
+getccsym_sc(char letter, int n, SYMTYPE stype, SC_KIND sc)
 {
   SPTR sptr;
 
@@ -1638,7 +1637,7 @@ getccsym_sc(int letter, int n, SYMTYPE stype, SC_KIND sc)
 }
 
 SPTR
-getcctemp_sc(char *name, SYMTYPE stype, SC_KIND sc)
+getcctemp_sc(const char *name, SYMTYPE stype, SC_KIND sc)
 {
   SPTR sym;
 
@@ -1649,7 +1648,7 @@ getcctemp_sc(char *name, SYMTYPE stype, SC_KIND sc)
 }
 
 SPTR
-getccssym(char *pfx, int n, SYMTYPE stype)
+getccssym(const char *pfx, int n, SYMTYPE stype)
 {
   char name[32];
   SPTR sptr;
@@ -1674,7 +1673,7 @@ getccssym(char *pfx, int n, SYMTYPE stype)
 }
 
 SPTR
-getccssym_sc(char *pfx, int n, SYMTYPE stype, SC_KIND sc)
+getccssym_sc(const char *pfx, int n, SYMTYPE stype, SC_KIND sc)
 {
   SPTR sptr;
 

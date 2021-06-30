@@ -279,7 +279,7 @@ ilm_return_slot_index(ILM_T *ilmp)
 }
 
 /******************************************************************/
-static char *nullname = "";
+static const char *nullname = "";
 
 /*
  * allocate the ILMs, free the ILMs
@@ -910,7 +910,7 @@ _dumponeilm(ILM_T *ilm_base, int i, int check)
     }
   } while (true);
   if (pr) {
-    char *s;
+    const char *s;
     switch (opc) {
     case IM_MP_MAP:
     case IM_PRAGMA:

@@ -21,7 +21,7 @@ static int pgno;      /* page number of next page */
 const int LPP = 60;
 
 static void
-list_ln(char *beg, char *txt)
+list_ln(const char *beg, const char *txt)
 {
   if (pgpos == 1 && !DBGBIT(14, 3)) {
     if (!lf)
@@ -64,7 +64,7 @@ list_init(FILE *fd)
 /*******************************************************************/
 
 void
-list_line(char *txt)
+list_line(const char *txt)
 {
   list_ln("", txt);
 }

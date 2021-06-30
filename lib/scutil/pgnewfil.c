@@ -37,7 +37,7 @@ extern size_t strlen();
  * copy chars from q to p, terminate string, return end of string
  */
 static char *
-add(char *p, char *q)
+add(char *p, const char *q)
 {
   while (*q != '\0')
     *p++ = *q++;
@@ -172,7 +172,7 @@ static char *
 gentmp(char *pfx, char *sfx)
 {
   char *filename;
-  char *tmpdir;
+  const char *tmpdir;
   char *p, *q;
   int l;
 

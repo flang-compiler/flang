@@ -75,7 +75,7 @@ char ilmname[MAXSTRING];
 int linenum;
 int numoperands;
 int numoperations = 0;
-char* operand[10];
+const char* operand[10];
 int j;
 
 int combinations = 0;

@@ -1023,8 +1023,8 @@ _dmp_dent(DTYPE dtypeind, FILE *outfile)
     paramct = DTyParamCount(dtypeind);
     dpdsc = DTyParamDesc(dtypeind);
     fprintf(outfile, 
-            "proc    dtype=%5ld  interface=%5ld  paramct=%3d  dpdsc=%5d"
-            "  fval=%5ld\n", DTyReturnType(dtypeind), DTyInterface(dtypeind),
+            "proc    dtype=%5d  interface=%5d  paramct=%3d  dpdsc=%5d"
+            "  fval=%5d\n", DTyReturnType(dtypeind), DTyInterface(dtypeind),
             paramct, dpdsc, DTyFuncVal(dtypeind));
     for (i = 0; i < paramct; i++) {
       fprintf(outfile, "     arg %d: %d\n", i + 1, aux.dpdsc_base[dpdsc + i]);

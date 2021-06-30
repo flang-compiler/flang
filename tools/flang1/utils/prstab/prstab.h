@@ -179,7 +179,7 @@ extern struct ptsem_s ptsem;
 
 /* prstab1 */
 INT enter(INT *buff, INT *len);
-INT error(char *msg, INT msglen, INT ibad, INT sym, INT alias);
+INT error(const char *msg, INT msglen, INT ibad, INT sym, INT alias);
 INT fndnul(void), bildhp(void), finish(void);
 INT endbas(INT *iptr);
 INT complt(INT *istate, INT *maxset);

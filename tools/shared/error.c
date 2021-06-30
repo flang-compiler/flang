@@ -109,10 +109,10 @@ display_error(error_code_t ecode, enum error_severity sev, int eline,
               const char *op1, const char *op2, int col, const char *srcFile)
 {
   static char sevlett[5] = {'X', 'I', 'W', 'S', 'F'};
-  char *formatstr;
+  const char *formatstr;
   char buff[400];
   int lastmsg;
-  char *msgstr;
+  const char *msgstr;
 
   if (sev < ERR_Informational || sev > ERR_Fatal)
     sev = ERR_Fatal;
@@ -153,7 +153,7 @@ display_error(error_code_t ecode, enum error_severity sev, int eline,
                sevlett[sev], ecode, errfill(msgstr, op1, op2), gbl.curr_file,
                eline);
     else {
-      static char *sevtext[5] = {"X", "info", "warning", "error", "error"};
+      static const char *sevtext[5] = {"X", "info", "warning", "error", "error"};
       if (col > 0 && (srcFile != NULL || gbl.curr_file != NULL)) {
         snprintf(&buff[1], sizeof(buff) - 1, "\n%s:%d:%d: %s %c%04d: %s",
                  (srcFile != NULL) ? srcFile : gbl.curr_file, eline, col,
@@ -325,7 +325,7 @@ errfatal(error_code_t ecode)
 int
 summary(bool final, int ipafollows)
 {
-  static char *t[5] = {
+  static const char *t[5] = {
       "%s/%s %s %s%s%s: compilation successful\n",
       "%s/%s %s %s%s%s: compilation completed with informational messages\n",
       "%s/%s %s %s%s%s: compilation completed with warnings\n",

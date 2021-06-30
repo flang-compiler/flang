@@ -67,11 +67,8 @@ static int symnum;
 static void proc_sym();
 static void flushsym(int *, int, FILE *);
 static void addfieldtosym(int *, int, int);
-static void addsname(int *, int, int, char *);
 static void write_ast();
 static int qscmp(const void *, const void *);
-static int findfield(char *);
-extern void put_err1(int, char *, char *);
 
 static int checkmode = 0;
 
@@ -150,8 +147,6 @@ proc_sym()
   int cursyms[20], cursym;
   FILE *outf;
   FILE *tempfp;
-  char dtfields[20][32];
-  int ndtfields;
   int pdoffs;
 
   tempfp = NULL;
@@ -248,7 +243,6 @@ write_ast()
   int i, j;
   int k;
   char buff[32];
-  int c;
   char buff1[32];
 
   for (i = 0; i < fieldnum; ++i)
@@ -437,7 +431,6 @@ flushsym(int *cursyms, int cursym, FILE *tempf)
 {
   int i, j, k;
   int indir;
-  int f;
   int addit;
   int *p;
   int offs;
@@ -571,7 +564,6 @@ static void
 addfieldtosym(int *cursyms, int cursym, int field)
 {
   int i, indir, j, k;
-  int t1, t2, t3, t4;
 
   for (i = 0; i < cursym; ++i) {
     indir = cursyms[i]; /* symbol number */
@@ -684,9 +676,9 @@ addfield(int sharedflag, int flagflag)
   if (offs > 9)
     aftp++;
   offs = (offs - 1) * 4;
-  if (aftp[0] == 0)
+  if (aftp[0] == 0) {
     size = 4;
-  else if (aftp[0] != ':') {
+  } else if (aftp[0] != ':') {
     put_error(2, ": must follow word spec");
     size = 4;
   } else if (aftp[1] != 'h' && aftp[1] != 'b') {
@@ -711,6 +703,8 @@ addfield(int sharedflag, int flagflag)
       else
         size = (aftp[4] - aftp[2]) + 1;
     }
+  } else {
+    size = 0;
   }
 done:
   fields[fieldnum].size = size;

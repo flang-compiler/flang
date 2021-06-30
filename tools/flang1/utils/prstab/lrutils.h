@@ -76,7 +76,7 @@
 
 /* char */
 void a1tos1(INT *from, INT *to, INT count);
-void a4tos1(char *from, INT *to, INT count);
+void a4tos1(const char *from, INT *to, INT count);
 void i32tos(INT *from, INT *to, INT count, INT sign, INT radix, INT format);
 void s1toa1(INT *from, INT *to, INT *count);
 void s1toa4(INT *from, INT *to, INT *count);
@@ -99,7 +99,7 @@ INT iargc(void);
 void lower_to_upper(INT cur_arg, INT arg_table[ARG_TABLE_ROWS][ARG_TABLE_COLS]);
 INT upper_to_lower(INT *name, INT col);
 
-void util_error(char *, INT, INT);
+void util_error(const char *, INT, INT);
 
 #ifdef TRACE
 void trace(char *);

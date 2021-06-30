@@ -16,73 +16,85 @@ INT
 gentab(void)
 {
   /* Initialized data */
-  static char *msg5 =
+  static const char *msg5 =
       "d   i   m   e   n   s   i   o   n       p   r   o   "
       "d   (                       )   ,       l   e   f   t   s   "
       "i   d   e   (               )   ,       l   e   n   r   e   "
       "d   (               )   ";
 
-  static char *msg6 =
+  static const char *msg6 =
       "d   i   m   e   n   s   i   o   n       l   o   o   "
       "k   s   e   t   (           ,                       )   ";
 
-  static char *msg7 = "d   a   t   a   (   v   o   c   a   b   l   r   y   "
-                      "(               )   =   ";
+  static const char *msg7 =
+      "d   a   t   a   (   v   o   c   a   b   l   r   y   "
+      "(               )   =   ";
 
-  static char *msg8 = "d   a   t   a   (   t   r   a   n   s   (           "
-                      "            )   =   ";
+  static const char *msg8 =
+      "d   a   t   a   (   t   r   a   n   s   (           "
+      "            )   =   ";
 
-  static char *msg9 = "d   a   t   a   (   f   r   d   t   r   a   n   s   "
-                      "(                       )   =   ";
+  static const char *msg9 =
+      "d   a   t   a   (   f   r   d   t   r   a   n   s   "
+      "(                       )   =   ";
 
-  static char *msg10 = "d   a   t   a   (   e   n   t   r   a   n   c   e   "
-                       "(                       )   =   ";
+  static const char *msg10 =
+      "d   a   t   a   (   e   n   t   r   a   n   c   e   "
+      "(                       )   =   ";
 
-  static char *msg11 = "d   a   t   a   (   f   l   o   o   k   a   h   d   "
-                       "(                       )   =   ";
+  static const char *msg11 =
+      "d   a   t   a   (   f   l   o   o   k   a   h   d   "
+      "(                       )   =   ";
 
-  static char *msg12 = "d   a   t   a   (   n   l   o   o   k   s   e   t   "
-                       "(                       )   =   ";
+  static const char *msg12 =
+      "d   a   t   a   (   n   l   o   o   k   s   e   t   "
+      "(                       )   =   ";
 
-  static char *msg13 = "d   a   t   a   (   p   r   o   d   (               "
-                       "        )   =   ";
+  static const char *msg13 =
+      "d   a   t   a   (   p   r   o   d   (               "
+      "        )   =   ";
 
-  static char *msg14 = "d   a   t   a   (   l   e   f   t   s   i   d   e   "
-                       "(               )   =   ";
+  static const char *msg14 =
+      "d   a   t   a   (   l   e   f   t   s   i   d   e   "
+      "(               )   =   ";
 
-  static char *msg15 = "d   a   t   a   (   l   e   n   r   e   d   (       "
-                       "        )   =   ";
+  static const char *msg15 =
+      "d   a   t   a   (   l   e   n   r   e   d   (       "
+      "        )   =   ";
 
-  static char *msg16 = "d   a   t   a   (   l   o   o   k   s   e   t   (   "
-                       "        ,                       )   =   ";
+  static const char *msg16 =
+      "d   a   t   a   (   l   o   o   k   s   e   t   (   "
+      "        ,                       )   =   ";
 
-  static char *digit = "0   1   2   3   4   5   6   7   ";
+  static const char *digit = "0   1   2   3   4   5   6   7   ";
 
-  static char *msga = "p   a   r   a   m   e   t   e   r   (   n   t   e   "
-                      "r   m   s   =               )   ";
+  static const char *msga =
+      "p   a   r   a   m   e   t   e   r   (   n   t   e   "
+      "r   m   s   =               )   ";
 
-  static char *msg0 = "p   a   r   a   m   e   t   e   r   (   i   f   i   "
-                      "n   s   t   a   t   =                       )   ";
+  static const char *msg0 =
+      "p   a   r   a   m   e   t   e   r   (   i   f   i   "
+      "n   s   t   a   t   =                       )   ";
 
-  static char *msg1 =
+  static const char *msg1 =
       "b   y   t   e       t   r   a   n   s   (           "
       ")   ,       f   r   d   t   r   a   n   s   (           )   "
       ",       e   n   t   r   a   n   c   e   (           )   ,   "
       "    f   l   o   o   k   a   h   d   (           )   ";
 
-  static char *msg2 =
+  static const char *msg2 =
       "b   y   t   e       n   l   o   o   k   s   e   t   "
       "(           )   ,       p   r   o   d   (           )   ,   "
       "    l   e   f   t   s   i   d   e   (           )   ,       "
       "l   e   n   r   e   d   (       6   )   ";
 
-  static char *msg3 =
+  static const char *msg3 =
       "d   i   m   e   n   s   i   o   n       v   o   c   "
       "a   b   l   r   y   (               )   ,       t   r   a   "
       "n   s   (                       )   ,       f   r   d   t   "
       "r   a   n   s   (                       )   ";
 
-  static char *msg4 =
+  static const char *msg4 =
       "d   i   m   e   n   s   i   o   n       e   n   t   "
       "r   a   n   c   e   (                       )   ,       f   "
       "l   o   o   k   a   h   d   (                       )   ,   "
@@ -532,8 +544,9 @@ gentab(void)
 INT
 genthd(void)
 {
-  static char *hdg = "t   h   e       t   h   e   a   d       s   e   t   "
-                     "s   ";
+  static const char *hdg =
+      "t   h   e       t   h   e   a   d       s   e   t   "
+      "s   ";
 
   INT i_1, i_2;
   INT i, j, k;
@@ -1641,21 +1654,24 @@ pntbas(INT iprod, INT idot, INT iptr)
 INT
 pntset(void)
 {
-  static char *hdg1 = "    c   o   n   f   i   g   u   r   a   t   i   o  "
-                      " n       s   e   t   :   ";
+  static const char *hdg1 =
+      "    c   o   n   f   i   g   u   r   a   t   i   o  "
+      " n       s   e   t   :   ";
 
-  static char *hdg2 = "    t   h   e       t   r   a   n   s   i   t   i  "
-                      " o   n   s   :   ";
+  static const char *hdg2 =
+      "    t   h   e       t   r   a   n   s   i   t   i  "
+      " o   n   s   :   ";
 
-  static char *hdg3 = "    t   h   e       r   e   d   u   c   t   i   o  "
-                      " n   s   :   ";
+  static const char *hdg3 =
+      "    t   h   e       r   e   d   u   c   t   i   o  "
+      " n   s   :   ";
 
-  static char *msg1 =
+  static const char *msg1 =
       "    *   *   *   i   n   t   e   r   s   e   c   t  "
       " i   o   n       w   i   t   h       t   r   a   n   s   i  "
       " t   i   o   n       t   o   ";
 
-  static char *msg2 =
+  static const char *msg2 =
       "    *   *   *   i   n   t   e   r   s   e   c   t  "
       " i   o   n       w   i   t   h       r   e   d   u   c   t  "
       " i   o   n   ";

@@ -23,12 +23,12 @@ extern char *comment_char; /* assem.c */
 typedef struct ANNO_S {
   struct ANNO_S *next;
   int lineno;
-  int module;     /** \brief module number, 0 .. n-1 */
-  long fileloc;   /** \brief Byte offset from begin of file */
-  int bihd;       /** \brief bihd associated with this line */
-  int tmp;        /** \brief index holder */
-  char *filename; /** \brief Name of file for this lineno */
-  FILE *fd;       /** \brief file descriptor associated with this lineno */
+  int module;           /** \brief module number, 0 .. n-1 */
+  long fileloc;         /** \brief Byte offset from begin of file */
+  int bihd;             /** \brief bihd associated with this line */
+  int tmp;              /** \brief index holder */
+  const char *filename; /** \brief Name of file for this line */
+  FILE *fd;             /** \brief file descriptor associated with this line */
 } ANNO;
 
 extern void annomod_init(void);
@@ -40,7 +40,7 @@ extern void annomod_end(void);
 static char *get_anno_line(FILE *fptr);
 static void put_anno_line(char *p);
 static int find_idx(ANNO *, int, int, int);
-static void emit_str(char *p, int lptr);
+static void emit_str(const char *p, int lptr);
 static void dmp_all_anno(ANNO *, FILE *, int);
 static void dmp_anno(ANNO *, FILE *);
 
@@ -51,7 +51,7 @@ static struct {
   int curlin;  /* Current line number */
   INT curpos;  /* Current file position.  Good after each output */
   char buf[ALEN + 4];
-} lanno = {0};
+} lanno;
 
 static FILE *fanno = NULL;
 static ANNO *amod = NULL;
@@ -325,9 +325,9 @@ annomod_initx(ANNO *ahead)
 static int
 qs_anno(const void *p1, const void *p2)
 {
-  if (((ANNO *)p1)->lineno < ((ANNO *)p2)->lineno)
+  if (((const ANNO *)p1)->lineno < ((const ANNO *)p2)->lineno)
     return (-1);
-  if (((ANNO *)p1)->lineno > ((ANNO *)p2)->lineno)
+  if (((const ANNO *)p1)->lineno > ((const ANNO *)p2)->lineno)
     return (1);
 #ifdef HOST_MSDOS
   return 0;
@@ -518,7 +518,7 @@ find_idx(ANNO *p, int cnt, /* # of records in linear list */
  * \param lptr is the label sptr used for delay br filling.
  */
 static void
-emit_str(char *p, int lptr)
+emit_str(const char *p, int lptr)
 {
   if (p == NULL && lptr != 0)
     return; /* Called from sched_blkinit */
@@ -538,7 +538,7 @@ emit_str(char *p, int lptr)
 static void
 dmp_all_anno(ANNO *panno, FILE *fp, int flag)
 {
-  static char *msg[] = {" linked list dump ", " linear list dump "};
+  static const char *msg[] = {" linked list dump ", " linear list dump "};
   ANNO *p;
   int cnt = 0;
 

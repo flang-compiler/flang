@@ -20,7 +20,7 @@ struct rbtree_root_struct {
 struct rbtree_struct {
   rbtree left, right, parent;
   int color;
-  int data[];
+  int data[1];
 };
 
 #define RBRED 1

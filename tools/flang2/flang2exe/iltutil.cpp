@@ -29,8 +29,6 @@ static int iltcur;
 void
 ilt_init(void)
 {
-  int i;
-
   STG_ALLOC(iltb, 128);
   STG_SET_FREELINK(iltb, ILT, next);
 }
@@ -179,7 +177,7 @@ relnkilt(int iltx, int bihx)
 void
 moveilt(int iltx, int before)
 {
-  register int i, j;
+  int i, j;
 
   /**  remove iltx from list  **/
   i = ILT_PREV(iltx);

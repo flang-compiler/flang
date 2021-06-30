@@ -14,6 +14,7 @@
 
 #include "ompaccel.h"
 #include "gbldefs.h"
+#include <string>
 
 #define OMPACCEL_DEFAULT_DEVICEID -1
 
@@ -41,7 +42,7 @@ enum {
 };
 
 typedef struct any_tgt_struct {
-  char *name;
+  std::string name;
   DTYPE dtype;
   int byval;
   int psptr;

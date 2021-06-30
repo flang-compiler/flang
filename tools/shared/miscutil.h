@@ -25,7 +25,7 @@ char *literal_string(char *oldstr, int userlen, bool isStringW);
 /**
    \brief ...
  */
-char *mkfname(char *oldname, char *oldsuf, char *newsuf);
+char *mkfname(const char *oldname, const char *oldsuf, const char *newsuf);
 
 /**
    \brief ...

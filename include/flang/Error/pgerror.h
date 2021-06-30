@@ -55,6 +55,7 @@ char * getDeduceStr(char * ptoken);
  * active in both debug and release builds, and expands to a statement,
  * not an expression.
  */
+void interr(const char *txt, int val, enum error_severity sev);
 #define assert(cond, txt, val, sev) \
   if (cond)                         \
     ;                               \

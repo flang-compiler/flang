@@ -153,17 +153,17 @@ CC_RELATION complement_int_cc(CC_RELATION cc);
 /**
    \brief ...
  */
-char *dump_msz(MSZ ms);
+const char *dump_msz(MSZ ms);
 
 /**
    \brief ...
  */
-char *fast_math(char *root, int widthc, int typec, char *oldname);
+char *fast_math(const char *root, int widthc, int typec, const char *oldname);
 
 /**
    \brief ...
  */
-char *gnr_math(char *root, int widthc, int typec, char *oldname, int masked);
+char *gnr_math(const char *root, int widthc, int typec, const char *oldname, int masked);
 
 /**
    \brief ...
@@ -183,12 +183,12 @@ char *make_math_name_vabi(MTH_FN fn, int vectlen, bool mask, DTYPE res_dt);
 /**
    \brief ...
  */
-char *relaxed_math(char *root, int widthc, int typec, char *oldname);
+char *relaxed_math(const char *root, int widthc, int typec, const char *oldname);
 
 /**
    \brief ...
  */
-char *scond(int c);
+const char *scond(int c);
 
 /**
    \brief ...
@@ -213,7 +213,7 @@ int ad1ili(ILI_OP opc, int opn1);
 /**
    \brief ...
  */
-int ad2func_kint(ILI_OP opc, char *name, int opn1, int opn2);
+int ad2func_kint(ILI_OP opc, const char *name, int opn1, int opn2);
 
 /**
    \brief ...

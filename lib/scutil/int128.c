@@ -215,7 +215,6 @@ int128_unsigned_compare(const int128_t *x, const int128_t *y)
 int
 int128_signed_compare(const int128_t *x, const int128_t *y)
 {
-  int j;
   if (x->part[3] & MSB32) {
     if (!(y->part[3] & MSB32))
       return -1;
@@ -238,7 +237,7 @@ int128_count_leading_zeros(const int128_t *x)
         if (((w << k) & MSB32) != 0)
           return 32 * j + k;
       }
-      assert(!"int128_count_leading_zeros: can't happen");
+      assert(false && "int128_count_leading_zeros: can't happen");
     }
   }
   return 128;

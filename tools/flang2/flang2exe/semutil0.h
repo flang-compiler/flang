@@ -14,7 +14,7 @@
 /**
    \brief ...
  */
-bool sem_eq_str(int con, char *pattern);
+bool sem_eq_str(int con, const char *pattern);
 
 /**
    \brief ...

@@ -37,7 +37,7 @@ static void assign1(int rtype);
 void
 exp_rcand(int ilix, int nmex)
 {
-  register int sym;
+  int sym;
 
   if (NME_TYPE(nmex) == NT_VAR                         /* var names only */
       && TY_ISSCALAR(DTY(DTYPEG(sym = NME_SYM(nmex)))) /* scalars only */
@@ -65,11 +65,8 @@ exp_rcand(int ilix, int nmex)
 void
 reg_assign1(void)
 {
-  register int first_rat, /* first entry of the block's RAT  */
-      ilix,               /* ili index of the candidate */
-      entr,               /* entry symbol of the function */
-      rtype,              /* register type */
-      cand;               /* register candidate */
+  int first_rat, /* first entry of the block's RAT  */
+      entr;      /* entry symbol of the function */
   int null_rat;
   int funcbih;
   int iltt; /* local tmp for ilt */
@@ -210,10 +207,10 @@ reg_assign1(void)
 static void
 assign1(int rtype)
 {
-  register int cand, /* candidate for a register */
-      rat,           /* RAT for each assigned reg */
-      ilix,          /* ili for the candidate */
-      areg;          /* assigned register */
+  int cand, /* candidate for a register */
+      rat,  /* RAT for each assigned reg */
+      ilix, /* ili for the candidate */
+      areg; /* assigned register */
 
   int candl,  /* candidate list */
       nme,    /* NME for the candidate */

@@ -539,7 +539,7 @@ public:
 
     /* output ilmaux, the strings of constants and external names" */
 
-    fputs("char *ilmaux[] = {\n", OUT1);
+    fputs("const char *ilmaux[] = {\n", OUT1);
     i = 0;
     while (1) {
       if (i % 5 == 0)

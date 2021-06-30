@@ -330,7 +330,7 @@ char *getprint(int sptr);
 /**
    \brief ...
  */
-char *parmprint(int sptr);
+const char *parmprint(int sptr);
 
 /**
    \brief Add a new symbol with same name as an existing symbol
@@ -358,14 +358,14 @@ int dbg_symdentry(int sptr);
    \brief Create (or possibly reuse) a compiler created symbol whose name is of
    the form . <pfx> dddd where dddd is the decimal representation of n.
  */
-SPTR getccssym(char *pfx, int n, SYMTYPE stype);
+SPTR getccssym(const char *pfx, int n, SYMTYPE stype);
 
 /**
    \brief Similar to getccssym, but storage class is an argument. Calls
    getccssym if the storage class is not private; if private, a 'p' is appended
    to the name.
  */
-SPTR getccssym_sc(char *pfx, int n, SYMTYPE stype, SC_KIND sc);
+SPTR getccssym_sc(const char *pfx, int n, SYMTYPE stype, SC_KIND sc);
 
 /**
    \brief ...
@@ -376,20 +376,20 @@ SPTR getccsym_copy(SPTR oldsptr);
    \brief create (or possibly reuse) a compiler created symbol whose name is of
    the form . <letter> dddd where dddd is the decimal representation of n.
  */
-SPTR getccsym(int letter, int n, SYMTYPE stype);
+SPTR getccsym(char letter, int n, SYMTYPE stype);
 
 /**
    \brief Similar to getccsym, but storage class is an argument. Calls
    getccsym if the storage class is not private; if private, a 'p' is
    appended to the name.
  */
-SPTR getccsym_sc(int letter, int n, SYMTYPE stype, SC_KIND sc);
+SPTR getccsym_sc(char letter, int n, SYMTYPE stype, SC_KIND sc);
 
 /**
    \brief Create (or possibly reuse) a compiler created temporary where the
    caller constructs the name and passes the storage class as an argument.
  */
-SPTR getcctemp_sc(char *name, SYMTYPE stype, SC_KIND sc);
+SPTR getcctemp_sc(const char *name, SYMTYPE stype, SC_KIND sc);
 
 /**
    \brief ...
@@ -405,7 +405,7 @@ SPTR getlab(void);
    \brief Create (never reuse) a compiler created symbol whose name is of the
    form . <letter> dddd where dddd is the decimal representation of n.
  */
-SPTR getnewccsym(int letter, int n, SYMTYPE stype);
+SPTR getnewccsym(char letter, int n, SYMTYPE stype);
 
 /**
    \brief ...
@@ -421,7 +421,7 @@ SPTR get_semaphore(void);
    If the constant was already in the table, returns a pointer to the existing
    entry instead.
  */
-SPTR getstring(char *value, int length);
+SPTR getstring(const char *value, int length);
 
 /**
    \brief Similar to getstring except the character string is null terminated

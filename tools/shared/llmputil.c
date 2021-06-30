@@ -30,7 +30,7 @@ static struct {
 } llmp_all_tasks;
 
 static LLUplevel *
-get_uplevel(int stblock_sptr)
+get_uplevel(SPTR stblock_sptr)
 {
   int key;
   LLUplevel *up;
@@ -52,7 +52,7 @@ get_uplevel(int stblock_sptr)
 }
 
 LLUplevel *
-llmp_has_uplevel(int stblock_sptr)
+llmp_has_uplevel(SPTR stblock_sptr)
 {
   int key;
   LLUplevel *up;
@@ -71,7 +71,7 @@ llmp_has_uplevel(int stblock_sptr)
 }
 
 LLUplevel *
-llmp_create_uplevel(int stblock_sptr)
+llmp_create_uplevel(SPTR stblock_sptr)
 {
   int key;
   LLUplevel *up;
@@ -104,7 +104,7 @@ llmp_create_uplevel(int stblock_sptr)
 }
 
 LLUplevel *
-llmp_get_uplevel(int stblock_sptr)
+llmp_get_uplevel(SPTR stblock_sptr)
 {
   return get_uplevel(stblock_sptr);
 }
@@ -126,13 +126,12 @@ llmp_uplevel_set_parent(SPTR stblock_sptr, SPTR parent_sptr)
 
 /* Uniquely add shared_sptr to up */
 int
-llmp_add_shared_var(LLUplevel *up, int shared_sptr)
+llmp_add_shared_var(LLUplevel *up, SPTR shared_sptr)
 {
-  int i;
   const int idx = up->vals_count;
 
   /* Unique add: I really wanted to make this a hashset... */
-  for (i = 0; i < up->vals_count; ++i) {
+  for (int i = 0; i < up->vals_count; ++i) {
     if (shared_sptr == 0)
       break;
     if (up->vals[i] == shared_sptr)
@@ -140,24 +139,23 @@ llmp_add_shared_var(LLUplevel *up, int shared_sptr)
   }
 
   ++up->vals_count;
-  NEED(up->vals_count, up->vals, int, up->vals_size, up->vals_size + 8);
+  NEED(up->vals_count, up->vals, SPTR, up->vals_size, up->vals_size + 8);
   up->vals[idx] = shared_sptr;
   return 1;
 }
 
 /* add 0 as placeholder for character len sptr for shared_sptr */
 void
-llmp_add_shared_var_charlen(LLUplevel *up, int shared_sptr)
+llmp_add_shared_var_charlen(LLUplevel *up, SPTR shared_sptr)
 {
-  int i;
   const int idx = up->vals_count;
 
   /* Unique add: I really wanted to make this a hashset... */
-  for (i = 0; i < up->vals_count; ++i)
+  for (int i = 0; i < up->vals_count; ++i)
     if (up->vals[i] == shared_sptr) {
       ++up->vals_count;
-      NEED(up->vals_count, up->vals, int, up->vals_size, up->vals_size + 8);
-      up->vals[idx] = 0;
+      NEED(up->vals_count, up->vals, SPTR, up->vals_size, up->vals_size + 8);
+      up->vals[idx] = SPTR_NULL;
     }
 }
 
@@ -195,12 +193,9 @@ llmp_create_uplevel_bykey(int key)
 void
 llmp_reset_uplevel(void)
 {
-  int i, j;
-  LLUplevel *up;
-  LLTask *task;
   if (llmp_all_uplevels.avl) {
-    for (i = 1; i < llmp_all_uplevels.avl; ++i) {
-      up = (LLUplevel *)(&llmp_all_uplevels.base[i]);
+    for (int i = 1; i < llmp_all_uplevels.avl; ++i) {
+      LLUplevel *up = (LLUplevel *)(&llmp_all_uplevels.base[i]);
       if (up->vals_count)
         FREE(up->vals);
     }
@@ -208,8 +203,8 @@ llmp_reset_uplevel(void)
     memset(&llmp_all_uplevels, 0, sizeof(llmp_all_uplevels));
   }
   if (llmp_all_tasks.avl) {
-    for (i = 0; llmp_all_tasks.avl; ++i) {
-      task = (LLTask *)(&llmp_all_tasks.base[i]);
+    for (int i = 0; llmp_all_tasks.avl; ++i) {
+      LLTask *task = (LLTask *)(&llmp_all_tasks.base[i]);
       if (task->privs_count) {
         FREE(task->privs);
       }
@@ -251,10 +246,9 @@ llmp_get_parent_sptr(SPTR child)
 }
 
 LLTask *
-llmp_get_task(int scope_sptr)
+llmp_get_task(SPTR scope_sptr)
 {
-  int i;
-  for (i = 0; i < llmp_all_tasks.avl; ++i) {
+  for (int i = 0; i < llmp_all_tasks.avl; ++i) {
     LLTask *task = (LLTask *)&llmp_all_tasks.base[i];
     if (task->scope_sptr == scope_sptr)
       return task;
@@ -263,15 +257,12 @@ llmp_get_task(int scope_sptr)
 }
 
 LLTask *
-llmp_create_task(int scope_sptr)
+llmp_create_task(SPTR scope_sptr)
 {
-  int key;
-  LLTask *task;
-
   NEED(llmp_all_tasks.avl + 1, llmp_all_tasks.base, LLTask, llmp_all_tasks.size,
        llmp_all_tasks.size + 4);
 
-  task = (LLTask *)(&llmp_all_tasks.base[llmp_all_tasks.avl]);
+  LLTask *task = (LLTask *)(&llmp_all_tasks.base[llmp_all_tasks.avl]);
   ++llmp_all_tasks.avl;
   memset(task, 0, sizeof(LLTask));
   task->actual_size = llmp_task_get_base_task_size();
@@ -306,30 +297,26 @@ llmp_task_get_size(LLTask *task)
 
 /* Set the fnsptr that belongs to the outlined task */
 void
-llmp_task_set_fnsptr(LLTask *task, int task_sptr)
+llmp_task_set_fnsptr(LLTask *task, SPTR task_sptr)
 {
   task->task_sptr = task_sptr;
 }
 
 /* Return the task object associated with 'task_sptr' */
 LLTask *
-llmp_task_get_by_fnsptr(int task_sptr)
+llmp_task_get_by_fnsptr(SPTR task_sptr)
 {
-  int i;
-  LLTask *task;
-
-  for (i = 0; i < llmp_all_tasks.avl; ++i) {
+  for (int i = 0; i < llmp_all_tasks.avl; ++i) {
     LLTask *task = (LLTask *)&llmp_all_tasks.base[i];
     if (task->task_sptr == task_sptr) {
       return task;
     }
   }
-
   return NULL;
 }
 
 int
-llmp_task_add_private(LLTask *task, int shared_sptr, SPTR private_sptr)
+llmp_task_add_private(LLTask *task, SPTR shared_sptr, SPTR private_sptr)
 {
   int pad = 0;
   int size;
@@ -389,7 +376,7 @@ llmp_task_add_loopvar(LLTask *task, int num, DTYPE dtype)
 }
 
 void
-llmp_task_add(int scope_sptr, int shared_sptr, SPTR private_sptr)
+llmp_task_add(SPTR scope_sptr, SPTR shared_sptr, SPTR private_sptr)
 {
   LLTask *task;
   assert(scope_sptr && STYPEG(scope_sptr) == ST_BLOCK,
@@ -401,13 +388,11 @@ llmp_task_add(int scope_sptr, int shared_sptr, SPTR private_sptr)
   llmp_task_add_private(task, shared_sptr, private_sptr);
 }
 
-int
-llmp_task_get_private(const LLTask *task, int sptr, int encl)
+SPTR
+llmp_task_get_private(const LLTask *task, SPTR sptr, int encl)
 {
-  int i;
-
-  for (i = 0; i < task->privs_count; ++i) {
-    const int pr = task->privs[i].private_sptr;
+  for (int i = 0; i < task->privs_count; ++i) {
+    SPTR pr = task->privs[i].private_sptr;
     if (sptr == pr && TASKG(sptr)
 #ifndef FE90
         && is_llvm_local_private(sptr)
@@ -415,32 +400,25 @@ llmp_task_get_private(const LLTask *task, int sptr, int encl)
     )
       return pr;
   }
-
-  return 0;
+  return SPTR_NULL;
 }
 
 /* should call in taskdup only */
 INT
-llmp_task_get_privoff(int sptr, const LLTask *task)
+llmp_task_get_privoff(SPTR sptr, const LLTask *task)
 {
-  int i;
-
-  for (i = 0; i < task->privs_count; ++i) {
+  for (int i = 0; i < task->privs_count; ++i) {
     const int pr = task->privs[i].shared_sptr;
     if (sptr == pr)
       return ADDRESSG(task->privs[i].private_sptr);
   }
-
   return 0;
 }
 
 void
-llmp_concur_add_shared_var(int stblock_sptr, int shared_sptr)
+llmp_concur_add_shared_var(SPTR stblock_sptr, SPTR shared_sptr)
 {
-  int dtype;
-  LLUplevel *up;
-
-  up = llmp_create_uplevel(stblock_sptr);
+  LLUplevel *up = llmp_create_uplevel(stblock_sptr);
   (void)llmp_add_shared_var(up, shared_sptr);
 }
 

@@ -60,12 +60,12 @@ void delbih(int bihx);
 /**
    \brief ...
  */
-void dump_blocks(FILE *ff, int bih, char *fmt, int fihflag);
+void dump_blocks(FILE *ff, int bih, const char *fmt, int fihflag);
 
 /**
    \brief ...
  */
-void dump_one_block(FILE *ff, int bih, char *fmt);
+void dump_one_block(FILE *ff, int bih, const char *fmt);
 
 /**
    \brief ...

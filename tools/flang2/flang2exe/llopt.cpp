@@ -25,7 +25,7 @@
 #define DEC_UCOUNT(i) ((i)->tmps->use_count--)
 
 static void
-replace_by_call_to_llvm_instrinsic(INSTR_LIST *instr, char *fname,
+replace_by_call_to_llvm_instrinsic(INSTR_LIST *instr, const char *fname,
                                    OPERAND *params)
 {
   OPERAND *call_op;
@@ -77,7 +77,7 @@ static void
 replace_by_fma_intrinsic(INSTR_LIST *instr, OPERAND *op, INSTR_LIST *mul_instr)
 {
   OPERAND *params;
-  char *intrinsic_name = NULL;
+  const char *intrinsic_name = NULL;
 
   switch (instr->ll_type->data_type) {
   case LL_FLOAT:

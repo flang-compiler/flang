@@ -505,7 +505,7 @@ private:
       "#ifdef ERRMSG_GET_ERRTXT_TABLE\n"
       "#ifndef ERRMSGDFa_H_\n"
       "#define ERRMSGDFa_H_\n"
-      "static char *errtxt[] = {\n";
+      "static const char *errtxt[] = {\n";
 
     out << std::setfill('0');
     for (std::vector<Message>::size_type num = 0; num < messages.size();

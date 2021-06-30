@@ -70,7 +70,6 @@ ili_lpprg_init(void)
     TR3("indx %d, begline %d, endline %d\n", i, lpprg->beg_line,
         lpprg->end_line);
   }
-
 }
 
 /** \brief Find and open the set of loop pragmas associated with a line number.
@@ -80,7 +79,6 @@ ili_lpprg_init(void)
 void
 open_pragma(int line)
 {
-  int i;
   LPPRG *lpprg;
   int match;
 

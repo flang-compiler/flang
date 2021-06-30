@@ -180,17 +180,17 @@ char *sxaccfeature(int a);
 /**
    \brief ...
  */
-char *sxfeature(int f);
+const char *sxfeature(int f);
 
 /**
    \brief ...
  */
-char *sxtp(int tp);
+const char *sxtp(int tp);
 
 /**
    \brief ...
  */
-char *sxtype(int m);
+const char *sxtype(int m);
 
 /**
    \brief return \c ACC_TYPE value from accelerator value
@@ -205,7 +205,7 @@ int accvalue(char *accname);
 /**
    \brief ...
  */
-int machvalue(char *thistpname);
+int machvalue(const char *thistpname);
 
 /**
    \brief make sure the first accelerator is ACC_MULTICORE or ACC_HOST
@@ -262,6 +262,6 @@ void set_mach(X86TYPE *mach, int machtype);
 /**
    \brief ...
  */
-void set_tp(char *thistpname);
+void set_tp(const char *thistpname);
 
 #endif /* X86_H_ */

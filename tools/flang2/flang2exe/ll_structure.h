@@ -683,7 +683,7 @@ typedef struct LL_MDNode {
   LL_MDClass mdclass : 6;
   unsigned is_distinct : 1;
   unsigned is_flexible : 1;
-  LL_MDRef elem[];
+  LL_MDRef elem[1];
 } LL_MDNode;
 
 typedef enum LL_DW_OP_t {
@@ -732,7 +732,7 @@ typedef enum LL_MDName {
 } LL_MDName;
 
 typedef struct LL_Value {
-  const char *data;
+  char *data;
   struct LL_Value *storage;
   LL_Type *type_struct;
   enum LL_ModuleVarType mvtype;
@@ -1083,7 +1083,7 @@ bool ll_proto_is_weak(const char *fnname);
 /**
    \brief ...
  */
-const char *ll_create_local_name(LL_Function *function, const char *format,
+char *ll_create_local_name(LL_Function *function, const char *format,
                                  ...);
 
 /**

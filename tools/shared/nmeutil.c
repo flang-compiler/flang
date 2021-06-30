@@ -491,11 +491,6 @@ addnme(NT_KIND type, SPTR insym, int nm, ISZ_T cnst)
 int
 _build_sym_nme(DTYPE dt, int curr_off, int offset, int nme)
 {
-  int i, j, mem, prev_mem;
-  int elem_size;
-  int sub;
-  bool inlarr;
-
   return 0;
 }
 
@@ -904,8 +899,8 @@ conflict(int nm1, int nm2)
   r = _conflict(nm1, nm2);
   if (DBGBIT(10, 0x10000) || (r != NOCONFLICT && DBGBIT(10, 0x40000))) {
     int s = r;
-    static char *cname[] = {"same", "noconflict", "conflict", "unconflict",
-                            "?"};
+    static const char *cname[] = {"same", "noconflict", "conflict",
+                                  "unconflict", "?"};
     if (s < -1 || s > 3)
       s = 4;
     fprintf(gbl.dbgfil, "conflict(%d=", nm1);
@@ -1641,7 +1636,7 @@ dumpname(int opn)
 }
 
 #if DEBUG
-static void
+void
 DumpnmeHelper(FILE *f, int opn)
 {
   FILE *ff;

@@ -21,7 +21,7 @@
  * are represented as a list of unique sptrs.
  */
 typedef struct {
-  int *vals;      /* Array containing shared var sptrs */
+  SPTR *vals;      /* Array containing shared var sptrs */
   int vals_size;  /* Total allocated slots in vals */
   int vals_count; /* Traditionally "available" or vals_avl */
   DTYPE dtype;    ///< The true dtype containing fields and their offsets
@@ -35,14 +35,14 @@ typedef struct {
  * First privates for the task have to be stored in that memory.
  */
 typedef struct _llprivate_t {
-  int shared_sptr;  /**< Represents the caller's copy */
-  int private_sptr; /**< Represents the callee's copy (local) */
+  SPTR shared_sptr;  /**< Represents the caller's copy */
+  SPTR private_sptr; /**< Represents the callee's copy (local) */
 } LLFirstPrivate;
 
 /// Task data structure containing a list of private variables for the task.
 typedef struct {
-  int scope_sptr;        /**< Outlined task's scope sptr (BMPSCOPE ST_BLOCK) */
-  int task_sptr;         /**< Outlined function representing the task */
+  SPTR scope_sptr;       /**< Outlined task's scope sptr (BMPSCOPE ST_BLOCK) */
+  SPTR task_sptr;        /**< Outlined function representing the task */
   LLFirstPrivate *privs; /**< Array of private sptrs for this task */
   int privs_count;
   int privs_size;
@@ -127,7 +127,7 @@ static const char *omp_target_mode_names[] = {
 /* Obtain a previously created task object, where scope_sptr is the BMPSCOPE
  * scope sptr containing the task.
  */
-extern LLTask *llmp_get_task(int scope_sptr);
+extern LLTask *llmp_get_task(SPTR scope_sptr);
 
 /* Return the task base size without any private values being stored. */
 extern int llmp_task_get_base_task_size(void);
@@ -136,18 +136,18 @@ extern int llmp_task_get_base_task_size(void);
 extern int llmp_task_get_size(LLTask *task);
 
 /* Set the task function sptr */
-extern void llmp_task_set_fnsptr(LLTask *task, int task_sptr);
+extern void llmp_task_set_fnsptr(LLTask *task, SPTR task_sptr);
 
 /* Return a task a object associated to 'task_sptr' */
-extern LLTask *llmp_task_get_by_fnsptr(int task_sptr);
+extern LLTask *llmp_task_get_by_fnsptr(SPTR task_sptr);
 
 /* Returns the sptr of the 'private' (local to the callee) copy of the
  * private variable represented by 'sptr'.
  */
-extern int llmp_task_get_private(const LLTask *task, int sptr, int incl);
+extern SPTR llmp_task_get_private(const LLTask *task, SPTR sptr, int incl);
 
 /// \brief Uniquely add a shared variable
-int llmp_add_shared_var(LLUplevel *up, int shared_sptr);
+int llmp_add_shared_var(LLUplevel *up, SPTR shared_sptr);
 
 /// \brief Return a new key (index) into our table of all uplevels
 int llmp_get_next_key(void);
@@ -165,7 +165,7 @@ int llmp_task_add_loopvar(LLTask *task, int num, DTYPE dtype);
            execution.
  /
  */
-int llmp_task_add_private(LLTask *task, int shared_sptr, SPTR private_sptr);
+int llmp_task_add_private(LLTask *task, SPTR shared_sptr, SPTR private_sptr);
 
 /**
    \brief ...
@@ -175,12 +175,12 @@ int llmp_task_get_base_task_size(void);
 /**
    \brief ...
  */
-int llmp_task_get_private(const LLTask *task, int sptr, int encl);
+SPTR llmp_task_get_private(const LLTask *task, SPTR sptr, int encl);
 
 /**
    \brief ...
  */
-INT llmp_task_get_privoff(int sptr, const LLTask *task);
+INT llmp_task_get_privoff(SPTR sptr, const LLTask *task);
 
 /**
    \brief ...
@@ -196,17 +196,17 @@ int llmp_uplevel_has_parent(int uplevel);
    \brief Create task object that can be searched for later using \p scope_sptr
    \param scope_sptr ...
  */
-LLTask *llmp_create_task(int scope_sptr);
+LLTask *llmp_create_task(SPTR scope_sptr);
 
 /**
    \brief ...
  */
-LLTask *llmp_get_task(int scope_sptr);
+LLTask *llmp_get_task(SPTR scope_sptr);
 
 /**
    \brief ...
  */
-LLTask *llmp_task_get_by_fnsptr(int task_sptr);
+LLTask *llmp_task_get_by_fnsptr(SPTR task_sptr);
 
 /// \brief Retrieve an LLUplevel instance by key
 LLUplevel *llmp_create_uplevel_bykey(int key);
@@ -216,15 +216,15 @@ LLUplevel *llmp_create_uplevel_bykey(int key);
    \param stblock_sptr Block where this region nest begins.
    This is used as a key into the global list of all uplevels.
  */
-LLUplevel *llmp_create_uplevel(int uplevel_sptr);
+LLUplevel *llmp_create_uplevel(SPTR uplevel_sptr);
 
 /// \brief Obtain a previously created uplevel
-LLUplevel *llmp_get_uplevel(int uplevel_sptr);
+LLUplevel *llmp_get_uplevel(SPTR uplevel_sptr);
 
 /** Return an uplevel pointer if it has an entry in uplevel table
     or NULL if there is no entry.
  */
-LLUplevel *llmp_has_uplevel(int uplevel_sptr);
+LLUplevel *llmp_has_uplevel(SPTR uplevel_sptr);
 
 /**
    \brief ...
@@ -239,17 +239,17 @@ void dump_uplevel(LLUplevel *up);
 /**
    \brief ...
  */
-void llmp_add_shared_var_charlen(LLUplevel *up, int shared_sptr);
+void llmp_add_shared_var_charlen(LLUplevel *up, SPTR shared_sptr);
 
 /**
    \brief ...
  */
-void llmp_append_uplevel(int from_sptr, int to_sptr);
+void llmp_append_uplevel(SPTR from_sptr, SPTR to_sptr);
 
 /**
    \brief ...
  */
-void llmp_concur_add_shared_var(int uplevel_sptr, int shared_sptr);
+void llmp_concur_add_shared_var(SPTR uplevel_sptr, SPTR shared_sptr);
 
 /**
    \brief ...
@@ -266,12 +266,12 @@ SPTR llmp_get_parent_sptr(SPTR);
    Add a private sptr to the task object.  shared, priv: See
    llmp_task_add_private
  */
-void llmp_task_add(int scope_sptr, int shared_sptr, SPTR private_sptr);
+void llmp_task_add(SPTR scope_sptr, SPTR shared_sptr, SPTR private_sptr);
 
 /**
    \brief ...
  */
-void llmp_task_set_fnsptr(LLTask *task, int task_sptr);
+void llmp_task_set_fnsptr(LLTask *task, SPTR task_sptr);
 
 /**
    \brief Set the dtype (actual struct of member pointers)

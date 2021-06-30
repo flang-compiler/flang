@@ -24,7 +24,7 @@ BIHB bihb;
 
 NMEB nmeb;
 
-EXP expb = {0};
+EXP expb;
 
 RCANDB rcandb;
 

@@ -38,7 +38,7 @@ bool strict_match(LL_Type *ty1, LL_Type *ty2);
 /**
    \brief ...
  */
-char *dtype_struct_name(DTYPE dtype);
+const char *dtype_struct_name(DTYPE dtype);
 
 /**
    \brief ...
@@ -53,17 +53,17 @@ char *get_label_name(int sptr);
 /**
    \brief ...
  */
-char *get_llvm_mips_sname(SPTR sptr);
+const char *get_llvm_mips_sname(SPTR sptr);
 
 /**
    \brief ...
  */
-char *get_llvm_sname(SPTR sptr);
+const char *get_llvm_sname(SPTR sptr);
 
 /**
    \brief ...
  */
-char *match_names(MATCH_Kind match_val);
+const char *match_names(MATCH_Kind match_val);
 
 /**
    \brief ...
