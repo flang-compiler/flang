@@ -1801,7 +1801,10 @@ emit_alnd_secd(int sptr, int memberast, LOGICAL free_flag, int std,
           sizeAst = sym_mkfunc_nodesc(mkRteRtnNm(RTE_lena), astb.bnd.dtype);
           sizeAst = begin_call(A_FUNC, sizeAst, 1);
           add_arg(target_ast);
-          ARGT_ARG(A_ARGSG(STD_AST(STD_PREV(std))), 4) = sizeAst;
+          if (STYPEG(sptr) == ST_MEMBER)
+            ARGT_ARG(A_ARGSG(STD_AST(STD_PREV(STD_PREV(std)))), 4) = sizeAst;
+          else
+            ARGT_ARG(A_ARGSG(STD_AST(STD_PREV(std))), 4) = sizeAst;
         }
       }
     }
