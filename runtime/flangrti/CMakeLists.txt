@@ -9,19 +9,14 @@ enable_language(C ASM) # Enable assembly
 SET(ASM_OPTIONS "-DLINUX_ELF")
 SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
 
+set(ARCH_DEP_FILES
+  ${TARGET_ARCHITECTURE}/dumpregs.c
+)
+
 if( ${TARGET_ARCHITECTURE} STREQUAL "x86_64" )
-  set(ARCH_DEP_FILES 
-    x86_64-Linux/x86_daz.c
-    x86_64-Linux/x86_flushz.c
-    x86_64-Linux/dumpregs.c
-  )
-elseif( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
-  set(ARCH_DEP_FILES
-      aarch64-Linux/dumpregs.c
-  )
-elseif( ${TARGET_ARCHITECTURE} STREQUAL "ppc64le" )
-  set(ARCH_DEP_FILES
-    ppc64le-Linux/dumpregs.c
+  set(ARCH_DEP_FILES ${ARCH_DEP_FILES}
+    x86_64/x86_daz.c
+    x86_64/x86_flushz.c
   )
 endif()
 
@@ -81,14 +76,14 @@ endif()
 
 # Import OpenMP
 if (NOT DEFINED LIBOMP_EXPORT_DIR)
-  find_library( 
+  find_library(
     FLANG_LIBOMP
     libomp.so
     HINTS ${CMAKE_BINARY_DIR}/lib)
   target_link_libraries(flangrti_shared ${FLANG_LIBOMP})
 endif()
 
-find_library( 
+find_library(
   LIBPGMATH
   libpgmath.so
   HINTS ${CMAKE_BINARY_DIR}/lib)
