@@ -18,7 +18,7 @@
 #define _PGHPFENT_H_
 
 /* Alternate Fortran entry symbol formats */
-#if defined(WIN64)
+#if defined(_WIN64)
 #if defined(DESC_I8)
 #define ENTF90IO(UC, LC) pgf90io_##LC##_i8
 #define ENTF90(UC, LC) pgf90_##LC##_i8
@@ -45,7 +45,7 @@
 #define ENTCRFTN(UC, LC) pgcrhpf_##LC
 #define ENTCOMN(UC, LC) pghpf_##LC##_
 
-#elif defined(WIN32)
+#elif defined(_WIN32)
 #define ENTF90(UC, LC) pgf90_##LC
 #define ENTF90IO(UC, LC) pgf90io_##LC
 #define ENTFTN(UC, LC) pghpf_##LC
@@ -58,19 +58,7 @@
 #define ENTCOMN(UC, LC) pghpf_##LC
 #define F90_MATMUL(s) pg_mm_##s##_
 #define F90_NORM2(s) pg_norm2_##s##_
-
-#elif defined(WINNT)
-#define ENTF90(UC, LC) pgf90_##LC
-#define ENTF90IO(UC, LC) pgf90io_##LC
-#define ENTFTN(UC, LC) pghpf_##LC
-#define ENTFTNIO(UC, LC) pghpfio_##LC
-#define ENTRY(UC, LC) LC
-#define ENTCRF90IO(UC, LC) pgcrf90io_##LC
-#define ENTCRFTNIO(UC, LC) pgcrhpfio_##LC
-#define ENTCRF90(UC, LC) pgcrf90_##LC
-#define ENTCRFTN(UC, LC) pgcrhpf_##LC
 #define ENTCOMN(UC, LC) pghpf_win_##LC
-#define F90_MATMUL(s) pg_mm_##s##_
 
 #else
 #if defined(DESC_I8)
@@ -127,8 +115,7 @@
 #define CADR(ARG) (ARG##_adr)
 #define CLEN(ARG) (ARG##_len)
 
-/* #if defined(WIN64) || defined(WIN32) */
-#if defined(PGDLL) && defined(_DLL) &&                                         (defined(TARGET_WIN) || defined(WIN64) || defined(WIN32))
+#if defined(PGDLL) && defined(_DLL) && defined(_WIN32)
 #define WIN_EXP __declspec(dllexport)
 #define WIN_IMP extern __declspec(dllimport)
 #else

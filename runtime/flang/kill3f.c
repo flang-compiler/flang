@@ -9,7 +9,7 @@
 
 /*	kill3f.c - Implements LIB3F kill subprogram.  */
 
-#ifndef WINNT
+#if !defined(_WIN32)
 
 #define POSIX 1
 #include <sys/types.h>
@@ -29,4 +29,4 @@ int *sig;
   return i;
 }
 
-#endif /* !WINNT */
+#endif /* !_WIN32 */

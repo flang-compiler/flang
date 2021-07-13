@@ -15,7 +15,7 @@ get_expected_f(float src[], float expct[], int n)
     int i;
 
     for(i= 0; i <n; i++ ) {
-#ifdef  WIN64
+#if defined(_WIN64)
         expct[i] = erf(src[i]);
 #else
         expct[i] = erff(src[i]);

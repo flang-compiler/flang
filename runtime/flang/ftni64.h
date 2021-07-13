@@ -46,7 +46,7 @@ typedef union {
     I64_LSH(int64d.i) = l;                                                     \
     return int64d.lv;                                                          \
   }
-#elif defined(WIN64)
+#elif defined(_WIN64)
 /* Someday, should only care if TM_I8 is defined */
 #define __I8RET_T long long
 #define UTL_I_I64RET(m, l)                                                     \

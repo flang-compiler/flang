@@ -63,7 +63,7 @@ chkalt(int * ir, int * ie, int * np)
     return chkalt_(ir, ie, np);
 }
 
-#if defined(WINNT) || defined(WIN32)
+#if defined(_WIN32)
 void
 __stdcall CHECK(res, exp, np)
     int *res, *exp, *np;

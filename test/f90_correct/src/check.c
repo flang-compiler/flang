@@ -252,7 +252,7 @@ fcpyi(int *r, int f)
     fcpyi_(r, f);
 }
 
-#if defined(WINNT) || defined(WIN32)
+#if defined(_WIN32)
 void
 __stdcall CHECK(int* res, int* exp, int* np)
 {

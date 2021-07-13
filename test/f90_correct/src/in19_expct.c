@@ -15,7 +15,7 @@ get_expected_f(float src1[], float expct[], int n)
     int i;
 
     for(i= 0; i <n; i++ ) {
-#if  defined( _WIN64) || defined(_WIN32) || defined(osx86)
+#if defined(_WIN32) || defined(osx86)
         expct[i] = y0(src1[i]);
 #else
         expct[i] = y0f(src1[i]);

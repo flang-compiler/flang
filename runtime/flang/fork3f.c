@@ -9,7 +9,7 @@
 
 /*	fork3f.c - Implements LIB3F fork subprogram.  */
 
-#ifndef WINNT
+#if !defined(_WIN32)
 
 /* must include ent3f.h AFTER io3f.h */
 #include "io3f.h"
@@ -33,4 +33,4 @@ int ENT3F(FORK, fork)()
     return pid;
 }
 
-#endif /* !WINNT */
+#endif /* !_WIN32 */

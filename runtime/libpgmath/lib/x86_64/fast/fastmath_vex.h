@@ -106,7 +106,7 @@ ENT(ASM_CONCAT(__fvd_sin_,TARGET_VEX_OR_FMA)):
 	test	$3, %ecx
         jnz	LBL(.L__Scalar_fvdsin2)
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  %ymm6, 64(%rsp)
         vmovdqu  %ymm7, 96(%rsp)
 #endif
@@ -300,7 +300,7 @@ ENT(ASM_CONCAT(__fvd_sin_,TARGET_VEX_OR_FMA)):
 #endif
         vmulpd   %xmm6,%xmm0,%xmm0                   /* dc1 * dp */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  64(%rsp),%ymm6
         vmovdqu  96(%rsp),%ymm7
 #endif
@@ -554,7 +554,7 @@ ENT(ASM_CONCAT(__fvd_cos_,TARGET_VEX_OR_FMA)):
 	test	$3, %ecx
         jnz	LBL(.L__Scalar_fvdcos2)
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  %ymm6, 64(%rsp)
         vmovdqu  %ymm7, 96(%rsp)
 #endif
@@ -752,7 +752,7 @@ ENT(ASM_CONCAT(__fvd_cos_,TARGET_VEX_OR_FMA)):
         vsubpd   %xmm6,%xmm1,%xmm1                   /* ((dc2...) - ds2*dp) - ds1*dp */
 #endif
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  64(%rsp),%ymm6
         vmovdqu  96(%rsp),%ymm7
 #endif
@@ -1012,7 +1012,7 @@ ENT(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA)):
 	test	$3, %ecx
         jnz	LBL(.L__Scalar_fvdsincos2)
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  %ymm6, 32(%rsp)
         vmovdqu  %ymm7, 64(%rsp)
         vmovdqu  %ymm8, 96(%rsp)
@@ -1244,7 +1244,7 @@ ENT(ASM_CONCAT(__fvd_sincos_,TARGET_VEX_OR_FMA)):
 #endif
         vaddpd   %xmm7,%xmm1,%xmm1                   /* cos(x) = (C + Cq(r)) + Sq(r) */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  32(%rsp),%ymm6
         vmovdqu  64(%rsp),%ymm7
         vmovdqu  96(%rsp),%ymm8
@@ -1268,7 +1268,7 @@ LBL(.L__Scalar_fvdsincos1):
 	test    $2, %eax
 	jz	LBL(.L__Scalar_fvdsincos1a)
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  %ymm6, 64(%rsp)
         vmovdqu  %ymm7, 96(%rsp)
 #endif
@@ -1348,7 +1348,7 @@ LBL(.L__Scalar_fvdsincos1):
         vaddpd   .L__real_one(%rip),%xmm1,%xmm1        /* 1.0 - 0.5x2 + (...) done */
 /* #endif */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  64(%rsp),%ymm6
         vmovdqu  96(%rsp),%ymm7
 #endif
@@ -2568,7 +2568,7 @@ ENT(ASM_CONCAT(__fvs_sincos_,TARGET_VEX_OR_FMA)):
         /* Set n = nearest integer to r */
 	vmovhps	%xmm1,(%rsp)                     /* Store x4, x3 */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  %ymm6, 64(%rsp)
         vmovdqu  %ymm7, 96(%rsp)
 #endif
@@ -2754,7 +2754,7 @@ LBL(.L__fvsincos_done_twice):
 	vmovaps  %xmm5, %xmm0
 	vmovaps  %xmm7, %xmm1
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  64(%rsp), %ymm6
         vmovdqu  96(%rsp), %ymm7
 #endif
@@ -2782,7 +2782,7 @@ LBL(.L__Scalar_fvsincos1):
 	vcvtps2pd 16(%rsp),%xmm0               /* x(2), x(1) */
 	vcvtps2pd 24(%rsp),%xmm1               /* x(4), x(3) */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  %ymm6, 96(%rsp)
 #endif
         vmovapd  %xmm0,16(%rsp)
@@ -2926,7 +2926,7 @@ LBL(.L__Scalar_fvsincos1):
         vcvtpd2ps %xmm4,%xmm4            /* cos(x4), cos(x3) */
         vshufps  $68, %xmm4, %xmm1,%xmm1       /* cos(x4),cos(x3),cos(x2),cos(x1) */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  96(%rsp), %ymm6
 #endif
 
@@ -3801,7 +3801,7 @@ ENT(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA)):
         vmulsd   %xmm0,%xmm4,%xmm4
 
         RZ_PUSH
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  %ymm6, RZ_OFF(64)(%rsp)
         vmovdqu  %ymm7, RZ_OFF(96)(%rsp)
 #endif
@@ -3996,7 +3996,7 @@ ENT(ASM_CONCAT(__fsd_sin_,TARGET_VEX_OR_FMA)):
 	vaddsd	%xmm1,%xmm0,%xmm0			/* sin(x) = Cp(r) + (S+Sq(r)) */
 /* #endif */
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	RZ_OFF(64)(%rsp),%ymm6
 	vmovdqu	RZ_OFF(96)(%rsp),%ymm7
 #endif
@@ -4093,7 +4093,7 @@ ENT(ASM_CONCAT(__fsd_cos_,TARGET_VEX_OR_FMA)):
         vmulsd   %xmm0,%xmm4,%xmm4
 
         RZ_PUSH
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  %ymm6, RZ_OFF(64)(%rsp)
         vmovdqu  %ymm7, RZ_OFF(96)(%rsp)
 #endif
@@ -4284,7 +4284,7 @@ ENT(ASM_CONCAT(__fsd_cos_,TARGET_VEX_OR_FMA)):
 
         vaddsd   %xmm1,%xmm0,%xmm0			/* cos(x) = (C + Cq(r)) + Sq(r) */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  RZ_OFF(64)(%rsp),%ymm6
         vmovdqu  RZ_OFF(96)(%rsp),%ymm7
 #endif
@@ -4377,7 +4377,7 @@ ENT(ASM_CONCAT(__fsd_sincos_,TARGET_VEX_OR_FMA)):
         vmulsd   %xmm0,%xmm4,%xmm4
 
         RZ_PUSH
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  %ymm6, RZ_OFF(32)(%rsp)
         vmovdqu  %ymm7, RZ_OFF(64)(%rsp)
         vmovdqu  %ymm8, RZ_OFF(96)(%rsp)
@@ -4578,7 +4578,7 @@ ENT(ASM_CONCAT(__fsd_sincos_,TARGET_VEX_OR_FMA)):
 #endif
         vaddsd   %xmm7,%xmm1,%xmm1                   /* cos(x) = (C + Cq(r)) + Sq(r) */
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  RZ_OFF(32)(%rsp),%ymm6
         vmovdqu  RZ_OFF(64)(%rsp),%ymm7
         vmovdqu  RZ_OFF(96)(%rsp),%ymm8
@@ -4873,7 +4873,7 @@ ENT(ASM_CONCAT(__fvz_exp_,TARGET_VEX_OR_FMA)):
 ENT(ASM_CONCAT(__fsz_exp_1v_,TARGET_VEX_OR_FMA)):
 
 
-#ifdef	WIN64
+#if	defined(_WIN64)
 	/*
 	 * Return structure in (%rcx).
 	 * Will be managed by macro I1.
@@ -4946,7 +4946,7 @@ ENT(ASM_CONCAT3(__fsz_exp_,TARGET_VEX_OR_FMA,_c99)):
 ENT(ASM_CONCAT(__fsz_exp_,TARGET_VEX_OR_FMA)):
 
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	/*
 	 *	WIN64 ONLY:
 	 *	Jump entry point into routine from __fsz_exp_vex_v1.
@@ -4954,7 +4954,7 @@ ENT(ASM_CONCAT(__fsz_exp_,TARGET_VEX_OR_FMA)):
 LBL(.L__fsz_exp_vex_win64):
 #endif
 
-#if	defined(WIN64)
+#if	defined(_WIN64)
 	vmovapd	%xmm1,%xmm0
 	vmovapd	%xmm2,%xmm1
 #endif
@@ -4985,7 +4985,7 @@ LBL(.L__fsz_exp_vex_win64):
         movq    %rsp, %rbp
         subq    $256, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  %ymm6, 128(%rsp)
         vmovdqu  %ymm7, 160(%rsp)
         vmovdqu  %ymm8, 192(%rsp)
@@ -5291,7 +5291,7 @@ LBL(.L__fsz_exp_vex_win64):
         vmulsd   %xmm0,%xmm1,%xmm1
         vmulsd   %xmm9,%xmm0,%xmm0
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movq    24(%rsp),I1
         vmovdqu  128(%rsp),%ymm6
         vmovdqu  160(%rsp),%ymm7
@@ -5894,7 +5894,7 @@ ENT(ASM_CONCAT(__fvd_pow_,TARGET_VEX_OR_FMA)):
 	test	$3, %r8d
 	jnz	LBL(.L__Scalar_fvdpow)
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, 96(%rsp)
 #endif
 	/* Call log long version */
@@ -5945,7 +5945,7 @@ ENT(ASM_CONCAT(__fvd_pow_,TARGET_VEX_OR_FMA)):
 	CALL(ENT(ASM_CONCAT(__fvd_exp_long_,TARGET_VEX_OR_FMA)))
 
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	96(%rsp), %ymm6
 #endif
 
@@ -5989,7 +5989,7 @@ ENT(ASM_CONCAT(__fsd_pow_,TARGET_VEX_OR_FMA)):
 	vmovsd	%xmm1, 0(%rsp)
 	vmovsd	%xmm0, 8(%rsp)
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, 32(%rsp)
 #endif
 	/* r8 holds flags for x, in rax */
@@ -6100,7 +6100,7 @@ LBL(.L__D_algo_start):
 
 
 LBL(.L__Dpop_and_return):
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	32(%rsp), %ymm6
 #endif
 	movq	%rbp, %rsp
@@ -7067,7 +7067,7 @@ ENT(ASM_CONCAT(__fvs_exp_,TARGET_VEX_OR_FMA)):
 
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, RZ_OFF(104)(%rsp)
 	movq	%rsi, RZ_OFF(64)(%rsp)
 	movq	%rdi, RZ_OFF(72)(%rsp)
@@ -7223,7 +7223,7 @@ ASM_CONCAT(.L__fvs_exp_dbl_entry_,TARGET_VEX_OR_FMA):
 
 LBL(.L_vsp_final_check):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	RZ_OFF(104)(%rsp), %ymm6
 	movq	RZ_OFF(64)(%rsp), %rsi
 	movq	RZ_OFF(72)(%rsp), %rdi
@@ -7234,7 +7234,7 @@ LBL(.L_vsp_final_check):
 	ret
 
 LBL(.L__Scalar_fvsexp):
-#if defined(WIN64)
+#if defined(_WIN64)
 	/* Need to restore callee-saved regs can do here for this path
 	 * because entry was only thru fvs_exp_fma4/fvs_exp_vex
 	 */
@@ -7292,7 +7292,7 @@ ENT(__fvs_exp_dbl_vex):
 #endif
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, RZ_OFF(104)(%rsp)
 	movq	%rsi, RZ_OFF(64)(%rsp)
 	movq	%rdi, RZ_OFF(72)(%rsp)
@@ -7357,7 +7357,7 @@ LBL(.L__Scalar_fvs_exp_dbl):
         popq    %rbp
 
 	/* Done */
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	RZ_OFF(104)(%rsp), %ymm6
 	movq	RZ_OFF(64)(%rsp), %rsi
 	movq	RZ_OFF(72)(%rsp), %rdi
@@ -7641,7 +7641,7 @@ ENT(__fvd_exp_long_vex):
 	sar	$5,%edx
 	vaddpd	%xmm5,%xmm2,%xmm2    /* xmm2 = r = r1 + r2 */
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, RZ_OFF(72)(%rsp)
 #endif
 	/* Step 2. Compute the polynomial. */
@@ -7738,7 +7738,7 @@ ENT(__fvd_exp_long_vex):
 	movq	%rdx,RZ_OFF(16)(%rsp) 	/* get 2^n to memory */
 	vmulpd	RZ_OFF(24)(%rsp),%xmm0,%xmm0  /* result*= 2^n */
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	RZ_OFF(72)(%rsp), %ymm6
 #endif
 
@@ -7842,7 +7842,7 @@ ENT(ASM_CONCAT(__fsd_log_,TARGET_VEX_OR_FMA)):
 
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, RZ_OFF(96)(%rsp)
 #endif
 	/* Get input x into the range [0.5,1) */
@@ -7946,7 +7946,7 @@ LBL(.L__100):
 	vaddsd	%xmm1,%xmm0,%xmm0
 
 LBL(.L__finish):
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	RZ_OFF(96)(%rsp), %ymm6
 #endif
 
@@ -8061,7 +8061,7 @@ ENT(ASM_CONCAT(__fvd_log_,TARGET_VEX_OR_FMA)):
 
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, RZ_OFF(72)(%rsp)
 #endif
 
@@ -8178,7 +8178,7 @@ LBL(.Lfinish):
 	jnz		LBL(.Lnear_one)
 LBL(.Lfinishn1):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	RZ_OFF(72)(%rsp), %ymm6
 #endif
 	RZ_POP
@@ -8801,7 +8801,7 @@ ENT(ASM_CONCAT(__fvs_log_,TARGET_VEX_OR_FMA)):
 
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, RZ_OFF(72)(%rsp)
 	vmovdqu	%ymm7, RZ_OFF(104)(%rsp)
 #endif
@@ -8961,7 +8961,7 @@ LBL(.LB_100):
 
 LBL(.LB_900):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	RZ_OFF(72)(%rsp), %ymm6
 	vmovdqu	RZ_OFF(104)(%rsp), %ymm7
 #endif
@@ -9069,7 +9069,7 @@ ENT(ASM_CONCAT(__fss_log_,TARGET_VEX_OR_FMA)):
 
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, RZ_OFF(96)(%rsp)
 #endif
 	/* First check for valid input:
@@ -9182,7 +9182,7 @@ LBL(.LB1_100):
 
 LBL(.LB1_900):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	RZ_OFF(96)(%rsp), %ymm6
 #endif
 	RZ_POP
@@ -9258,7 +9258,7 @@ ENT(ASM_CONCAT(__fvd_log10_,TARGET_VEX_OR_FMA)):
 
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, RZ_OFF(72)(%rsp)
 #endif
 
@@ -9391,7 +9391,7 @@ ENT(ASM_CONCAT(__fvd_log10_,TARGET_VEX_OR_FMA)):
 
 LBL(.Lfinishn1_log10):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	RZ_OFF(72)(%rsp), %ymm6
 #endif
 	RZ_POP
@@ -9570,7 +9570,7 @@ ENT(ASM_CONCAT(__fsd_log10_,TARGET_VEX_OR_FMA)):
 
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, RZ_OFF(96)(%rsp)
 #endif
 	/* Get input x into the range [0.5,1) */
@@ -9689,7 +9689,7 @@ LBL(.L__cvt_to_dlog10):
 	vaddsd	%xmm1,%xmm0,%xmm0
 
 LBL(.L__finish_dlog10):
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	RZ_OFF(96)(%rsp), %ymm6
 #endif
 
@@ -9824,7 +9824,7 @@ ENT(ASM_CONCAT(__fvs_log10_,TARGET_VEX_OR_FMA)):
 
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, RZ_OFF(72)(%rsp)
 	vmovdqu	%ymm7, RZ_OFF(104)(%rsp)
 #endif
@@ -9991,7 +9991,7 @@ LBL(.LB_100_log10):
 
 LBL(.LB_900_log10):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	RZ_OFF(72)(%rsp), %ymm6
 	vmovdqu	RZ_OFF(104)(%rsp), %ymm7
 #endif
@@ -10099,7 +10099,7 @@ ENT(ASM_CONCAT(__fss_log10_,TARGET_VEX_OR_FMA)):
 
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, RZ_OFF(96)(%rsp)
 #endif
 	/* First check for valid input:
@@ -10210,7 +10210,7 @@ LBL(.LB1_100_log10):
 
 LBL(.LB1_900_log10):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	RZ_OFF(96)(%rsp), %ymm6
 #endif
 	RZ_POP
@@ -10615,7 +10615,7 @@ ENT(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA)):
 
 	RZ_PUSH
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, RZ_OFF(96)(%rsp)
 #endif
 
@@ -10801,7 +10801,7 @@ ENT(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA)):
 	vaddsd	%xmm6, %xmm0,%xmm0
 #endif
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	RZ_OFF(96)(%rsp), %ymm6
 #endif
 
@@ -10832,7 +10832,7 @@ ENT(ASM_CONCAT(__fsd_cosh_,TARGET_VEX_OR_FMA)):
 ENT(ASM_CONCAT(__fsd_sinh_,TARGET_VEX_OR_FMA)):
 
 	RZ_PUSH
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	%ymm6, RZ_OFF(96)(%rsp)
 #endif
 
@@ -11024,7 +11024,7 @@ ENT(ASM_CONCAT(__fsd_sinh_,TARGET_VEX_OR_FMA)):
 
 LBL(.L__fsd_sinh_done):
 
-#if defined(WIN64)
+#if defined(_WIN64)
 	vmovdqu	RZ_OFF(96)(%rsp), %ymm6
 #endif
 	RZ_POP
@@ -11104,7 +11104,7 @@ ENT(ASM_CONCAT(__fvs_cosh_,TARGET_VEX_OR_FMA)):
         movq    %rsp, %rbp
         subq    $256, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movq    %rsi, 64(%rsp)
         movq    %rdi, 56(%rsp)
         vmovdqu %ymm6, 192(%rsp)
@@ -11342,7 +11342,7 @@ ENT(ASM_CONCAT(__fvs_cosh_,TARGET_VEX_OR_FMA)):
 
 LBL(.L_fvcosh_final_check):
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movq    64(%rsp), %rsi
         movq    56(%rsp), %rdi
         vmovdqu 192(%rsp), %ymm6
@@ -11358,7 +11358,7 @@ LBL(.L__Scalar_fvscosh):
         /* Need to restore callee-saved regs can do here for this path
          * because entry was only thru fvs_cosh_fma4/fvs_cosh_vex
          */
-#if defined(WIN64)
+#if defined(_WIN64)
         movq    64(%rsp), %rsi
         movq    56(%rsp), %rdi
         vmovdqu 192(%rsp), %ymm6
@@ -11418,7 +11418,7 @@ ENT(ASM_CONCAT(__fvs_sinh_,TARGET_VEX_OR_FMA)):
         movq    %rsp, %rbp
         subq    $256, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movq    %rsi, 64(%rsp)
         movq    %rdi, 56(%rsp)
         vmovdqu %ymm6, 192(%rsp)
@@ -11656,7 +11656,7 @@ ENT(ASM_CONCAT(__fvs_sinh_,TARGET_VEX_OR_FMA)):
 
 LBL(.L_fvsinh_final_check):
 
-#if defined(WIN64)
+#if defined(_WIN64)
         movq    64(%rsp), %rsi
         movq    56(%rsp), %rdi
         vmovdqu 192(%rsp), %ymm6
@@ -11672,7 +11672,7 @@ LBL(.L__Scalar_fvssinh):
         /* Need to restore callee-saved regs can do here for this path
          * because entry was only thru fvs_sinh_fma4/fvs_sinh_vex
          */
-#if defined(WIN64)
+#if defined(_WIN64)
         movq    64(%rsp), %rsi
         movq    56(%rsp), %rdi
         vmovdqu 192(%rsp), %ymm6
@@ -11751,7 +11751,7 @@ ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA)):
 	testl	$3, %r8d
 	jnz	LBL(.L__Scalar_fvdcosh)
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  %ymm6, 72(%rsp)
 #endif
 
@@ -11963,7 +11963,7 @@ ENT(ASM_CONCAT(__fvd_cosh_,TARGET_VEX_OR_FMA)):
 	vaddpd	%xmm6,%xmm0,%xmm0		/* done with cosh */
 #endif
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  72(%rsp),%ymm6
 #endif
 
@@ -12044,7 +12044,7 @@ ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA)):
 	testl	$3, %r8d
 	jnz	LBL(.L__Scalar_fvdsinh)
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  %ymm6, 72(%rsp)
 #endif
 
@@ -12264,7 +12264,7 @@ ENT(ASM_CONCAT(__fvd_sinh_,TARGET_VEX_OR_FMA)):
 	vsubpd	%xmm6,%xmm0,%xmm0		/* done with sinh */
 #endif
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu  72(%rsp),%ymm6
 #endif
 
@@ -12325,7 +12325,7 @@ ENT(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_256)):
         movq    %rsp, %rbp
         subq    $256, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu %ymm6, 128(%rsp)
         movq    %rsi, 192(%rsp)
         movq    %rdi, 224(%rsp)
@@ -12346,7 +12346,7 @@ ENT(ASM_CONCAT3(__fvs_exp_,TARGET_VEX_OR_FMA,_256)):
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu 128(%rsp), %ymm6
         movq    %rsi, 192(%rsp)
         movq    %rdi, 224(%rsp)
@@ -12471,7 +12471,7 @@ ENT(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_256)):
         movq    %rsp, %rbp
         subq    $256, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu %ymm6, 128(%rsp)
         vmovdqu %ymm7, 160(%rsp)
 #endif
@@ -12492,7 +12492,7 @@ ENT(ASM_CONCAT3(__fvd_sin_,TARGET_VEX_OR_FMA,_256)):
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu 128(%rsp), %ymm6
         vmovdqu 160(%rsp), %ymm7
 #endif
@@ -12571,7 +12571,7 @@ ENT(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_256)):
         movq    %rsp, %rbp
         subq    $256, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu %ymm6, 128(%rsp)
         vmovdqu %ymm7, 160(%rsp)
 #endif
@@ -12592,7 +12592,7 @@ ENT(ASM_CONCAT3(__fvd_cos_,TARGET_VEX_OR_FMA,_256)):
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu 128(%rsp), %ymm6
         vmovdqu 160(%rsp), %ymm7
 #endif
@@ -12627,7 +12627,7 @@ ENT(ASM_CONCAT3(__fvs_log_,TARGET_VEX_OR_FMA,_256)):
         movq    %rsp, %rbp
         subq    $512, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu %ymm6, 128(%rsp)
         vmovdqu %ymm7, 160(%rsp)
         vmovdqu %ymm8, 192(%rsp)
@@ -12816,7 +12816,7 @@ LBL(.LB_900_256):
 
 /*******************************************/
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu 128(%rsp), %ymm6
         vmovdqu 160(%rsp), %ymm7
         vmovdqu 192(%rsp), %ymm8
@@ -12925,7 +12925,7 @@ ENT(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_256)):
         movq    %rsp, %rbp
         subq    $256, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu %ymm6, 128(%rsp)
 #endif
 
@@ -12945,7 +12945,7 @@ ENT(ASM_CONCAT3(__fvd_log_,TARGET_VEX_OR_FMA,_256)):
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu 128(%rsp), %ymm6
 #endif
 
@@ -12978,7 +12978,7 @@ ENT(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_256)):
         movq    %rsp, %rbp
         subq    $256, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu %ymm6, 128(%rsp)
         vmovdqu %ymm7, 160(%rsp)
 #endif
@@ -12999,7 +12999,7 @@ ENT(ASM_CONCAT3(__fvs_log10_,TARGET_VEX_OR_FMA,_256)):
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu 128(%rsp), %ymm6
         vmovdqu 160(%rsp), %ymm7
 #endif
@@ -13033,7 +13033,7 @@ ENT(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_256)):
         movq    %rsp, %rbp
         subq    $256, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu %ymm6, 128(%rsp)
 #endif
 
@@ -13053,7 +13053,7 @@ ENT(ASM_CONCAT3(__fvd_log10_,TARGET_VEX_OR_FMA,_256)):
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu 128(%rsp), %ymm6
 #endif
 
@@ -13086,7 +13086,7 @@ ENT(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_256)):
         movq    %rsp, %rbp
         subq    $256, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu %ymm6, 128(%rsp)
         vmovdqu %ymm7, 160(%rsp)
 	movq	%rsi, 192(%rsp)
@@ -13109,7 +13109,7 @@ ENT(ASM_CONCAT3(__fvs_sinh_,TARGET_VEX_OR_FMA,_256)):
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu 128(%rsp), %ymm6
         vmovdqu 160(%rsp), %ymm7
 	movq	192(%rsp), %rsi
@@ -13190,7 +13190,7 @@ ENT(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_256)):
         movq    %rsp, %rbp
         subq    $256, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu %ymm6, 128(%rsp)
         vmovdqu %ymm7, 160(%rsp)
         movq    %rsi, 192(%rsp)
@@ -13213,7 +13213,7 @@ ENT(ASM_CONCAT3(__fvs_cosh_,TARGET_VEX_OR_FMA,_256)):
         vmovups 80(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu 128(%rsp), %ymm6
         vmovdqu 160(%rsp), %ymm7
         movq    192(%rsp), %rsi
@@ -13294,7 +13294,7 @@ ENT(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_256)):
         movq    %rsp, %rbp
         subq    $256, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu %ymm6, 128(%rsp)
         vmovdqu %ymm7, 160(%rsp)
 #endif
@@ -13319,7 +13319,7 @@ ENT(ASM_CONCAT3(__fvs_sincos_,TARGET_VEX_OR_FMA,_256)):
         vmovups 96(%rsp), %ymm4
         vinsertf128     $1, %xmm1, %ymm4, %ymm1
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu 128(%rsp), %ymm6
         vmovdqu 160(%rsp), %ymm7
 #endif
@@ -13353,7 +13353,7 @@ ENT(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_256)):
         movq    %rsp, %rbp
         subq    $256, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu %ymm6, 128(%rsp)
         vmovdqu %ymm7, 160(%rsp)
         vmovdqu	%ymm8, 192(%rsp)
@@ -13379,7 +13379,7 @@ ENT(ASM_CONCAT3(__fvd_sincos_,TARGET_VEX_OR_FMA,_256)):
         vmovups 96(%rsp), %ymm4
         vinsertf128     $1, %xmm1, %ymm4, %ymm1
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu 128(%rsp), %ymm6
         vmovdqu 160(%rsp), %ymm7
         vmovdqu	192(%rsp), %ymm8
@@ -13463,7 +13463,7 @@ ENT(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_256)):
         movq    %rsp, %rbp
         subq    $256, %rsp
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu %ymm6, 128(%rsp)
 #endif
 
@@ -13486,7 +13486,7 @@ ENT(ASM_CONCAT3(__fvd_pow_,TARGET_VEX_OR_FMA,_256)):
         vmovups 64(%rsp), %ymm1
         vinsertf128     $1, %xmm0, %ymm1, %ymm0
 
-#if defined(WIN64)
+#if defined(_WIN64)
         vmovdqu 128(%rsp), %ymm6
 #endif
 

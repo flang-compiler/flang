@@ -78,7 +78,7 @@ addn(char *p, unsigned long val, int n)
 static LONG pgrand = 0;
 static unsigned long pid = 0;
 
-#if defined(USETEMPNAM) || defined(HOST_WIN) || defined(WIN64)
+#if defined(USETEMPNAM) || defined(HOST_WIN) || defined(_WIN64)
 static int next = 0; /* counter of files created */
 
 /*
@@ -132,7 +132,7 @@ gentmp(char *pfx, char *sfx)
     last = NULL;
     for (q = filename; *q; ++q) {
       if (*q == '/'
-#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64)
+#if defined(HOST_WIN) || defined(_WIN32)
           || *(p - 1) != '\\'
 #endif
           ) {
@@ -233,7 +233,7 @@ gentmp(char *pfx, char *sfx)
   }
   p = add(filename, tmpdir);
   if (*(p - 1) != '/'
-#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64)
+#if defined(HOST_WIN) || defined(_WIN32)
       && *(p - 1) != '\\'
 #endif
       )
@@ -349,7 +349,7 @@ pg_makenewdir(char *pfx, char *sfx, int make)
     if (r == -1 && errno == ENOENT) {
       if (make) {
         int err;
-#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64)
+#if defined(HOST_WIN) || defined(_WIN32)
         err = _mkdir(filename);
 #else
         err = mkdir(filename, S_IRWXG | S_IRWXO | S_IXUSR | S_IWUSR | S_IRUSR);

@@ -18,7 +18,7 @@
 #undef CLEN
 
 /* macros for entries */
-#if defined(WINNT) && !defined(WIN64) && !defined(UXOBJS)
+#if defined(_WIN32) && !defined(_WIN64) && !defined(UXOBJS)
 
 #pragma global - x 121 0x20000
 #define ENT3F(UC, LC) __attribute__((stdcall)) UC
@@ -37,7 +37,7 @@
 
 #endif
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN32)
 #define j0 _j0
 #define j1 _j1
 #define jn _jn

@@ -18,7 +18,7 @@
 #endif
 #include "stdioInterf.h"
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN32)
 #define unlink _unlink
 #define access _access
 #endif
@@ -38,7 +38,7 @@ __fortio_close(FIO_FCB *f, int flag)
 
   if (f->nonadvance) {
     f->nonadvance = FALSE;
-#if defined(WINNT)
+#if defined(_WIN32)
     if (__fortio_binary_mode(f->fp))
       __io_fputc('\r', f->fp);
 #endif
@@ -61,7 +61,7 @@ __fortio_close(FIO_FCB *f, int flag)
       else
         __fort_unlink(f->name);
     }
-#ifdef WINNT
+#if defined(_WIN32)
     else if (f->status == FIO_SCRATCH)
       unlink(f->name);
 #endif

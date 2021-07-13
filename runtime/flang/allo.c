@@ -237,7 +237,7 @@ I8(__fort_alloc)(__INT_T nelem, dtype kind, size_t len, __STAT_T *stat,
   char msg[80];
   char *p_env;
 
-#if (defined(WIN64) || defined(WIN32))
+#if defined(_WIN32)
 #define ALN_LARGE
 #else
 #undef ALN_LARGE
@@ -397,7 +397,7 @@ I8(__alloc04)(__NELEM_T nelem, dtype kind, size_t len,
     MP_V_STDIO;
   }
 
-#if (defined(WIN64) || defined(WIN32))
+#if defined(_WIN32)
 #define ALN_LARGE
 #else
 #undef ALN_LARGE

@@ -5,7 +5,7 @@
  *
  */
 
-#if !defined(WIN64)
+#if !defined(_WIN64)
 #include "mthdecls.h"
 #else
 double atan(double d);

@@ -11,7 +11,7 @@
 
 #include "ent3f.h"
 
-#ifdef WIN32
+#if defined(_WIN32)
 #define yn _yn
 #endif
 

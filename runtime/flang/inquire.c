@@ -16,7 +16,7 @@
 #include "global.h"
 #include "async.h"
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN32)
 #define access _access
 #endif
 

@@ -35,7 +35,7 @@
 
 #if   defined(TARGET_OSX)
 #include <crt_externs.h>
-#elif defined(__WIN64)
+#elif defined(_WIN64)
 /* OPENTOOLS14 has changed the name.  wrap _environ for all of windowws */
 char **__io_environ();
 #else
@@ -67,19 +67,16 @@ static struct {
 /* common blocks containing values for inlined number_of_processors()
    and my_processor() functions */
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN32)
 WIN_IMP __INT_T ENTCOMN(NP, np)[];
 WIN_IMP __INT_T ENTCOMN(ME, me)[];
-#elif defined(C90) || defined(WINNT)
+#define write _write
+#elif defined(C90)
 __INT_T ENTCOMN(NP, np)[1];
 __INT_T ENTCOMN(ME, me)[1];
 #else
 extern __INT_T ENTCOMN(NP, np)[];
 extern __INT_T ENTCOMN(ME, me)[];
-#endif
-
-#if defined(WIN32) || defined(WIN64)
-#define write _write
 #endif
 
 /* Return logical cpu number */
@@ -98,8 +95,8 @@ __fort_ncpus()
   return __fort_tcpus;
 }
 
-#if defined(WINNT)
-#if !defined(WIN64) && !defined(WIN32)
+#if defined(_WIN32)
+#if !defined(_WIN64)
 __INT_T *CORMEM;
 
 /* special argument pointer access routines */
@@ -161,7 +158,7 @@ __get_fort_np_addr(void)
 {
   return (char *)ENTCOMN(NP, np);
 }
-#endif /* !WIN64 || !WIN32 */
+#endif /* !_WIN64 */
 
 /* access routines for data shared between windows dlls */
 
@@ -309,7 +306,7 @@ __set_fort_tids_elem(int idx, int val)
   __fort_tids[idx] = val;
 }
 
-#endif /* WINNT */
+#endif /* _WIN32 */
 
 int
 __fort_getioproc()
