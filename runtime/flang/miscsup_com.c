@@ -4545,6 +4545,10 @@ ENTF90(NEARESTX, nearestx)(__REAL4_T f, __LOG_T sign)
       ++x.i;
     else
       --x.i;
+  } else if (!(sign & GET_DIST_MASK_LOG) && (x.i == 0x7F800000)) {
+    x.i = 0x7F7FFFFF;
+  } else if ((sign & GET_DIST_MASK_LOG) && (x.i == 0xFF800000)) {
+    x.i = 0xFF7FFFFF;
   }
   return x.f;
 }
@@ -4564,13 +4568,15 @@ ENTF90(NEARESTDX, nearestdx)(__REAL8_T d, __LOG_T sign)
   if (x.d == 0.0) {
     x.i.h = (sign & 1) ? 0x00100000 : 0x80100000;
     x.i.l = 0;
-  } else {
-    if ((x.ll >> 52 & 0x7FF) != 0x7FF) { /* not nan or inf */
+  } else if ((x.ll >> 52 & 0x7FF) != 0x7FF) { /* not nan or inf */
       if ((x.d < 0) ^ (sign & GET_DIST_MASK_LOG))
         ++x.ll;
       else
         --x.ll;
-    }
+  } else if (!(sign & GET_DIST_MASK_LOG) && (x.ll == 0x7FF0000000000000)) {
+    x.ll = 0x7FEFFFFFFFFFFFFF;
+  } else if ((sign & GET_DIST_MASK_LOG) && (x.ll == 0xFFF0000000000000)) {
+    x.ll = 0xFFEFFFFFFFFFFFFF;
   }
   return x.d;
 }
