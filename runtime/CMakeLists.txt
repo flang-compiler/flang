@@ -6,13 +6,24 @@
 
 set (RUNTIME_SHARED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shared)
 
+if( ${TARGET_OS} STREQUAL "Darwin" )
+  add_definitions(
+   -DTARGET_OSX
+   -DTARGET_OSX_X8664
+   -DOSX86
+  )
+else()
+  add_definitions(
+   -DTARGET_LINUX
+   -DLINUX
+  )
+endif()
+
 add_definitions(
  -DMAXCPUS=256 
  -DMAXCPUSL=8 
  -DMAXCPUSR=8 
- -DTARGET_LINUX 
  -DTARGET_LLVM 
- -DLINUX 
  -DPGF90 
  -DPGFLANG
  -DNATIVE_FPCVT

@@ -83,14 +83,14 @@ endif()
 if (NOT DEFINED LIBOMP_EXPORT_DIR)
   find_library( 
     FLANG_LIBOMP
-    libomp.so
+    libomp${CMAKE_SHARED_LIBRARY_SUFFIX}
     HINTS ${CMAKE_BINARY_DIR}/lib)
   target_link_libraries(flangrti_shared ${FLANG_LIBOMP})
 endif()
 
 find_library( 
   LIBPGMATH
-  libpgmath.so
+  libpgmath${CMAKE_SHARED_LIBRARY_SUFFIX}
   HINTS ${CMAKE_BINARY_DIR}/lib)
 target_link_libraries(flangrti_shared ${LIBPGMATH})
 

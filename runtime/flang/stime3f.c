@@ -17,6 +17,10 @@
 
 int ENT3F(STIME, stime)(int *tp)
 {
+#ifdef TARGET_OSX
+  /* stime() doesn't exist on maxOS and is root-only anyway */
+  return EPERM;
+#else
   int i;
   struct timespec ts = {0};
 
@@ -25,6 +29,7 @@ int ENT3F(STIME, stime)(int *tp)
     i = __io_errno();
 
   return i;
+#endif
 }
 
 #endif /* !WINNT */

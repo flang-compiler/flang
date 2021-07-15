@@ -162,7 +162,6 @@ char *mkfname(char *, char *, char *); /* from miscutil.c: */
 bool is_xflag_bit(int);
 void set_xflag(int, INT);
 void set_yflag(int, INT);
-void bzero(void *, size_t);
 void list_init(FILE *); /* listing.c: */
 void list_line(char *); /* listing.c */
 void list_page(void);   /* listing.c */
