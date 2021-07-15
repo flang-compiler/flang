@@ -11,6 +11,16 @@
  *  Declare routines that access the machine registers
  */
 
-void dumpregs(gregset_t *regs);
-gregset_t *getRegs(ucontext_t *u);
+#include "flangrti_config.h"
 
+#if defined(HAVE_GREGSET_T)
+#include <sys/ucontext.h>
+#define FLANGRTI_GREGSET_T gregset_t
+#define FLANGRTI_UCONTEXT_T ucontext_t
+#else
+#define FLANGRTI_GREGSET_T void
+#define FLANGRTI_UCONTEXT_T void
+#endif
+
+void dumpregs(FLANGRTI_GREGSET_T *regs);
+FLANGRTI_GREGSET_T *getRegs(FLANGRTI_UCONTEXT_T *u);

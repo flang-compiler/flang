@@ -5,9 +5,9 @@
  *
  */
 
+#include "flangrti_config.h"
 #include <stdint.h>
 #include <signal.h>
-#include <sys/ucontext.h>
 #include <execinfo.h>
 #include <stdioInterf.h>
 #include "dumpregs.h"
@@ -82,7 +82,7 @@ static struct sigs sigs[] = {
     {0, CODNULL, NULL} /* end of list */
 };
 
-static gregset_t *regs; /* pointer to regs at signal  */
+static FLANGRTI_GREGSET_T *regs; /* pointer to regs at signal  */
 
 extern char **__io_get_argv();
 static char ** saved_argv = NULL;
@@ -172,7 +172,7 @@ __abort_trace(int skip)
   char **strings;
   size_t i;
 
-  if (regs != (gregset_t *)0) {
+  if (regs != (FLANGRTI_GREGSET_T *)0) {
     dumpregs(regs);
   }
 
@@ -201,7 +201,7 @@ __abort_trace(int skip)
  */
 
 static void
-__abort_sig_hand(int sig, siginfo_t *in, ucontext_t *u)
+__abort_sig_hand(int sig, siginfo_t *in, FLANGRTI_UCONTEXT_T *u)
 {
   char *p;
   char b[128];

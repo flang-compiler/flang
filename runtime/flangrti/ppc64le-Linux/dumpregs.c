@@ -5,6 +5,8 @@
  *
  */
 
+#include "flangrti_config.h"
+#if defined(HAVE_GREGSET_T)
 #include <sys/ucontext.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -86,3 +88,18 @@ getRegs(ucontext_t *u)
   mcontext_t *mc = &u->uc_mcontext;
   return (uint64_t *)&(mc->gp_regs);
 }
+
+#else
+
+void
+dumpregs(void *regs)
+{
+}
+
+void *
+getRegs(void *u)
+{
+  return (void *)0;
+}
+
+#endif

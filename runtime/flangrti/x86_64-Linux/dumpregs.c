@@ -5,11 +5,9 @@
  *
  */
 
+#include "dumpregs.h"
 #include <stdint.h>
 #include <inttypes.h>
-#if !defined(TARGET_WIN)
-#include <sys/ucontext.h>
-#endif
 #include "stdioInterf.h"
 
 /* define register indexes */
@@ -32,7 +30,7 @@
 #define RSP 15
 #define RIP 16
 
-#if defined(TARGET_OSX) || defined(TARGET_WIN)
+#if !defined(HAVE_GREGSET_T)
 /* no gregs and/or ucontext defined in for OSX or Windows */
 void * 
 getRegs(void *u)
