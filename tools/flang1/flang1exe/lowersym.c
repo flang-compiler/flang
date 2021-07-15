@@ -1221,6 +1221,101 @@ lower_pointer_init(void)
   }
 } /* lower_pointer_init */
 
+/* When prepend_func_result_as_first_arg(semfin.c) has been called for an
+ * entry, the FVAL symbol and its descriptor symbol if exist are referred in
+ * the entry's dummy arguments.
+ * When we are going to identify all result variables of same dtype from
+ * different entry points with a single symbol, here we traverse all the dummy
+ * arguments, and replace the FVAL symbol and its descriptor symbol with this
+ * single symbol and corresponding descriptor symbol.
+ */
+static void
+replace_fval_in_params(SPTR entry, SPTR entrysame)
+{
+  SPTR fval, fvalsame, newdsc, newdscsame, newarg, newargsame;
+  int params, narg, i;
+
+  fval = FVALG(entry);
+  fvalsame = FVALG(entrysame);
+  newdsc = NEWDSCG(fval);
+  newarg = NEWARGG(fval);
+  newdscsame = NEWDSCG(fvalsame);
+  newargsame = NEWARGG(fvalsame);
+  params = DPDSCG(entry);
+  narg = PARAMCTG(entry);
+  for (i = 0; i < narg; i++) {
+    int arg = aux.dpdsc_base[params + i];
+    if (arg != 0 && arg == newarg) {
+      aux.dpdsc_base[params + i] = newargsame;
+      continue;
+    }
+    if (arg != 0 && arg == newdsc) {
+      aux.dpdsc_base[params + i] = newdscsame;
+      continue;
+    }
+  }
+}
+
+/* replace the symbol used in the ast of type A_ID taking advantage of the hash
+ * in the AST table
+ */
+static void
+replace_sptr_in_ast(SPTR sptr)
+{
+  SPTR newsptr;
+  int ast;
+
+  if (sptr <= NOSYM) {
+    return;
+  }
+  newsptr = LOWER_SYMBOL_REPLACE(sptr);
+  if (newsptr <= NOSYM) {
+    return;
+  }
+  ast = mk_id(sptr);
+  A_SPTRP(ast, newsptr);
+}
+
+static inline void
+add_replace_map(SPTR sptr, SPTR newsptr)
+{
+  if (sptr <= NOSYM || newsptr <= NOSYM) {
+    return;
+  }
+  LOWER_SYMBOL_REPLACE(sptr) = newsptr;
+}
+
+/* replace the fval symbol and associated symbols when the fval symbol is
+ * pointer or array
+ */
+static void
+replace_fval_in_ast(SPTR fval, SPTR fvalsame)
+{
+  SPTR var, var_same;
+
+  replace_sptr_in_ast(fval);
+
+  var = MIDNUMG(fval);
+  var_same = MIDNUMG(fvalsame);
+  add_replace_map(var, var_same);
+  replace_sptr_in_ast(var);
+
+  var = PTROFFG(fval);
+  var_same = PTROFFG(fvalsame);
+  add_replace_map(var, var_same);
+  replace_sptr_in_ast(var);
+
+  var = DESCRG(fval);
+  var_same = DESCRG(fvalsame);
+  add_replace_map(var, var_same);
+  replace_sptr_in_ast(var);
+
+  var = SDSCG(fval);
+  var_same = SDSCG(fvalsame);
+  add_replace_map(var, var_same);
+  replace_sptr_in_ast(var);
+}
+
 extern int pghpf_type_sptr;
 extern int pghpf_local_mode_sptr;
 
@@ -1228,6 +1323,8 @@ void
 lower_init_sym(void)
 {
   int sym, dtype;
+  LOGICAL from_func;
+
   lowersym.sc = SC_LOCAL;
   lowersym.parallel_depth = 0;
   lowersym.task_depth = 0;
@@ -1353,9 +1450,10 @@ lower_init_sym(void)
   stack_size = 100;
   NEW(stack, int, stack_size);
 
+  from_func = gbl.rutype == RU_SUBR && gbl.entries > NOSYM && FVALG(gbl.entries);
   /* look for ENTRY points; make all ENTRY points with the same
    * return type use the same FVAL symbol */
-  if (gbl.rutype == RU_FUNC) {
+  if (from_func || gbl.rutype == RU_FUNC) {
     int ent, esame;
     for (ent = gbl.entries; ent > NOSYM; ent = SYMLKG(ent)) {
       for (esame = gbl.entries; esame != ent; esame = SYMLKG(esame)) {
@@ -1363,11 +1461,13 @@ lower_init_sym(void)
         fval = FVALG(ent);
         fvalsame = FVALG(esame);
         if (fval && fvalsame && fval != fvalsame &&
-            DTYPEG(fval) == DTYPEG(fvalsame)) {
+            same_dtype(DTYPEG(fval), DTYPEG(fvalsame))) {
           /* esame is the earlier entry point, make ent use the
            * FVAL of esame */
           LOWER_SYMBOL_REPLACE(fval) = fvalsame;
+          replace_fval_in_params(ent, esame);
           FVALP(ent, fvalsame);
+          replace_fval_in_ast(fval, fvalsame);
           break; /* leave inner loop */
         }
       }
