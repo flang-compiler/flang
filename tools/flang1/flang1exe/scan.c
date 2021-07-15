@@ -4531,7 +4531,7 @@ alpha(void)
       default:
         break;
       }
-    } else if (id[1] == '0') {
+    } else if (id[1] == '0' && id[2] == 0) {
       if (*cp == ' ' || *cp == ',' || *cp == ')') {
         tkntyp = TK_G0FORMAT; /* G0 */
         idlen += 1;
