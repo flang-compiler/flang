@@ -4,18 +4,26 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 
-set(ENV{LC_ALL} "C")
-
 add_executable(upperl
   upperl.c
   )
 
 # Generate upper tables
+file(STRINGS "${UTILS_UPPER_DIR}/upperilm.in" UPPERILM_H_CONTENTS)
+list(SORT UPPERILM_H_CONTENTS)
+set(UPPERILM_H_CONTENTS_SORTED "")
+foreach(Line ${UPPERILM_H_CONTENTS})
+  # Don't modify the line if it contains #local at the end.
+  string(SUBSTRING "${Line}" 0 1 FIRST_CHAR)
+  if(NOT "${FIRST_CHAR}" STREQUAL "#")
+    set(UPPERILM_H_CONTENTS_SORTED "${UPPERILM_H_CONTENTS_SORTED}${Line}\n")
+  endif()
+endforeach()
+file(WRITE ${UTILS_UPPER_BIN_DIR}/upperilm.sort "${UPPERILM_H_CONTENTS_SORTED}")
 
 add_custom_command( 
   OUTPUT ${UTILS_UPPER_BIN_DIR}/upperilm.h
-  COMMAND LC_ALL=C sort ${UTILS_UPPER_DIR}/upperilm.in | grep -v "^ *\#" > ${UTILS_UPPER_BIN_DIR}/upperilm.sort
-  COMMAND ${CMAKE_BINARY_DIR}/bin/upperl ${UTILS_UPPER_BIN_DIR}/upperilm.sort ${UTILS_UPPER_BIN_DIR}/upperilm.h
+  COMMAND upperl ${UTILS_UPPER_BIN_DIR}/upperilm.sort ${UTILS_UPPER_BIN_DIR}/upperilm.h
   DEPENDS upperl ${UTILS_UPPER_DIR}/upperilm.in
   )
 

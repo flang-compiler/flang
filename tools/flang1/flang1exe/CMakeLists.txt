@@ -155,9 +155,12 @@ target_compile_options(flang1
 target_link_libraries(flang1
   PRIVATE
   flangArgParser
-  ${FLANG_LIB_DIR}/scutil.a
-  -lm
+  scutil
   )
+
+if (NOT MSVC)
+  target_link_libraries(flang1 PRIVATE m)
+endif()
 
 # Install flang1 executable
 install(TARGETS flang1

@@ -143,6 +143,10 @@ target_link_libraries(flang2
   scutil
   )
 
+if (NOT MSVC)
+  target_link_libraries(flang2 PRIVATE m)
+endif()
+
 add_dependencies(flang2
   gen_backend_error_headers # Error message headers
   gen_backend_symtab        # Symbol table headers
