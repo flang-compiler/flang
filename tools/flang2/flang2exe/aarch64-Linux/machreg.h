@@ -183,7 +183,6 @@ extern char *zm_reg[MAX_N_XMM_REGS + 1]; /* ZMM_REG_NAMES */
 
 /* Use macros ARG_IR, ARG_XR, etc.
  */
-extern int mr_arg_ir[MR_MAX_IREG_ARGS + 1]; /* defd in machreg.c */
 extern int mr_arg_xr[MR_MAX_XREG_ARGS + 1]; /* defd in machreg.c */
 extern int mr_res_ir[MR_MAX_IREG_RES + 1];
 extern int mr_res_xr[MR_MAX_XREG_RES + 1];
@@ -206,14 +205,13 @@ extern int mr_res_xr[MR_MAX_XREG_RES + 1];
 
 /* Macros for unpacking/packing KR registers.
  */
-#define KR_LSH(i) (((i) >> 8) & 0xff)
-#define KR_MSH(i) ((i)&0xff)
-#define KR_PACK(ms, ls) (((ls) << 8) | (ms))
+#define KR_LSH(i) (i)
+#define KR_MSH(i) (i)
 
 /* Macro for defining the KR register in which the value of a 64-bit integer
  * function is returned.
  */
-#define KR_RETVAL KR_PACK(IR_EDX, IR_EAX)
+#define KR_RETVAL IR_RETVAL
 
 /* Define MR_UNIQ, the number of unique register classes for the machine.
  */
@@ -249,13 +247,6 @@ extern int mr_res_xr[MR_MAX_XREG_RES + 1];
  * assignment when calls are or are not present.
  */
 #define MR_IR_AVAIL(c) 0
-
-/* Define gindex bounds for the set of global irs/ars and scratch
- * irs/ars.  MUST BE CONSISTENT with mr_gindex().
- */
-#define MR_GI_IR_LOW 0
-#define MR_GI_IR_HIGH (MR_U1 - MR_L1)
-#define MR_GI_IS_SCR_IR(i) ((i) > (MR_U1 - MR_L1))
 
 /* Machine Register Information -
  *
@@ -321,16 +312,7 @@ typedef struct {/* three -word bit-vector */
   int xr;
 } RGSET;
 
-#define RGSETG(i) rgsetb.stg_base[i]
-
 #define RGSET_XR(i) rgsetb.stg_base[i].xr
-
-#define SET_RGSET_XR(i, reg)     \
-  {                              \
-    RGSET_XR(i) |= (1 << (reg)); \
-  }
-
-#define TST_RGSET_XR(i, reg) ((RGSET_XR(i) >> (reg)) & 1)
 
 typedef struct {
   RGSET *stg_base;
@@ -343,12 +325,47 @@ typedef struct {
 extern REG reg[];
 extern RGSETB rgsetb;
 
+#define SCRATCH_REGS {IR_RAX, IR_RCX, IR_RDX}
+
+#define MACH_REGS \
+  { \
+    {1, 8, 8 /*TBD*/, MR_L1, MR_U1, MR_U1, MR_U1, 0, 0, 'i'},       /*  %r's  */ \
+    {1, 8, 8 /*TBD*/, MR_L2, MR_U2, MR_U2, MR_U2, 0, MR_MAX1, 'f'}, /*  %f's  */ \
+    {1, 8, 8 /*TBD*/, MR_L3, MR_U3, MR_U3, MR_U3, 0, (MR_MAX1 + MR_MAX2), \
+     'x'} /*  %f's  xmm */ \
+  }
+
+#define REGS(mach_regs) \
+  { \
+    {6, 0, 0, 0, &((mach_regs)[0]), RCF_NONE}, /*  IR  */   \
+    {3, 0, 0, 0, &((mach_regs)[1]), RCF_NONE}, /*  SP  */   \
+    {3, 0, 0, 0, &((mach_regs)[1]), RCF_NONE}, /*  DP  */   \
+    {6, 0, 0, 0, &((mach_regs)[0]), RCF_NONE}, /*  AR  */   \
+    {3, 0, 0, 0, &((mach_regs)[0]), RCF_NONE}, /*  KR  */   \
+    {0, 0, 0, 0, 0, 0},                        /*  VECT  */ \
+    {0, 0, 0, 0, 0, 0},                        /*  QP    */ \
+    {3, 0, 0, 0, 0, RCF_NONE},                 /*  CSP   */ \
+    {3, 0, 0, 0, 0, RCF_NONE},                 /*  CDP   */ \
+    {0, 0, 0, 0, 0, 0},                        /*  CQP   */ \
+    {0, 0, 0, 0, 0, 0},                        /*  X87   */ \
+    {0, 0, 0, 0, 0, 0},                        /*  CX87  */ \
+    /* the following will be mapped over SP and DP above */ \
+    {3, 0, 0, 0, &((mach_regs)[2]), RCF_NONE}, /*  SPXM  */ \
+    {3, 0, 0, 0, &((mach_regs)[2]), RCF_NONE}, /*  DPXM  */ \
+  }
+
+#define MR_RESET_FRGLOBALS(mach_regs) \
+  { \
+    /* effectively turn off fp global regs. */ \
+    (mach_regs)[1].last_global = mach_reg[1].first_global - 1; \
+    (mach_regs)[2].last_global = mach_reg[2].first_global - 1; \
+  }
+
 /*****  External Function Declarations  *****/
 
  int mr_getnext(int rtype);
  int mr_getreg(int rtype);
  int mr_get_rgset();
- int mr_gindex(int rtype, int regno);
  void mr_end();
  void mr_init();
  void mr_reset_frglobals();
