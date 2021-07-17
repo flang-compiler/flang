@@ -16,7 +16,7 @@
 /**
    \brief ...
  */
-ISZ_T put_skip(ISZ_T old, ISZ_T New);
+ISZ_T put_skip(ISZ_T old, ISZ_T New, bool is_char);
 
 /**
    \brief ...
@@ -47,7 +47,7 @@ void add_init_routine(char *initroutine);
    \brief ...
  */
 void emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
-               ISZ_T loc_base, ISZ_T *i8cnt, int *ptrcnt, char **cptr);
+               ISZ_T loc_base, ISZ_T *i8cnt, int *ptrcnt, char **cptr, bool is_char);
 
 /**
    \brief ...
