@@ -1614,8 +1614,15 @@ fr_read(char *item,      /* where to transfer data to.  The value of item may
           if (g->curr_pos > g->obuff_len)
             g->curr_pos = g->obuff_len;
           else {
+#ifdef TARGET_LLVM_ARM64
+            if (g->rec_len < g->curr_pos) {
+              memset(g->rec_buff + g->rec_len, ' ', g->curr_pos - g->rec_len);
+              g->rec_len = g->curr_pos;
+            }
+#else
             while (g->rec_len < g->curr_pos)
               g->rec_buff[g->rec_len++] = ' ';
+#endif
           }
         }
       }
@@ -1703,11 +1710,23 @@ fr_read(char *item,      /* where to transfer data to.  The value of item may
         i = fr_move_fwd(w);
         if (i != 0)
           return i;
+#ifdef TARGET_LLVM_ARM64
+        memcpy(item, g->rec_buff + idx, w);
+        item += w;
+#else
         while (w-- > 0)
           *item++ = g->rec_buff[idx++];
+#endif
         if (g->pad == FIO_YES) {
+#ifdef TARGET_LLVM_ARM64
+          if (pad > 0) {
+            memset(item, ' ', pad);
+            item += pad;
+          }
+#else
           while (pad > 0)
             *item++ = ' ', pad--;
+#endif
         }
       }
       goto exit_loop;
@@ -1739,11 +1758,23 @@ fr_read(char *item,      /* where to transfer data to.  The value of item may
         i = fr_move_fwd(w);
         if (i != 0)
           return i;
+#ifdef TARGET_LLVM_ARM64
+        memcpy(item, g->rec_buff + idx, w);
+        item += w;
+#else
         while (w-- > 0)
           *item++ = g->rec_buff[idx++];
+#endif
         if (g->pad == FIO_YES) {
+#ifdef TARGET_LLVM_ARM64
+          if (pad > 0) {
+            memset(item, ' ', pad);
+            item += pad;
+          }
+#else
           while (pad > 0)
             *item++ = ' ', pad--;
+#endif
         }
         goto exit_loop;
       }
@@ -3189,8 +3220,15 @@ fr_move_fwd(int len)
       move_fwd_eor = 1;
     }
 
+#if TARGET_LLVM_ARM64
+    if (g->rec_len < g->curr_pos) {
+      memset(g->rec_buff + g->rec_len, ' ', g->curr_pos - g->rec_len);
+      g->rec_len = g->curr_pos;
+    }
+#else
     while (g->rec_len < g->curr_pos)
       g->rec_buff[g->rec_len++] = ' ';
+#endif
   }
   g->max_pos = g->curr_pos;
   return 0;
