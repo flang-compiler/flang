@@ -64,7 +64,6 @@ void F90_I8(stride_1_norm2_real8) (__POINT_T *src_pointer, __INT_T *size, __REAL
 
 void ENTFTN(NORM2_NODIM, norm2_nodim) (__POINT_T *result, __POINT_T *src, __INT4_T * pfr, _DIST_TYPE *result_kind, F90_Desc *src_desc) {
   char error_msg[50];
-
   if (src_desc->kind == __REAL8) {
     switch(src_desc->rank) {
       case 1:
@@ -89,7 +88,7 @@ void ENTFTN(NORM2_NODIM, norm2_nodim) (__POINT_T *result, __POINT_T *src, __INT4
         F90_NORM2(nodim_7_real8) (result, src, pfr, src_desc);
         break;
       default:
-        sprintf(error_msg, "Rank : %d, can not be less than 1 or greater 7\n", src_desc->rank);
+        sprintf(error_msg, "Rank : %d, can not be less than 1 or greater 7\n", (int)src_desc->rank);
         __fort_abort(error_msg);
     }
   } else if (src_desc->kind == __REAL4) {
@@ -116,14 +115,14 @@ void ENTFTN(NORM2_NODIM, norm2_nodim) (__POINT_T *result, __POINT_T *src, __INT4
         F90_NORM2(nodim_7_real4) (result, src, src_desc);
         break;
       default:
-        sprintf(error_msg, "Rank : %d, can not be less than 1 or greater 7\n", src_desc->rank);
+        sprintf(error_msg, "Rank : %d, can not be less than 1 or greater 7\n", (int)src_desc->rank);
         __fort_abort(error_msg);
     }
   } else if (src_desc->len == 0) {
     // empty array case
     *result = 0.0;
   } else {
-    sprintf(error_msg, "Unsupported type %d for norm2\n", src_desc->kind);
+    sprintf(error_msg, "Unsupported type %d for norm2\n", (int)src_desc->kind);
     __fort_abort(error_msg);
   }
 }
@@ -159,7 +158,7 @@ void ENTFTN(NORM2, norm2) (__POINT_T *result, __POINT_T *src, __INT4_T * pfr, __
         F90_NORM2(dim_7_real8) (result, src, pfr, dim, result_desc, src_desc);
         break;
       default:
-        sprintf(error_msg, "Rank : %d, can not be less than 1 or greater 7\n", src_desc->rank);
+        sprintf(error_msg, "Rank : %d, can not be less than 1 or greater 7\n", (int)src_desc->rank);
         __fort_abort(error_msg);
     }
   } else if (src_desc->kind == __REAL4) {
@@ -186,14 +185,14 @@ void ENTFTN(NORM2, norm2) (__POINT_T *result, __POINT_T *src, __INT4_T * pfr, __
         F90_NORM2(dim_7_real4) (result, src, dim, result_desc, src_desc);
         break;
       default:
-        sprintf(error_msg, "Rank : %d, can not be less than 1 or greater 7\n", src_desc->rank);
+        sprintf(error_msg, "Rank : %d, can not be less than 1 or greater 7\n", (int)src_desc->rank);
         __fort_abort(error_msg);
     }
   } else if (src_desc->len == 0) {
     // empty array case
     *result = 0.0;
   } else {
-    sprintf(error_msg, "Unsupported type %d for norm2\n", src_desc->kind);
+    sprintf(error_msg, "Unsupported type %d for norm2\n", (int)src_desc->kind);
     __fort_abort(error_msg);
   }
 }

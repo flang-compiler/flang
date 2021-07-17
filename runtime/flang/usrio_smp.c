@@ -49,7 +49,7 @@ __fort_par_open(char *fn, char *par)
   mode = 0666;
   p = par;
   if (p == NULL) {
-    p = "";
+    p = (char *)"";
   }
   while (*p != '\0') { /* process system-specific options */
     if (strncmp(p, "rdonly", 6) == 0) {
@@ -102,7 +102,6 @@ __CLEN_T
 __fort_par_read(int fd, char *adr, __CLEN_T cnt, int str, int typ,
                 __CLEN_T ilen, int own)
 {
-  long l;
   int s;
 
   if (fds[fd].flags & I_WRITE) {
@@ -120,7 +119,7 @@ __fort_par_read(int fd, char *adr, __CLEN_T cnt, int str, int typ,
     if (s == -1) {
       __fort_abortp("parallel i/o");
     }
-    if (s != (cnt * ilen)) {
+    if (s != (int)(cnt * ilen)) {
       __fort_abort("parallel i/o: partial read");
     }
   } else {

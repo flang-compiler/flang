@@ -46,15 +46,6 @@ static __INT_T mask_desc = __LOG; /* scalar mask descriptor */
     *r = x;                                                                    \
   }
 
-COUNTFN(count_log1, __LOG1_T)
-COUNTFN(count_log2, __LOG2_T)
-COUNTFN(count_log4, __LOG4_T)
-COUNTFN(count_log8, __LOG8_T)
-COUNTFN(count_int1, __INT1_T)
-COUNTFN(count_int2, __INT2_T)
-COUNTFN(count_int4, __INT4_T)
-COUNTFN(count_int8, __INT8_T)
-
 COUNTFNLKN(count_log1, __LOG1_T, 1)
 COUNTFNLKN(count_log2, __LOG2_T, 1)
 COUNTFNLKN(count_log4, __LOG4_T, 1)

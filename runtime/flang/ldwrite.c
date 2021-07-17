@@ -72,7 +72,7 @@ static int gbl_size = GBL_SIZE;
 
 /* local functions */
 
-static int write_item(char *, int);
+static int write_item(const char *, int);
 static int write_record(void);
 
 static void
@@ -767,7 +767,7 @@ ENTCRF90IO(LDWA, ldwa) (type, length, stride, CADR(item), (__CLEN_T)CLEN(item));
 /* --------------------------------------------------------------------- */
 
 static int
-write_item(char *p, int len)
+write_item(const char *p, int len)
 {
   int newlen;
   int ret_err;
@@ -934,7 +934,7 @@ __INT_T
 ENTF90IO(LDW_END, ldw_end)()
 {
   int ioproc, len;
-  int i, s = 0;
+  int s = 0;
 
   ioproc = GET_DIST_IOPROC;
   if (LOCAL_MODE || GET_DIST_LCPU == ioproc) {
@@ -958,7 +958,7 @@ ENTF90IO(LDW_END, ldw_end)()
 __INT_T
 ENTCRF90IO(LDW_END, ldw_end)()
 {
-  int i, s = 0;
+  int s = 0;
   s = _f90io_ldw_end();
 
   save_samefcb();

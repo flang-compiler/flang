@@ -66,7 +66,7 @@ typedef struct {
 
 void __fort_red_unimplemented();
 
-void __fort_red_abort(char *msg);
+void __fort_red_abort(const char *msg);
 
 void I8(__fort_red_scalar)(red_parm *z, char *rb, char *ab, char *mb,
                           F90_Desc *rs, F90_Desc *as, F90_Desc *ms, __INT_T *xb,
@@ -93,7 +93,7 @@ void I8(__fort_kred_arraylk)(red_parm *z, char *rb0, char *ab, char *mb,
                             F90_Desc *ds, red_enum op);
 
 void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
-                             F90_Desc *hd, char *what, void (*fn[__NTYPES])());
+                             F90_Desc *hd, const char *what, void (*fn[__NTYPES])());
 
 /* prototype local reduction function (name beginning with l_):
 
@@ -128,7 +128,7 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
    ATYP = accumulator type
 */
 
-#define ARITHFN(OP, NAME, RTYP, ATYP)                                          \
+#define ARITHFN_L(OP, NAME, RTYP, ATYP)                                          \
   static void l_##NAME(RTYP *r, __INT_T n, RTYP *v, __INT_T vs, __LOG_T *m,    \
                        __INT_T ms, __INT_T *loc, __INT_T li, __INT_T ls,       \
                        __INT_T len)                                            \
@@ -148,7 +148,9 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
       }                                                                        \
     }                                                                          \
     *r = x;                                                                    \
-  }                                                                            \
+  }
+
+#define ARITHFN_G(OP, NAME, RTYP, ATYP)                                        \
   static void g_##NAME(__INT_T n, RTYP *lr, RTYP *rr, void *lv, void *rv)      \
   {                                                                            \
     __INT_T i;                                                                 \
@@ -181,7 +183,7 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
 
 /* note: all, any, parity, and count do not have mask arguments */
 
-#define LOGFN(OP, NAME, RTYP)                                                  \
+#define LOGFN_L(OP, NAME, RTYP)                                                  \
   static void l_##NAME(RTYP *r, __INT_T n, RTYP *v, __INT_T vs, __LOG_T *m,    \
                        __INT_T ms, __INT_T *loc, __INT_T li, __INT_T ls,       \
                        __INT_T len)                                            \
@@ -194,7 +196,9 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
       x = x OP((v[i] & mask_log) != 0);                                        \
     }                                                                          \
     *r = (RTYP)(x ? GET_DIST_TRUE_LOG : 0);                                   \
-  }                                                                            \
+  }
+
+#define LOGFN_G(OP, NAME, RTYP)                                                \
   static void g_##NAME(__INT_T n, RTYP *lr, RTYP *rr, void *lv, void *rv,      \
                        __INT_T len)                                            \
   {                                                                            \
@@ -790,7 +794,6 @@ static void l_ ## NAME(RTYP *r, __INT_T n, RTYP *v, __INT_T vs, \
       __INT4_T *loc, __INT_T li, __INT_T ls, __INT_T len, __LOG_T back)        \
   {                                                                            \
     __INT4_T i, j, ahop, t_loc = 0;                                            \
-    RTYP *val = v;                                                             \
     __LOG##N##_T mask_log;                                                     \
     if (!back && *loc != 0)                                                    \
       return;                                                                  \
@@ -895,7 +898,6 @@ static void l_ ## NAME(RTYP *r, __INT_T n, RTYP *v, __INT_T vs, \
       __INT8_T *loc, __INT_T li, __INT_T ls, __INT_T len, __LOG_T back)        \
   {                                                                            \
     __INT_T i, j, ahop, t_loc = 0;                                             \
-    RTYP *val = v;                                                             \
     __LOG##N##_T mask_log;                                                     \
     if (!back && *loc != 0)                                                    \
       return;                                                                  \

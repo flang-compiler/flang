@@ -134,7 +134,7 @@ static int gbl_size = GBL_SIZE;
 static int
 adjust_fpos(FIO_FCB *cur_file, long offset, int whence)
 {
-  int retval;
+  int retval = 0;
 
   if (cur_file->asy_rw) {
     Fio_asy_fseek(cur_file->asyptr, offset, whence);
@@ -438,7 +438,6 @@ __f90io_unf_read(int type,    /* Type of data */
                  char *item,  /* where to xfer data */
                  __CLEN_T item_length)
 {
-  int i;         /* loop index */
   size_t nbytes; /* number of bytes to read from current record */
   size_t resid;  /* number of bytes to read from following records */
   int offset;    /* offset into item */
@@ -1425,7 +1424,6 @@ __f90io_usw_read(int type,   /* Type of data */
                  char *item, /* where to xfer data */
                  __CLEN_T item_length)
 {
-  long i;        /* loop index */
   size_t nbytes; /* number of bytes to read from current record */
   size_t resid;  /* number of bytes to read from following records */
   int offset;    /* offset into item */
@@ -1845,7 +1843,7 @@ nonunit_cp:
     /* ??? one copy per byte.  Maybe optimize later */
     for (j = 0; j < item_length; j++)
       *buf_ptr++ = *item++;
-      __fortio_swap_bytes(buf_ptr - item_length, type, 1);
+    __fortio_swap_bytes(buf_ptr - item_length, type, 1);
 
     rw_size += item_length;
   }

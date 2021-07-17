@@ -61,7 +61,7 @@ extern void local_scatter_WRAPPER();
 static __INT_T id_map[MAXDIMS] = {1, 2, 3, 4, 5, 6, 7};
 
 static void
-gathscat_abort(char *what, char *msg)
+gathscat_abort(const char *what, const char *msg)
 {
   char str[80];
   sprintf(str, "%s: %s", what, msg);
@@ -72,7 +72,7 @@ gathscat_abort(char *what, char *msg)
 
 typedef struct {
   sked sked;            /* schedule header */
-  char *what;           /* "GATHER"/"XXX_SCATTER" */
+  const char *what;     /* "GATHER"/"XXX_SCATTER" */
   void (*gathscatfn)(); /* local gather-scatter-reduction function */
   void (*scatterfn)();  /* local scatter-reduction function */
   chdr *repchn;         /* replication channel */
@@ -91,7 +91,7 @@ static void I8(gathscat_start)(gathscat_sked *sk, char *rb, char *sb,
                                F90_Desc *rd, F90_Desc *sd)
 {
   char *rp, *sp, *bufr, *bufs;
-  int cpu, i, j, k, lcpu, m, nr, ns, tcpus;
+  int cpu, j, k, lcpu, m, nr, ns, tcpus;
 
   double t;
   if (__fort_test & DEBUG_TIME)
@@ -216,10 +216,9 @@ gathscat_free(gathscat_sked *sk)
 static void I8(gathscat_element)(gathscat_parm *z, __INT_T uoff, __INT_T xoff[])
 {
   gathscat_dim *zd;
-  __INT_T *xp;
   DECL_HDR_PTRS(ud);
   DECL_HDR_PTRS(vd);
-  int cpu, k, ux, vx, xx;
+  int cpu, k, ux, vx;
   __INT_T roff;
   __INT_T vi[MAXDIMS];
 
@@ -534,10 +533,10 @@ sked *I8(__fort_gathscat)(gathscat_parm *z)
   DECL_HDR_PTRS(rd);
   DECL_HDR_PTRS(xd);
   DECL_F90_DIM_PTR(mdd);
-  DECL_DIST_DIM_PTR(mdd);
+  DECL_DIST_DIM_PTR(mdd) = NULL;
   DECL_DIM_PTRS(udd);
   DECL_F90_DIM_PTR(xdd);
-  DECL_DIST_DIM_PTR(xdd);
+  DECL_DIST_DIM_PTR(xdd) = NULL;
   xstuff *x;
 
   int *countbuf, *countr, *counts, *goff, *head, *loff, *next, *offr, *offs,
@@ -545,7 +544,9 @@ sked *I8(__fort_gathscat)(gathscat_parm *z)
 
   int alike, cpu, different, incoming, i, j, k, m, n, nr, ns;
   int lclcnt, lcpu, maxcnt, tempz, tcpus, u_covers_v, v_covers_u;
+#if defined(DEBUG)
   int has_gb = 0;
+#endif
   __INT_T mx, uoff, ux, vx, xx, xoff[MAXDIMS + 1];
 
   repl_t u_repl; /* unvectored array replication descriptor */
@@ -1170,8 +1171,9 @@ zero_lsize_ok_for_gen_block:
   return &sk->sked;
 }
 
-void *I8(__fort_adjust_index_array)(char *what, char *idx_array, char *src,
-                                   int dim, F90_Desc *is, F90_Desc *bs)
+void *I8(__fort_adjust_index_array)(const char *what, char *idx_array,
+                                    char *src, int dim, F90_Desc *is,
+                                    F90_Desc *bs)
 {
 
   /* Adjust Index array for scatter routines. This needs to be called
@@ -1250,9 +1252,9 @@ void *I8(__fort_adjust_index_array)(char *what, char *idx_array, char *src,
   return idx_array;
 }
 
-void *I8(__fort_create_conforming_index_array)(char *what, char *ab, void *ib,
-                                              F90_Desc *as, F90_Desc *is,
-                                              F90_Desc *new_is)
+void *I8(__fort_create_conforming_index_array)(const char *what, char *ab,
+                                               void *ib, F90_Desc *as,
+                                               F90_Desc *is, F90_Desc *new_is)
 {
 
   /* Create a conforming index array. Returns a pointer to the

@@ -34,7 +34,6 @@ void ENTFTN(CSHIFTS, cshifts)(void *rb,     /* result base */
   __INT_T aolb[MAXDIMS], aoub[MAXDIMS];
   __INT_T rolb[MAXDIMS], roub[MAXDIMS];
   __INT_T dim, extent, i, sabs, shift;
-  __INT_T al, au, rl, ru;
 
   shift = *sb;
   dim = *db;

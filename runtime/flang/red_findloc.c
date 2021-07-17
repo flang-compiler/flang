@@ -118,7 +118,6 @@ void ENTFTN(FINDLOCS, findlocs)(__INT_T *rb, char *ab, char *val, char *mb,
   red_parm z;
   double vb[4];
   char *strvb;
-  int len;
 
   INIT_RED_PARM(z);
   __fort_red_what = "FINDLOC";
@@ -193,7 +192,7 @@ void ENTFTN(KFINDLOCS, kfindlocs)(__INT8_T *rb, char *ab, char *val, char *mb,
   char *strvb;
 
   INIT_RED_PARM(z);
-  __fort_red_what = "FINDLOC";
+  __fort_red_what = (char *)"FINDLOC";
 
   z.kind = F90_KIND_G(as);
   z.len = F90_LEN_G(as);
@@ -229,7 +228,7 @@ void ENTFTN(KFINDLOC, kfindloc)(char *rb, char *ab, char *val, char *mb,
   red_parm z;
 
   INIT_RED_PARM(z);
-  __fort_red_what = "FINDLOC";
+  __fort_red_what = (char *)"FINDLOC";
 
   z.kind = F90_KIND_G(as);
   z.len = F90_LEN_G(as);

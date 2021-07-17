@@ -16,12 +16,12 @@
 #endif
 
 static struct {
-  char *lib;  /* library */
-  char *host; /* host */
-  char *vsn;  /* version number */
-  char *bld;  /* build number */
-  char *dvsn; /* date-based version number */
-  char *copyright;
+  const char *lib;  /* library */
+  const char *host; /* host */
+  const char *vsn;  /* version number */
+  const char *bld;  /* build number */
+  const char *dvsn; /* date-based version number */
+  const char *copyright;
 } version = {
     LIBRARY, VHOST,
     VSN,     BLD,

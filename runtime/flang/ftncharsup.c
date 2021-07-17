@@ -70,7 +70,7 @@ Ftn_str_copy(int n, char *to, int to_len, ...)
   if (to_len <= 0) {
     return;
   }
-  if (n <= (sizeof(aa) / sizeof(SRC_STR))) {
+  if (n <= (int)(sizeof(aa) / sizeof(SRC_STR))) {
     qq = src_p = aa;
     src_p_allocd = 0;
   } else {
@@ -305,7 +305,7 @@ Ftn_str_copy_klen(int n, char *to, int64_t to_len, ...)
   if (to_len <= 0) {
     return;
   }
-  if (n <= (sizeof(aa) / sizeof(SRC_STR))) {
+  if (n <= (int)(sizeof(aa) / sizeof(SRC_STR))) {
     qq = src_p = aa;
     src_p_allocd = 0;
   } else {

@@ -442,8 +442,8 @@ fstrcpy(char *s1, char *s2, __CLEN_T len1, __CLEN_T len2)
   }
 }
 
-static char *month[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+static const char *month[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 static int
 yr2(int yr)
@@ -813,7 +813,7 @@ ENTFTN(SYSCLK, sysclk)(__STAT_T *count, __STAT_T *count_rate,
 #else
     def = sizeof(__STAT_T) < 8 ? 1000 : 1000000;
 #endif
-    resol = __fort_getoptn("-system_clock_rate", def);
+    resol = __fort_getoptn((char *)"-system_clock_rate", def);
     if (resol <= 0)
       __fort_abort("invalid value given for system_clock rate");
   }
@@ -3344,7 +3344,7 @@ ENTFTN(TRAILZ, trailz)(void *i, __INT_T *size)
 __INT_T
 ENTFTN(POPCNT, popcnt)(void *i, __INT_T *size)
 {
-  unsigned ui, uj; /* unsigned representation of 'i' */
+  unsigned ui = 0, uj; /* unsigned representation of 'i' */
   __INT8_T ll;
 
   switch (*size) {
@@ -3395,7 +3395,7 @@ ENTFTN(POPCNT, popcnt)(void *i, __INT_T *size)
 __INT_T
 ENTFTN(POPPAR, poppar)(void *i, __INT_T *size)
 {
-  int ii;
+  int ii = 0;
   __INT8_T ll;
 
   switch (*size) {
@@ -4309,9 +4309,9 @@ ENTF90(KSEL_INT_KIND, ksel_int_kind)
 static int
 _selected_char_kind(char *p, __CLEN_T len)
 {
-  if (__fortio_eq_str(p, len, "ASCII"))
+  if (__fortio_eq_str(p, len, (char *)"ASCII"))
     return 1;
-  else if (__fortio_eq_str(p, len, "DEFAULT"))
+  else if (__fortio_eq_str(p, len, (char *)"DEFAULT"))
     return 1;
   return -1;
 }

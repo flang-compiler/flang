@@ -328,7 +328,7 @@ __fort_is_ioproc()
 /* abort with message */
 
 void
-__fort_abort(char *s)
+__fort_abort(const char *s)
 {
   char buf[256];
 
@@ -342,7 +342,7 @@ __fort_abort(char *s)
 /* abort with perror message */
 
 void
-__fort_abortp(char *s)
+__fort_abortp(const char *s)
 {
   fprintf(__io_stderr(), "%d: ", __fort_lcpu);
   perror(s);
@@ -364,10 +364,7 @@ static char *dumarg = NULL;
 static void
 __fort_initarg()
 {
-  char *p, *q;
-  int i;
   char **v;
-  int c;
 
   if (arg != (char **)0) {
     return;
@@ -450,8 +447,8 @@ __fort_initopt()
 }
 
 /* get option (command line -xx and environment */
-
-char *__fort_getopt(opt) char *opt;
+char
+*__fort_getopt(const char *opt)
 {
   char env[64];
   char *p, *q;
@@ -464,7 +461,7 @@ char *__fort_getopt(opt) char *opt;
     if (strcmp(arg[n], opt) == 0) {
       p = arg[n + 1];
       if (p == NULL) {
-        p = "";
+        p = (char *)"";
       }
       break;
     }
@@ -472,7 +469,7 @@ char *__fort_getopt(opt) char *opt;
   if (p == NULL) {
     strcpy(env, "PGHPF_");
     p = env + 6;
-    q = opt + 1;
+    q = (char *)opt + 1;
     while (*q != '\0') {
       *p++ = toupper(*q++);
     }
@@ -484,14 +481,14 @@ char *__fort_getopt(opt) char *opt;
       if (strcmp(opts[n], opt) == 0) {
         p = opts[n + 1];
         if (p == NULL) {
-          p = "";
+          p = (char *)"";
         }
         break;
       }
     }
   }
   if ((strcmp(opt, "-g") == 0) && (p != NULL) && (*p == '-')) {
-    p = "";
+    p = (char *)"";
   }
   return (p);
 }
@@ -499,12 +496,12 @@ char *__fort_getopt(opt) char *opt;
 /* abort because of problem with command/environment option */
 
 static void
-getopt_abort(char *problem, char *opt)
+getopt_abort(const char *problem, const char *opt)
 {
   char buf[128], *p, *q;
 
   p = buf;
-  q = opt;
+  q = (char *)opt;
   while (*++q != '\0')
     *p++ = toupper(*q);
   *p++ = '\0';
@@ -533,10 +530,10 @@ __fort_getoptn(char *opt, long def)
 /* get yes/no option */
 
 int
-__fort_getoptb(char *opt, int def)
+__fort_getoptb(const char *opt, int def)
 {
   char *p;
-  int n;
+  int n = 0;
 
   p = __fort_getopt(opt);
   if (p == NULL)
@@ -562,7 +559,7 @@ __fort_istat()
     return;
   }
   if ((*p == '\0') || (*p == '-')) {
-    p = "all";
+    p = (char *)"all";
   }
   while (1) {
     if (strncmp(p, "cpus", 4) == 0) {
@@ -833,12 +830,6 @@ __fort_pull_them_in()
 
 /* -------------------------------------------------------------------- */
 
-#pragma global opt = 1
-static void
-f90_compiled_arg()
-{
-}
-
 /*
  * this routine is called from .init.  it does limited initialization
  * for f90 routines called from a non-f90 main routine.  argc and
@@ -850,9 +841,6 @@ void
 __attribute__((constructor))
 f90_compiled()
 {
-#ifndef TARGET_LINUX_ARM
-  static void (*p)(void) = f90_compiled_arg;
-#endif
   if (!inited.consts) {
     __fort_tcpus = 1;
     __fort_np2 = 1;

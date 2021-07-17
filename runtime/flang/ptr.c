@@ -46,8 +46,8 @@ I8(nullify)(char *pb, F90_Desc *pd, dtype kind, __CLEN_T len)
 void
 ENTFTN(NULLIFY, nullify)(char *pb, F90_Desc *pd)
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
 
   if (F90_TAG_G(pd) == __NONE)
     return; /* already disassociated */
@@ -87,8 +87,8 @@ ENTFTN(NULLIFY_CHAR, nullify_char)(DCHAR(pb), F90_Desc *pd DCLEN(pb))
 void
 ENTFTN(NULLIFYX, nullifyx)(char **pb, F90_Desc *pd)
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
 
   if (F90_TAG_G(pd) == __NONE)
     return; /* already disassociated */
@@ -160,8 +160,8 @@ void
 ENTFTN(PTR_ASGN, ptr_asgn)(char *pb, F90_Desc *pd, char *tb, F90_Desc *td,
                             __INT_T lb[])
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASGN: invalid descriptor");
@@ -187,8 +187,8 @@ ENTFTN(PTR_ASGN_CHARA, ptr_asgn_chara)(DCHAR(pb), F90_Desc *pd, DCHAR(tb),
                                      F90_Desc *td,
                                      __INT_T lb[] DCLEN64(pb) DCLEN64(tb))
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASGN: invalid descriptor");
@@ -224,8 +224,7 @@ I8(ptr_assign)(char *pb, F90_Desc *pd, dtype kind, __CLEN_T len, char *tb,
                F90_Desc *td, int sectflag)
 {
   DECL_DIM_PTRS(tdd);
-  __POINT_T *off;
-  char *p, **ptr;
+  char **ptr;
   __INT_T i;
   __INT_T gsize;
 
@@ -363,8 +362,8 @@ ENTFTN(PTR_ASSIGN_CHARA, ptr_assign_chara)
          (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
          __INT_T *sectflag DCLEN64(pb) DCLEN64(tb))
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSIGN: invalid descriptor");
@@ -402,8 +401,8 @@ ENTFTN(PTR_ASSIGNX, ptr_assignx)
         (char *pb, F90_Desc *pd, char *tb, F90_Desc *td, __INT_T *sectflag,
          __INT_T *targetlen, __INT_T *targettype)
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSIGN: invalid descriptor");
@@ -435,8 +434,8 @@ ENTFTN(PTR_ASSIGN_CHARXA, ptr_assign_charxa)
           __INT_T *sectflag, __CLEN_T *targetlen,
           __INT_T *targettype DCLEN64(pb) DCLEN64(tb))
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSIGN: invalid descriptor");
@@ -476,9 +475,8 @@ void
 ENTFTN(PTR_ASSIGN_ASSUMESHP, ptr_assign_assumeshp)
          (char *pb, F90_Desc *pd, char *tb, F90_Desc *td, __INT_T *sectflag)
 {
-  dtype kind;
-  __CLEN_T len;
-  int i;
+  dtype kind = 0;
+  __CLEN_T len = 0;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSIGN: invalid descriptor");
@@ -508,9 +506,8 @@ ENTFTN(PTR_ASSIGN_CHAR_ASSUMESHPA, ptr_assign_char_assumeshpa)
          (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
           __INT_T *sectflag DCLEN64(pb) DCLEN64(tb))
 {
-  dtype kind;
-  __CLEN_T len;
-  int i;
+  dtype kind = 0;
+  __CLEN_T len = 0;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSIGN: invalid descriptor");
@@ -545,7 +542,6 @@ ENTFTN(PTR_ASSIGN_CHAR_ASSUMESHP, ptr_assign_char_assumeshp)
 void
 ENTFTN(PTR_FIX_ASSUMESHP1, ptr_fix_assumeshp1)(F90_Desc *sd, __INT_T lb1)
 {
-  int ii;
   __INT_T lbase;
 
   lbase = 1;
@@ -558,7 +554,6 @@ void
 ENTFTN(PTR_FIX_ASSUMESHP2, ptr_fix_assumeshp2)(F90_Desc *sd, __INT_T lb1,
                                                __INT_T lb2)
 {
-  int ii;
   __INT_T lbase;
 
   lbase = 1;
@@ -573,7 +568,6 @@ void
 ENTFTN(PTR_FIX_ASSUMESHP3, ptr_fix_assumeshp3)(F90_Desc *sd, __INT_T lb1,
                                                __INT_T lb2, __INT_T lb3)
 {
-  int ii;
   __INT_T lbase;
 
   lbase = 1;
@@ -749,8 +743,6 @@ I8(ptr_assn)(char *pb, F90_Desc *pd, dtype kind, __CLEN_T len, char *tb,
              F90_Desc *td, int sectflag)
 {
   DECL_DIM_PTRS(tdd);
-  __POINT_T *off;
-  char *p, **ptr;
   void *res;
   __INT_T i;
   __INT_T gsize;
@@ -866,7 +858,7 @@ ENTFTN(PTR_ASSN, ptr_assn)(char *pb, F90_Desc *pd, char *tb, F90_Desc *td,
 {
   dtype kind;
   __CLEN_T len;
-  void *res;
+  void *res = 0;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSN: invalid descriptor");
@@ -944,8 +936,8 @@ ENTFTN(PTR_ASSN_CHARA, ptr_assn_chara)
          (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
           __INT_T *sectflag DCLEN64(pb) DCLEN64(tb))
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
   void *res;
 
   if (pd == NULL || td == NULL) {
@@ -985,8 +977,8 @@ ENTFTN(PTR_ASSN_CHARA, ptr_assn_dchara)
          (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
           __INT_T *sectflag DCLEN64(pb) DCLEN64(tb))
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
   void *res;
 
   if (pd == NULL || td == NULL) {
@@ -1026,8 +1018,8 @@ ENTFTN(PTR_ASSNXA, ptr_assnxa)
          (char *pb, F90_Desc *pd, char *tb, F90_Desc *td, __INT_T *sectflag,
           __CLEN_T *targetlen, __INT_T *targettype)
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
   void *res;
 
   if (pd == NULL || td == NULL) {
@@ -1070,8 +1062,8 @@ ENTFTN(PTR_ASSN_CHARXA,
        __INT_T *sectflag, __CLEN_T *targetlen,
       __INT_T *targettype DCLEN64(pb) DCLEN64(tb))
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
   void *res;
 
   if (pd == NULL || td == NULL) {
@@ -1115,8 +1107,8 @@ ENTFTN(PTR_ASSN_DCHARXA, ptr_assn_dcharxa)
          (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td, __INT_T *sectflag,
           __CLEN_T *targetlen, __INT_T *targettype DCLEN64(pb) DCLEN64(tb))
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
   void *res;
 
   if (pd == NULL || td == NULL) {
@@ -1158,10 +1150,9 @@ void *
 ENTFTN(PTR_ASSN_ASSUMESHP, ptr_assn_assumeshp)
          (char *pb, F90_Desc *pd, char *tb, F90_Desc *td, __INT_T *sectflag)
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
   void *res;
-  int i;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSN: invalid descriptor");
@@ -1192,10 +1183,9 @@ ENTFTN(PTR_ASSN_CHAR_ASSUMESHPA, ptr_assn_char_assumeshpa)
          (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
           __INT_T *sectflag DCLEN64(pb) DCLEN64(tb))
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
   void *res;
-  int i;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSN: invalid descriptor");
@@ -1235,10 +1225,9 @@ ENTFTN(PTR_ASSN_DCHAR_ASSUMESHPA, ptr_assn_dchar_assumeshpa)
   (DCHAR(pb), F90_Desc *pd, DCHAR(tb), F90_Desc *td,
     __INT_T *sectflag DCLEN64(pb) DCLEN64(tb))
 {
-  dtype kind;
-  __CLEN_T len;
+  dtype kind = 0;
+  __CLEN_T len = 0;
   void *res;
-  int i;
 
   if (pd == NULL || td == NULL) {
     __fort_abort("PTR_ASSN: invalid descriptor");
@@ -1285,7 +1274,7 @@ ENTFTN(PTR_SHAPE_ASSNX, ptr_shape_assnx)
   F90_Desc *new_td = 0;
   __INT_T dimflags = 0, stride[MAXDIMS], *lb = 0, *ub = 0;
   int notSet = 0;
-  int f, i, reshape;
+  int i, reshape;
   __INT_T lbase = 0, tstride;
   int sz = *rank;
   int extent_diff;
@@ -1411,7 +1400,7 @@ ENTFTN(PTR_SHAPE_ASSN, ptr_shape_assn)
   }
 
   if (rank && *rank) {
-    int f, i, reshape;
+    int i, reshape;
     __INT_T lbase = 0, tstride, old_lbase;
     int sz = *rank;
 
@@ -1654,8 +1643,6 @@ I8(__fort_associated)(char *pb, F90_Desc *pd, char *tb, F90_Desc *td,
   DECL_DIM_PTRS(tdd);
   char *adr;
   __INT_T i, pextent, poff, textent, toff;
-  OBJECT_DESC *ad;
-  TYPE_DESC *atd;
 
       /* FS#20453 - disable FS#17427 patch below. It appears to no longer be
        * needed and this fixes UMRs in oop567 - oop570 f90_correct tests.

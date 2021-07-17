@@ -122,8 +122,6 @@ asy_wait(struct asy *asy)
   long len;
   int s;
   int tn;
-  int offset;
-  int n;
 
   struct aiocb *p[1];
 
@@ -242,7 +240,6 @@ int
 Fio_asy_open(FILE *fp, struct asy **pasy)
 {
   struct asy *asy;
-  char *p;
 #if defined(TARGET_WIN_X8664)
   HANDLE temp_handle;
 #endif

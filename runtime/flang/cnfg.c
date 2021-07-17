@@ -31,19 +31,16 @@ extern char *__fort_getenv();
  *                Default is 1 (VAX-style)
  */
 
-FIO_CNFG __fortio_cnfg_ = {
-/* ending '_' so it can be accessed by user */
-/* default_name */
-    "fort.%d",
-
-    /* vax-style */
-    1,  /* odd => true */
-    -1, /* internal value of .TRUE. */
+FIO_CNFG __fortio_cnfg_ = { /* ending '_' so it can be accessed by user */
+    "fort.%d",              /* default_name */
+                            /* vax-style */
+    1,                      /* odd => true */
+    -1,                     /* internal value of .TRUE. */
 };
 
 /* fio access routines */
 
-char *
+const char *
 __get_fio_cnfg_default_name(void)
 {
   return __fortio_cnfg_.default_name;

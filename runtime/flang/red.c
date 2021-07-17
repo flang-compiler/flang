@@ -33,7 +33,7 @@ __fort_red_unimplemented()
 }
 
 void
-__fort_red_abort(char *msg)
+__fort_red_abort(const char *msg)
 {
   char str[80];
 
@@ -152,8 +152,7 @@ void I8(__fort_red_scalar)(red_parm *z, char *rb, char *ab, char *mb,
                           red_enum op)
 {
   DECL_DIM_PTRS(asd);
-  __INT_T ao, i, len, m, p, q;
-  int loop;
+  __INT_T ao, i, m, p, q;
 
   z->rb = rb;
   z->rs = rs;
@@ -215,8 +214,7 @@ void I8(__fort_red_scalarlk)(red_parm *z, char *rb, char *ab, char *mb,
                             __INT_T *xb, red_enum op)
 {
   DECL_DIM_PTRS(asd);
-  __INT_T ao, i, len, m, p, q;
-  int loop;
+  __INT_T ao, i, m, p, q;
 
   z->rb = rb;
   z->rs = rs;
@@ -354,9 +352,9 @@ static void I8(red_array_loop)(red_parm *z, __INT_T rof, __INT_T aof, int rdim,
 
     ap = z->ab + ao * F90_LEN_G(as);
     if (z->l_fn_b) {
-      z->l_fn_b(rp, acn, ap, ahop, mp, mhop, lp, li, ls, z->len, z->back);
+      z->l_fn_b(rp, acn, ap, ahop, mp, mhop, (__INT_T *)lp, li, ls, z->len, z->back);
     } else {
-      z->l_fn(rp, acn, ap, ahop, mp, mhop, lp, li, ls, z->len);
+      z->l_fn(rp, acn, ap, ahop, mp, mhop, (__INT_T *)lp, li, ls, z->len);
     }
 
     return;
@@ -417,9 +415,9 @@ static void I8(red_array_loop)(red_parm *z, __INT_T rof, __INT_T aof, int rdim,
 
       ap = z->ab + ao * F90_LEN_G(as);
       if (z->l_fn_b) {
-        z->l_fn_b(rp, abn, ap, ahop, mp, mhop, lp, li, 1, z->len, z->back);
+        z->l_fn_b(rp, abn, ap, ahop, mp, mhop, (__INT_T *)lp, li, 1, z->len, z->back);
       } else {
-        z->l_fn(rp, abn, ap, ahop, mp, mhop, lp, li, 1, z->len);
+        z->l_fn(rp, abn, ap, ahop, mp, mhop, (__INT_T *)lp, li, 1, z->len);
       }
     }
     acl += DIST_DPTR_CS_G(asd);
@@ -440,8 +438,7 @@ void I8(__fort_kred_scalarlk)(red_parm *z, char *rb, char *ab, char *mb,
                              __INT8_T *xb, red_enum op)
 {
   DECL_DIM_PTRS(asd);
-  __INT_T ao, i, len, m, p, q;
-  int loop;
+  __INT_T ao, i, m, p, q;
 
   z->rb = rb;
   z->rs = rs;
@@ -667,7 +664,7 @@ void I8(__fort_red_array)(red_parm *z, char *rb0, char *ab, char *mb, char *db,
   DECL_HDR_VARS(rs1);
   char *rb = 0, *xb, *zb;
   __INT_T flags, kind, len, rank, _1 = 1;
-  int i, n, rc, rl;
+  int i, rc, rl;
   __INT_T ao, ro;
 
   z->dim = I8(__fort_fetch_int)(db, ds);
@@ -859,7 +856,7 @@ void I8(__fort_red_arraylk)(red_parm *z, char *rb0, char *ab, char *mb, char *db
   DECL_HDR_VARS(rs1);
   char *rb = 0, *xb, *zb;
   __INT_T flags, kind, len, rank, _1 = 1;
-  int i, n, rc, rl;
+  int i, rc, rl;
   __INT_T ao, ro;
 
   z->dim = I8(__fort_fetch_int)(db, ds);
@@ -1050,7 +1047,7 @@ void I8(__fort_kred_arraylk)(red_parm *z, char *rb0, char *ab, char *mb,
   DECL_HDR_VARS(rs1);
   char *rb = 0, *xb, *zb;
   __INT_T flags, kind, len, rank, _1 = 1;
-  int i, n, rc, rl;
+  int i, rc, rl;
   __INT_T ao, ro;
 
   z->dim = I8(__fort_fetch_int)(db, ds);
@@ -1246,7 +1243,6 @@ void ENTFTN(REDUCE_DESCRIPTOR,
                                F90_Desc *ad,   /* array descriptor */
                                __INT_T *dimb)  /* dimension */
 {
-  DECL_DIM_PTRS(rdd);
   DECL_DIM_PTRS(add);
   DECL_HDR_PTRS(td);
   dtype kind;
@@ -1292,9 +1288,9 @@ void ENTFTN(REDUCE_DESCRIPTOR,
   I8(__fort_finish_descriptor)(rd);
 }
 
-void *I8(__fort_create_conforming_mask_array)(char *what, char *ab, char *mb,
-                                             F90_Desc *as, F90_Desc *ms,
-                                             F90_Desc *new_ms)
+void *I8(__fort_create_conforming_mask_array)(const char *what, char *ab,
+                                              char *mb, F90_Desc *as,
+                                              F90_Desc *ms, F90_Desc *new_ms)
 {
 
   /* Create a conforming mask array. Returns a pointer to the

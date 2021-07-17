@@ -69,4 +69,7 @@
 #define FED_G0 -54
 #define FED_G0_d -55
 
-void I8(get_vlist_desc)(F90_Desc *sd, __INT_T ubnd);
+/* Users of this header need both versions of get_vlist_desc, but are not
+   dependent on DESC_I8 themselves; explicitly declare both versions here. */
+void get_vlist_desc(F90_Desc *sd, __INT_T ubnd);
+void get_vlist_desc_i8(F90_Desc *sd, __INT_T ubnd);

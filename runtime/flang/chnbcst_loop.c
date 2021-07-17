@@ -20,7 +20,6 @@ void __fort_bcstchn(struct chdr *c,
 {
   int lcpu;
   int n;
-  char buf[80];
 
   lcpu = __fort_myprocnum();
 

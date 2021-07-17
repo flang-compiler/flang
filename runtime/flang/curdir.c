@@ -32,7 +32,7 @@ WIN_MSVCRT_IMP char *WIN_CDECL getenv(const char *);
 void __fort_fixmnt(new, old) char *new;
 char *old;
 {
-  char *q;
+  const char *q;
   char s[MAXPATHLEN]; /* substitute patterns */
   char *smat;         /* match string */
   char *srep;         /* replace string */
@@ -54,15 +54,13 @@ char *old;
       snxt++;
     }
     srep = strchr(smat, ':'); /* replace string */
-    if (srep == NULL) {
-      srep = "";
-    } else {
+    if (srep != NULL) {
       *srep = '\0';
       srep++;
     }
     n = strlen(smat); /* match string length */
     if (strncmp(old, smat, n) == 0) {
-      strcpy(new, srep);
+      strcpy(new, srep ? srep : "");
       strcat(new, old + n);
       return;
     }

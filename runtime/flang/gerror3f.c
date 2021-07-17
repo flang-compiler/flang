@@ -32,7 +32,7 @@ void ENT3F(GERROR, gerror)(DCHAR(str) DCLEN(str))
 
 void ENT3F(GET_IOSTAT_MSG, get_iostat_msg)(int *ios, DCHAR(str) DCLEN(str))
 {
-  char *p;
+  const char *p;
   p = Ftn_errmsg(*ios);
   __fcp_cstr(CADR(str), CLEN(str), p);
 }
@@ -40,7 +40,7 @@ void ENT3F(GET_IOSTAT_MSG, get_iostat_msg)(int *ios, DCHAR(str) DCLEN(str))
 /* for -Msecond_underscore */
 void ENT3F(GET_IOSTAT_MSG_, get_iostat_msg_)(int *ios, DCHAR(str) DCLEN(str))
 {
-  char *p;
+  const char *p;
   p = Ftn_errmsg(*ios);
   __fcp_cstr(CADR(str), CLEN(str), p);
 }

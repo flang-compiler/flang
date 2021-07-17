@@ -62,7 +62,6 @@ int ENT3F(FSTAT, fstat)(int *lu, int *statb)
   return i;
 #else
   struct stat b;
-  char *p;
   int i;
   void *f;
 

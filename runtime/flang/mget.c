@@ -60,7 +60,7 @@ void ENTFTN(MGET_SCALAR, mget_scalar)(__INT_T *nb, ...)
   char *rb, *ab, *ap;
   DECL_HDR_PTRS(as);
   chdr *ch;
-  int me, np, from, partner, j, k;
+  int me, np, from, partner;
   __INT_T i, n, idx[MAXDIMS];
 
   me = GET_DIST_LCPU;

@@ -14,13 +14,13 @@
 #define write _write
 #endif
 
-extern char *__fort_getopt(char *);
+extern char *__fort_getopt(const char *);
 
 /* signals handled and message strings */
 
 struct sigs {
-  int sig;   /* signal value */
-  char *str; /* message string */
+  int sig;          /* signal value */
+  const char *str;  /* message string */
 };
 
 static struct sigs sigs[] = {

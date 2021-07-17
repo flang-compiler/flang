@@ -70,8 +70,8 @@ static void I8(__io_read)(fio_parm *z)
 static void I8(__io_write)(fio_parm *z)
 {
   DECL_HDR_PTRS(ac);
-  char *adr, *buf;
-  int ioproc, owner, str;
+  char *adr;
+  int str;
 
   ac = z->ac;
   adr = I8(__fort_local_address)(z->ab, ac, z->index);

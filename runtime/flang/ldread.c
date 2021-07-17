@@ -440,7 +440,7 @@ ENTF90IO(LDR_INIT03A, ldr_init03a)
       } else if (__fortio_eq_str(CADR(round), CLEN(round), "COMPATIBLE")) {
         gbl->round = FIO_COMPATIBLE;
       } else if (__fortio_eq_str(CADR(round), CLEN(round),
-                                "PROCESSOR_DEFINED")) {
+                                 "PROCESSOR_DEFINED")) {
         gbl->round = FIO_PROCESSOR_DEFINED;
       } else
         s = __fortio_error(FIO_ESPEC);
@@ -699,7 +699,7 @@ ENTF90IO(LDRA, ldra)
  DCLEN64(item))
 {
   int typ;
-  int cnt, cpu, i, ioproc, str;
+  int cnt, ioproc, str;
   __CLEN_T len;
   char *adr;
   int s = 0;
@@ -745,7 +745,7 @@ ENTF90IO(LDR_AA, ldr_aa)
  DCLEN64(item))
 {
   int typ;
-  int cnt, cpu, i, ioproc, str;
+  int cnt, ioproc, str;
   __CLEN_T len;
   char *adr;
   int s = 0;
@@ -789,7 +789,7 @@ ENTF90IO(LDR64_AA, ldr64_aa)
 {
   int typ;
   long cnt;
-  int cpu, i, ioproc, str;
+  int ioproc, str;
   __CLEN_T len;
   char *adr;
   int s = 0;
@@ -833,7 +833,7 @@ ENTCRF90IO(LDRA, ldra)
  DCLEN64(item))
 {
   int typ;
-  int cnt, cpu, i, str;
+  int cnt, str;
   __CLEN_T len;
   char *adr;
 

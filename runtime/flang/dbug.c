@@ -134,7 +134,7 @@ void I8(__fort_show_index)(__INT_T rank, __INT_T *index)
     for (i = 0; i < rank; i++) {
       if (i > 0)
         fprintf(__io_stderr(), ",");
-      fprintf(__io_stderr(), "%d", index[i]);
+      fprintf(__io_stderr(), "%d", (int)index[i]);
     }
     fprintf(__io_stderr(), ")");
   } else
@@ -163,24 +163,22 @@ void I8(__fort_show_section)(F90_Desc *d)
       fprintf(__io_stderr(), ",");
     SET_DIM_PTRS(dd, d, dx);
     if (F90_DPTR_LBOUND_G(dd) != 1)
-      fprintf(__io_stderr(), "%d:", F90_DPTR_LBOUND_G(dd));
-    fprintf(__io_stderr(), "%d", DPTR_UBOUND_G(dd));
+      fprintf(__io_stderr(), "%d:", (int)F90_DPTR_LBOUND_G(dd));
+    fprintf(__io_stderr(), "%d", (int)DPTR_UBOUND_G(dd));
   }
-  fprintf(__io_stderr(), ")[%d]", F90_GSIZE_G(d));
+  fprintf(__io_stderr(), ")[%d]", (int)F90_GSIZE_G(d));
 }
 
-static char *intentnames[4] = {"INOUT", "IN", "OUT", "??"};
+#if !defined(DESC_I8)
+static const char *intentnames[4] = {"INOUT", "IN", "OUT", "??"};
 
-static char *specnames[4] = {"OMITTED", "PRESCRIPTIVE", "DESCRIPTIVE",
-                             "TRANSCRIPTIVE"};
+static const char *specnames[4] = {"OMITTED", "PRESCRIPTIVE", "DESCRIPTIVE",
+                                   "TRANSCRIPTIVE"};
+#endif
 
-static char *dfmtnames[] = {"*",      "BLOCK",     "BLOCK",   "CYCLIC",
-                            "CYCLIC", "GEN_BLOCK", "INDIRECT"};
-
-static char *dfmtabbrev[] = {"*", "BLK", "BLKK", "CYC", "CYCK", "GENB", "IND"};
+static const char *dfmtabbrev[] = {"*", "BLK", "BLKK", "CYC", "CYCK", "GENB", "IND"};
 
 #if !defined(DESC_I8)
-
 void
 __fort_show_flags(__INT_T flags)
 {
@@ -189,7 +187,7 @@ __fort_show_flags(__INT_T flags)
   _io_spec dist_format_spec;
   _io_spec align_target_spec;
 
-  fprintf(__io_stderr(), "flags=0x%x", flags);
+  fprintf(__io_stderr(), "flags=0x%x", (unsigned int)flags);
   if (flags & __ASSUMED_SIZE)
     fprintf(__io_stderr(), ", ASSUMED SIZE");
   if (flags & __SEQUENCE)
@@ -255,12 +253,13 @@ void ENTFTN(SHOW, show)(void *b, F90_Desc *d)
 
   I8(__fort_show_section)(d);
   fprintf(__io_stderr(), "@%p F90_Desc@%p rank=%d %s len=%d\n", b, d,
-          F90_RANK_G(d), GET_DIST_TYPENAMES(F90_KIND_G(d)), F90_LEN_G(d));
+          (int)F90_RANK_G(d), GET_DIST_TYPENAMES(F90_KIND_G(d)), (int)F90_LEN_G(d));
 
   fprintf(__io_stderr(), "lsize=%d pbase=%d lbase=%d scoff=%d\n",
-          F90_LSIZE_G(d), DIST_PBASE_G(d), F90_LBASE_G(d), DIST_SCOFF_G(d));
-
+          (int)F90_LSIZE_G(d), DIST_PBASE_G(d), (int)F90_LBASE_G(d), DIST_SCOFF_G(d));
+#if !defined(DESC_I8)
   __fort_show_flags(F90_FLAGS_G(d));
+#endif
   fprintf(__io_stderr(), "\n");
 
   if (F90_RANK_G(d) > 0) {
@@ -269,11 +268,11 @@ void ENTFTN(SHOW, show)(void *b, F90_Desc *d)
     for (dx = 1; dx <= F90_RANK_G(d); ++dx) {
       SET_DIM_PTRS(dd, d, dx - 1);
       fprintf(__io_stderr(),
-              "%3d%5d%5d%5d%5d%5d%5d%5d%5d%5d%5d%5d%5d%5d%5d\n", dx,
-              F90_DPTR_LBOUND_G(dd), DPTR_UBOUND_G(dd), DIST_DPTR_OLB_G(dd),
-              DIST_DPTR_OUB_G(dd), DIST_DPTR_NO_G(dd), DIST_DPTR_PO_G(dd),
-              DIST_DPTR_LAB_G(dd), DIST_DPTR_UAB_G(dd), F90_DPTR_LSTRIDE_G(dd),
-              DIST_DPTR_LOFFSET_G(dd), F90_DPTR_SSTRIDE_G(dd),
+              "%3d%5d%5d%5d%5d%5d%5d%5d%5d%5d%5d%5d%5d%5d%5d\n", (int)dx,
+              (int)F90_DPTR_LBOUND_G(dd), (int)DPTR_UBOUND_G(dd), (int)DIST_DPTR_OLB_G(dd),
+              (int)DIST_DPTR_OUB_G(dd), DIST_DPTR_NO_G(dd), DIST_DPTR_PO_G(dd),
+              (int)DIST_DPTR_LAB_G(dd), (int)DIST_DPTR_UAB_G(dd), (int)F90_DPTR_LSTRIDE_G(dd),
+              (int)DIST_DPTR_LOFFSET_G(dd), F90_DPTR_SSTRIDE_G(dd),
               F90_DPTR_SOFFSET_G(dd), DIST_DPTR_ASTRIDE_G(dd),
               DIST_DPTR_AOFFSET_G(dd));
     }
@@ -281,7 +280,7 @@ void ENTFTN(SHOW, show)(void *b, F90_Desc *d)
     fprintf(__io_stderr(), "dim   tx tstr toff cost  map olap sect\n");
     for (dx = 1; dx <= F90_RANK_G(d); ++dx) {
       SET_DIM_PTRS(dd, d, dx - 1);
-      fprintf(__io_stderr(), "%3d%5d%5d%5d%5d%5d%5d%5d\n", dx,
+      fprintf(__io_stderr(), "%3d%5d%5d%5d%5d%5d%5d%5d\n", (int)dx,
               DIST_DPTR_TAXIS_G(dd), DIST_DPTR_TSTRIDE_G(dd),
               DIST_DPTR_TOFFSET_G(dd), DIST_DPTR_COFSTR_G(dd),
               (DIST_MAPPED_G(d) >> (dx - 1)) & 1,
@@ -293,9 +292,9 @@ void ENTFTN(SHOW, show)(void *b, F90_Desc *d)
             "dim  tlb  tub dfmt blck cycl  clb  cno   px pcrd pshp pstr\n");
     for (dx = 1; dx <= F90_RANK_G(d); ++dx) {
       SET_DIM_PTRS(dd, d, dx - 1);
-      fprintf(__io_stderr(), "%3d%5d%5d%5s%5d%5d%5d%5d%5d%5d%5d%5d\n", dx,
-              DIST_DPTR_TLB_G(dd), DIST_DPTR_TUB_G(dd), dfmtabbrev[DFMT(d, dx)],
-              DIST_DPTR_BLOCK_G(dd), DIST_DPTR_CYCLE_G(dd), DIST_DPTR_CLB_G(dd),
+      fprintf(__io_stderr(), "%3d%5d%5d%5s%5d%5d%5d%5d%5d%5d%5d%5d\n", (int)dx,
+              (int)DIST_DPTR_TLB_G(dd), (int)DIST_DPTR_TUB_G(dd), dfmtabbrev[DFMT(d, dx)],
+              DIST_DPTR_BLOCK_G(dd), DIST_DPTR_CYCLE_G(dd), (int)DIST_DPTR_CLB_G(dd),
               DIST_DPTR_CNO_G(dd), DIST_DPTR_PAXIS_G(dd), DIST_DPTR_PCOORD_G(dd),
               DIST_DPTR_PSHAPE_G(dd), DIST_DPTR_PSTRIDE_G(dd));
     }
@@ -305,7 +304,7 @@ void ENTFTN(SHOW, show)(void *b, F90_Desc *d)
       for (dx = 1; dx <= F90_RANK_G(d); ++dx) {
         if ((DIST_CACHED_G(d) >> (dx - 1)) & 1) {
           SET_DIM_PTRS(dd, d, dx - 1);
-          fprintf(__io_stderr(), "%3d%5d%5d%5d%5d%5d\n", dx,
+          fprintf(__io_stderr(), "%3d%5d%5d%5d%5d%5d\n", (int)dx,
                   DIST_DPTR_CL_G(dd), DIST_DPTR_CN_G(dd), DIST_DPTR_CS_G(dd),
                   DIST_DPTR_CLOF_G(dd), DIST_DPTR_CLOS_G(dd));
         }
@@ -315,9 +314,11 @@ void ENTFTN(SHOW, show)(void *b, F90_Desc *d)
 
   t = DIST_ALIGN_TARGET_G(d);
   if (t != d) {
-    fprintf(__io_stderr(), "align-target@%x rank=%d pbase=%d\n", t->tag,
-            F90_RANK_G(t), DIST_PBASE_G(t));
+    fprintf(__io_stderr(), "align-target@%x rank=%d pbase=%d\n", (int)t->tag,
+            (int)F90_RANK_G(t), DIST_PBASE_G(t));
+#if !defined(DESC_I8)
     __fort_show_flags(F90_FLAGS_G(t));
+#endif
     fprintf(__io_stderr(), "\n");
 
     if (F90_RANK_G(t) > 0) {
@@ -326,9 +327,9 @@ void ENTFTN(SHOW, show)(void *b, F90_Desc *d)
       for (tx = 1; tx <= F90_RANK_G(t); ++tx) {
         SET_DIM_PTRS(td, t, tx - 1);
         fprintf(__io_stderr(), "%3d%5d%5d%5s%5d%5d%5d%5d%5d%5d%5d%5d%5d%5d\n",
-                tx, F90_DPTR_LBOUND_G(td), DPTR_UBOUND_G(td),
+                (int)tx, (int)F90_DPTR_LBOUND_G(td), (int)DPTR_UBOUND_G(td),
                 dfmtabbrev[DFMT(t, tx)], DIST_DPTR_BLOCK_G(td),
-                DIST_DPTR_CYCLE_G(td), DIST_DPTR_CLB_G(td), DIST_DPTR_CNO_G(td),
+                DIST_DPTR_CYCLE_G(td), (int)DIST_DPTR_CLB_G(td), DIST_DPTR_CNO_G(td),
                 DIST_DPTR_PAXIS_G(td), DIST_DPTR_PCOORD_G(td),
                 DIST_DPTR_PSHAPE_G(td), DIST_DPTR_PSTRIDE_G(td),
                 (DIST_SINGLE_G(d) >> (tx - 1)) & 1, DIST_INFO_G(d, tx - 1));
@@ -337,17 +338,19 @@ void ENTFTN(SHOW, show)(void *b, F90_Desc *d)
   }
 
   p = DIST_DIST_TARGET_G(d);
-  fprintf(__io_stderr(), "dist-target@%x rank=%d size=%d base=%d\n", p->tag,
-          p->rank, p->size, p->base);
+  fprintf(__io_stderr(), "dist-target@%x rank=%d size=%d base=%d\n", (unsigned int)p->tag,
+          (int)p->rank, (int)p->size, (int)p->base);
+#if !defined(DESC_I8)
   __fort_show_flags(p->flags);
+#endif
   fprintf(__io_stderr(), "\n");
 
   if (p->rank > 0) {
     fprintf(__io_stderr(), "dim shape stride coord repl\n");
     for (px = 1; px <= p->rank; ++px) {
       pd = &p->dim[px - 1];
-      fprintf(__io_stderr(), "%3d%6d%7d%6d%5d\n", px, pd->shape, pd->stride,
-              pd->coord, (DIST_REPLICATED_G(d) >> (px - 1)) & 1);
+      fprintf(__io_stderr(), "%3d%6d%7d%6d%5d\n", (int)px, (int)pd->shape, (int)pd->stride,
+              (int)pd->coord, (DIST_REPLICATED_G(d) >> (px - 1)) & 1);
     }
   }
 }
@@ -355,12 +358,8 @@ void ENTFTN(SHOW, show)(void *b, F90_Desc *d)
 #if (defined(DESC_I8) && defined(__PGLLVM__)) || (!defined(DESC_I8) && !defined(__PGLLVM__))
 void ENTF90COMN(SHOW_, show_)(void *b, F90_Desc *d)
 {
-  DECL_HDR_PTRS(t);
-  DECL_DIM_PTRS(td);
   DECL_DIM_PTRS(dd);
-  proc *p;
-  procdim *pd;
-  __INT_T dx, px, tx;
+  __INT_T dx;
   OBJECT_DESC *dest = (OBJECT_DESC *)d;
   TYPE_DESC *dest_td;
 
@@ -386,7 +385,9 @@ void ENTF90COMN(SHOW_, show_)(void *b, F90_Desc *d)
   fprintf(__io_stderr(), "lsize=%d pbase=%d lbase=%d scoff=%d\n",
           F90_LSIZE_G(d), DIST_PBASE_G(d), F90_LBASE_G(d), DIST_SCOFF_G(d));
 
+#if !defined(DESC_I8)
   __fort_show_flags(F90_FLAGS_G(d));
+#endif
   fprintf(__io_stderr(), "\n");
 
   if (F90_RANK_G(d) > 0) {
@@ -405,20 +406,22 @@ void ENTF90COMN(SHOW_, show_)(void *b, F90_Desc *d)
 
 void I8(__fort_describe)(char *b, F90_Desc *d)
 {
-  DECL_HDR_PTRS(t);
-  proc *p;
-  __INT_T dx, px, tx;
+  __INT_T dx;
 
   if (ISSEQUENCE(d)) {
     fprintf(__io_stderr(), "sequence %s at %p = ",
             GET_DIST_TYPENAMES(TYPEKIND(d)), b);
+#if !defined(DESC_I8)
     __fort_print_scalar(b, (int)TYPEKIND(d));
+#endif
     fprintf(__io_stderr(), "\n");
     return;
   } else if (ISSCALAR(d)) {
     fprintf(__io_stderr(), "scalar %s at %p = ",
             GET_DIST_TYPENAMES(TYPEKIND(d)), b);
+#if !defined(DESC_I8)
     __fort_print_scalar(b, (int)TYPEKIND(d));
+#endif
     fprintf(__io_stderr(), "\n");
     return;
   } else if (F90_TAG_G(d) != __DESC) {
@@ -427,16 +430,16 @@ void I8(__fort_describe)(char *b, F90_Desc *d)
   }
 
   if (~F90_FLAGS_G(d) & __TEMPLATE) {
-    fprintf(__io_stderr(), "%s a_%x(", GET_DIST_TYPENAMES(F90_KIND_G(d)), d->tag);
+    fprintf(__io_stderr(), "%s a_%x(", GET_DIST_TYPENAMES(F90_KIND_G(d)), (int)d->tag);
     for (dx = 0; dx < F90_RANK_G(d); ++dx) {
       if (dx > 0)
         fprintf(__io_stderr(), ",");
       if (F90_DIM_LBOUND_G(d, dx) != 1)
-        fprintf(__io_stderr(), "%d:", F90_DIM_LBOUND_G(d, dx));
-      fprintf(__io_stderr(), "%d", DIM_UBOUND_G(d, dx));
+        fprintf(__io_stderr(), "%d:", (int)F90_DIM_LBOUND_G(d, dx));
+      fprintf(__io_stderr(), "%d", (int)DIM_UBOUND_G(d, dx));
     }
     fprintf(__io_stderr(), ") at %p\n", b);
-    fprintf(__io_stderr(), "!hpf$ shadow a_%x(", d->tag);
+    fprintf(__io_stderr(), "!hpf$ shadow a_%x(", (int)d->tag);
     for (dx = 0; dx < F90_RANK_G(d); ++dx) {
       if (dx > 0)
         fprintf(__io_stderr(), ",");
@@ -449,25 +452,26 @@ void I8(__fort_describe)(char *b, F90_Desc *d)
       if (dx > 0)
         fprintf(__io_stderr(), ",");
       if (DIST_DIM_LAB_G(d, dx) != 1)
-        fprintf(__io_stderr(), "%d:", DIST_DIM_LAB_G(d, dx));
-      fprintf(__io_stderr(), "%d", DIST_DIM_UAB_G(d, dx));
+        fprintf(__io_stderr(), "%d:", (int)DIST_DIM_LAB_G(d, dx));
+      fprintf(__io_stderr(), "%d", (int)DIST_DIM_UAB_G(d, dx));
     }
-    fprintf(__io_stderr(), ")[%d] map (", F90_LSIZE_G(d));
+    fprintf(__io_stderr(), ")[%d] map (", (int)F90_LSIZE_G(d));
     for (dx = 0; dx < F90_RANK_G(d); ++dx) {
       if (dx > 0)
         fprintf(__io_stderr(), ")+(");
       if (F90_DIM_LSTRIDE_G(d, dx) != 1)
-        fprintf(__io_stderr(), "%d*", F90_DIM_LSTRIDE_G(d, dx));
-      fprintf(__io_stderr(), "%c", 'i' + dx);
+        fprintf(__io_stderr(), "%d*", (int)F90_DIM_LSTRIDE_G(d, dx));
+      fprintf(__io_stderr(), "%c", (int)('i' + dx));
       if (DIST_DIM_LOFFSET_G(d, dx) != 0)
-        fprintf(__io_stderr(), "%+d", DIST_DIM_LOFFSET_G(d, dx));
+        fprintf(__io_stderr(), "%+d", (int)DIST_DIM_LOFFSET_G(d, dx));
     }
-    fprintf(__io_stderr(), ") lbase=%d scoff=%d\n", F90_LBASE_G(d),
+    fprintf(__io_stderr(), ") lbase=%d scoff=%d\n", (int)F90_LBASE_G(d),
             DIST_SCOFF_G(d));
+#if !defined(DESC_I8)
     __fort_show_flags(F90_FLAGS_G(d));
+#endif
     fprintf(__io_stderr(), "\n");
   }
-
 }
 
 void ENTFTN(DESCRIBE, describe)(void *b, F90_Desc *d)
@@ -501,7 +505,7 @@ static void I8(print_row)(void *ab, __INT_T str, __INT_T cnt, dtype kind)
     for (i = 0; i < cnt; ++i) {
       if (i > 0 && (i & 15) == 0)
         fprintf(__io_stderr(), "\n");
-      fprintf(__io_stderr(), " %4d", ci[i * str]);
+      fprintf(__io_stderr(), " %4d", (int)ci[i * str]);
     }
     break;
   case __INT1:

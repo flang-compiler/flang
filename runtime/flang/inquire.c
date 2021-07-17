@@ -22,9 +22,9 @@
 
 static FIO_FCB *f2; /* save fcb for inquire2 */
 
-static void copystr(char *dst, /*  destination string, blank-filled */
-                    int len,   /*  length of destination space */
-                    char *src) /*  null terminated source string  */
+static void copystr(char *dst,       /* destination string, blank-filled */
+                    int len,         /* length of destination space */
+                    const char *src) /* null terminated source string  */
 {
   char *end = dst + len;
   while (dst < end && *src != '\0')
@@ -56,7 +56,7 @@ inquire(__INT_T *unit, char *file_ptr, __INT_T *bitv, __INT_T *iostat,
 {
   FIO_FCB *f;
   __CLEN_T i;
-  char *cp;
+  const char *cp;
   __CLEN_T len, nleadb;
 
   __fortio_errinit03(*unit, *bitv, iostat, "INQUIRE");
@@ -502,8 +502,6 @@ int ENTF90IO(INQUIREA, inquirea)(
   char *schr = 0, *schrp;
   __CLEN_T schr_len = 0;
 
-  int n;
-
   file_ptr = (ISPRESENTC(file) ? CADR(file) : NULL);
   name_ptr = (ISPRESENTC(name) ? CADR(name) : NULL);
   acc_ptr = (ISPRESENTC(acc) ? CADR(acc) : NULL);
@@ -860,8 +858,6 @@ int ENTF90IO(INQUIRE2003A, inquire2003a)(
   int sint[SINTN], *sintp;
   char *schr = 0, *schrp;
   __CLEN_T schr_len = 0;
-
-  int n;
 
   file_ptr = (ISPRESENTC(file) ? CADR(file) : NULL);
   name_ptr = (ISPRESENTC(name) ? CADR(name) : NULL);
@@ -1459,7 +1455,7 @@ ENTF90IO(INQUIRE2A, inquire2a)
      DCLEN64(stream))
 {
   FIO_FCB *f;
-  char *cp;
+  const char *cp;
 
   if (*istat)
     return *istat;
@@ -1677,8 +1673,6 @@ ENTF90IO(INQUIRE03A, inquire03a) (
   __INT8_T sint[SINTN], *sintp;
   char *schr = 0, *schrp;
   __CLEN_T schr_len = 0;
-
-  int n;
 
   file_ptr = (ISPRESENTC(file) ? CADR(file) : NULL);
   name_ptr = (ISPRESENTC(name) ? CADR(name) : NULL);
@@ -2187,8 +2181,6 @@ ENTF90IO(INQUIRE03_2A, inquire03_2a)
   __INT8_T sint[SINTN], *sintp;
   char *schr = 0, *schrp;
   __CLEN_T schr_len = 0;
-
-  int n;
 
   file_ptr = (ISPRESENTC(file) ? CADR(file) : NULL);
   name_ptr = (ISPRESENTC(name) ? CADR(name) : NULL);

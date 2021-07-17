@@ -272,18 +272,8 @@ __fort_i64toax(DBLINT64 from, char *to, int count, int sign, int radix)
                       * to be shifted */
   int msd;           /* index of the most-signingicant digit in to */
   int num_bits;      /* number of bits to be shifted */
-  DBLINT64 quot;        /* the quotient part of a 64 bit division */
-  DBLINT64 remain;      /* the remainder part of a 64 bit division */
   DBLINT64 temp_from;   /* temp from (=(abs(from)) */
   DBLINT64 temp64;      /* temporary 64 bit integer */
-
-  /* 64 bit integer equal to 10 */
-  static DBLINT64 ten64 = {0, 10};
-
-  /* the result of dividing a 64 bit unsigned integer with only the
-   * sign bit on by 10
-   */
-  static INT msbdiv10[2] = {0xccccccc, 0xcccccccc};
 
   if ((from[0] == 0) && (from[1] == 0)) {
     msd = count - 1;
@@ -419,8 +409,6 @@ __fort_i64toax(DBLINT64 from, char *to, int count, int sign, int radix)
 static int toi64(char *s, DBLINT64 toi, char *end, int radix)
 {
   DBLINT64 base; /* 64 bit integer equal to radix */
-  DBLINT64 diff; /* difference between 2 64 bit integers, used
-               * in determining if overflow has occured */
   DBLINT64 num;  /* numerical value of a particular digit */
   DBLINT64 to;
   int negate;
@@ -431,7 +419,6 @@ static int toi64(char *s, DBLINT64 toi, char *end, int radix)
 
   /* maximum 64-bit signed integer */
   static DBLINT64 max_int = {0x7fffffff, 0xffffffff};
-  static DBLINT64 max_neg = {0x80000000, 0};
 
   OVL8 pto;
 

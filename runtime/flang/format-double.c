@@ -1111,8 +1111,8 @@ G_format(char *out, int width,
 
       if (int_part_digits == 0) {
         bool all_frac_zeroes = all_zeroes(frac_part, frac_digits);
-        if (frac_digits > 0 && frac_part[0] == '0' &&
-           (!all_frac_zeroes || next_digit_for_rounding > 0 || is_inexact)
+        if ((frac_digits > 0 && frac_part[0] == '0' &&
+           (!all_frac_zeroes || next_digit_for_rounding > 0 || is_inexact))
            || (frac_digits == 0 && control->scale_factor))
           goto do_E_formatting; /* 0 < |x| < 0.1 */
         if (all_frac_zeroes) {

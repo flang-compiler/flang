@@ -27,7 +27,6 @@ __INT_T *iostat;
 __INT_T *id;
 {
   FIO_FCB *f;
-  int i;
   int s = 0;
 
   __fort_status_init(bitv, iostat);

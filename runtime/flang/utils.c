@@ -465,11 +465,11 @@ __fortio_zeropad(FILE *fp, long len)
 
 /* --------------------------------------------------------------- */
 
+/* return TRUE if string 'str' of length 'len' is equal to 'pattern'. */
 extern bool __fortio_eq_str(
-    /* return TRUE if string 'str' of length 'len' is equal to 'pattern'. */
-
-    char *str, /* user specified string, not null terminated */
-    __CLEN_T len, char *pattern) /* upper case, null terminated string */
+    char *str,           /* user-specified string, not null terminated */
+    __CLEN_T len,        /* maximum number of characters to comprae */
+    const char *pattern) /* upper case, null terminated string */
 {
   char c1, c2;
 

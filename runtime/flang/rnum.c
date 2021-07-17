@@ -6321,7 +6321,6 @@ void ENTFTN(RSEED, rseed)(void *size, __INT_T *putb, __INT_T *getb,
                           F90_Desc *sized, F90_Desc *putd, F90_Desc *getd)
 {
   int i, j, no_args_present, vhi, vlo;
-  __INT_T *la;
   int list[LONG_LAG][2];
   __INT_T extent, index;
   char *static_seed;

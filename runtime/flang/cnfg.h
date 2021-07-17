@@ -12,14 +12,14 @@
 
 /* declare structure which may alter the configuration */
 typedef struct {
-  char *default_name; /* sprintf string for default file name */
-  int true_mask;      /* 1 => odd is true, -1 => nonzero is true */
-  int ftn_true;       /* -1 ==> VAX; 1 => unix */
+  const char *default_name; /* sprintf string for default file name */
+  int true_mask;            /* 1 => odd is true, -1 => nonzero is true */
+  int ftn_true;             /* -1 ==> VAX; 1 => unix */
 } FIO_CNFG;
 
 #ifdef WINNT
 
-extern char *__get_fio_cnfg_default_name(void);
+extern const char *__get_fio_cnfg_default_name(void);
 extern int __get_fio_cnfg_true_mask(void);
 extern int *__get_fio_cnfg_true_mask_addr(void);
 extern int __get_fio_cnfg_ftn_true(void);

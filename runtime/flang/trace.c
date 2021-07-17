@@ -21,7 +21,7 @@ __fort_trac_init(void)
   char *p, *q;
   int n;
 
-  p = __fort_getopt("-trace");
+  p = __fort_getopt((char *)"-trace");
   if (p) {
     n = (int)__fort_strtol(p, &q, 0);
     if (q == p)
@@ -46,7 +46,7 @@ __fort_trac_function_entry(int line, int lines, int cline, char *func,
   ++call_level;
   if (tracing)
     printf("%d: %.*s %.*s (%.*s:%d..%d) called from line %d\n", GET_DIST_LCPU,
-           call_level, dots, funcl, func, filel, file, line, line + lines - 1,
+           call_level, dots, (int)funcl, func, (int)filel, file, line, line + lines - 1,
            cline);
 }
 

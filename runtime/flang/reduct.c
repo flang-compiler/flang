@@ -92,7 +92,7 @@ static void
    template.  */
 
 static void
-global_reduce_abort(char *what, char *msg)
+global_reduce_abort(const char *what, const char *msg)
 {
   char str[120];
   sprintf(str, "GLOBAL_%s: %s", what, msg);
@@ -100,7 +100,7 @@ global_reduce_abort(char *what, char *msg)
 }
 
 void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
-                             F90_Desc *hd, char *what, void (*fn[__NTYPES])())
+                             F90_Desc *hd, const char *what, void (*fn[__NTYPES])())
 {
   DECL_HDR_PTRS(ht); /* align-target */
   DECL_DIM_PTRS(hdd);
@@ -138,7 +138,7 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
     /* all processors allocate same size temporary buffer */
 
     bufsiz = ALIGNR(cnt * len); /* round up buffer size */
-    if (bufsiz > sizeof(buf))
+    if (bufsiz > (int)(sizeof(buf)))
       tmp = (char *)__fort_gmalloc(bufsiz);
     else
       tmp = (char *)buf;
@@ -341,7 +341,6 @@ void I8(__fort_reduce_section)(void *vec1, dtype typ1, int len1, void *vec2,
                               int dim, F90_Desc *a)
 {
   DECL_DIM_PTRS(ad);
-  proc *p;
   char *tmp1, *tmp2; /* temporary buffer pointers */
   double buf1[4], buf2[4];
   __INT_T bit, cpu, i, it, mask, n, offgrid, pr, np, pc, pl, pe[MAXDIMS],
@@ -379,14 +378,14 @@ void I8(__fort_reduce_section)(void *vec1, dtype typ1, int len1, void *vec2,
   /* allocate temporary buffers */
 
   n = cnt * len1;
-  if (n > sizeof(buf1))
+  if (n > (int)(sizeof(buf1)))
     tmp1 = (char *)__fort_gmalloc(n);
   else
     tmp1 = (char *)buf1;
 
   if (vec2 != NULL) {
     n = cnt * len2;
-    if (n > sizeof(buf2))
+    if (n > (int)(sizeof(buf2)))
       tmp2 = (char *)__fort_gmalloc(n);
     else
       tmp2 = (char *)buf2;
@@ -472,7 +471,6 @@ void I8(__fort_replicate_result)(void *vec1, dtype typ1, int len1, void *vec2,
 {
   DECL_HDR_PTRS(t);
   DECL_DIM_PTRS(td);
-  proc *ap;
   __INT_T fromcpu, fromidx, i, mask, me, np, offgrid, p0, pc, pr, pe[MAXDIMS],
       ps[MAXDIMS];
 

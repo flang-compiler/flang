@@ -84,15 +84,15 @@ __fort_zopen(char *path)
 
 /* write */
 
-void __fort_zwrite(adr, len) char *adr;
-int len;
+void
+__fort_zwrite(char *adr, int len)
 {
   int ioproc;
   int s;
 
   ioproc = GET_DIST_IOPROC;
   if (GET_DIST_LCPU != ioproc) {
-    if ((len + sizeof(int)) > (bufe - bufp)) {
+    if ((long)(len + sizeof(int)) > (bufe - bufp)) {
       if (len > MAXBUF) {
         __fort_abort("__fort_zwrite: message too big");
       }

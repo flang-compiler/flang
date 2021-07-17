@@ -51,11 +51,6 @@ void ENTF90(MMUL_REAL4, mmul_real4)(int ta, int tb, __POINT_T mra,
   // Local variables
 
   int colsa, rowsa, rowsb, colsb;
-  int ar, ac;
-  int ndx, ndxsav, colchunk, colchunks, rowchunk, rowchunks;
-  int colsb_chunks, colsb_end, colsb_strt;
-  int bufr, bufc, loc, lor;
-  int small_size = SMALL_ROWSA * SMALL_ROWSB * SMALL_COLSB;
   int tindex = 0;
   float buffera[SMALL_ROWSA * SMALL_ROWSB];
   float bufferb[SMALL_COLSB * SMALL_ROWSB];
@@ -67,8 +62,8 @@ void ENTF90(MMUL_REAL4, mmul_real4)(int ta, int tb, __POINT_T mra,
   /*
    * Small matrix multiply variables
    */
-  int i, ia, ja, j, k, bk;
-  int astrt, bstrt, cstrt, andx, bndx, cndx, indx, indx_strt;
+  int i, ja, j, k;
+  int astrt = 0, bstrt, cstrt, andx, bndx, cndx, indx, indx_strt;
   /*
    * tindex has the following meaning:
    * ta == 0, tb == 0: tindex = 0
