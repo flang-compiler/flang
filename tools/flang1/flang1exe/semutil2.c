@@ -990,6 +990,7 @@ typedef struct {
   int indx_tmpid[MAXDIMS];  /* id ast of subscripting temporary */
   int level;                /* implied do nesting level */
   int width;
+  LOGICAL func_in_do;       /* func call found in ac-value-list */
 } _ACS;
 
 static _ACS acs;
@@ -1668,10 +1669,19 @@ init_sptr_w_acl(int in_sptr, ACL *aclp)
     /* converts AC_AST to AC_IEXPR. */
     aclp->subc = rewrite_acl(aclp->subc, aclp->dtype, aclp->id);
   } else {
+    int std;
     if (sem.arrdim.ndefer) {
       ALLOCATE_ARRAYS = 0; /* allocate for these array temps is done here */
     }
 
+    if (sem.arrdim.ndefer && sem.arrfn.sptr > NOSYM &&
+        sem.arrfn.return_value &&
+        ADD_DEFER(A_DTYPEG(sem.arrfn.return_value)) &&
+        aclp->id == AC_ACONST && aclp->subc->id == AC_IDO) {
+      sptr = acs.tmp = get_adjlr_arr_temp(acs.arrtype);
+      get_static_descriptor(acs.tmp);
+      get_all_descriptors(acs.tmp);
+    } else
       sptr = acs.tmp = get_arr_temp(acs.arrtype, FALSE, FALSE, FALSE);
     ALLOCATE_ARRAYS = 1;
     if (sem.arrdim.ndefer) {
@@ -1680,11 +1690,36 @@ init_sptr_w_acl(int in_sptr, ACL *aclp)
       /* assign values to the bounds temporaries and allocate the
        * array.
        */
+      std = STD_PREV(0);
       gen_allocate_array(acs.tmp);
+      std = STD_NEXT(std);
     }
 
+    acs.func_in_do = FALSE;
     /* generate code to assign aclp values to the temporary */
     constructf90(acs.tmp, aclp);
+
+    if (acs.func_in_do && sem.arrdim.ndefer &&
+        SDSCG(A_SPTRG(sem.arrfn.return_value))) {
+      int sdsc, dtype, i;
+
+      sdsc = SDSCG(A_SPTRG(sem.arrfn.return_value));
+      dtype = A_DTYPEG(sem.arrfn.return_value);
+      for (i = 0; i < ADD_NUMDIM(dtype); i++) {
+        int lb = lbound_of(dtype, i);
+        int extnt = ADD_EXTNTAST(dtype, i);
+        assert(A_TYPEG(lb) == A_SUBSCR, "init_sptr_w_acl: lb not subs", lb,
+               ERR_Fatal);
+        assert(memsym_of_ast(lb) == sdsc, "init_sptr_w_acl: lb not sdsc", lb,
+               ERR_Fatal);
+        assert(A_TYPEG(extnt) == A_SUBSCR, "init_sptr_w_acl: extnt not subs",
+               extnt, ERR_Fatal);
+        assert(memsym_of_ast(extnt) == sdsc, "init_sptr_w_acl: extnt not sdsc",
+               extnt, ERR_Fatal);
+        (void)add_stmt_before(mk_assn_stmt(lb, astb.bnd.one, astb.bnd.dtype), std);
+        (void)add_stmt_before(mk_assn_stmt(extnt, astb.bnd.zero, astb.bnd.dtype), std);
+      }
+    }
     acs.tmp = sptr; /* if we recursed, asc.tmp may have changed */
   }
 
@@ -2630,6 +2665,8 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
   int indexast;
   INT cnt;
   LOGICAL sdscismbr;
+  int argt = 0;
+  int argt_count = 0;
 
   indexast = in_indexast;
 
@@ -2948,6 +2985,28 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
           ast = ast_rewrite_indices(ast);
           (void)add_stmt(ast);
           break;
+        }
+
+        if(acs.level && sem.arrfn.sptr > NOSYM &&
+           sem.arrfn.return_value == SST_ASTG(stkp)) {
+          acs.func_in_do = TRUE;
+          if (sem.arrfn.call_std) {
+            ast = STD_AST(sem.arrfn.call_std);
+            ast = ast_rewrite_indices(ast);
+            (void)add_stmt(ast);
+            remove_stmt(sem.arrfn.call_std);
+            sem.arrfn.call_std = 0;
+          }
+          if (ADD_DEFER(SST_DTYPEG(stkp)) && SDSCG(A_SPTRG(SST_ASTG(stkp)))) {
+            argt_count = 3;
+            argt = mk_argt(argt_count);
+            ARGT_ARG(argt, 0) = mk_id(MIDNUMG(memsym_of_ast(base_id)));
+            ARGT_ARG(argt, 1) = mk_id(SDSCG(memsym_of_ast(base_id)));
+            ARGT_ARG(argt, 2) = mk_id(SDSCG(A_SPTRG(SST_ASTG(stkp))));
+            ast = mk_func_node(A_CALL, mk_id(sym_mkfunc(mkRteRtnNm(
+                RTE_realloc_arr_in_impiled_do), DT_ADDR)), argt_count, argt);
+            (void)add_stmt(ast);
+          }
         }
 
         tmpid = get_subscripting_tmp(indexast);

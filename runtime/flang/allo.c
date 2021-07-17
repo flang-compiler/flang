@@ -937,6 +937,46 @@ ENTF90(ALLOC03_CHK, alloc03_chk)(__INT_T *nelem, __INT_T *kind, __INT_T *len,
 }
 
 void
+ENTF90(REALLOC_ARR_IN_IMPLIED_DO, realloc_arr_in_impiled_do)(char **ptr,
+                         F90_Desc *ad, F90_Desc *dd)
+{
+  int i, total_extent;
+  char *tmp = NULL;
+  char *ptr_data = NULL;
+  char *base = NULL;
+  __POINT_T *off = NULL;
+  __NELEM_T old_size, inc_size;
+
+  inc_size = F90_LSIZE_G(dd) * F90_LEN_G(dd);
+  if (inc_size <= 0)
+    return; /* no need to realloc */
+
+  off = (__POINT_T *)(ptr + 1); /* array offset variable */
+  ptr_data = *(__POINT_T *)ptr;              /* array address */
+  base = ptr_data - (*off - 1) * F90_LEN_G(ad);
+
+  old_size = F90_LSIZE_G(ad) * F90_LEN_G(ad);
+  total_extent = 1;
+  for (i = 0; i < F90_RANK_G(dd) ; i++) {
+    total_extent *= F90_DIM_EXTENT_G(dd, i);
+  }
+
+  F90_LSIZE_G(ad) += F90_LSIZE_G(dd);
+  F90_GSIZE_G(ad) += F90_GSIZE_G(dd);
+
+  ad->dim[0].ubound += total_extent;
+  ad->dim[0].extent += total_extent;
+
+  (void)I8(__fort_allocate)(F90_LSIZE_G(ad), F90_KIND_G(ad), F90_LEN_G(ad),
+                            base, &tmp, off);
+  if (old_size > 0)
+    __fort_bcopy(tmp, ptr_data, old_size);
+
+  I8(__fort_deallocate)(ptr_data);
+  *ptr = tmp;
+}
+
+void
 ENTF90(ALLOC04A, alloc04a)(__NELEM_T *nelem, __INT_T *kind, __INT_T *len,
                          __STAT_T *stat, char **pointer, __POINT_T *offset,
                          __INT_T *firsttime, __NELEM_T *align,
