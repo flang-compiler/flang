@@ -138,6 +138,19 @@ is_empty_typedef(DTYPE dtype)
   return (mem <= NOSYM);
 }
 
+bool
+is_zero_size_typedef(DTYPE dtype)
+{
+  if (dtype <= DT_NONE)
+    return false;
+  dtype = is_array_dtype(dtype) ? DTySeqTyElement(dtype) : dtype;
+
+  if (DTY(dtype) != TY_UNION && DTY(dtype) != TY_STRUCT)
+    return false;
+
+  return (DTyAlgTySize(dtype) == 0);
+}
+
 static bool
 is_recursive(int sptr, struct visit_list **visited)
 {
