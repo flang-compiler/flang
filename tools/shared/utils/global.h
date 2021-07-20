@@ -208,6 +208,7 @@ typedef struct {
   bool trans_inv; /* global equiv to -Mx,7,0x10000 */
   int tpcount;
   int tpvalue[TPNVERSION]; /* target processor(s), for unified binary */
+  char *cmdline; /* contains compiler command line */
 } FLG;
 
 extern FLG flg;
