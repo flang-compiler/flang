@@ -314,7 +314,7 @@ emit_eol(void)
 
   if (!internal_file) {
 #if defined(WINNT)
-    if (__fortio_binary_mode(f->fp)) {
+    if (__io_binary_mode(f->fp)) {
       ret_err = write_char('\r');
       if (ret_err)
         return ret_err;

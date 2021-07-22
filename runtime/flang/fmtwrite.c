@@ -2688,7 +2688,7 @@ fw_write_record(void)
         if (!(g->suppress_crlf)) {
 /* append carriage return */
 #if defined(WINNT)
-          if (__fortio_binary_mode(f->fp))
+          if (__io_binary_mode(f->fp))
             __io_fputc('\r', f->fp);
 #endif
           /*                    if (g->max_pos > 0)*/

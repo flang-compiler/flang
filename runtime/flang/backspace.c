@@ -65,7 +65,7 @@ _f90io_backspace(__INT_T *unit, __INT_T *bitv, __INT_T *iostat, int swap_bytes)
   if (f->nonadvance) {
     f->nonadvance = FALSE;
 #if defined(WINNT)
-    if (__fortio_binary_mode(f->fp))
+    if (__io_binary_mode(f->fp))
       __io_fputc('\r', f->fp);
 #endif
     __io_fputc('\n', f->fp);
