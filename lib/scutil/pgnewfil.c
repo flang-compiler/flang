@@ -19,7 +19,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#if defined(HOST_WIN)
+#ifdef _WIN64
 #include <direct.h>
 #include <io.h>
 extern unsigned long getpid(void);
@@ -32,6 +32,10 @@ extern unsigned long getpid(void);
 int pgnewfil_debug = 0;
 #endif
 extern size_t strlen();
+
+#ifndef S_ISDIR 
+#define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR) 
+#endif 
 
 /*
  * copy chars from q to p, terminate string, return end of string
@@ -132,7 +136,7 @@ gentmp(char *pfx, char *sfx)
     last = NULL;
     for (q = filename; *q; ++q) {
       if (*q == '/'
-#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64)
+#ifdef _WIN64
           || *(p - 1) != '\\'
 #endif
           ) {
@@ -233,7 +237,7 @@ gentmp(char *pfx, char *sfx)
   }
   p = add(filename, tmpdir);
   if (*(p - 1) != '/'
-#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64)
+#ifdef _WIN64
       && *(p - 1) != '\\'
 #endif
       )
@@ -303,7 +307,7 @@ pg_makenewfile(char *pfx, char *sfx, int make)
       if (!make) {
         break;
       } else {
-#if defined(HOST_WIN)
+#ifdef _WIN64
         fd = _open(filename, _O_CREAT | _O_BINARY | _O_EXCL | _O_RDWR, _S_IWRITE);
 #else
         fd = open(filename, O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
@@ -349,7 +353,7 @@ pg_makenewdir(char *pfx, char *sfx, int make)
     if (r == -1 && errno == ENOENT) {
       if (make) {
         int err;
-#if defined(HOST_WIN) || defined(WINNT) || defined(WIN64)
+#ifdef _WIN64
         err = _mkdir(filename);
 #else
         err = mkdir(filename, S_IRWXG | S_IRWXO | S_IXUSR | S_IWUSR | S_IRUSR);

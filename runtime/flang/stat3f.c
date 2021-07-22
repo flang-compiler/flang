@@ -19,7 +19,7 @@ extern void __cstr_free();
 
 int ENT3F(STAT, stat)(DCHAR(nm), int *statb DCLEN(nm))
 {
-#ifdef WIN32
+#ifdef _WIN64
   struct _stat32 b;
   char *p;
   int i;

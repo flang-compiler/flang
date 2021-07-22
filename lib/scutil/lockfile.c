@@ -33,7 +33,7 @@
  *	Clean up by deleting the uniquely named file we had created earlier.
  */
 
-#ifndef _WIN32
+#ifndef _WIN64
   #include <unistd.h>
 #else
   #include <Winsock2.h>
@@ -60,6 +60,9 @@ static char *udir = NULL;
  */
 static long uwaiting;
 
+#ifdef _WIN64
+#define pid_t int
+#endif
 int
 __pg_make_lock_file(char *dir)
 {

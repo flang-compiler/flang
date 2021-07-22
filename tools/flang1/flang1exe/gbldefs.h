@@ -258,7 +258,7 @@ void parse_init(void);
 
 void fpp(void); /* fpp.c */
 
-#if defined(HOST_WIN)
+#ifdef _WIN64
 #define snprintf _snprintf
 #endif
 

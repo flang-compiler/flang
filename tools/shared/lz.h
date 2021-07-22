@@ -41,7 +41,7 @@ typedef struct lzhandle {
 #define LZZLIB 8
 #define LZMAX 9
 
-#if defined(HOST_WIN)
+#ifdef _WIN64
 #define vsnprintf _vsnprintf
 #endif
 

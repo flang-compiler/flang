@@ -30,7 +30,7 @@ static int putdtypex(DTYPE dtype, int len);
 static void _printnme(int n);
 static bool g_dout = true;
 
-#if defined(HOST_WIN)
+#ifdef _WIN64
 #define vsnprintf _vsnprintf
 #endif
 
