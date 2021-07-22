@@ -2008,7 +2008,7 @@ mkvarref(SST *stktop, ITEM *list)
       /* subscripts specified for non-array variable */
       error(76, 3, gbl.lineno, SYMNAME(sptr), CNULL);
       goto add_base;
-
+    case ST_MODPROC:
     case ST_PROC:
       if (FVALG(sptr) == 0 && DTYPEG(sptr) == 0) {
         error(84, 3, gbl.lineno, SYMNAME(sptr),
