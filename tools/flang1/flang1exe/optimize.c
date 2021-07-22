@@ -49,7 +49,9 @@ extern void close_pragma(void);
 static void br_to_br(void);
 static void merge_blocks(void);
 static void loop_init(int lp);
+#ifdef FLANG_OPTIMIZE_UNUSED
 static void process_exit(int lp, int s);
+#endif
 static void replace_label(int bihx, int label, int newlab);
 
 /*   SHARED init and end routines for the vectorizer and optimizer */
@@ -527,6 +529,7 @@ optimize(int whichpass)
 
 /*******************************************************************/
 
+#ifdef FLANG_OPTIMIZE_UNUSED
 /*
  * attempt to move the label which labels a bih.  The condition for
  * moving the label is if the block contains an unconditional branch.
@@ -538,6 +541,7 @@ move_label(int lab, int bih)
 {
 
 }
+#endif
 
 static void
 br_to_br(void)
@@ -856,6 +860,7 @@ add_single_loop_exit(int lp)
 
 /*******************************************************************/
 
+#ifdef FLANG_OPTIMIZE_UNUSED
 /*
  * node s is an exit target of the loop. newtarget_fg represents the
  * new exit target which must be executed before executing s.
@@ -876,6 +881,7 @@ static void
 process_exit(int lp, int s)
 {
 }
+#endif
 
 /*******************************************************************/
 

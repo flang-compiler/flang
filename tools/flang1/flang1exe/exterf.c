@@ -110,21 +110,28 @@ static void export_ieee_arith_libraries(void);
 static void export_one_std(int);
 static void queue_one_std(int std);
 static void all_stds(void (*)(int));
+#ifdef FLANG_EXTERF_UNUSED
 static void export_parameter_info(ast_visit_fn);
+#endif
 static void export_data_file(int);
 static void export_component_init(int);
 static void export_data_file_asts(ast_visit_fn, int, int, int);
 static void export_component_init_asts(ast_visit_fn, int, int);
+#ifdef FLANG_EXTERF_UNUSED
 static void export_equiv_asts(int, ast_visit_fn);
 static void export_dist_info(int, ast_visit_fn);
 static void export_align_info(int, ast_visit_fn);
+#endif
 static void export_equivs(void);
 static void export_external_equiv();
 
+#ifdef FLANG_EXTERF_UNUSED
 static void export_dinit_file(void (*)(int), void (*)(int, INT), int);
 static void export_dinit_record(int, INT);
+#endif
 static int dtype_skip(int dtype);
 
+#ifdef FLANG_EXTERF_UNUSED
 /* return 1 if the base type is double/complex/other 8-byte-type */
 static int
 doubletype(int sptr)
@@ -149,6 +156,7 @@ doubletype(int sptr)
   }
   return 0;
 } /* doubletype */
+#endif
 
 void
 export_public_module(int module, int exceptlist)
@@ -2886,13 +2894,16 @@ all_stds(void (*callproc)(int))
     (*callproc)(std);
 }
 
+#ifdef FLANG_EXTERF_UNUSED
 /* export a single record to the interf file */
 static void
 export_dinit_record(int rectype, INT recval)
 {
   lzprintf(outlz, "I %d %x\n", rectype, recval);
 } /* export_dinit_record */
+#endif
 
+#ifdef FLANG_EXTERF_UNUSED
 /*
  * go through data initialization file.
  * call symproc for symbols in that file that will be saved
@@ -2988,7 +2999,9 @@ export_dinit_file(void (*symproc)(int), void (*recproc)(int, INT),
   }
   dinit_fseek_end();
 } /* export_dinit_file */
+#endif
 
+#ifdef FLANG_EXTERF_UNUSED
 /* go through symbols; if we find one that is a parameter, export
  * the ASTs for its value */
 static void
@@ -3003,7 +3016,9 @@ export_parameter_info(ast_visit_fn astproc)
     }
   }
 } /* export_parameter_info */
+#endif
 
+#ifdef FLANG_EXTERF_UNUSED
 static int
 externalequiv(int evp)
 {
@@ -3018,7 +3033,9 @@ externalequiv(int evp)
   } while (evp != 0 && EQV(evp).is_first == 0);
   return FALSE;
 } /* externalequiv */
+#endif
 
+#ifdef FLANG_EXTERF_UNUSED
 static void
 export_equiv_asts(int queuesym, ast_visit_fn astproc)
 {
@@ -3049,6 +3066,7 @@ export_equiv_asts(int queuesym, ast_visit_fn astproc)
     }
   }
 } /* export_equiv_asts */
+#endif
 
 static void
 export_equiv_item(int evp)
@@ -3067,6 +3085,7 @@ export_equiv_item(int evp)
   lzprintf(outlz, " -1\n"); /*  end of subscripts */
 } /* export_equiv_item */
 
+#ifdef FLANG_EXTERF_UNUSED
 static void
 export_external_equiv()
 {
@@ -3084,6 +3103,7 @@ export_external_equiv()
     }
   }
 } /* export_external_equiv */
+#endif
 
 static void
 export_equivs(void)

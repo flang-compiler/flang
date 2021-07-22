@@ -2809,6 +2809,7 @@ dlist(LITEMF *list)
   fprintf(dfile, "\n");
 }
 
+#ifdef FLANG_COMMOPT_UNUSED
 static int
 common_compute_point(LITEMF *nm_list, int fg, int std)
 {
@@ -2864,6 +2865,7 @@ common_compute_point(LITEMF *nm_list, int fg, int std)
   else
     return STD_PREV(std);
 }
+#endif
 
 /* This routine is to change all allocate statements into
  * allocate ast which is defined for hpf communication ast.
@@ -3271,7 +3273,8 @@ is_same_def(int def, int def1)
   return TRUE;
 }
 
-/* This routine is checks that def has only one definition and
+#ifdef FLANG_COMMOPT_UNUSED
+/* This routine checks that def has only one definition and
  * src of that definition is a constant; if so, it returns
  * the ast of the difference, else it returns 'defaultval'
  */
@@ -3314,6 +3317,7 @@ diff_def_cnst(int cnstAst, int def, int defaultval)
 
   return ast;
 }
+#endif
 
 static void
 rewrite_all_shape(LITEMF *exceptions)

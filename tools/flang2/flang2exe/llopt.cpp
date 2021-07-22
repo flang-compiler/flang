@@ -24,6 +24,7 @@
 
 #define DEC_UCOUNT(i) ((i)->tmps->use_count--)
 
+#ifdef TARGET_LLVM_ARM
 static void
 replace_by_call_to_llvm_instrinsic(INSTR_LIST *instr, char *fname,
                                    OPERAND *params)
@@ -138,6 +139,7 @@ optimize_instruction(INSTR_LIST *instr)
     break;
   }
 }
+#endif
 
 void
 optimize_block(INSTR_LIST *last_block_instr)

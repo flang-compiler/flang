@@ -10,7 +10,9 @@
  *
  */
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE // for vasprintf()
+#endif
 #include <stdio.h>
 #undef _GNU_SOURCE
 #include "dinit.h"

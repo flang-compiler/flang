@@ -8801,7 +8801,9 @@ static char *tkp;
 static void _rd_tkline(char **tkbuf, int *tkbuf_sz);
 static int _rd_token(INT *);
 static INT get_num(int);
+#ifdef FLANG_SCAN_UNUSED
 static void get_string(char *);
+#endif
 
 /** \brief trim white space of source line that has continuations and return
  * the index of the last character in the source line.
@@ -9443,6 +9445,7 @@ get_num(int radix)
   return val;
 }
 
+#ifdef FLANG_SCAN_UNUSED
 static void
 get_string(char *dest)
 {
@@ -9458,6 +9461,7 @@ get_string(char *dest)
   }
   dest[i] = '\0';
 }
+#endif
 
 static void
 realloc_stmtb(void)

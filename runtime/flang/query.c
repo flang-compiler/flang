@@ -32,6 +32,7 @@ static int I8(fetch_int)(void *b, F90_Desc *s)
   }
 }
 
+#ifdef FLANG_QUERY_UNUSED
 static int I8(fetch_log)(void *b, F90_Desc *s)
 {
   dtype kind = TYPEKIND(s);
@@ -49,6 +50,7 @@ static int I8(fetch_log)(void *b, F90_Desc *s)
     return 0;
   }
 }
+#endif
 
 static void I8(fetch_vector)(void *ab, F90_Desc *as, __INT_T *vector,
                              int veclen)

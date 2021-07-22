@@ -37,8 +37,10 @@ static void conv_e(int, int, int, bool);
 static void conv_en(int, int, bool);
 static void conv_es(int, int, bool);
 static void conv_f(int, int);
+#ifdef FLANG_FMTCONV_UNUSED
 static void fp_canon(__BIGREAL_T, int, int);
 static void cvtp_round(int);
+#endif
 static void cvtp_cp(int);
 static void cvtp_set(int, int);
 static void alloc_fpbuf(int);
@@ -1063,6 +1065,7 @@ __fortio_fmt_z(unsigned int c)
   return buff_pos;
 }
 
+#ifdef FLANG_FMTCONV_UNUSED
 static void
 fp_canon(__BIGREAL_T val, int type, int round)
 {
@@ -1119,6 +1122,7 @@ cvtp_round(int d)
   }
 
 }
+#endif
 
 static void
 cvtp_cp(int n)

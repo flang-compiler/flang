@@ -119,12 +119,16 @@ static LOGICAL bld_ud(int, int *); /**< pre-order visit routine called during
 static int bld_use(int, LOGICAL);  /**< visit routine for adding uses */
 static DEF *bld_lhs(int, int, LOGICAL, int); /**< visit routine for the lhs of
                                                 assignments */
+#ifdef FLANG_FLOW_UNUSED
 static void def_from_triple(int, int);
+#endif
 
 static void _cr_nme(int ast, int *dummy);
 static int copy_const(int);
+#ifdef FLANG_FLOW_UNUSED
 static int lhs_notsubscr(int);
 static void cp_cse_store(void);
+#endif
 static void new_ud(int astx);
 static void new_du_ud(void);
 
@@ -1403,6 +1407,7 @@ again:
   return df;
 }
 
+#ifdef FLANG_FLOW_UNUSED
 /* stmt ast containing the triple whose fields are
  * being defined */
 static void
@@ -1428,6 +1433,7 @@ def_from_triple(int stmt, int triple)
       df->flags.bits.other = 1;
   }
 }
+#endif
 
 static void
 build_do_init(int tree)
@@ -2388,6 +2394,7 @@ bv_count(int *bv)
   return count;
 } /* bv_count */
 
+#ifdef FLANG_FLOW_UNUSED
 static void
 dump_queue(Q_ITEM *head)
 {
@@ -2403,6 +2410,7 @@ dump_queue(Q_ITEM *head)
     fprintf(gbl.dbgfil, " ...");
   fprintf(gbl.dbgfil, " (%4d entries)\n", count);
 } /* dump_queue */
+#endif
 #endif
 
 /*
@@ -2865,6 +2873,7 @@ const_prop(void)
   return changes;
 }
 
+#ifdef FLANG_FLOW_UNUSED
 static int
 lhs_notsubscr(int use)
 {
@@ -2877,6 +2886,7 @@ lhs_notsubscr(int use)
     return 0;
   return 1;
 }
+#endif
 
 static int
 copy_const(int use)

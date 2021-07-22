@@ -34,7 +34,9 @@ static void find_allocatable_assignment(void);
 static void rewrite_allocatable_assignment(int, int, bool, bool);
 static void handle_allocatable_members(int, int, int, bool);
 static void trans_get_descrs(void);
+#ifdef FLANG_TRANSFRM_UNUSED
 static int trans_getidx(void);
+#endif
 static void trans_clridx(void);
 static void trans_freeidx(void);
 static int collapse_assignment(int, int);
@@ -48,8 +50,10 @@ static void init_finfo(void);
 static void distribute_fval(void);
 static int get_newdist_with_newproc(int dist);
 static void set_initial_s1(void);
+#ifdef FLANG_TRANSFRM_UNUSED
 static LOGICAL contains_non0_scope(int astSrc);
 static LOGICAL is_non0_scope(int sptr);
+#endif
 static void gen_allocated_check(int, int, int, bool, bool, bool);
 static int subscript_allocmem(int aref, int asd);
 static int normalize_subscripts(int oldasd, int oldshape, int newshape);
@@ -2533,6 +2537,7 @@ static struct idxlist {
   struct idxlist *next;
 } * idxlist;
 
+#ifdef FLANG_TRANSFRM_UNUSED
 static int
 trans_getidx(void)
 {
@@ -2550,6 +2555,7 @@ trans_getidx(void)
   idxlist = p;
   return p->idx;
 }
+#endif
 
 static void
 trans_clridx(void)
@@ -2589,6 +2595,7 @@ is_array_type(int sptr)
   return result;
 }
 
+#ifdef FLANG_TRANSFRM_UNUSED
 static int
 find_allocate(int findstd, int findast)
 {
@@ -2605,7 +2612,9 @@ find_allocate(int findstd, int findast)
   }
   return 0;
 } /* find_allocate */
+#endif
 
+#ifdef FLANG_TRANSFRM_UNUSED
 static int
 find_deallocate(int findstd, int findast)
 {
@@ -2620,7 +2629,9 @@ find_deallocate(int findstd, int findast)
   }
   return 0;
 } /* find_deallocate */
+#endif
 
+#ifdef FLANG_TRANSFRM_UNUSED
 /* the function of this routine is to use lhs for user-defined
  * array returning function,
  * allocate (tmp)
@@ -2808,7 +2819,9 @@ use_lhs_for_user_func(int std)
     delete_stmt(dealloc_std);
   return TRUE;
 }
+#endif
 
+#ifdef FLANG_TRANSFRM_UNUSED
 /* if the array bounds, or distribute arguments of this template
  * contain any variables, return TRUE */
 static LOGICAL
@@ -2828,10 +2841,14 @@ variable_template(int tmpl)
   }
   return FALSE;
 } /* variable_template */
+#endif
 
 /* replace dummy arguments in an alignment descriptor with actual arguments */
+#ifdef FLANG_TRANSFRM_UNUSED
 static int find_entry, find_nargs, find_argt, find_dpdsc, find_std;
+#endif
 
+#ifdef FLANG_TRANSFRM_UNUSED
 static void
 find_args(int ast, int *extra)
 {
@@ -2881,7 +2898,9 @@ find_args(int ast, int *extra)
     }
   }
 } /* find_args */
+#endif
 
+#ifdef FLANG_TRANSFRM_UNUSED
 static void
 find_arguments(int std, int entry, int nargs, int argt, int ast)
 {
@@ -2896,7 +2915,9 @@ find_arguments(int std, int entry, int nargs, int argt, int ast)
   find_std = std;
   ast_traverse(ast, NULL, find_args, NULL);
 } /* replace_arguments */
+#endif
 
+#ifdef FLANG_TRANSFRM_UNUSED
 static LOGICAL
 is_non0_scope(int sptr)
 {
@@ -2932,7 +2953,9 @@ is_non0_scope(int sptr)
   }
   return FALSE;
 }
+#endif
 
+#ifdef FLANG_TRANSFRM_UNUSED
 /* This is the callback function for contains_non0_scope(). */
 static LOGICAL
 _contains_non0_scope(int astSrc, LOGICAL *pflag)
@@ -2943,7 +2966,9 @@ _contains_non0_scope(int astSrc, LOGICAL *pflag)
   }
   return FALSE;
 }
+#endif
 
+#ifdef FLANG_TRANSFRM_UNUSED
 /* Return TRUE if astSrc has non zero scope ID somewhere within astSrc.
  */
 static LOGICAL
@@ -2959,7 +2984,9 @@ contains_non0_scope(int astSrc)
   ast_unvisit();
   return result;
 }
+#endif
 
+#ifdef FLANG_TRANSFRM_UNUSED
 static void
 _copy(int ast, int *unused)
 {
@@ -2991,7 +3018,9 @@ _copy(int ast, int *unused)
     }
   }
 } /* _copy */
+#endif
 
+#ifdef FLANG_TRANSFRM_UNUSED
 static int
 copy_nonconst(int ast)
 {
@@ -3006,6 +3035,7 @@ copy_nonconst(int ast)
   newast = ast_rewrite(ast);
   return newast;
 } /* copy_nonconst */
+#endif
 
 /* Make an AST id for the descriptor (SDSC or DESCR) of this symbol. */
 static int

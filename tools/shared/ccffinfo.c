@@ -182,6 +182,7 @@ xmlopenattri(char *entity, char *shortentity, char *attr, int attrval)
 /*
  * output <entity attr="attrval">
  */
+#ifdef FLANG_CCFFINFO_UNUSED
 static void
 xmlopenattrs(char *entity, char *shortentity, char *attr, char *attrval)
 {
@@ -192,6 +193,7 @@ xmlopenattrs(char *entity, char *shortentity, char *attr, char *attrval)
   else
     fprintf(ccff_file, "<%s %s=\"%s\">\n", entity, attr, attrval);
 } /* xmlopenattrs */
+#endif
 
 /*
  * output <entity attr1="attr1val" attr2="attr2val">
@@ -1328,6 +1330,7 @@ fih_message_ofile(FILE *ofile, int nest, int lineno, int childnest,
   }
 } /* fih_message_ofile */
 
+#ifdef FLANG_CCFFINFO_UNUSED
 /*
  * Format and print message to log file
  */
@@ -1469,6 +1472,7 @@ ifih_message_ofile(FILE *ofile, int nest, int lineno, int childnest,
     }
   }
 } /* ifih_message_ofile */
+#endif
 
 /*
  * output messages for this FIH tag
@@ -1587,6 +1591,7 @@ fih_messages(int fihx, FILE *ofile, int nest)
 #endif
 } /* fih_messages */
 
+#ifdef FLANG_CCFFINFO_UNUSED
 /*
  * output messages for this FIH tag
  */
@@ -1695,6 +1700,7 @@ ifih_messages(int ifihx, FILE *ofile, int nest)
   }
 #endif
 } /* ifih_messages */
+#endif
 
 /*
  *  Remove child include files if there is no message.

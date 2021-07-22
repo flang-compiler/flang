@@ -26,7 +26,9 @@
 #include "rte.h"
 
 static int reference_for_temp_lhs_indirection(int, int, int);
+#ifdef FLANG_VSUB_UNUSED
 static int newforall_list(int arr, int forall);
+#endif
 static int forall_semantic(int std);
 static void forall_with_mask(int std);
 static void forall_loop_interchange(int std);
@@ -36,8 +38,10 @@ static void forall_bound_dependence(int std);
 static void forall_bound_dependence_fix(int prevstd, int nextstd);
 static LOGICAL is_mask_for_rhs(int std, int ast);
 static LOGICAL is_legal_lhs_for_mask(int, int);
+#ifdef FLANG_VSUB_UNUSED
 static int make_dos(int std);
 static void make_enddos(int n, int std);
+#endif
 static void scalar_lhs_dependency(int std);
 static void scatter_dependency(int std);
 static void scatter_dependency_assumsz(int std);
@@ -977,6 +981,7 @@ is_legal_rhs(int lhs, int rhs, int forall)
   return TRUE;
 }
 
+#ifdef FLANG_VSUB_UNUSED
 /* This routine takes an array and forall,
  * It returns a list which only has forall index appears
  * in the array subscripts. A(i), forall(i=,j=), return i=..
@@ -1006,6 +1011,7 @@ newforall_list(int arr, int forall)
   }
   return ASTLI_HEAD;
 }
+#endif
 
 static void
 forall_loop_interchange(int std)
@@ -1376,6 +1382,7 @@ is_ugly_pure(int ast)
 
 static int lhsComm; /* Lhs of assignment */
 
+#ifdef FLANG_VSUB_UNUSED
 /* This is to calculate how many DO statements have to be made
    from forall statement and add those before std              */
 
@@ -1413,7 +1420,9 @@ make_dos(int std)
   }
   return n;
 }
+#endif
 
+#ifdef FLANG_VSUB_UNUSED
 /* this is to add n enddo statements before std */
 
 static void
@@ -1427,6 +1436,7 @@ make_enddos(int n, int std)
     add_stmt_before(newast, std);
   }
 }
+#endif
 
 static LOGICAL
 _contains_call(int astx, LOGICAL *pflag)

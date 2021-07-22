@@ -59,7 +59,9 @@ static long getlval(char *valname);
 static int getbit(char *bitname);
 
 #define STB_UPPER() (gbl.stbfil != NULL)
+#ifdef FLANG2_UPPER_UNUSED
 static void do_llvm_sym_is_refd(void);
+#endif
 static void build_agoto(void);
 static void free_modvar_alias_list(void);
 static void save_modvar_alias(SPTR sptr, const char *alias_name);
@@ -6394,6 +6396,7 @@ cuda_emu_end(void)
   }
 }
 
+#ifdef FLANG2_UPPER_UNUSED
 /* get the size of STATICS/BSS - this has to be done after fix_datatype so that
    we can get the size of sptr if it is an array. AD_DPTR is done in
    fix_datatype.
@@ -6425,6 +6428,7 @@ do_llvm_sym_is_refd(void)
     }
   }
 }
+#endif
 
 /**
    \brief ...

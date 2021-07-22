@@ -1019,6 +1019,11 @@ merge_commons()
   }
 } /* merge_commons */
 
+#ifdef FLANG_COMMON_BLOCK_ERROR_UNUSED
+/* FIXME: This function is not being used, but it isn't clear why error 482
+ * ("COMMON /$/ is declared differently in two subprograms - $") does not
+ * need to be emitted.
+ */
 static void
 puttwice(int cmn1, int cmn2)
 {
@@ -1037,6 +1042,7 @@ puttwice(int cmn1, int cmn2)
   sprintf(errmsg, "%s and %s", SYMNAME(func1), SYMNAME(func2));
   error(482, 3, FUNCLINEG(gbl.currsub), SYMNAME(cmn1), errmsg);
 } /* puttwice */
+#endif
 
 static LOGICAL
 same_datatype(int s1, int s2)

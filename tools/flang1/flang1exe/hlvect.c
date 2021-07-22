@@ -28,8 +28,12 @@
 #if DEBUG
 #include <stdarg.h>
 
+#ifdef FLANG_HLVECT_UNUSED
 #define Trace(a) TraceOutput a
 #define STrace(a) STraceOutput a
+#endif
+
+#ifdef FLANG_HLVECT_UNUSED
 /* print a message, continue */
 static void
 TraceOutput(const char *fmt, ...)
@@ -49,7 +53,9 @@ TraceOutput(const char *fmt, ...)
   }
   va_end(argptr);
 } /* TraceOutput */
+#endif
 
+#ifdef FLANG_HLVECT_UNUSED
 /* print a message, continue */
 static void
 STraceOutput(const char *fmt, ...)
@@ -69,6 +75,7 @@ STraceOutput(const char *fmt, ...)
   }
   va_end(argptr);
 } /* STraceOutput */
+#endif
 
 extern void dumpnme(int n);
 extern void dumploop(int l);
@@ -86,6 +93,7 @@ int hlv_getsym(int phase, int type);
 void vdel_bih(int bihx);
 LOGICAL is_parent_loop(int lpParent, int lpChild);
 
+#ifdef FLANG_HLVECT_UNUSED
 static void analyze_subs(int loop);
 static void compute_subs(int mr, int loop);
 static LOGICAL ilt_preceeds(int ilt1, int ilt2);
@@ -121,10 +129,13 @@ static LOGICAL _contains_shape_string(int ast, LOGICAL *pflag);
 static LOGICAL has_valid_stmts(int lp);
 
 static void hlv_syminitfunc(void);
+#endif
 
 #if DEBUG
 void dump_memrefs(int start, int cnt);
+#ifdef FLANG_HLVECT_UNUSED
 static void dump_subs(void);
+#endif
 void dump_vinduc(int start, int cnt);
 void dump_vloops(int first, int base);
 #endif
@@ -178,6 +189,7 @@ enum {
 
 static int vdel_lst; /* list of blocks to be deleted at end of processing */
 
+#ifdef FLANG_HLVECT_UNUSED
 /* Init for function */
 static void
 hlv_init(void)
@@ -216,7 +228,9 @@ hlv_init(void)
 
   hlv_syminitfunc();
 }
+#endif
 
+#ifdef FLANG_HLVECT_UNUSED
 /* end for function */
 static void
 hlv_end(void)
@@ -234,6 +248,7 @@ hlv_end(void)
   FREE(hlv.scbase);
   FREE(hlv.eabase);
 }
+#endif
 
 /************************************************************************
  ************************************************************************/
@@ -260,6 +275,7 @@ unmark_vinduc(int loop)
     NME_RFPTR(VIND_NM(i)) = 0;
 }
 
+#ifdef FLANG_HLVECT_UNUSED
 static void
 hlv_syminitfunc(void)
 {
@@ -271,6 +287,7 @@ hlv_syminitfunc(void)
           hlv_temps[i][j].iavl_max;
   hlv_vtemps.iavl = hlv_vtemps.iavl_base = hlv_vtemps.iavl_max;
 }
+#endif
 
 int
 hlv_getsym(int phase, int type)
@@ -326,6 +343,7 @@ vdel_bih(int bihx)
   vdel_lst = bihx;
 }
 
+#ifdef FLANG_HLVECT_UNUSED
 /* Delete all bih's within the vdel_lst list, as well as all ilt's within
  * those bih's. */
 static void
@@ -343,15 +361,19 @@ vunlnk_bih(void)
     delbih(bihx);
   }
 }
+#endif
 
+#ifdef FLANG_HLVECT_UNUSED
 static void
 delbih(int fgx)
 {
   FG_LNEXT(FG_LPREV(fgx)) = FG_LNEXT(fgx);
   FG_LPREV(FG_LNEXT(fgx)) = FG_LPREV(fgx);
 }
+#endif
 
 #if DEBUG
+#ifdef FLANG_HLVECT_UNUSED
 /* DEBUG DUMP ROUTINES */
 static void
 dump_subs(void)
@@ -374,6 +396,7 @@ dump_subs(void)
     }
   }
 }
+#endif
 
 void
 dump_memref_hdr(void)

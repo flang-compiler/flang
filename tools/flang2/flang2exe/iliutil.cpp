@@ -85,13 +85,17 @@ static int ad2altili(ILI_OP, int, int, int);
 static int ad3altili(ILI_OP, int, int, int, int);
 static int ad2func_int(ILI_OP, char *, int, int);
 static int gen_sincos(ILI_OP, int, ILI_OP, ILI_OP, MTH_FN, DTYPE, ILI_OP);
+#if defined(TARGET_X8664) || defined(TARGET_POWER)
 static int _newton_fdiv(int, int);
+#endif
 static bool do_newton_sqrt(void);
 static int _pwr2(INT, int);
 static int _kpwr2(INT, INT, int);
 static int _ipowi(int, int);
 static int _xpowi(int, int, ILI_OP);
+#if defined(TARGET_X8664) || defined(TARGET_POWER) || !defined(TARGET_LLVM_ARM)
 static int _frsqrt(int);
+#endif
 static int _mkfunc(char *);
 static int DblIsSingle(SPTR dd);
 static int _lshift_one(int);
@@ -883,6 +887,7 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
   return ilix;
 }
 
+#if defined(TARGET_X8664)
 static char *
 fmth_name(char *root)
 {
@@ -895,6 +900,8 @@ fmth_name(char *root)
   sprintf(bf, "%s%s", root, suf);
   return bf;
 }
+#endif
+
 /*
  * fast math naming convention:
  *    __g[sv][sdcz]_BASE[L]
@@ -1899,6 +1906,7 @@ ICON(INT v)
   return ilix;
 } /* ICON */
 
+#ifdef FLANG2_ILIUTIL_UNUSED
 static int
 KCON(INT v)
 {
@@ -1909,6 +1917,7 @@ KCON(INT v)
   ilix = ad1ili(IL_KCON, recipsym);
   return ilix;
 } /* KCON */
+#endif
 
 static int
 MULSH(int ilix, int iliy)
@@ -1954,6 +1963,7 @@ MULUH(int ilix, int iliy)
   return t3;
 } /* MULUH */
 
+#ifdef FLANG2_ILIUTIL_UNUSED
 static int
 MULU(int ilix, int iliy)
 {
@@ -1964,6 +1974,7 @@ MULU(int ilix, int iliy)
 
   return t1;
 } /* MULU */
+#endif
 
 static int
 MUL(int ilix, int iliy)
@@ -2005,8 +2016,7 @@ KXSIGN(int ilix, int N)
   return t;
 } /* XSIGN */
 
-#define WSIZE 32
-
+#ifdef FLANG2_ILIUTIL_UNUSED
 static void
 mod_decompose(int d, int *d0, int *k)
 {
@@ -2056,6 +2066,7 @@ test_mod_zero(int n, int d, int sgnd, int cc)
     return 0;
   }
 }
+#endif
 
 static int
 reciprocal_division(int n, INT divisor, int sgnd)
@@ -3300,7 +3311,9 @@ addarth(ILI *ilip)
   case IL_FADD:
     if (ncons == 2 && is_flt0(cons2))
       return op1;
+#ifdef FPSUB2ADD
   like_fadd:
+#endif
     if (!flg.ieee && ncons == 3) {
       xfadd(con1v2, con2v2, &res.numi[1]);
       goto add_rcon;
@@ -3321,7 +3334,9 @@ addarth(ILI *ilip)
   case IL_DADD:
     if (ncons == 2 && is_dbl0(cons2))
       return op1;
+#ifdef FPSUB2ADD
   like_dadd:
+#endif
     if (!flg.ieee && ncons == 3) {
       GETVAL64(num1, cons1);
       GETVAL64(num2, cons2);
@@ -3343,7 +3358,9 @@ addarth(ILI *ilip)
   case IL_SCMPLXADD:
     if (ncons == 2 && IS_FLT0(con2v1) && IS_FLT0(con2v2))
       return op1;
+#ifdef FPSUB2ADD
   like_scmplxadd:
+#endif
     if (!flg.ieee && ncons == 3) {
       xfadd(con1v1, con2v1, &res.numi[0]);
       xfadd(con1v2, con2v2, &res.numi[1]);
@@ -3362,7 +3379,9 @@ addarth(ILI *ilip)
   case IL_DCMPLXADD:
     if (ncons == 2 && IS_DBL0(con2v1) && IS_DBL0(con2v2))
       return op1;
+#ifdef FPSUB2ADD
   like_dcmplxadd:
+#endif
     if (!flg.ieee && ncons == 3) {
       GETVAL64(num1, con1v1);
       GETVAL64(num2, con2v1)
@@ -7184,6 +7203,7 @@ gen_sincos(ILI_OP opc, int op1, ILI_OP sincos_opc, ILI_OP fopc, MTH_FN fn,
   return ilix;
 }
 
+#if defined(TARGET_X8664) || defined(TARGET_POWER)
 static int
 _newton_fdiv(int op1, int op2)
 {
@@ -7200,6 +7220,7 @@ _newton_fdiv(int op1, int op2)
   ilix = ad2ili(IL_FMUL, op1, tmp1);
   return ilix;
 }
+#endif
 
 static bool
 do_newton_sqrt(void)
@@ -7461,15 +7482,6 @@ red_kadd(int ilix, INT con[2])
     break;
   } /*****  end of switch(ILI_OPC(ilix))  *****/
 
-  return 0;
-}
-
-/**
- * \brief constant folds the extended int add ili (eiadd)
- */
-static int
-red_eiadd(int ilix, INT con[2])
-{
   return 0;
 }
 
@@ -8423,7 +8435,9 @@ addbran(ILI *ilip)
     if (ILI_OPC(op2) == IL_FCON && IS_FLT0(ILI_OPND(op2, 1)))
       return ad3ili(IL_FCJMPZ, op1, ilip->opnd[2], ilip->opnd[3]);
 #endif
+#if defined(TARGET_X86)
   nogen_fcjmpz:
+#endif
     if (op1 == op2 && ILI_OPC(op2) == IL_FCON && !_is_nanf(ILI_OPND(op2, 1))) {
       cond = CCRelationILIOpnd(ilip, 2);
       if (cond == CC_EQ || cond == CC_GE || cond == CC_LE || cond == CC_NOTNE ||
@@ -8473,7 +8487,9 @@ addbran(ILI *ilip)
     if (ILI_OPC(op2) == IL_DCON && IS_DBL0(ILI_OPND(op2, 1)))
       return ad3ili(IL_DCJMPZ, op1, ilip->opnd[2], ilip->opnd[3]);
 #endif
+#if defined(TARGET_X86)
   nogen_dcjmpz:
+#endif
     if (op1 == op2 && (ILI_OPC(op2) == IL_DCON) &&
         !_is_nand(ILI_SymOPND(op2, 1))) {
       cond = CCRelationILIOpnd(ilip, 2);
@@ -12496,7 +12512,7 @@ _xpowi(int opn, int pwr, ILI_OP opc)
   return opn;
 }
 
-#if defined(TARGET_X8664) || defined(TARGET_POWER) || defined(TARGET_ARM64)
+#if defined(TARGET_X8664) || defined(TARGET_POWER) || !defined(TARGET_LLVM_ARM)
 static int
 _frsqrt(int x)
 {

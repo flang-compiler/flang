@@ -102,6 +102,7 @@ static long num_hdrs = NUM_HDRS;
 
 #define ALLHDR()
 
+#ifdef FLANG_ALLO_UNUSED
 /** \brief
  * Allocate ALLO_HDR list */
 static void
@@ -138,6 +139,7 @@ allhdr()
 
   MP_V(sem);
 }
+#endif
 
 /** \brief
  * Return nonzero if addresses p1 and p2 are aligned with respect to a

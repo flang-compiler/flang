@@ -56,7 +56,9 @@ static LOGICAL invar_src(int);
 static void invar_init(int);
 static void invar_mark(int);
 static void invar_end(int);
+#ifdef FLANG_INVAR_UNUSED
 static void invar_arrnme(int);
+#endif
 static void invar_motion(int);
 static void store_ili(int);
 static void initnames(STL *);
@@ -536,6 +538,7 @@ mark_variant:
 
 }
 
+#ifdef FLANG_INVAR_UNUSED
 /*
  * for any array nme's in nme, check their subscripts.  Note that this only
  * marks the ili if necessary.  Detecting an invariant subscript is not
@@ -562,6 +565,7 @@ invar_arrnme(int nme)
     anme = NME_NM(anme);
   }
 }
+#endif
 
 static LOGICAL is_std_hoistable(int, int);
 
@@ -924,6 +928,7 @@ store_ili(int ilix)
   /* assign temp; routine marks ILI with candidate entry */
 }
 
+#ifdef FLANG_INVAR_UNUSED
 static LOGICAL
 is_nme_loop_safe(int ldnme, int lpx)
 {
@@ -953,6 +958,7 @@ is_nme_loop_safe(int ldnme, int lpx)
   */
   return TRUE;
 }
+#endif
 
 LOGICAL
 is_sym_invariant_safe(int nme, int lpx)

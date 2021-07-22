@@ -320,10 +320,12 @@ static void new_symbol_and_link(int, int *, SYMITEM **);
 static void fill_links_symbol(SYMITEM *, WantPrivates);
 static int can_find_symbol(int);
 static int can_find_dtype(int);
+#ifdef FLANG_INTERF_UNUSED
 static SYMITEM *find_symbol(int);
 static int common_conflict(void);
 static int install_common(SYMITEM *, int);
 static LOGICAL common_mem_eq(int, int);
+#endif
 static int new_installed_dtype(int old_dt);
 static DITEM * finddthash(int old_dt);
 
@@ -1657,6 +1659,7 @@ find_nmptr(char *symname)
   return putsname(symname, len);
 } /* find_nmptr */
 
+#ifdef FLANG_INTERF_UNUSED
 /** \brief Find a nmptr index for this name, then link this symbol into
  * the stb.hashtb hash links.
  */
@@ -1679,6 +1682,7 @@ hash_link_name(int sptr, char *symname)
   HASHLKP(sptr, stb.hashtb[hash]);
   stb.hashtb[hash] = sptr;
 } /* hash_link_name */
+#endif
 
 static int
 find_member_name(char *symname, int stype, int scopesym, int offset)
@@ -3342,6 +3346,7 @@ get_nstring(char *dest, int len)
   dest[i] = '\0';
 }
 
+#ifdef FLANG_INTERF_UNUSED
 static char *
 getlstring(int area)
 {
@@ -3365,6 +3370,7 @@ getlstring(int area)
   currp = p;
   return s;
 } /* getlstring */
+#endif
 
 static int ipa_ast(int a);
 static int dindex(int dtype);
@@ -6231,6 +6237,7 @@ new_symbol_and_link(int old_sptr, int *pnew, SYMITEM **pps)
   interr("interf:new_symbol_and_link, symbol not found", old_sptr, 4);
 } /* new_symbol_and_link */
 
+#ifdef FLANG_INTERF_UNUSED
 static SYMITEM *
 find_symbol(int old_sptr)
 {
@@ -6249,6 +6256,7 @@ find_symbol(int old_sptr)
 #endif
   return symbol_list;
 }
+#endif
 
 static int
 can_find_symbol(int old_sptr)
@@ -6271,6 +6279,7 @@ can_find_dtype(int old_dt)
   return 0;
 }
 
+#ifdef FLANG_INTERF_UNUSED
 /** \brief Ensure that the common blocks from the interface file do not already
   * exist in the subprogram or if they do, their elements match.
   *
@@ -6313,7 +6322,9 @@ common_conflict(void)
   }
   return 0;
 } /* common_conflict */
+#endif
 
+#ifdef FLANG_INTERF_UNUSED
 /** \brief Compare the existing common block with the common block from the
   * interface file. Install the members while they match.
   *
@@ -6368,7 +6379,9 @@ common_diff:
   BZERO(stb.stg_base, SYM, 1);
   return cmblk;
 } /* install_common */
+#endif
 
+#ifdef FLANG_INTERF_UNUSED
 /** \brief return TRUE if two data types are equal.
   *
   * This function only needs to handle dtype situations resulting
@@ -6403,6 +6416,7 @@ common_mem_eq(int d1, int d2)
 
   return TRUE;
 }
+#endif
 
 static int
 import_mk_newsym(char *name, int stype)

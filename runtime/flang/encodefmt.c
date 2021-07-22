@@ -705,6 +705,7 @@ int *len;
 
 /* ---------------------------------------------------------------- */
 
+#ifdef FLANG_ENCODEFMT_UNUSED
 static int ef_nextdtchar(p, len)
     /* call after encounter DT */
     char *p;
@@ -723,6 +724,7 @@ int *len;
     c = c + ('A' - 'a');
   return c;
 }
+#endif
 
 /* -------------------------------------------------------------------- */
 

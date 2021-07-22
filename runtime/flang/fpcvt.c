@@ -56,6 +56,7 @@ static void fperror(int x);
 #define FP_UNDERFLOW_ERROR      -3
 #define FP_UNDEFINED_ERROR      -4
 
+#ifdef FLANG_FPCVT_UNUSED
 static void
 ui64toa(INT m[2], char *s, int n, int decpl)
 {
@@ -89,6 +90,7 @@ ui64toa(INT m[2], char *s, int n, int decpl)
     s[j] = buff[i];
   s[j] = '\0';
 }
+#endif
 
 static void
 manshftr(INT *m, /* m[4] */
@@ -299,6 +301,7 @@ ufpxten(UFP *u, int exp)
   u->fexp += ftab1[i][2] + ftab2[j][2];
 }
 
+#ifdef FLANG_FPCVT_UNUSED
 static void
 ufptosci(UFP *u, char *s, int dp, int *decpt, int *sign)
 {
@@ -340,7 +343,9 @@ again:
   }
   *decpt = exp10;
 }
+#endif
 
+#ifdef FLANG_FPCVT_UNUSED
 static void
 ufptodec(UFP *u, char *s, int dp, int *decpt, int *sign)
 {
@@ -363,7 +368,9 @@ ufptodec(UFP *u, char *s, int dp, int *decpt, int *sign)
   manrnd(u->fman, 64);
   ui64toa(u->fman, s, 0, dp);
 }
+#endif
 
+#ifdef FLANG_FPCVT_UNUSED
 static void
 dtoufp(IEEE64 d, UFP *u)
 {
@@ -396,6 +403,7 @@ dtoufp(IEEE64 d, UFP *u)
   } else
     u->fman[0] |= 0x00100000L;
 }
+#endif
 
 static void
 ufptod(UFP *u, IEEE64 *r)

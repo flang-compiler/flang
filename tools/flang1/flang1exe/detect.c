@@ -29,15 +29,19 @@ static void tag_comms(int);
 static void matched_dim(int);
 static void no_comm_class(int);
 static void overlap_class(int);
+#ifdef FLANG_DETECT_UNUSED
 static void copy_section_class(int);
 static void gather_class(int, int);
+#endif
 static void convert_idx_scalar(int);
 static int is_structured(int);
+#ifdef FLANG_DETECT_UNUSED
 static LOGICAL is_scatterx_gatherx_subscript(int, int);
 static LOGICAL result_base_relation(int result, int base, int forall);
 static LOGICAL mask_array_relation(int mask, int array, int forall);
 static int generic_intrinsic_type(int);
 static LOGICAL is_all_idx_appears(int, int);
+#endif
 static LOGICAL is_array_in_expr(int ast);
 static LOGICAL is_nonscalar_array_in_expr(int ast);
 
@@ -698,6 +702,7 @@ no_comm_class(int a)
     ARREF_CLASS(arref) = NO_COMM;
 }
 
+#ifdef FLANG_DETECT_UNUSED
 /* Algorithm:
  * This routine does not cares about neither template nor distribution types.
  * It looks the subscripts of lhs and rhs:
@@ -920,6 +925,7 @@ scatter_type(int std)
   comminfo.scat.function = func;
   comminfo.scat.array_simple = TRUE;
 }
+#endif
 
 LOGICAL
 scatter_class(int std)
@@ -927,6 +933,7 @@ scatter_class(int std)
   return FALSE;
 }
 
+#ifdef FLANG_DETECT_UNUSED
 static int
 generic_intrinsic_type(int otype)
 {
@@ -1025,6 +1032,7 @@ result_base_relation(int result, int base, int forall)
     return TRUE;
   return FALSE;
 }
+#endif
 
 /** \brief Inquire whether array has indirection in its subscripts */
 LOGICAL
@@ -1649,6 +1657,7 @@ convert_idx_scalar(int arref)
   }
 }
 
+#ifdef FLANG_DETECT_UNUSED
 /* This routine is to check
  * whether all ind from list appears at array subscript
  * For example, (i=, j=) a(i,j) true
@@ -1684,4 +1693,5 @@ is_all_idx_appears(int a, int list)
   }
   return TRUE;
 }
+#endif
 

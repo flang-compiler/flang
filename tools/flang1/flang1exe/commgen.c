@@ -27,7 +27,9 @@
 #include "fdirect.h"
 #include "rtlRtns.h"
 
+#ifdef FLANG_COMMGEN_UNUSED
 static void generate_forall(int);
+#endif
 static void change_forall_triple(int, int, int, LOGICAL);
 static int fill_cyclic_k(int);
 static void fill_cyclic_1(int);
@@ -35,19 +37,25 @@ static void generate_hallobnds(int);
 static void generate_sect(int);
 static void generate_copy(int);
 static void generate_gather(int);
+#ifdef FLANG_COMMGEN_UNUSED
 static void generate_shift(int);
-static void generate_ownerproc(int astAssn);
-static int inline_ownerproc(int astAssn);
+#endif
 static void generate_get_scalar(void);
 static void eliminate_redundant(void);
+#ifdef FLANG_COMMGEN_UNUSED
 static int rewrite_expr(int, int, int);
+#endif
 static void pointer_changer(void);
 static int pointer_squeezer(int);
 static int cyclic_section(int, int, int, int, int);
+#ifdef FLANG_COMMGEN_UNUSED
 static LOGICAL is_same_lower_dim(int, int, int, int);
+#endif
 static int gen_minmax(int, int, int);
+#ifdef FLANG_COMMGEN_UNUSED
 static int rhs_cyclic(int, int, int);
 static int cyclic_localize(int, int, int);
+#endif
 
 void
 comm_generator(void)
@@ -567,6 +575,7 @@ generate_gather(int ast)
   }
 }
 
+#ifdef FLANG_COMMGEN_UNUSED
 static void
 generate_shift(int ast)
 {
@@ -687,6 +696,7 @@ generate_shift(int ast)
   A_ARGSP(ast, argt);
   add_stmt_after(ast, freestd);
 }
+#endif
 
 /*  This routine will give outvalue   */
 
@@ -1392,6 +1402,7 @@ fill_cyclic_k(int ast)
   return mk_triple(lb, ub, 0);
 }
 
+#ifdef FLANG_COMMGEN_UNUSED
 static void
 generate_forall(int ast)
 {
@@ -1495,6 +1506,7 @@ rhs_cyclic(int ast, int std, int ifexpr)
     return 0;
   }
 }
+#endif
 
 int
 gen_localize_index(int sptr, int dim, int subAst, int astmem)
@@ -1554,6 +1566,7 @@ cyclic_section(int sptr, int idxAst, int clofAst, int i, int memberast)
   return ast2;
 }
 
+#ifdef FLANG_COMMGEN_UNUSED
 /* to check two sptr lower bounds are the same at
  * at the given dimension.
  */
@@ -1636,6 +1649,7 @@ rewrite_expr(int expr, int a, int b)
     return expr;
   }
 }
+#endif
 
 /* This routine is to emit bounds calculation for BLOCK distribution
  * stride==1

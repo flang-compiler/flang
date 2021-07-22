@@ -26,7 +26,9 @@
 #endif
 #include "symfun.h"
 
+#ifdef FLANG_NMEUTIL_UNUSED
 static bool found_rpct(int rpct_nme1, int rpct_nme2);
+#endif
 
 #if DEBUG
 #define asrt(c) \
@@ -842,6 +844,7 @@ add_rpct(int rpct_nme1, int rpct_nme2)
 
 } /* end add_rpct( int rpct_nme1, int rpct_nme2 ) */
 
+#ifdef FLANG_NMEUTIL_UNUSED
 /**
  * This function returns true if there is an RPCT (runtime pointer
  * conflict test) record containing the pair of NMEs (rpct_nme1,
@@ -883,6 +886,7 @@ found_rpct(int rpct_nme1, int rpct_nme2)
   return false; /* not found */
 
 } /* end found_rpct( int rpct_nme1, int rpct_nme2 ) */
+#endif
 
 #ifndef FE90
 /* #if defined(I386) || defined(X86_64) || defined(X86_32) || defined(LX) ||

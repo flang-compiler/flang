@@ -39,12 +39,6 @@ union {
   unsigned char byte[4];
 } i32bit;
 
-union {
-  unsigned long i64; /* need to make sure this is 64 bit */
-  double r8;
-  unsigned char byte[8];
-} i64bit;
-
 #include "dtypeutl.h"
 
 AGB_t agb;
@@ -72,15 +66,7 @@ static void put_i8(int);
 static void put_i16(int);
 static void put_r4(INT);
 static void put_r8(int, int);
-static void put_int(INT);
-static void put_int8(INT);
-static void put_float(INT);
-static void put_double(int);
 static void put_cmplx_n(int, int);
-static void put_float_cmplx(int, int);
-static void put_double_cmplx(int, int);
-static void put_string(char *, int);
-static void put_zeroes_bysize(ISZ_T, int);
 static void add_ctor(char *);
 static void write_proc_pointer(SPTR sptr);
 
@@ -772,22 +758,6 @@ put_zeroes(ISZ_T len)
 }
 
 static void
-put_zeroes_bytype(ISZ_T len, char *ttype, char *initval)
-{
-  ISZ_T i;
-  i = len;
-  if (i) {
-    while (1) {
-      fprintf(ASMFIL, "%s %s", ttype, initval);
-      i--;
-      if (i == 0)
-        break;
-      fprintf(ASMFIL, ",");
-    }
-  }
-}
-
-static void
 put_i8(int val)
 {
   int i;
@@ -827,24 +797,6 @@ put_short(int val)
   fprintf(ASMFIL, "i16 %u", val);
 }
 
-static void
-put_int(INT val)
-{
-  fprintf(ASMFIL, "i%d %u", DIR_LONG_SIZE, val);
-}
-
-void
-put_int4(int val)
-{
-  fprintf(ASMFIL, "i32 %u", val);
-}
-
-static void
-put_int8(INT val)
-{
-  fprintf(ASMFIL, "i64 %lu", (unsigned long)val);
-}
-
 /* write:  i8 0x?, i8 0x?, i8 0x?, i8 0x? */
 static void
 put_r4(INT val)
@@ -855,47 +807,6 @@ put_r4(INT val)
     fprintf(ASMFIL, "i8 %u", i32bit.byte[i] & 0xff);
     if (i < 3)
       fprintf(ASMFIL, ",");
-  }
-}
-
-static void
-put_float(INT val)
-{
-  union xx_u xx;
-  union {
-    double d;
-    INT tmp[2];
-  } dtmp, dtmp2;
-  xx.ww = val;
-  fprintf(ASMFIL, "float ");
-  xdble(xx.ww, dtmp2.tmp);
-  xdtomd(dtmp2.tmp, &dtmp.d);
-
-  if (dtmp.tmp[0] == -1) /* pick up the quiet nan */
-    fprintf(ASMFIL, "0x7FF80000");
-  else if (!dtmp.tmp[1])
-    fprintf(ASMFIL, "0x00000000");
-  else
-    fprintf(ASMFIL, "0x%X", dtmp.tmp[1]);
-
-  if (!dtmp.tmp[0] || dtmp.tmp[0] == -1)
-    fprintf(ASMFIL, "00000000");
-  else
-    fprintf(ASMFIL, "%X", dtmp.tmp[0]);
-}
-
-static void
-put_double(int sptr)
-{
-  INT num[2];
-  num[0] = CONVAL1G(sptr);
-  num[1] = CONVAL2G(sptr);
-  fprintf(ASMFIL, "double ");
-
-  if ((num[0] & 0x7ff00000) == 0x7ff00000) /* exponent == 2047 */
-    fprintf(ASMFIL, "0x%08x00000000", num[0]);
-  else {
-    fprintf(ASMFIL, "0x%.8X%.8X", num[0], num[1]);
   }
 }
 
@@ -923,26 +834,6 @@ put_cmplx_n(int sptr, int putval)
   put_r4(CONVAL1G(sptr));
   fprintf(ASMFIL, ",");
   put_r4(CONVAL2G(sptr));
-}
-
-static void
-put_float_cmplx(int sptr, int putval)
-{
-  fprintf(ASMFIL, " {float, float} {");
-  put_float(CONVAL1G(sptr));
-  fprintf(ASMFIL, ",");
-  put_float(CONVAL2G(sptr));
-  fprintf(ASMFIL, "}");
-}
-
-static void
-put_double_cmplx(int sptr, int putval)
-{
-  fprintf(ASMFIL, " {double, double} {");
-  put_double(CONVAL1G(sptr));
-  fprintf(ASMFIL, ",");
-  put_double(CONVAL2G(sptr));
-  fprintf(ASMFIL, "}");
 }
 
 static void

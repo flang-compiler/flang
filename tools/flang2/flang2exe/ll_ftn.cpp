@@ -74,25 +74,6 @@ need_charlen(DTYPE dtype)
   }
 }
 
-static int
-get_func_altili(int ilix)
-{
-  if (ILI_ALT(ilix) && ILI_OPC(ILI_ALT(ilix)) == IL_GJSR)
-    return ILI_ALT(ilix);
-  return 0;
-}
-
-/**
-   \brief return argument dtype in IL GJSR , expect ili derived from IL_GJSR
- */
-static int
-get_altili_dtype(int param_ili)
-{
-  if (ILI_OPC(param_ili) != IL_NULL)
-    return ILI_OPND(param_ili, 3);
-  return 0;
-}
-
 bool
 is_fastcall(int ilix)
 {
@@ -554,6 +535,7 @@ ll_process_routine_parameters(SPTR func_sptr)
   DBGTRACEOUT("")
 } /* ll_process_routine_parameters */
 
+#ifdef FLANG2_LLFTN_UNUSED
 /*
  * same return value as strcmp(str, pattern); pattern is a lower case
  * string and str may contain upper case characters.
@@ -578,6 +560,7 @@ sem_strcmp(char *str, char *pattern)
     p2++;
   } while (1);
 }
+#endif
 
 int
 is_iso_cptr(DTYPE d_dtype)
@@ -655,6 +638,7 @@ write_llvm_lltype(int sptr)
   write_type(LLTYPE(sptr));
 }
 
+#ifdef FLANG2_LLFTN_UNUSED
 static int
 llvm_args_valid(SPTR func_sptr)
 {
@@ -688,6 +672,7 @@ llvm_args_valid(SPTR func_sptr)
 
   return valid;
 }
+#endif
 
 void
 fix_llvm_fptriface(void)

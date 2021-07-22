@@ -1565,6 +1565,7 @@ find_pointer_assignments_f90(int stdx)
   ast_unvisit();
 } /* find_pointer_assignments_f90 */
 
+#ifdef FLANG_POINTSTO_UNUSED
 /*
  * return unique identifier for an anonymous variable
  */
@@ -1580,7 +1581,9 @@ anonymous_number(int n)
   ganon.stg_base[a] = n;
   return a;
 } /* anonymous_number */
+#endif
 
+#ifdef FLANG_POINTSTO_UNUSED
 /*
  * return unique identifier for a dynamically-allocated block of space
  */
@@ -1596,7 +1599,9 @@ dynamic_number(int n)
   gdyn.stg_base[d] = n;
   return d;
 } /* dynamic_number */
+#endif
 
+#ifdef FLANG_POINTSTO_UNUSED
 /*
  * Add pseudo assignments for initial pointer information at the program entry
  */
@@ -1661,6 +1666,7 @@ make_init_assignment(int v, int sourcesptr, int stars, int targettype,
     FIRSTAS(v) = asx;
   }
 } /* make_init_assignment */
+#endif
 
 /*
  * add the TPTE at ptex to the TPTE list at LHEAD(s)
