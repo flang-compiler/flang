@@ -1382,6 +1382,7 @@ size_of_array(DTYPE dtype)
   ISZ_T dim_size;
   ISZ_T size = 1;
   ISZ_T d;
+  int ub;
 
   if (dtype) {
 #define DEFAULT_DIM_SIZE 127
@@ -1408,7 +1409,8 @@ size_of_array(DTYPE dtype)
               A_TYPEG(AD_UPAST(ad, i)) != A_CNST) {
             dim_size = DEFAULT_DIM_SIZE;
           } else {
-            dim_size = ad_val_of(sym_of_ast(AD_UPAST(ad, i))) -
+            ub = AD_ASSUMSZ(ad) ? AD_EXTNTAST(ad, i) : AD_UPAST(ad, i);
+            dim_size = ad_val_of(sym_of_ast(ub)) -
                        ad_val_of(sym_of_ast(AD_LWAST(ad, i))) + 1;
           }
           size *= dim_size;
