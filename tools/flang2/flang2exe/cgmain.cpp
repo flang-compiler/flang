@@ -234,9 +234,12 @@ static STMT_Type curr_stmt_type;
 static int *idxstack = NULL;
 static hashmap_t sincos_map;
 static hashmap_t sincos_imap;
-static LL_MDRef cached_loop_metadata;
-static LL_MDRef cached_unroll_enable_metadata;
-static LL_MDRef cached_unroll_disable_metadata;
+static LL_MDRef cached_loop_id_md = ll_get_md_null();
+static bool cached_loop_id_md_has_vectorize = false;
+static LL_MDRef cached_vectorize_enable_metadata = ll_get_md_null();
+static LL_MDRef cached_vectorize_disable_metadata = ll_get_md_null();
+static LL_MDRef cached_unroll_enable_metadata = ll_get_md_null();
+static LL_MDRef cached_unroll_disable_metadata = ll_get_md_null();
 static LL_MDRef cached_access_group_metadata;
 
 static bool CG_cpu_compile = false;
@@ -789,18 +792,37 @@ fix_nodepchk_flag(int bih)
 }
 
 INLINE static void
+clear_cached_loop_id_md()
+{
+  cached_loop_id_md = ll_get_md_null();
+  cached_loop_id_md_has_vectorize = false;
+}
+
+// Construct a new loop ID node or return previously cached one.
+// It looks like: !0 = !{!0}
+INLINE static LL_MDRef
+cons_loop_id_md()
+{
+  if (LL_MDREF_IS_NULL(cached_loop_id_md)) {
+    cached_loop_id_md = ll_create_flexible_md_node(cpu_llvm_module);
+    ll_extend_md_node(cpu_llvm_module, cached_loop_id_md, cached_loop_id_md);
+  }
+  return cached_loop_id_md;
+}
+
+INLINE static void
 mark_rw_nodepchk(int bih)
 {
   rw_nodepcheck = 1;
   if (!BIH_NODEPCHK2(bih))
-    cached_loop_metadata = ll_get_md_null();
+    clear_cached_loop_id_md();
 }
 
 INLINE static void
 clear_rw_nodepchk(void)
 {
   rw_nodepcheck = 0;
-  cached_loop_metadata = ll_get_md_null();
+  clear_cached_loop_id_md();
 }
 
 INLINE static void
@@ -808,14 +830,14 @@ mark_rw_access_grp(int bih)
 {
   rw_access_group = 1;
   if (!BIH_NODEPCHK2(bih))
-    cached_loop_metadata = ll_get_md_null();
+    clear_cached_loop_id_md();
 }
 
 INLINE static void
 clear_rw_access_grp(void)
 {
   rw_access_group = 0;
-  cached_loop_metadata = ll_get_md_null();
+  clear_cached_loop_id_md();
 }
 
 void
@@ -982,51 +1004,51 @@ cons_loop_parallel_accesses_metadata(void)
   return ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
 } // cons_loop_parallel_accesses_metadata
 
+/**
+   \brief Construct exactly one cached instance of !{!"llvm.loop.vectorize.enable", 0}.
+ */
 INLINE static LL_MDRef
 cons_novectorize_metadata(void)
 {
   LL_MDRef lvcomp[2];
-  LL_MDRef loopVect;
-  LL_MDRef rv;
-
-  if (cpu_llvm_module->loop_md)
-    return cpu_llvm_module->loop_md;
-  rv = ll_create_flexible_md_node(cpu_llvm_module);
-  lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.enable");
-  lvcomp[1] = ll_get_md_i1(0);
-  loopVect = ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
-  ll_extend_md_node(cpu_llvm_module, rv, rv);
-  ll_extend_md_node(cpu_llvm_module, rv, loopVect);
-  cpu_llvm_module->loop_md = rv;
-  return rv;
+  if (LL_MDREF_IS_NULL(cached_vectorize_disable_metadata)) {
+    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.enable");
+    lvcomp[1] = ll_get_md_i1(0);
+    cached_vectorize_disable_metadata = ll_get_md_node(cpu_llvm_module,
+      LL_PlainMDNode, lvcomp, 2);
+  }
+  return cached_vectorize_disable_metadata;
 }
 
+/**
+   \brief Construct exactly one cached instance of !{!"llvm.loop.unroll.disable"}.
+ */
 INLINE static LL_MDRef
 cons_nounroll_metadata(void)
 {
   LL_MDRef lvcomp[1];
-  LL_MDRef loopUnroll;
-  LL_MDRef rv;
-
   if (LL_MDREF_IS_NULL(cached_unroll_disable_metadata)) {
-   rv = ll_create_flexible_md_node(cpu_llvm_module);
    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.disable");
-   loopUnroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 1);
-   ll_extend_md_node(cpu_llvm_module, rv, rv);
-   ll_extend_md_node(cpu_llvm_module, rv, loopUnroll);
-   cached_unroll_disable_metadata=rv;
+   cached_unroll_disable_metadata = ll_get_md_node(cpu_llvm_module,
+     LL_PlainMDNode, lvcomp, 1);
   }
   return cached_unroll_disable_metadata;
 }
 
+/**
+   \brief Construct exactly one cached instance of !{!"llvm.loop.vectorize.enable", 1}.
+ */
 INLINE static LL_MDRef
 cons_vectorize_metadata(void)
 {
   LL_MDRef lvcomp[2];
-
-  lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.enable");
-  lvcomp[1] = ll_get_md_i1(1);
-  return ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
+  if (LL_MDREF_IS_NULL(cached_vectorize_enable_metadata)) {
+    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.enable");
+    lvcomp[1] = ll_get_md_i1(1);
+    cached_vectorize_enable_metadata = ll_get_md_node(cpu_llvm_module,
+      LL_PlainMDNode, lvcomp, 2);
+  }
+  return cached_vectorize_enable_metadata;
 }
 
 /**
@@ -1317,50 +1339,62 @@ finish_routine(void)
   }
 }
 
+/**
+   \brief Return current loop id and mark it as vectorizable.
+
+   No dependency checking currently means to mark a loop id metadata with
+   !"llvm.loop.vectorize.enable", and to mark memory instructions with
+   !llvm.group access referring to the loop id. This function
+   returns the current loop id metadata via cons_loop_id_md() and marks the loop
+   as vectorizable.
+ */
 static LL_MDRef
 cons_no_depchk_metadata(void)
 {
-  if (LL_MDREF_IS_NULL(cached_loop_metadata)) {
+  LL_MDRef loop_id_md = cons_loop_id_md();
+  // Condition ensures only one copy of vectorize in the loop metadata.
+  if (!cached_loop_id_md_has_vectorize) {
+    cached_loop_id_md_has_vectorize = true;
     LL_MDRef vectorize = cons_vectorize_metadata();
-    LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
-    ll_extend_md_node(cpu_llvm_module, md, md);
-    ll_extend_md_node(cpu_llvm_module, md, vectorize);
-    cached_loop_metadata = md;
+    LL_MDRef paraccess = cons_loop_parallel_accesses_metadata();
+    ll_extend_md_node(cpu_llvm_module, loop_id_md, vectorize);
+    ll_extend_md_node(cpu_llvm_module, loop_id_md, paraccess);
   }
-  return cached_loop_metadata;
+  return loop_id_md;
 }
 
+/**
+   \brief Construct exactly one cached instance of !{!"llvm.loop.unroll.enable"}.
+ */
 static LL_MDRef
 cons_vec_always_metadata(void)
 {
-  if (LL_MDREF_IS_NULL(cached_loop_metadata)) {
+  LL_MDRef loop_id_md = cons_loop_id_md();
+  if (!cached_loop_id_md_has_vectorize) {
+    cached_loop_id_md_has_vectorize = true;
     LL_MDRef vectorize = cons_vectorize_metadata();
     LL_MDRef paraccess = cons_loop_parallel_accesses_metadata();
-    LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
-    ll_extend_md_node(cpu_llvm_module, md, md);
-    ll_extend_md_node(cpu_llvm_module, md, vectorize);
-    ll_extend_md_node(cpu_llvm_module, md, paraccess);
-    cached_loop_metadata = md;
+    ll_extend_md_node(cpu_llvm_module, loop_id_md, vectorize);
+    ll_extend_md_node(cpu_llvm_module, loop_id_md, paraccess);
   }
-  return cached_loop_metadata;
+  return loop_id_md;
 }
 
 static LL_MDRef
 cons_unroll_metadata(void) //Calls the metadata for unroll
 {
   LL_MDRef lvcomp[1];
-  LL_MDRef unroll;
   if (LL_MDREF_IS_NULL(cached_unroll_enable_metadata)) {
-    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.enable");
-    unroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 1);
-    LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
-    ll_extend_md_node(cpu_llvm_module, md, md);
-    ll_extend_md_node(cpu_llvm_module, md, unroll);
-    cached_unroll_enable_metadata = md;
+   lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.enable");
+   cached_unroll_enable_metadata = ll_get_md_node(cpu_llvm_module,
+     LL_PlainMDNode, lvcomp, 1);
   }
   return cached_unroll_enable_metadata;
 }
 
+/**
+   \brief Construct instance of !{!"llvm.loop.unroll.count", <unroll_factor>}.
+ */
 static LL_MDRef
 cons_unroll_count_metadata(int unroll_factor)
 {
@@ -1369,10 +1403,7 @@ cons_unroll_count_metadata(int unroll_factor)
   lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.count");
   lvcomp[1] = ll_get_md_i32(cpu_llvm_module, unroll_factor);
   unroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
-  LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
-  ll_extend_md_node(cpu_llvm_module, md, md);
-  ll_extend_md_node(cpu_llvm_module, md, unroll);
-  return md;
+  return unroll;
 }
 
 INLINE static bool
@@ -1703,16 +1734,12 @@ restartConcur:
     else if (XBIT(19, 0x400))
       BIH_SIMD(bih) = true;
     if ((!XBIT(69, 0x100000)) && BIH_NODEPCHK(bih) &&
-        (!ignore_simd_block(bih))) {
+        (!ignore_simd_block(bih)) || XBIT(191, 0x4)) {
       fix_nodepchk_flag(bih);
-      mark_rw_nodepchk(bih);
-    } else {
       clear_rw_nodepchk();
-    }
-    if (XBIT(191, 0x4)) {
-      fix_nodepchk_flag(bih);
       mark_rw_access_grp(bih);
     } else {
+      clear_rw_nodepchk();
       clear_rw_access_grp();
     }
     if (flg.x[9] > 0)
@@ -1768,15 +1795,39 @@ restartConcur:
             next_bih_label = t_next_bih_label;
         }
         make_stmt(STMT_BR, ilix, false, next_bih_label, ilt);
+
+        int branch_nops = ilis[opc].oprs;
+        int branch_target = ILI_OPND(ilix, branch_nops);
+        int branch_target_bih = ILIBLKG(branch_target);
+        int start_line = BIH_LINENO(branch_target_bih);
+        int end_line = ILT_LINENO(ilt);
+        bool is_loop_backedge = BIH_HEAD(branch_target_bih) && start_line <= end_line;
+
+        LL_MDRef loop_md = ll_get_md_null();
+
+        bool emitting_debug = !ISNVVMCODEGEN && (flg.debug || XBIT(120, 0x1000));
+        if (emitting_debug && is_loop_backedge) {
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          lldbg_emit_line(current_module->debug_info, start_line);
+          LL_MDRef loop_line_start = lldbg_get_line(current_module->debug_info);
+          lldbg_emit_line(current_module->debug_info, end_line);
+          LL_MDRef loop_line_end = lldbg_get_line(current_module->debug_info);
+
+          ll_extend_md_node(cpu_llvm_module, loop_md, loop_line_start);
+          ll_extend_md_node(cpu_llvm_module, loop_md, loop_line_end);
+        }
+
         if ((!XBIT(69, 0x100000)) &&
             (BIH_NODEPCHK(bih) && (!BIH_NODEPCHK2(bih)) &&
             (!ignore_simd_block(bih))) || BIH_SIMD(bih)) {
-          LL_MDRef loop_md = cons_no_depchk_metadata();
-          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
-          if (i) {
-            i->flags |= LOOP_BACKEDGE_FLAG;
-            i->misc_metadata = loop_md;
-          }
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+
+          // cons_no_depchk_metadata is different from the others because it
+          // arranges that llvm.loop.vectorize is only added to the loop
+          // metadata once.
+          (void)cons_no_depchk_metadata();
         }
         if ((check_for_loop_directive(ILT_LINENO(ilt), 191, 0x4))) {
           LL_MDRef loop_md = cons_vec_always_metadata();
@@ -1785,33 +1836,33 @@ restartConcur:
             i->flags |= LOOP_BACKEDGE_FLAG;
             i->misc_metadata = loop_md;
           }
-        }
-        if (BIH_UNROLL(bih)) {
-          LL_MDRef loop_md = cons_unroll_metadata();
-          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
-          if (i) {
-            i->flags |= LOOP_BACKEDGE_FLAG;
-            i->misc_metadata = loop_md;
-          }
+	}
+        if (BIH_UNROLL(bih)) { // Set on open_pragma() -> if(XBIT(11,0X3))
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          ll_extend_md_node(cpu_llvm_module, loop_md, cons_unroll_metadata());
         } else if (BIH_UNROLL_COUNT(bih)) {
-          LL_MDRef loop_md = cons_unroll_count_metadata(unroll_factor);
-          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
-          if (i) {
-            i->flags |= LOOP_BACKEDGE_FLAG;
-            i->misc_metadata = loop_md;
-          }
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          ll_extend_md_node(cpu_llvm_module, loop_md, cons_unroll_count_metadata(unroll_factor));
         } else if (BIH_NOUNROLL(bih)) {
-          LL_MDRef loop_md = cons_nounroll_metadata();
-          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
-          if (i) {
-            i->flags |= LOOP_BACKEDGE_FLAG;
-            i->misc_metadata = loop_md;
-          }
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          ll_extend_md_node(cpu_llvm_module, loop_md, cons_nounroll_metadata());
         }
         if (ignore_simd_block(bih)) {
-          LL_MDRef loop_md = cons_novectorize_metadata();
-          llvm_info.last_instr->flags |= LOOP_BACKEDGE_FLAG;
-          llvm_info.last_instr->misc_metadata = loop_md;
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          ll_extend_md_node(cpu_llvm_module, loop_md, cons_novectorize_metadata());
+        }
+
+        if (!LL_MDREF_IS_NULL(loop_md)) {
+          // If any loop metadata is present, mark the last executable
+          // instruction as a backedge.
+          if (INSTR_LIST *i = find_last_executable(llvm_info.last_instr)) {
+            i->flags |= LOOP_BACKEDGE_FLAG;
+            i->misc_metadata = loop_md;
+          }
         }
       } else if ((ILT_ST(ilt) || ILT_DELETE(ilt)) &&
                  (IL_TYPE(opc) == ILTY_STORE)) {
@@ -2881,28 +2932,15 @@ write_memory_order_and_alignment(INSTR_LIST *instrs)
 }
 
 INLINE static void
-write_no_depcheck_metadata(LL_Module *module, INSTR_LIST *insn)
+write_llaccgroup_metadata(LL_Module *module, INSTR_LIST *insn,
+                          LL_InstrListFlags flag_check, unsigned int val)
 {
-  if (insn->flags & LDST_HAS_METADATA) {
-    char buf[64];
-    int n;
-    DEBUG_ASSERT(insn->misc_metadata, "missing metadata");
-    n = snprintf(buf, 64, ", !llvm.mem.parallel_loop_access !%u",
-                 LL_MDREF_value(insn->misc_metadata));
-    DEBUG_ASSERT(n < 64, "buffer overrun");
-    print_token(buf);
-  }
-}
-
-INLINE static void
-write_llaccgroup_metadata(LL_Module *module, INSTR_LIST *insn)
-{
-  if (insn->flags & LDST_HAS_ACCESSGRP_METADATA) {
+  if (insn->flags & flag_check) {
     char buf[64];
     int n;
     DEBUG_ASSERT(insn->misc_metadata, "missing metadata");
     n = snprintf(buf, 64, ", !llvm.access.group !%u",
-                 LL_MDREF_value(cached_access_group_metadata));
+                 LL_MDREF_value(val));
     DEBUG_ASSERT(n < 64, "buffer overrun");
     print_token(buf);
   }
@@ -3313,8 +3351,10 @@ write_instructions(LL_Module *module)
 
         assert(p->next == NULL, "write_instructions(), bad next ptr", 0,
                ERR_Fatal);
-        write_no_depcheck_metadata(module, instrs);
-        write_llaccgroup_metadata(module, instrs);
+        write_llaccgroup_metadata(module, instrs, LDST_HAS_METADATA,
+                                  instrs->misc_metadata);
+        write_llaccgroup_metadata(module, instrs, LDST_HAS_ACCESSGRP_METADATA,
+                                  cached_access_group_metadata);
         write_tbaa_metadata(module, instrs->ilix, instrs->operands,
                             instrs->flags);
         break;
@@ -3334,8 +3374,10 @@ write_instructions(LL_Module *module)
         write_operand(p, "", 0);
 
         write_memory_order_and_alignment(instrs);
-        write_no_depcheck_metadata(module, instrs);
-        write_llaccgroup_metadata(module, instrs);
+        write_llaccgroup_metadata(module, instrs, LDST_HAS_METADATA,
+                                  instrs->misc_metadata);
+        write_llaccgroup_metadata(module, instrs, LDST_HAS_ACCESSGRP_METADATA,
+                                  cached_access_group_metadata);
         write_tbaa_metadata(module, instrs->ilix, instrs->operands->next,
                             instrs->flags & VOLATILE_FLAG);
         break;

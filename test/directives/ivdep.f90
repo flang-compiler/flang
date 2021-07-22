@@ -13,7 +13,9 @@ subroutine sum(myarr1,myarr2,ub)
 end subroutine
 
 ! CHECK:  {{.*}} add nsw <[[VF:[0-9]+]] x i32>{{.*}}
-! METADATA: load {{.*}}, !llvm.mem.parallel_loop_access ![[TAG1:[0-9]+]]
-! METADATA: store {{.*}}, !llvm.mem.parallel_loop_access ![[TAG1]]
-! METADATA: ![[TAG2:[0-9]+]] = !{!"llvm.loop.vectorize.enable", i1 true}
-! METADATA: ![[TAG1:[0-9]+]] = distinct !{![[TAG1]], ![[TAG2]]}
+! METADATA: load {{.*}}, !llvm.access.group ![[TAG1:[0-9]+]]
+! METADATA: store {{.*}}, !llvm.access.group ![[TAG1]]
+! METADATA: ![[TAG1]] = distinct !{}
+! METADATA: ![[TAG4:[0-9]+]] = distinct !{![[TAG4]], ![[TAG2:[0-9]+]], ![[TAG3:[0-9]+]], {{.*}}, {{.*}}}
+! METADATA: ![[TAG2]] = !{!"llvm.loop.vectorize.enable", i1 true}
+! METADATA: ![[TAG3]] = !{!"llvm.loop.parallel_accesses", ![[TAG1:[0-9]+]]}

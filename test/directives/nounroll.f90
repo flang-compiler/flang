@@ -18,7 +18,6 @@
 ! RUN: %flang -Hx,59,2 -S -emit-llvm %s -o - \
 ! RUN: | FileCheck %s --check-prefix=CHECK-NODIRECTIVE
 !
-! CHECK-NODIRECTIVE-NOT: !llvm.loop
 ! CHECK-NODIRECTIVE-NOT: !"llvm.loop.unroll.disable"
 
 program tz
