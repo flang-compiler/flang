@@ -751,7 +751,11 @@ size_shape(int shape, int i)
   a = mk_binop(OP_SUB, argu, argl, astb.bnd.dtype);
   a = mk_binop(OP_ADD, a, args, astb.bnd.dtype);
   a = mk_binop(OP_DIV, a, args, astb.bnd.dtype);
-  mask = mk_binop(OP_GE, argu, argl, DT_LOG);
+  /* 'a' is calculated as ((ub - lb + s) / s)
+   * which works for negative strides as well.
+   * Negative results are converted to zero.
+   */
+  mask = mk_binop(OP_GE, a, astb.bnd.zero, DT_LOG);
   a = mk_merge(a, astb.bnd.zero, mask, astb.bnd.dtype);
   if (astb.bnd.dtype != stb.user.dt_int) {
     /* -i8: type of size is integer*8 so convert result */
