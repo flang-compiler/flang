@@ -1556,10 +1556,12 @@ ldst_msz(DTYPE dtype, ILI_OP *ld, ILI_OP *st, MSZ *siz)
 
   switch (DTY(dtype)) {
   case TY_BINT:
+  case TY_BLOG:
   case TY_CHAR:
     *siz = MSZ_SBYTE;
     break;
   case TY_SINT:
+  case TY_SLOG:
   case TY_NCHAR:
     *siz = MSZ_SHWORD;
     break;
@@ -1574,6 +1576,7 @@ ldst_msz(DTYPE dtype, ILI_OP *ld, ILI_OP *st, MSZ *siz)
     *st = IL_STSCMPLX;
     return;
   case TY_INT8:
+  case TY_LOG8:
     *siz = MSZ_I8;
     *ld = IL_LDKR;
     *st = IL_STKR;
@@ -1615,6 +1618,7 @@ ldst_msz(DTYPE dtype, ILI_OP *ld, ILI_OP *st, MSZ *siz)
     }
     break;
   case TY_INT:
+  case TY_LOG:
   default:
     *siz = MSZ_WORD;
     break;
