@@ -532,9 +532,9 @@ export_iso_fortran_env_libraries(void)
 
   if (exportb.iso_fortran_env_library) {
     sptr = lookupsymbol("compiler_options");
-    lzprintf(outlz, "B %d %s %s\n", sptr, "iso_c_binding", SYMNAME(sptr));
+    lzprintf(outlz, "B %d %s %s\n", sptr, "iso_fortran_env", SYMNAME(sptr));
     sptr = lookupsymbol("compiler_version");
-    lzprintf(outlz, "B %d %s %s\n", sptr, "iso_c_binding", SYMNAME(sptr));
+    lzprintf(outlz, "B %d %s %s\n", sptr, "iso_fortran_env", SYMNAME(sptr));
   }
 }
 
