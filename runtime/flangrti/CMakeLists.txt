@@ -96,14 +96,14 @@ if (NOT DEFINED LIBOMP_EXPORT_DIR)
     FLANG_LIBOMP
     NAMES omp libomp
     HINTS ${CMAKE_BINARY_DIR}/lib)
-  target_link_libraries(flangrti_shared PRIVATE ${FLANG_LIBOMP})
+  target_link_libraries(flangrti_shared PUBLIC ${FLANG_LIBOMP})
 endif()
 
 find_library(
   LIBPGMATH
   NAMES pgmath libpgmath
   HINTS ${CMAKE_BINARY_DIR}/lib)
-target_link_libraries(flangrti_shared PRIVATE ${LIBPGMATH})
+target_link_libraries(flangrti_shared PUBLIC ${LIBPGMATH})
 
 if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
   target_compile_definitions(flangrti_static PRIVATE TARGET_LINUX_ARM)
