@@ -13,7 +13,7 @@
 #else
 #include <execinfo.h>
 #include <unistd.h>
-#include <linux/limits.h>
+#include <limits.h>
 #include <sys/types.h>
 #endif
 #include <stdioInterf.h>
