@@ -31,7 +31,11 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <time.h> /* time() */
+#ifndef _WIN64
 #include <unistd.h> /* getcwd() */
+#else
+#include <direct.h>
+#endif
 
 /* See tmpfile(3). */
 FILE *tmpf(char *ignored);
