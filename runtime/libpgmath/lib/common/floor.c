@@ -6,26 +6,44 @@
  */
 
 #include "mthdecls.h"
-#if     defined(__SSE4_1__) || defined(__AVX__)
-#include    <immintrin.h>
-#endif
 
-#if     defined(__AVX__)
-float
-__mth_i_floor_avx(float x)
-{
-  return _mm_cvtss_f32(_mm_floor_ss(_mm_set1_ps(x), _mm_set1_ps(x)));
-}
-#elif   defined(__SSE4_1__)
+#if     defined(TARGET_X8664)
+/*
+ * For X8664, implement both SSE and AVX versions of __mth_i_floor using ISA
+ * instruction extensions.
+ *
+ * Using inline assembly allows both the SSE and AVX versions of the routine
+ * to be compiled in a single unit.
+ *
+ * The following asm statements is equivalent to:
+ *      return _mm_cvtss_f32(_mm_floor_ss(_mm_set1_ps(x), _mm_set1_ps(x)));
+ * But without the need for separate compiliations for SSE4.1 and AVX ISA
+ * extensions.
+ */
+
 float
 __mth_i_floor_sse(float x)
 {
-  return _mm_cvtss_f32(_mm_floor_ss(_mm_set1_ps(x), _mm_set1_ps(x)));
+  __asm__(
+    "roundss $0x1,%0,%0"
+    :"+x"(x)
+    );
+  return x;
 }
-#else
+
+float
+__mth_i_floor_avx(float x)
+{
+  __asm__(
+    "vroundss $0x1,%0,%0,%0"
+    :"+x"(x)
+    );
+  return x;
+}
+#endif
+
 float
 __mth_i_floor(float x)
 {
   return floorf(x);
 }
-#endif

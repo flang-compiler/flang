@@ -127,7 +127,7 @@ elseif(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "ppc64le")
     mth_128defs_init.c
     mth_128defs_stats.c)
   libmath_add_object_library("${MTH_INTRINSICS_SRCS}" "${FLAGS}" "${DEFINITIONS}" "mth_intrinsics")
- 
+
   set(SRCS
     kidnnt.c
     sincos.c
@@ -454,7 +454,7 @@ else()
   libmath_add_object_library("${TARGET_NAME}.c" "${FLAGS}" "${DEFINITIONS}" "${TARGET_NAME}_build")
   add_dependencies("${TARGET_NAME}_build" ${TARGET_NAME})
 endif()
-  
+
 # Generate tmp-mth_statsdefs.h
 set(TARGET_NAME "tmp-mth_statsdefs")
 add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
@@ -466,6 +466,6 @@ add_dependencies(dispatch ${TARGET_NAME} tmp-mth_alldefs)
 add_dependencies(dispatch ${TARGET_NAME} tmp-mth_statsdefs)
 target_include_directories(dispatch
   BEFORE
-  PRIVATE ${CMAKE_CURRENT_BINARY_DIR} 
+  PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
   PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../${PROCESSOR}/math_tables
   PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../generic/math_tables)

@@ -5,8 +5,20 @@
  *
  */
 
-MTHINTRIN(floor  , ss   , any        ,  __mth_i_floor         ,  __mth_i_floor         , __mth_i_floor          ,__math_dispatch_error)
-MTHINTRIN(floor  , ds   , any        ,  __mth_i_dfloor        ,  __mth_i_dfloor        , __mth_i_dfloor         ,__math_dispatch_error)
+MTHINTRIN(floor  , ss   , em64t      ,  __mth_i_floor         ,  __mth_i_floor         , __mth_i_floor          ,__math_dispatch_error)
+MTHINTRIN(floor  , ds   , em64t      ,  __mth_i_dfloor        ,  __mth_i_dfloor        , __mth_i_dfloor         ,__math_dispatch_error)
+MTHINTRIN(floor  , ss   , sse4       ,  __mth_i_floor_sse     ,  __mth_i_floor_sse     , __mth_i_floor_sse      ,__math_dispatch_error)
+MTHINTRIN(floor  , ds   , sse4       ,  __mth_i_dfloor_sse    ,  __mth_i_dfloor_sse    , __mth_i_dfloor_sse     ,__math_dispatch_error)
+MTHINTRIN(floor  , ss   , avx        ,  __mth_i_floor_avx     ,  __mth_i_floor_avx     , __mth_i_floor_avx      ,__math_dispatch_error)
+MTHINTRIN(floor  , ds   , avx        ,  __mth_i_dfloor_avx    ,  __mth_i_dfloor_avx    , __mth_i_dfloor_avx     ,__math_dispatch_error)
+MTHINTRIN(floor  , ss   , avxfma4    ,  __mth_i_floor_avx     ,  __mth_i_floor_avx     , __mth_i_floor_avx      ,__math_dispatch_error)
+MTHINTRIN(floor  , ds   , avxfma4    ,  __mth_i_dfloor_avx    ,  __mth_i_dfloor_avx    , __mth_i_dfloor_avx     ,__math_dispatch_error)
+MTHINTRIN(floor  , ss   , avx2       ,  __mth_i_floor_avx     ,  __mth_i_floor_avx     , __mth_i_floor_avx      ,__math_dispatch_error)
+MTHINTRIN(floor  , ds   , avx2       ,  __mth_i_dfloor_avx    ,  __mth_i_dfloor_avx    , __mth_i_dfloor_avx     ,__math_dispatch_error)
+MTHINTRIN(floor  , ss   , avx512knl  ,  __mth_i_floor_avx     ,  __mth_i_floor_avx     , __mth_i_floor_avx      ,__math_dispatch_error)
+MTHINTRIN(floor  , ds   , avx512knl  ,  __mth_i_dfloor_avx    ,  __mth_i_dfloor_avx    , __mth_i_dfloor_avx     ,__math_dispatch_error)
+MTHINTRIN(floor  , ss   , avx512     ,  __mth_i_floor_avx     ,  __mth_i_floor_avx     , __mth_i_floor_avx      ,__math_dispatch_error)
+MTHINTRIN(floor  , ds   , avx512     ,  __mth_i_dfloor_avx    ,  __mth_i_dfloor_avx    , __mth_i_dfloor_avx     ,__math_dispatch_error)
 MTHINTRIN(floor  , sv4  , any        ,  __gs_floor_4_f        ,  __gs_floor_4_r        , __gs_floor_4_p         ,__math_dispatch_error)
 MTHINTRIN(floor  , dv2  , any        ,  __gd_floor_2_f        ,  __gd_floor_2_r        , __gd_floor_2_p         ,__math_dispatch_error)
 MTHINTRIN(floor  , sv8  , any        ,  __gs_floor_8_f        ,  __gs_floor_8_r        , __gs_floor_8_p         ,__math_dispatch_error)
