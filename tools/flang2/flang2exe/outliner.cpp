@@ -1422,18 +1422,17 @@ handle_nested_threadprivate(LLUplevel *parent, SPTR uplevel, SPTR taskAllocSptr,
   }
 }
 
-/*
- * given a member of a struct datatype and an offset,
- * returns the sibling member with that has ADDRESSG to match the offset
+/* Given the member list of a struct datatype and an offset, returns the member
+ * within the struct whose ADDRESSG matches the offset.
  */
 static SPTR
 member_with_offset(SPTR member, int offset)
 {
-  for( ; member > NOSYM && ADDRESSG(member) < offset; member = SYMLKG(member)) {
-    if (ADDRESSG(member) = offset)
-      return member;	/* found the matching member */
+  for (SPTR m = member; m > NOSYM && ADDRESSG(m) <= offset; m = SYMLKG(m)) {
+    if (ADDRESSG(m) == offset)
+      return m; /* found the matching member */
   }
-  return SPTR_NULL;	/* trouble. */
+  return SPTR_NULL; /* trouble. */
 } /* member_with_offset */
 
 /* Generate load instructions to load just the fields of the uplevel table for
@@ -1488,7 +1487,7 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
     chk_block(ilix);
     offset += size_of(DT_CPTR);
   }
-    addition = ll_parent_vals_count(uplevel_stblk_sptr) * size_of(DT_CPTR);
+  addition = ll_parent_vals_count(uplevel_stblk_sptr) * size_of(DT_CPTR);
   offset = offset + addition;
   if (up)
     count = up->vals_count;
@@ -1507,9 +1506,9 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
       continue;
     }
 
-/* Load the uplevel pointer and get the offset where the pointer to the
- * member should be placed.
- */
+    /* Load the uplevel pointer and get the offset where the pointer to the
+     * member should be placed.
+     */
     if (!lensptr && need_charlen(DTYPEG(sptr))) {
       lensptr = CLENG(sptr);
     }
@@ -1522,11 +1521,9 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
       int anme = addnme(NT_VAR, asym, 0, (INT)0);
       val = mk_address(sptr);
       val = ad2ili(IL_LDA, val, anme);
-
     } else if (SCG(sptr) == SC_BASED && MIDNUMG(sptr)) {
-      /* for adjustable len char the $p does not have
-       * clen field so we need to reference it from
-       * the SC_BASED
+      /* For adjustable len char the $p does not have clen field so we need
+       * to reference it from the SC_BASED.
        */
       based = sptr;
       sptr = MIDNUMG(sptr);
@@ -1544,27 +1541,27 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
         int sym = getThreadPrivateTp(sptr);
         val = llGetThreadprivateAddr(sym);
       }
-    } else
-        if (THREADG(sptr)) {
-      /*
-       * special handle for copyin threadprivate var - we put it in uplevel
-       * structure
-       * so that we get master threadprivate copy and pass down to its team.
+    } else if (THREADG(sptr)) {
+      /* Special handling for copyin threadprivate var - we put it in uplevel
+       * structure so that we get master threadprivate copy and pass down to
+       * its team.
        */
       int sym = getThreadPrivateTp(sptr);
       val = llGetThreadprivateAddr(sym);
-    } else
+    } else {
       val = mk_address(sptr);
+    }
     addr = toUplevelAddr(taskAllocSptr, uplevel, offset);
+
     /* Skip non-openmp ST_BLOCKS stop at closest one (uplevel is set) */
     encl = ENCLFUNCG(sptr);
-    if (STYPEG(encl) != ST_ENTRY && STYPEG(encl) != ST_PROC)
+    if (STYPEG(encl) != ST_ENTRY && STYPEG(encl) != ST_PROC) {
       while (encl && ((STYPEG(ENCLFUNCG(encl)) != ST_ENTRY) ||
-                      (STYPEG(ENCLFUNCG(encl)) != ST_PROC)))
-    {
-      if (PARUPLEVELG(encl)) /* Only OpenMP blocks use this */
-        break;
-      encl = ENCLFUNCG(encl);
+                      (STYPEG(ENCLFUNCG(encl)) != ST_PROC))) {
+        if (PARUPLEVELG(encl)) /* Only OpenMP blocks use this */
+          break;
+        encl = ENCLFUNCG(encl);
+      }
     }
 
     /* Private and encl is an omp block not expanded, then do not load */
@@ -1574,14 +1571,14 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
         offset += size_of(DT_CPTR);
         continue;
       } else {
-        if ((STYPEG(ENCLFUNCG(encl)) != ST_ENTRY))
-        {
+        if ((STYPEG(ENCLFUNCG(encl)) != ST_ENTRY)) {
           offset += size_of(DT_CPTR);
           lensptr = SPTR_NULL;
           continue;
         }
       }
     }
+
     /* Determine if we should call a store */
     do_load = false;
     if (THREADG(sptr)) {
@@ -1597,8 +1594,9 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
         offset += size_of(DT_CPTR);
         continue;
       }
-    } else if (gbl.outlined && is_llvm_local_private(sptr))
+    } else if (gbl.outlined && is_llvm_local_private(sptr)) {
       do_load = true;
+    }
 
     if (do_load) {
       int mnmex;
@@ -1606,8 +1604,7 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
         /* PARREFLOAD is set if ADDRTKN of based was false */
         PARREFLOADP(based, !ADDRTKNG(based));
         ADDRTKNP(based, 1);
-      } else
-      {
+      } else {
         /* PARREFLOAD is set if ADDRTKN of sptr was false */
         PARREFLOADP(sptr, !ADDRTKNG(sptr));
         /* prevent optimizer to remove store instruction */
@@ -1638,8 +1635,8 @@ loadUplevelArgsForRegion(SPTR uplevel, SPTR taskAllocSptr, int count,
       }
       chk_block(ilix);
     }
-//   //TODO ompaccel optimize load offset for team-private.
-     offset += size_of(DT_CPTR);
+    //TODO ompaccel optimize load offset for team-private.
+    offset += size_of(DT_CPTR);
   }
   /* Special handling for threadprivate copyin, we need to copy the
    * address of current master copy to its slaves.
