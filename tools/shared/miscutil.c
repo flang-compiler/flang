@@ -21,7 +21,7 @@
    \brief Allocate space for and make new filename using mkperm.
  */
 char *
-mkfname(char *oldname, char *oldsuf, char *newsuf)
+mkfname(const char *oldname, const char *oldsuf, const char *newsuf)
 {
   char *p;
 

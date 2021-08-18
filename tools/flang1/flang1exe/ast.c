@@ -7017,7 +7017,7 @@ dump_std(void)
 
 /* routine must be externally visible */
 void
-dump_stg_stat(char *where)
+dump_stg_stat(const char *where)
 {
   FILE *fil;
   if (gbl.dbgfil == NULL)

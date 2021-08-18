@@ -597,7 +597,7 @@ copy_mach_intersect(X86TYPE *mach)
 } /* copy_mach_intersect */
 
 int
-machvalue(char *thistpname)
+machvalue(const char *thistpname)
 {
 #ifdef TARGET_X8664
   if (strcmp(thistpname, "amd64") == 0)
@@ -654,7 +654,7 @@ machvalue(char *thistpname)
 } /* machvalue */
 
 void
-set_tp(char *thistpname)
+set_tp(const char *thistpname)
 {
   if (flg.tpcount <= TPNVERSION) {
     int n, i, j;

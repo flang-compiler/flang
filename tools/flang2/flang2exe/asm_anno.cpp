@@ -27,7 +27,7 @@ typedef struct ANNO_S {
   long fileloc;   /** \brief Byte offset from begin of file */
   int bihd;       /** \brief bihd associated with this line */
   int tmp;        /** \brief index holder */
-  char *filename; /** \brief Name of file for this lineno */
+  const char *filename; /** \brief Name of file for this lineno */
   FILE *fd;       /** \brief file descriptor associated with this lineno */
 } ANNO;
 

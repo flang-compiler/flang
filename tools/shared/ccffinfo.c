@@ -312,7 +312,7 @@ xmlintentity2(char *entity, char *shortentity, int value1, int value2)
  * called from main()
  */
 void
-ccff_open(char *ccff_filename, char *srcfile)
+ccff_open(char *ccff_filename, const char *srcfile)
 {
   char *cwd, ch;
   int cwdlen;
@@ -335,11 +335,12 @@ ccff_open(char *ccff_filename, char *srcfile)
   }
   xmlopen("source", "s");
   if (slash >= 0) {
+    char *srcpath = (char *)malloc(strlen(srcfile) + 1);
+    strcpy(srcpath, srcfile);
+    srcpath[slash] = '\0';
     xmlentity("sourcename", "sn", srcfile + slash + 1);
-    ch = srcfile[slash];
-    srcfile[slash] = '\0';
-    xmlentity("sourcepath", "sp", srcfile);
-    srcfile[slash] = ch;
+    xmlentity("sourcepath", "sp", srcpath);
+    free(srcpath);
   } else {
     xmlentity("sourcename", "sn", srcfile);
     xmlentity("sourcepath", "sp", ".");
@@ -375,7 +376,7 @@ ccff_close()
 /** \brief Write build information, including command line options
  */
 void
-ccff_build(char *options, char *language)
+ccff_build(const char *options, const char *language)
 {
   char sdate[50], stime[50];
   time_t now;
@@ -2483,7 +2484,7 @@ ccff_seq(int seq)
 static char *nullname = "";
 
 int
-addfile(char *filename, char *funcname, int tag, int flags, int lineno,
+addfile(const char *filename, char *funcname, int tag, int flags, int lineno,
         int srcline, int level)
 {
   int f, len;

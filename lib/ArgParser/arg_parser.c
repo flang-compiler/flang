@@ -29,18 +29,18 @@ struct arg_parser_ {
    * continue parsing */
   bool fail_on_unknown_args;
   /** Where to write input file name */
-  char **input_file_name_ptr;
+  const char **input_file_name_ptr;
 };
 
 /** \brief Link a bool * and a char ** value together */
 typedef struct bool_string_ {
   bool *bool_ptr;
-  char **string_ptr;
+  const char **string_ptr;
 } bool_string_t;
 
 /** \brief Combine input and output for action map arguments */
 typedef struct action_map_bundle_ {
-  action_map_t *input;
+  const action_map_t *input;
   action_map_t *output;
 } action_map_bundle_t;
 
@@ -129,11 +129,11 @@ deallocate_arg_value(hash_key_t key, hash_data_t value_ptr, void *key_context)
 
 /** Register a string argument */
 void
-register_string_arg(arg_parser_t *parser, const char *arg_name, char **target,
-                    const char *default_value)
+register_string_arg(arg_parser_t *parser, const char *arg_name,
+                    const char **target, const char *default_value)
 {
   /* Set default value */
-  *target = (char *)default_value;
+  *target = default_value;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic warning "-Wcast-qual"
@@ -189,7 +189,7 @@ register_boolean_arg(arg_parser_t *parser, const char *arg_name, bool *target,
 /** Register a combines bool and string argument */
 void
 register_combined_bool_string_arg(arg_parser_t *parser, const char *arg_name,
-                                  bool *bool_target, char **string_target)
+                                  bool *bool_target, const char **string_target)
 {
   /* Boolean target defaults to false (not set) */
   *bool_target = false;
@@ -252,7 +252,7 @@ register_action_map_arg(arg_parser_t *parser, const char *arg_name,
 {
   action_map_bundle_t *value = (action_map_bundle_t*) malloc(
       sizeof(action_map_bundle_t));
-  value->input = (action_map_t *)input;
+  value->input = input;
   value->output = target;
 
   add_generic_argument(parser, arg_name, ARG_ActionMap, (void *)value);
@@ -260,7 +260,7 @@ register_action_map_arg(arg_parser_t *parser, const char *arg_name,
 
 /** Register input file name */
 void
-register_filename_arg(arg_parser_t *parser, char **target)
+register_filename_arg(arg_parser_t *parser, const char **target)
 {
   parser->input_file_name_ptr = target;
 }
@@ -359,7 +359,7 @@ parse_arguments(const arg_parser_t *parser, int argc, char **argv)
     /* Parse argument type */
     switch (value->type) {
     case ARG_ActionMap: {
-      action_map_t *from = ((action_map_bundle_t *)value->location)->input;
+      const action_map_t *from = ((action_map_bundle_t *)value->location)->input;
       action_map_t *to = ((action_map_bundle_t *)value->location)->output;
 
       /* TODO parse lists of arguments */

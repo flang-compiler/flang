@@ -443,7 +443,7 @@ void dump_std (void);
 void _dump_std (int, FILE *);
 void dump_shape(int);
 void _dump_shape(int, FILE *);
-void dump_stg_stat (char *);
+void dump_stg_stat (const char *);
 void dbg_print_ast(int ast, FILE *fil); /* astout.c */
 
 int ast_intr(int i_intr, DTYPE dtype, int cnt, ...);

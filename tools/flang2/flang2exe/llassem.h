@@ -557,7 +557,7 @@ void assemble_end(void);
 /**
    \brief ...
  */
-void assemble_init(int argc, char *argv[], char *cmdline);
+void assemble_init(int argc, char *argv[], const char *cmdline);
 
 /**
    \brief ...

@@ -445,7 +445,7 @@ assemble(void)
    Guaranteed to be called only once per compilation
  */
 void
-assemble_init(int argc, char *argv[], char *cmdline)
+assemble_init(int argc, char *argv[], const char *cmdline)
 {
   gbl.bss_addr = 0;
   ag_cmblks = 0;

@@ -292,7 +292,7 @@ get_filedesc_mdnode(LL_DebugInfo *db, int index)
 static LL_MDRef
 lldbg_create_compile_unit_mdnode(LL_DebugInfo *db, int lang_tag, char *filename,
                                  char *sourcedir, char *producer, int main,
-                                 bool optimized, char *compflags, int vruntime,
+                                 bool optimized, const char *compflags, int vruntime,
                                  LL_MDRef *enum_types_list,
                                  LL_MDRef *retained_types_list,
                                  LL_MDRef *subprograms_list, LL_MDRef *gv_list,

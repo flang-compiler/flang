@@ -18,7 +18,7 @@ void list_init(FILE *fd);
 /**
    \brief ...
  */
-void list_line(char *txt);
+void list_line(const char *txt);
 
 /**
    \brief ...

@@ -14,6 +14,7 @@
 #include "gbldefs.h"
 #include "error.h"
 #include "global.h"
+#include "listing.h"
 #include "symtab.h"
 #include "dtypeutl.h"
 #include "symfun.h"

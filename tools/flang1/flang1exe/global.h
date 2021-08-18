@@ -39,8 +39,8 @@ typedef struct {
   int maxsev;      /* maximum error severity for this compile */
   int lineno;      /* current source line number */
   int findex;      /* current file index */
-  char *src_file;  /* name of main input source file */
-  char *curr_file; /* name of current input source file */
+  const char *src_file;  /* name of main input source file */
+  const char *curr_file; /* name of current input source file */
   char *module;    /* object module name */
   char *ipaname;   /* IPA database name */
   FILE *srcfil;    /* file pointer for source input file */
@@ -92,7 +92,7 @@ typedef struct {
                          */
   int func_count;       /* function counter, current # of function being
                          * compiled, incremented by assem_init */
-  char *file_name;      /* full pathname of input file; -file may override */
+  const char *file_name; /* full pathname of input file; -file may override */
   int ftn_true;         /* value of .TRUE.; -1 (default) or 1 (-x 125 8) */
   LOGICAL in_include;   /* set to true if source is from an include file */
   int tp_adjarr;        /* list of template and processor adjustable array
@@ -128,7 +128,7 @@ typedef struct {
   FILE *ipofil;         /* newly generated ipa information */
   FILE *dependfil;      /* make dependency information */
   FILE *moddependfil;   /* make dependency information */
-  char *fn;             /* name of file being compiled which was previously
+  const char *fn;       /* name of file being compiled which was previously
                          * preprocessed (can be more general if we choose).
                          */
   LOGICAL denorm;       /* enforce denorm for the current subprogram */
@@ -192,8 +192,8 @@ typedef struct {
   LOGICAL p;
   char **def;
   char **undef;
-  char *stdinc; /* NULL => use std include; 1 ==> do not look in
-                 * std dir; o.w., use value as the std dir */
+  const char *stdinc; /* NULL => use std include; 1 ==> do not look in
+                       * std dir; o.w., use value as the std dir */
   LOGICAL hpf;
   LOGICAL freeform;
   LOGICAL sequence;
@@ -209,7 +209,7 @@ typedef struct {
   int tpcount;
   int tpvalue[TPNVERSION]; /* target processor(s), for unified binary */
   int accmp;
-  char *cmdline; /* command line used to invoke the compiler */
+  const char *cmdline; /* command line used to invoke the compiler */
 } FLG;
 
 extern FLG flg;

@@ -176,7 +176,7 @@ typedef enum RUTYPE {
  void bzero(void *, size_t);
 #endif
 void list_init(FILE*); /* from listing.c: */
-void list_line(char*);
+void list_line(const char*);
 void list_page(void);
 void fprintf_str_esc_backslash(FILE *f, char *str);
 void extractor_end(void);                          /* extractor.h */
