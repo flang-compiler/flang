@@ -46,6 +46,7 @@
 #include <stdbool.h>
 #include "flang/ArgParser/arg_parser.h"
 #include "dtypeutl.h"
+#include "miscutil.h"
 
 static bool process_input(char *argv0, bool *need_cuda_constructor);
 
@@ -76,7 +77,7 @@ static int saveoptflag;
 static int savevectflag;
 static int savex8flag;
 static int saverecursive;
-static char *objectfile;
+static char *objectfile = NULL;
 static void process_stb_file(void);
 #define STB_UPPER() (gbl.stbfil != NULL)
 #define IS_PARFILE (gbl.ilmfil == par_file1 || gbl.ilmfil == par_file2)
@@ -86,8 +87,8 @@ static action_map_t *phase_dump_map;
 /*
  * for reporting time
  */
-static char *who[] = {"init", "import",   "expand", "", "",
-                      "",     "assemble", "xref",   ""};
+static const char *who[] = {"init", "import",   "expand", "", "",
+                            "",     "assemble", "xref",   ""};
 #define _N_WHO (int)(sizeof(who) / sizeof(char *))
 static INT xtimes[_N_WHO];
 static char *ccff_filename = NULL;
@@ -126,7 +127,7 @@ static int ipa_import_mode = 0;
  * linenumber as 0
  */
 static void
-check_lineno(char *phase)
+check_lineno(const char *phase)
 {
   int block;
   int ilt;
@@ -537,12 +538,12 @@ init(int argc, char *argv[])
   int next;
   char *argstring;
   int indice;
-  char *sourcefile;
-  char *listfile;
-  char *stboutfile;
-  char *cppfile;
-  char *tempfile;
-  char *asmfile;
+  char *sourcefile = NULL;
+  const char *stboutfile = NULL;
+  const char *listfile = NULL;
+  const char *cppfile = NULL;
+  const char *tempfile = NULL;
+  const char *asmfile = NULL;
   int c;
   int def_count = 0;  /* number of -def switches */
   int idir_count = 0; /* number of -idir switches */
@@ -553,7 +554,7 @@ init(int argc, char *argv[])
   bool errflg;
   FILE *fd;
   int exlib_flag = 0;
-  char *file_suffix;
+  const char *file_suffix;
   char *idfname;
   time_t now;
 
@@ -578,13 +579,6 @@ init(int argc, char *argv[])
   errflg = false;
 
   bool arg_reentrant; /* Argument to enable generating reentrant code */
-
-  sourcefile = NULL;
-  listfile = NULL;
-  cppfile = NULL;
-  objectfile = NULL;
-  asmfile = NULL;
-  stboutfile = NULL;
 
   /* Create a datastructure of various dump actions and their names */
   action_map_t *dump_map; /* Deallocated after arguments are parsed */
@@ -616,10 +610,10 @@ init(int argc, char *argv[])
   /* Need to up optimization level if we modify unroller count */
   int old_unroller_cnt = flg.x[9];
   /* Target architecture string */
-  char *tp;
+  const char *tp;
   /* OpenMP target triple architecture string */
-  char *omptp = NULL;
-  char *ompfile = NULL;
+  const char *omptp = NULL;
+  const char *ompfile = NULL;
   /* Vectorizer settings */
   int vect_val;
 
@@ -630,8 +624,8 @@ init(int argc, char *argv[])
    * true) */
   create_arg_parser(&arg_parser, true);
 
-  /* Input file name */
-  register_filename_arg(arg_parser, &sourcefile);
+  /* Input ILM file name */
+  register_filename_arg(arg_parser, &(gbl.src_file));
   /* Fortran source file */
   register_string_arg(arg_parser, "fn", &(gbl.file_name), NULL);
   /* Other files to input or output */
@@ -640,7 +634,7 @@ init(int argc, char *argv[])
                                     &asmfile);
 
   /* Register version arguments */
-  register_string_arg(arg_parser, "vh", (char **)&(version.host), "");
+  register_string_arg(arg_parser, "vh", &(version.host), "");
 
   /* x flags */
   register_xflag_arg(arg_parser, "x", flg.x,
@@ -687,7 +681,7 @@ init(int argc, char *argv[])
     if (flg.dbg[0] & 1) {
       gbl.dbgfil = stderr;
     } else {
-      char *s, *ss, *t;
+      const char *s, *ss, *t;
       s = NULL;
       t = gbl.file_name;
       for (ss = gbl.file_name; *ss; ++ss) {
@@ -703,7 +697,7 @@ init(int argc, char *argv[])
       }
       if (s == NULL)
         s = ".f90";
-        tempfile = mkfname(t, s, ".qdbg");
+      tempfile = mkfname(t, s, ".qdbg");
       if ((gbl.dbgfil = fopen(tempfile, "w")) == NULL)
         errfatal((error_code_t)5);
     }
@@ -792,8 +786,9 @@ init(int argc, char *argv[])
   }
 
 empty_cl:
-  if (sourcefile == NULL) {
-    gbl.src_file = sourcefile = "STDIN.f";
+  if (gbl.src_file == NULL) {
+    gbl.src_file = "STDIN.f";
+    sourcefile = strdup(gbl.src_file);
     gbl.srcfil = stdin;
     goto do_curr_file;
   }
@@ -802,15 +797,13 @@ empty_cl:
     finish();
 
   /* open sourcefile */
-  if ((gbl.srcfil = fopen(sourcefile, "r")) == NULL) {
-    error((error_code_t)2, ERR_Fatal, 0, sourcefile, "");
+  if ((gbl.srcfil = fopen(gbl.src_file, "r")) == NULL) {
+    error((error_code_t)2, ERR_Fatal, 0, gbl.src_file, "");
   } else {
-    char *s;
-    gbl.src_file = (char *)malloc(strlen(sourcefile) + 1);
-    strcpy(gbl.src_file, sourcefile);
+    sourcefile = (char *)malloc(strlen(gbl.src_file) + 1);
     basenam(gbl.src_file, "", sourcefile);
     file_suffix = "";
-    for (s = sourcefile; *s; ++s) {
+    for (char *s = sourcefile; *s; ++s) {
       if (*s == '.')
         file_suffix = s;
     }
@@ -881,6 +874,7 @@ do_curr_file:
     ccff_build(flg.cmdline, "F90");
   }
 
+  free(sourcefile);
 }
 
 /** \brief Perform initializations for new user subprogram unit:

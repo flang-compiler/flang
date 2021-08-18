@@ -58,7 +58,7 @@ void destroy_arg_parser(arg_parser_t **parser);
  * \param default_value  value to intialize the target
  */
 void register_string_arg(arg_parser_t *parser, const char *arg_name,
-                         char **target, const char *default_value);
+                         const char **target, const char *default_value);
 
 /** \brief Register a string list argument
  *
@@ -91,7 +91,7 @@ void register_string_list_arg(arg_parser_t *parser, const char *arg_name,
  */
 void register_combined_bool_string_arg(arg_parser_t *parser,
                                        const char *arg_name, bool *bool_target,
-                                       char **string_target);
+                                       const char **string_target);
 
 /** \brief Register an integer argument
  *
@@ -205,7 +205,7 @@ void register_action_map_arg(arg_parser_t *parser, const char *arg_name,
  * \param parser argument parser data structure
  * \param target location to set the result (pointer to the string)
  */
-void register_filename_arg(arg_parser_t *parser, char **target);
+void register_filename_arg(arg_parser_t *parser, const char **target);
 
 /** \brief Parse arguments
  *

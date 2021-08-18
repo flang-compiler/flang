@@ -1044,8 +1044,8 @@ close_module(void)
 static int modu_sym = 0;
 static FILE *outfile;
 static FILE *single_outfile = NULL;
-static char *single_outfile_name = NULL;
-static char *single_outfile_index_name = NULL;
+static const char *single_outfile_name = NULL;
+static const char *single_outfile_index_name = NULL;
 static char modu_name[MAXIDLEN + 1];
 static int mod_lineno;
 
@@ -1079,7 +1079,7 @@ static struct {
  * save the name to use for the combined .mod file
  */
 void
-mod_combined_name(char *name)
+mod_combined_name(const char *name)
 {
   single_outfile_name = name;
 } /* mod_combined_name */
@@ -1088,7 +1088,7 @@ mod_combined_name(char *name)
  * save the name to use for the combined module index file
  */
 void
-mod_combined_index(char *name)
+mod_combined_index(const char *name)
 {
   single_outfile_index_name = name;
 } /* mod_combined_index */

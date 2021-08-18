@@ -1541,9 +1541,10 @@ get_fn(void)
     len = p - &cardb[5];
     if (len <= 0)
       return;
-    gbl.fn = (char *)getitem(8, len + 1);
-    strncpy(gbl.fn, &cardb[5], len);
-    gbl.fn[len] = '\0';
+    p = (char *)getitem(8, len + 1);
+    strncpy(p, &cardb[5], len);
+    p[len] = '\0';
+    gbl.fn = p;
   }
 }
 

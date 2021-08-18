@@ -79,9 +79,6 @@ typedef struct {
 
 extern FIHB fihb;
 
-extern int addfile(char *, char *, int, int, int, int, int);
-extern void setfile(int, char *, int);
-
 /*             IFIH (inline file information header)   */
 
 #define IFIH_DIRNAME(i) ifihb.stg_base[i].dirname
@@ -114,9 +111,6 @@ extern void setfile(int, char *, int);
 #define IFIH_FUNCSIZE(i) ifihb.stg_base[i].funcsize
 
 extern FIHB ifihb;
-
-extern int iaddfile(char *, char *, int, int, int, int, int, int, int, int,
-                    int);
 
 /* Moved from ccffinfo.c */
 typedef struct ccff_message {
