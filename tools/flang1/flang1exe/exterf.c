@@ -2945,9 +2945,9 @@ export_dinit_file(void (*symproc)(int), void (*recproc)(int, INT),
       if (symproc) {
         switch (DTY(ptype)) {
         case TY_DBLE:
+        case TY_QUAD:
         case TY_CMPLX:
         case TY_DCMPLX:
-        case TY_QUAD:
         case TY_QCMPLX:
         case TY_INT8:
         case TY_LOG8:

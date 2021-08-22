@@ -60,4 +60,5 @@ FLG flg = {
     false,      /* don't allow smp directives */
     false,      /* omptarget - don't allow OpenMP Offload directives */
     25,         /* errorlimit */
+    false,      /* qp */
 };

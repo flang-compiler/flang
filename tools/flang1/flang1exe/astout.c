@@ -938,6 +938,10 @@ print_ast(int ast)
       argt = A_ARGSG(ast);
       if (DTY(DDTG(A_DTYPEG(ARGT_ARG(argt, 0)))) == TY_REAL)
         rtlRtn = RTE_expon;
+#ifdef TARGET_SUPPORTS_QUADFP
+      else if (DTY(DDTG(A_DTYPEG(ARGT_ARG(argt, 0)))) == TY_QUAD)
+        rtlRtn = RTE_exponq;
+#endif
       else
         rtlRtn = RTE_expond;
       goto make_func_name;

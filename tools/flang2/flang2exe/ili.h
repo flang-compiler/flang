@@ -138,34 +138,35 @@ typedef enum ILIO_KIND {
   ILIO_HP = 8,
   ILIO_SP = 9,
   ILIO_DP = 10,
-  ILIO_CS = 11,
-  ILIO_CD = 12,
-  ILIO_AR = 13,
-  ILIO_KR = 14,
-  ILIO_XMM = 15, /* xmm register number */
-  ILIO_X87 = 16,
-  ILIO_DOUBLEDOUBLE = 17,
-  ILIO_FLOAT128 = 18,
-  ILIO_LNK = 19,
-  ILIO_IRLNK = 20,
-  ILIO_HPLNK = 21,
-  ILIO_SPLNK = 22,
-  ILIO_DPLNK = 23,
-  ILIO_ARLNK = 24,
-  ILIO_KRLNK = 25,
-  ILIO_QPLNK = 26,
-  ILIO_CSLNK = 27,
-  ILIO_CDLNK = 28,
-  ILIO_CQLNK = 29,
-  ILIO_128LNK = 30,
-  ILIO_256LNK = 31,
-  ILIO_512LNK = 32,
-  ILIO_X87LNK = 33,
-  ILIO_DOUBLEDOUBLELNK = 34,
-  ILIO_FLOAT128LNK = 35
+  ILIO_QP = 11,
+  ILIO_CS = 12,
+  ILIO_CD = 13,
+  ILIO_AR = 14,
+  ILIO_KR = 15,
+  ILIO_XMM = 16, /* xmm register number */
+  ILIO_X87 = 17,
+  ILIO_DOUBLEDOUBLE = 18,
+  ILIO_FLOAT128 = 19,
+  ILIO_LNK = 20,
+  ILIO_IRLNK = 21,
+  ILIO_HPLNK = 22,
+  ILIO_SPLNK = 23,
+  ILIO_DPLNK = 24,
+  ILIO_ARLNK = 25,
+  ILIO_KRLNK = 26,
+  ILIO_QPLNK = 27,
+  ILIO_CSLNK = 28,
+  ILIO_CDLNK = 29,
+  ILIO_CQLNK = 30,
+  ILIO_128LNK = 31,
+  ILIO_256LNK = 32,
+  ILIO_512LNK = 33,
+  ILIO_X87LNK = 34,
+  ILIO_DOUBLEDOUBLELNK = 35,
+  ILIO_FLOAT128LNK = 36
 } ILIO_KIND;
 
-#define ILIO_MAX 35
+#define ILIO_MAX 36
 #define ILIO_ISLINK(n) ((n) >= ILIO_IRLNK)
 
 /* Reflexive defines */
@@ -178,6 +179,8 @@ typedef enum ILIO_KIND {
 #define ILIO_HP ILIO_HP
 #define ILIO_SP ILIO_SP
 #define ILIO_DP ILIO_DP
+/* just for debug to dump ili */
+#define ILIO_QP ILIO_QP
 #define ILIO_CS ILIO_CS
 #define ILIO_CD ILIO_CD
 #define ILIO_AR ILIO_AR

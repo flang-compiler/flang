@@ -184,7 +184,7 @@ void lower_check_generics(void);
 
 struct lower_syms {
   int license, localmode, ptr0, ptr0c;
-  int intzero, intone, realzero, dblezero;
+  int intzero, intone, realzero, dblezero, quadzero;
   /* pointers for functions: loc, exit, allocate */
   int loc, exit, alloc, alloc_chk, ptr_alloc, dealloc, dealloc_mbr, lmalloc,
       lfree;

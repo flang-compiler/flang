@@ -28,6 +28,15 @@
 #define S_SCONST 14  /* structure constant */
 #define S_DERIVED 15 /* derived type object */
 
+/* max pow is 10, num[] has 4 elements and 128 bits   */
+#define POW1 1
+#define POW2 2
+
+#define RADIX2 2 /* Binary */
+#define NOT_GET_VAL 0 /* 0 is default, This should be ruled out */
+#define NO_REAL -5 /* if the processor supports no real type with radix RADIX  */
+#define KEYWD_ARGS2 2
+
 /* macros for checking to see if a derived type has a defined I/O
  * routine associated with it. DT_HAS_IO_FREAD true if derived type
  * has a formatted read associated with it. DT_HAS_IO_UREAD true

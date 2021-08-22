@@ -345,7 +345,11 @@ getcon(INT *value, DTYPE dtype)
   if (hashval < 0)
     hashval = -hashval;
   for (sptr = stb.hashtb[hashval]; sptr != 0; sptr = HASHLKG(sptr)) {
-    if (DTY(dtype) == TY_128) {
+    if (DTY(dtype) == TY_128
+#ifdef TARGET_SUPPORTS_QUADFP
+        || DTY(dtype) == TY_QUAD
+#endif
+       ) {
       if (DTYPEG(sptr) != dtype || STYPEG(sptr) != ST_CONST ||
           CONVAL1G(sptr) != value[0] || CONVAL2G(sptr) != value[1] ||
           CONVAL3G(sptr) != value[2] || CONVAL4G(sptr) != value[3])
@@ -368,7 +372,11 @@ getcon(INT *value, DTYPE dtype)
   ADDSYM(sptr, hashval);
   CONVAL1P(sptr, value[0]);
   CONVAL2P(sptr, value[1]);
-  if (DTY(dtype) == TY_128) {
+  if (DTY(dtype) == TY_128
+#ifdef TARGET_SUPPORTS_QUADFP
+      || DTY(dtype) == TY_QUAD
+#endif
+     ) {
     CONVAL3P(sptr, value[2]);
     CONVAL4P(sptr, value[3]);
   }

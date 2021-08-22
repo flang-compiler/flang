@@ -4490,10 +4490,16 @@ ref_intrin(SST *stktop, ITEM *list)
     case IM_I8MAX:
     case IM_RMAX:
     case IM_DMAX:
+#ifdef IM_QMAX
+    case IM_QMAX:
+#endif
     case IM_IMIN:
     case IM_I8MIN:
     case IM_RMIN:
     case IM_DMIN:
+#ifdef IM_QMIN
+    case IM_QMIN:
+#endif
       gen_init_intrin_call(stktop, sptr, count, DDTG(dtype1), TRUE);
       return 1;
     case 0:
@@ -4613,6 +4619,12 @@ ref_intrin(SST *stktop, ITEM *list)
         GET_DBLE(num1, con1);
         xdabsv(num1, res);
         goto const_getcon;
+#ifdef IM_QABS
+      case IM_QABS:
+        GET_QUAD(num1, con1);
+        xqabsv(num1, res);
+        goto const_getcon;
+#endif
       case IM_NINT:
         num1[0] = CONVAL2G(stb.flt0);
         if (xfcmp(con1, num1[0]) >= 0) {
@@ -4664,6 +4676,13 @@ ref_intrin(SST *stktop, ITEM *list)
         con2 = CONVAL2G(con1);
         res[1] = const_fold(OP_SUB, (INT)stb.dbl0, con2, DT_REAL8);
         goto const_getcon;
+#ifdef IM_QCONJG
+      case IM_QCONJG:
+        res[0] = CONVAL1G(con1);
+        con2 = CONVAL2G(con1);
+        res[1] = const_fold(OP_SUB, (INT)stb.quad0, con2, DT_QUAD);
+        goto const_getcon;
+#endif
 #ifdef IM_DPROD
       case IM_DPROD:
         con2 = GET_CVAL_ARG(1);
@@ -5009,6 +5028,16 @@ ref_intrin(SST *stktop, ITEM *list)
             conval = con1;
         }
         break;
+#ifdef IM_QMAX
+      case IM_QMAX:
+        conval = con1;
+        for (i = 1; i < count; i++) {
+          con1 = GET_CVAL_ARG(i);
+          if (const_fold(OP_CMP, con1, conval, DT_QUAD) > 0)
+            conval = con1;
+        }
+      break;
+#endif
       case IM_IMIN:
         conval = con1;
         for (i = 1; i < count; i++) {
@@ -5041,6 +5070,16 @@ ref_intrin(SST *stktop, ITEM *list)
             conval = con1;
         }
         break;
+#ifdef IM_QMIN
+      case IM_QMIN:
+        conval = con1;
+        for (i = 1; i < count; i++) {
+          con1 = GET_CVAL_ARG(i);
+          if (const_fold(OP_CMP, con1, conval, DT_QUAD) < 0)
+            conval = con1;
+        }
+        break;
+#endif
       default:
         goto no_const_fold;
       }
@@ -8375,8 +8414,10 @@ ref_pd(SST *stktop, ITEM *list)
     }
     if (DTY(dtype1) == TY_REAL)
       rtlRtn = RTE_expon;
-    else /* TY_DBLE */
+    else if(DTY(dtype1) == TY_DBLE) /* TY_DBLE */
       rtlRtn = RTE_expond;
+    else
+      rtlRtn = RTE_exponq;
 
     fsptr = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), stb.user.dt_int);
     ELEMENTALP(fsptr, 1);
@@ -8915,6 +8956,29 @@ ref_pd(SST *stktop, ITEM *list)
             res[0] = const_fold(OP_SUB, con1, stb.dbl0, DT_REAL8);
         }
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+        if (const_fold(OP_CMP, con1, stb.quad0, DT_QUAD) >= 0) {
+          /* 0x406f0000:IEEE754_QUAD_BIAS  + 112 */
+          INT qv4_112[4] = {0x406f0000, 0x00000000, 0x00000000, 0x00000000};
+          INT q4_112;
+          q4_112 = getcon(qv4_112, DT_QUAD);
+          if (const_fold(OP_CMP, con1, q4_112, DT_QUAD) >= 0)
+            res[0] = const_fold(OP_ADD, con1, stb.quad0, DT_QUAD);
+          else
+            res[0] = const_fold(OP_ADD, con1, stb.quadhalf, DT_QUAD);
+        } else {
+          INT qvm4_112[QVM4_SIZE] = {MMAX_MANTI_BIT0_31, MMAX_MANTI_BIT32_63,
+                                     MMAX_MANTI_BIT64_95, MMAX_MANTI_BIT96_127};
+          INT qm4_112;
+          qm4_112 = getcon(qvm4_112, DT_QUAD);
+          if (const_fold(OP_CMP, con1, qm4_112, DT_QUAD) >= 0)
+            res[0] = const_fold(OP_SUB, con1, stb.quadhalf, DT_QUAD);
+          else
+            res[0] = const_fold(OP_SUB, con1, stb.quad0, DT_QUAD);
+        }
+        break;
+#endif
       }
       conval = cngcon(res[0], dtype1, dtyper);
       goto const_return;
@@ -9280,7 +9344,6 @@ ref_pd(SST *stktop, ITEM *list)
       else
         conval = 15;
       break;
-    case TY_QCMPLX:
     case TY_QUAD:
       if (XBIT(49, 0x40000)) /* C90 */
         conval = 28;

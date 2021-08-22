@@ -10,8 +10,8 @@
 in33: run
 	
 
-fcheck.$(OBJX): $(SRC)/check_mod.f90
-	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.f90 -o fcheck.$(OBJX)
+fcheck.$(OBJX): $(SRC)/check_mod.F90
+	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.F90 -o fcheck.$(OBJX)
 
 build:  $(SRC)/in33.f90 fcheck.$(OBJX)
 	-$(RM) in33.$(EXESUFFIX) in33.$(OBJX) 

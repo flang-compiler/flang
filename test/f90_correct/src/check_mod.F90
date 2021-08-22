@@ -11,16 +11,25 @@ module check_mod
     module procedure checki1, checki2, checki4, checki8
     module procedure checkl1, checkl2, checkl4, checkl8
     module procedure checkr4, checkr8
+#ifdef __flang_quadfp__
+    module procedure checkr16
+#endif
     module procedure checkc4, checkc8, checkc1
     module procedure checkcptr, checkcptr2d, checkbytes, checkdt
   end interface
-  
+
   interface ulperror
     module procedure ulperrorr4r4, ulperrorr4r8, ulperrorr8r8
+#ifdef __flang_quadfp__
+    module procedure ulperrorr16r16
+#endif
   end interface
 
   interface ieeecheckcases
     module procedure ieeecheckcasesr4, ieeecheckcasesr8
+#ifdef __flang_quadfp__
+    module procedure ieeecheckcasesr16
+#endif
   end interface
 
   integer, parameter :: maxulperror = 1000
@@ -46,6 +55,9 @@ module check_mod
   character(80) :: fmt19="'res ',2(f0.3,1x),2('(0x',z16.16,') '),'exp ',2(f0.3,1x),2('(0x',z16.16,') '))"
 
   character(80) :: fmt20="'res (0x',z2.2,') exp (0x',z2.2,')')"
+#ifdef __flang_quadfp__
+  character(160) :: fmt21="'res ',f0.33,' (0x',z33.33,') exp ',f0.33,' (0x',z33.33,')')"
+#endif
 
   contains
       real*4 function ulperrorr4r4(rc, dc)
@@ -93,6 +105,23 @@ module check_mod
       end if
       return
       end
+
+#ifdef __flang_quadfp__
+      real*4 function ulperrorr16r16(rc, dc)
+      real*16 rc, dc
+      if (rc.eq.0.0_16) then
+        if (dc.eq.0.0_16) then
+          ulperrorr16r16 = 0.0
+        else
+          ulperrorr16r16 = maxulperror
+        endif
+      else
+        iexp = 112 - (exponent(rc) - 1)
+        ulperrorr16r16 = real(abs(ieee_scalb(rc,iexp)-ieee_scalb(dc,iexp)))
+      end if
+      return
+      end
+#endif
 
       integer function ieeecheckcasesr4(xres, xexp)
       real*4 xres, xexp
@@ -145,6 +174,34 @@ module check_mod
       end if
       return
       end
+
+#ifdef __flang_quadfp__
+      integer function ieeecheckcasesr16(xres, xexp)
+      real*16 xres, xexp
+      type(ieee_class_type) :: creslt, cexpct
+      creslt = ieee_class(xres)
+      cexpct = ieee_class(xexp)
+      if (ieee_is_finite(xres).and.ieee_is_finite(xexp)) then
+          ! Only check for +/- zero, else fall through
+          if ((creslt.eq.ieee_positive_zero) .and. &
+              (cexpct.ne.ieee_positive_zero)) then
+              ieeecheckcasesr16 = 1  ! FAIL
+          else if ((creslt.eq.ieee_negative_zero) .and. &
+                   (cexpct.ne.ieee_negative_zero)) then
+              ieeecheckcasesr16 = 1  ! FAIL
+          else if (xres .eq. xexp) then
+              ieeecheckcasesr16 = 2  ! PASS
+          else
+              ieeecheckcasesr16 = 0  ! Fail, check tolerances
+          end if
+      else if (creslt .ne. cexpct) then
+          ieeecheckcasesr16 = 1   ! FAIL
+      else
+          ieeecheckcasesr16 = 2   ! PASS
+      end if
+      return
+      end
+#endif
 
     ! First integer*1
     subroutine checki1(reslt, expct, np, atoler, rtoler)
@@ -625,6 +682,84 @@ module check_mod
       endif
       return
     end subroutine checkr8
+#ifdef __flang_quadfp__
+    !real16
+    subroutine checkr16(reslt, expct, np, atoler, rtoler, ulptoler, ieee)
+!dir$ ignore_tkr (r) reslt, expct
+      real*16, dimension(*) :: reslt
+      real*16, dimension(*) :: expct
+      integer :: np
+      real*16, optional :: atoler, rtoler, ulptoler
+      logical, optional :: ieee
+      integer i, tests_passed, tests_failed, tests_tolerated
+      real*16   abserror, relerror
+      logical ieee_on, anytolerated
+
+      anytolerated = present(atoler) .or. present(rtoler) .or. present(ulptoler)
+      ieee_on = .false.
+      if (present(ieee)) ieee_on = ieee
+
+      tests_passed = 0
+      tests_failed = 0
+      tests_tolerated = 0
+
+      do i = 1, np
+        if (ieee_on) then
+          iri = ieeecheckcases(reslt(i), expct(i))
+          if (iri.eq.1) then
+            goto 100
+          else if (iri.eq.2) then
+            tests_passed = tests_passed + 1
+            cycle
+          end if
+        end if
+
+        if (expct(i) .eq. reslt(i)) then
+            tests_passed = tests_passed + 1
+            cycle
+        end if
+
+        abserror = abs(expct(i) - reslt(i))
+        if (present(atoler)) then
+          if (abserror .gt. abs(atoler)) goto 100
+        end if
+
+        if (present(rtoler)) then
+          relerror = abserror / max(abs(expct(i)),ieee_next_after(0.0_16,1.0_16))
+          if (relerror .gt. abs(rtoler)) goto 100
+        end if
+
+        if (present(ulptoler)) then
+          if (ulperror(reslt(i),expct(i)) .gt. abs(ulptoler)) goto 100
+        end if
+
+        if (anytolerated) then  ! Some tolerances, so if here we've passed
+            tests_passed = tests_passed + 1
+            tests_tolerated = tests_tolerated + 1
+            if (tests_tolerated .le. 100) then
+              write(6,fmt=fmt02//fmt21) i, reslt(i),reslt(i), expct(i),expct(i)
+            end if
+            cycle
+        end if
+
+  100   tests_failed = tests_failed + 1   ! No tolerances, here we've failed
+        if (tests_failed .le. 100) then
+            write(6,fmt=fmt03//fmt21) i, reslt(i),reslt(i), expct(i),expct(i)
+        end if
+      end do
+
+      if (tests_failed .eq. 0) then
+         if (tests_tolerated .eq. 0) then
+            write(6,fmt=fmt04) np, tests_passed
+         else
+            write(6,fmt=fmt05) np, tests_passed, tests_tolerated
+         end if
+      else
+            write(6,fmt=fmt06) np, tests_passed, tests_failed
+      end if
+      return
+    end subroutine checkr16
+#endif
     subroutine checkc4(reslt, expct, np, atoler, rtoler, ulptoler, ieee)
 !dir$ ignore_tkr (r) reslt, expct
       complex*8, dimension(*) :: reslt

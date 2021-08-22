@@ -3700,6 +3700,9 @@ map_I_to_AC(int intrin)
   case I_KMIN1:
   case I_AJMIN0:
   case I_MIN:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QMIN:
+#endif
     return AC_I_min;
   case I_IMAX0:
   case I_MAX0:
@@ -3715,8 +3718,14 @@ map_I_to_AC(int intrin)
   case I_KMAX1:
   case I_AJMAX0:
   case I_MAX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QMAX:
+#endif
     return AC_I_max;
   case I_ABS:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QABS:
+#endif
     return AC_I_abs;
   case I_DBLE:
   case I_DFLOAT:
@@ -3732,6 +3741,9 @@ map_I_to_AC(int intrin)
     return AC_I_sqrt;
   case I_EXP:
   case I_DEXP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QEXP:
+#endif
     return AC_I_exp;
   case I_LOG:
   case I_ALOG:
@@ -4005,8 +4017,10 @@ get_ast_op(int op)
     break;
   case AC_EXP:
   case AC_EXPK:
-  case AC_EXPX:
     ast_op = OP_XTOI;
+    break;
+  case AC_EXPX:
+    ast_op = OP_XTOX;
     break;
   default:
     interr("get_ast_op: unexpected operator in initialization expr", op, 3);
@@ -4078,6 +4092,10 @@ get_ac_op(int ast)
       break;
     case DT_REAL4:
     case DT_REAL8:
+#ifdef TARGET_SUPPORTS_QUADFP
+    case DT_QUAD:
+    case DT_CMPLX8:
+#endif
       ac_op = AC_EXPX;
       break;
     default:
@@ -8418,6 +8436,14 @@ eval_abs(ACL *arg, DTYPE dtype)
       xdabsv(num1, res);
       con1 = getcon(res, dtype);
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      con1 = wrkarg->conval;
+      GET_QUAD(num1, con1);
+      xqabsv(num1, res);
+      con1 = getcon(res, dtype);
+      break;
+#endif
     case TY_CMPLX:
       con1 = wrkarg->conval;
       f1 = CONVAL1G(con1);
@@ -8555,6 +8581,9 @@ cmp_acl(DTYPE dtype, ACL *x, ACL *y, bool want_max, bool back)
     break;
   case TY_INT8:
   case TY_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+#endif
     cmp = const_fold(OP_CMP, x->conval, y->conval, dtype);
     break;
   default:
@@ -8993,6 +9022,28 @@ eval_nint(ACL *arg, DTYPE dtype)
           res[0] = const_fold(OP_SUB, con1, stb.dbl0, DT_REAL8);
       }
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      con1 = wrkarg->conval;
+      if (const_fold(OP_CMP, con1, stb.quad0, DT_QUAD) >= 0) {
+        INT qv2_112[4] = {MAX_MANTI_BIT0_31, MAX_MANTI_BIT32_63, MAX_MANTI_BIT64_95, MAX_MANTI_BIT96_127};
+        INT q2_112;
+        q2_112 = getcon(qv2_112, DT_QUAD);
+        if (const_fold(OP_CMP, con1, q2_112, DT_QUAD) >= 0)
+          res[0] = const_fold(OP_ADD, con1, stb.quad0, DT_QUAD);
+        else
+          res[0] = const_fold(OP_ADD, con1, stb.quadhalf, DT_QUAD);
+      } else {
+        INT qvm2_112[4] = {MMAX_MANTI_BIT0_31, MMAX_MANTI_BIT32_63, MMAX_MANTI_BIT64_95, MMAX_MANTI_BIT96_127};
+        INT qm2_112;
+        qm2_112 = getcon(qvm2_112, DT_QUAD);
+        if (const_fold(OP_CMP, con1, qm2_112, DT_QUAD) <= 0)
+          res[0] = const_fold(OP_SUB, con1, stb.quadhalf, DT_QUAD);
+        else
+          res[0] = const_fold(OP_SUB, con1, stb.quad0, DT_QUAD);
+      }
+      break;
+#endif
     }
     conval = cngcon(res[0], dtype1, dtype);
     wrkarg->dtype = dtype;
@@ -9189,6 +9240,15 @@ transfer_store(INT conval, DTYPE dtype, char *destination)
     dest[1] = CONVAL1G(conval);
     break;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    dest[0] = CONVAL4G(conval);
+    dest[1] = CONVAL3G(conval);
+    dest[2] = CONVAL2G(conval);
+    dest[3] = CONVAL1G(conval);
+    break;
+#endif
+
   case TY_CMPLX:
     dest[0] = CONVAL1G(conval);
     dest[1] = CONVAL2G(conval);
@@ -9217,7 +9277,7 @@ static INT
 transfer_load(DTYPE dtype, char *source)
 {
   int *src = (int *)source;
-  INT num[2], real[2], imag[2];
+  INT num[4], real[2], imag[2];
 
   if (DT_ISWORD(dtype))
     return src[0];
@@ -9230,6 +9290,15 @@ transfer_load(DTYPE dtype, char *source)
     num[1] = src[0];
     num[0] = src[1];
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    num[3] = src[0];
+    num[2] = src[1];
+    num[1] = src[2];
+    num[0] = src[3];
+    break;
+#endif
 
   case TY_CMPLX:
     num[0] = src[0];
@@ -11054,7 +11123,7 @@ eval_init_op(int op, ACL *lop, DTYPE ldtype, ACL *rop, DTYPE rdtype, SPTR sptr,
       if (rop->dtype != dt) {
         r_conval = cngcon(r_conval, rop->dtype, dt);
       }
-      root->conval = const_fold(get_ast_op(op), l_conval, r_conval, dt);
+      root->conval = const_fold(op, l_conval, r_conval, dt);
       break;
     }
   }

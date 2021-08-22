@@ -1823,6 +1823,9 @@ restartConcur:
         switch (opc) {
         case IL_DFRSP:
         case IL_DFRDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+        case IL_DFRQP:
+#endif
         case IL_DFRCS:
 #ifdef LONG_DOUBLE_FLOAT128
         case IL_FLOAT128RESULT:
@@ -3368,7 +3371,8 @@ write_instructions(LL_Module *module)
         print_tmp_name(instrs->tmps);
         print_token(" = ");
         print_token(llvm_instr_names[i_name]);
-        if ((i_name == I_FCMP) && ((!flg.ieee) || XBIT(216, 1)))
+        if ((i_name == I_FCMP) && ((!flg.ieee) || XBIT(216, 1)) &&
+            (instrs->operands->ll_type->data_type != LL_FP128))
           print_token(" fast");
         print_space(1);
         p = instrs->operands;
@@ -4060,6 +4064,10 @@ make_stmt(STMT_Type stmt_type, int ilix, bool deletable, SPTR next_bih_label,
       case IL_FCJMPZ:
       case IL_DCJMP:
       case IL_DCJMPZ:
+#ifdef TARGET_SUPPORTS_QUADFP
+      case IL_QCJMP:
+      case IL_QCJMPZ:
+#endif
         ad_instr(ilix, gen_instr(I_FCMP, tmps, Curr_Instr->operands->ll_type,
                                  gen_llvm_expr(ilix, NULL)));
         break;
@@ -4924,6 +4932,12 @@ gen_const_expr(int ilix, LL_Type *expected_type)
     operand->ll_type = make_lltype_from_dtype(DT_DBLE);
     operand->val.sptr = sptr;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCON:
+    operand->ll_type = make_lltype_from_dtype(DT_QUAD);
+    operand->val.sptr = sptr;
+    break;
+#endif
   case IL_VCON:
     operand->ll_type = make_lltype_from_sptr(sptr);
     operand->val.sptr = sptr;
@@ -4967,9 +4981,17 @@ gen_unary_expr(int ilix, LL_InstrName itype)
   case IL_DFIX:
   case IL_DFIXK:
   case IL_SNGL:
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* convert double to quad precision */
+  case IL_DQUAD:
+#endif
     opc_type = make_lltype_from_dtype(DT_DBLE);
     break;
   case IL_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* convert float to quad precision */
+  case IL_RQUAD:
+#endif
   case IL_UFIX:
   case IL_FIX:
   case IL_FIXK:
@@ -4980,6 +5002,9 @@ gen_unary_expr(int ilix, LL_InstrName itype)
   case IL_FLOATU:
   case IL_DFLOATU:
   case IL_DFLOAT:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFLOAT:
+#endif
   case IL_ALLOC:
     opc_type = make_lltype_from_dtype(DT_INT);
     break;
@@ -4987,8 +5012,23 @@ gen_unary_expr(int ilix, LL_InstrName itype)
   case IL_FLOATUK:
   case IL_DFLOATUK:
   case IL_DFLOATK:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFLOATK:
+#endif
     opc_type = make_lltype_from_dtype(DT_INT8);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* convert quad to integer */
+  case IL_QFIX:
+  /* convert quad to 64 bit integer */
+  case IL_QFIXK:
+  /* convert quad to single precision */
+  case IL_SNGQ:
+  /* convert quad to double precision */
+  case IL_DBLEQ:
+    opc_type = make_lltype_from_dtype(DT_QUAD);
+    break;
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128FROM:
     opc_type = make_lltype_from_dtype(DT_DBLE);
@@ -5150,6 +5190,9 @@ gen_minmax_expr(int ilix, OPERAND *op1, OPERAND *op2)
     break;
   case IL_FMIN:
   case IL_DMIN:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QMIN:
+#endif
     cc_itype = I_FCMP;
     cc_val = convert_to_llvm_fltcc(CC_NOTGE);
     break;
@@ -5165,6 +5208,9 @@ gen_minmax_expr(int ilix, OPERAND *op1, OPERAND *op2)
     break;
   case IL_FMAX:
   case IL_DMAX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QMAX:
+#endif
     cc_itype = I_FCMP;
     cc_val = convert_to_llvm_fltcc(CC_NOTLE);
     break;
@@ -6215,6 +6261,11 @@ gen_binary_expr(int ilix, int itype)
     case IL_DNEG:
       lhs_ili = ad1ili(IL_DCON, stb.dblm0);
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case IL_QNEG:
+      lhs_ili = ad1ili(IL_QCON, stb.quad0);
+      break;
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
     case IL_FLOAT128CHS:
       lhs_ili = ad1ili(IL_FLOAT128CON, stb.float128_0);
@@ -6964,6 +7015,11 @@ update_return_type_for_ccfunc(int ilix, ILI_OP opc)
   case IL_DFRDP:
     new_dtype = cg_get_type(3, DTY(dtype), DT_DBLE);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_DFRQP:
+    new_dtype = cg_get_type(3, DTY(dtype), DT_QUAD);
+    break;
+#endif
   case IL_DFRIR:
     new_dtype = cg_get_type(3, DTY(dtype), DT_INT);
     break;
@@ -7199,6 +7255,9 @@ get_next_arg(int arg_ili)
   switch (ILI_OPC(arg_ili)) {
   case IL_ARGAR:
   case IL_ARGDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_ARGQP:
+#endif
   case IL_ARGIR:
   case IL_ARGKR:
   case IL_ARGSP:
@@ -7211,6 +7270,9 @@ get_next_arg(int arg_ili)
 
   case IL_DAAR:
   case IL_DADP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_DAQP:
+#endif
   case IL_DAIR:
   case IL_DAKR:
   case IL_DASP:
@@ -8123,12 +8185,19 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   OPERAND *cc_op1, *cc_op2, *c1, *cse1;
   INT tmp[2];
   const char *intrinsic_name;
+  float f;
   union {
     double d;
     INT tmp[2];
   } dtmp;
-  float f;
   double d;
+#ifdef TARGET_SUPPORTS_QUADFP
+  union {
+    long double q;
+    INT tmp[QTMP_SIZE];
+  } qtmp;
+  long double q;
+#endif
 
   switch (ILI_OPC(ilix)) {
   case IL_JSR:
@@ -8395,6 +8464,10 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_LDQ:
   case IL_LD256:
 #endif
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* to support quad precision load */
+  case IL_LDQP:
+#endif
     ld_ili = ILI_OPND(ilix, 1);
     nme_ili = ILI_OPND(ilix, 2);
     msz = MSZ_ILI_OPND(ilix, 3);
@@ -8452,6 +8525,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_ICON:
   case IL_FCON:
   case IL_DCON:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCON:
+#endif
   case IL_SCMPLXCON:
   case IL_DCMPLXCON:
 #ifdef LONG_DOUBLE_FLOAT128
@@ -8461,10 +8537,16 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FIX:
   case IL_DFIX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFIX:
+#endif
     operand = gen_unary_expr(ilix, I_FPTOSI);
     break;
   case IL_FIXK:
   case IL_DFIXK:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFIXK:
+#endif
     operand = gen_unary_expr(ilix, I_FPTOSI);
     break;
   case IL_FIXUK:
@@ -8483,12 +8565,26 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_DFLOAT:
   case IL_DFLOATK:
   case IL_FLOATK:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFLOAT:
+  case IL_QFLOATK:
+#endif
     operand = gen_unary_expr(ilix, I_SITOFP);
     break;
   case IL_SNGL:
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* convert the quad precision to single precision */
+  case IL_SNGQ:
+  /* convert the quad precision to double precision */
+  case IL_DBLEQ:
+#endif
     operand = gen_unary_expr(ilix, I_FPTRUNC);
     break;
   case IL_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_RQUAD:
+  case IL_DQUAD:
+#endif
     operand = gen_unary_expr(ilix, I_FPEXT);
     break;
 #ifdef LONG_DOUBLE_FLOAT128
@@ -8515,6 +8611,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FADD:
   case IL_DADD:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QADD:
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128ADD:
 #endif
@@ -8537,6 +8636,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FSUB:
   case IL_DSUB:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QSUB:
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128SUB:
 #endif
@@ -8563,6 +8665,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FMUL:
   case IL_DMUL:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QMUL:
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128MUL:
 #endif
@@ -8587,6 +8692,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FDIV:
   case IL_DDIV:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QDIV:
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128DIV:
 #endif
@@ -8714,6 +8822,26 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     operand->ll_type = make_type_from_opc(opc);
     goto process_cc;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMPZ:
+    if (!zero_ili) {
+      q = 0.0;
+      xmqtoq(q, qtmp.tmp);
+      zero_ili = ad1ili(IL_QCON, getcon(qtmp.tmp, DT_QUAD));
+      comp_exp_type = make_lltype_from_dtype(DT_QUAD);
+    }
+    operand->ot_type = OT_CC;
+    first_ili = ILI_OPND(ilix, 1);
+    second_ili = zero_ili;
+    ili_cc = ILI_ccOPND(ilix, 2);
+    if (IEEE_CMP)
+      float_jmp = true;
+    operand->val.cc = convert_to_llvm_fltcc(ili_cc);
+    float_jmp = false;
+    operand->ll_type = make_type_from_opc(opc);
+    goto process_cc;
+    break;
+#endif
   case IL_UKCJMPZ:
     zero_ili = ad_kconi(0);
     operand->ot_type = OT_CC;
@@ -8769,6 +8897,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   /* jumps with cc and expression */
   case IL_FCJMP:
   case IL_DCJMP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMP:
+#endif
     operand->ot_type = OT_CC;
     first_ili = ILI_OPND(ilix, 1);
     second_ili = ILI_OPND(ilix, 2);
@@ -8810,6 +8941,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FCMP:
   case IL_DCMP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCMP:
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128CMP:
 #endif
@@ -9017,6 +9151,12 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype(DT_DBLE);
     goto _process_define_ili;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_DFRQP:
+    if (expected_type == NULL)
+      expected_type = make_lltype_from_dtype(DT_QUAD);
+    goto _process_define_ili;
+#endif
   case IL_DFR128:
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype(DT_128);
@@ -9157,6 +9297,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_UKNEG:
     operand = gen_binary_expr(ilix, I_SUB);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QNEG:
+#endif
   case IL_DNEG:
   case IL_FNEG:
 #ifdef LONG_DOUBLE_FLOAT128
@@ -9177,13 +9320,15 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     cse1 = gen_copy_operand(c1);
 
     /* real = 0 - real */
-    op_rneg = make_constval_op(cmpnt_ty, 0, 0);
+    op_rneg = (et == DT_QUAD) ? make_constval_opL(cmpnt_ty, 0, 0, 0, 0) :
+	    make_constval_op(cmpnt_ty, 0, 0);
     op_rneg->next = gen_extract_value(c1, dt, et, 0);
     op_rneg =
         ad_csed_instr(I_FSUB, 0, cmpnt_ty, op_rneg, InstrListFlagsNull, true);
 
     /* imag = 0 - imag */
-    op_ineg = make_constval_op(cmpnt_ty, 0, 0);
+    op_ineg = (et == DT_QUAD) ? make_constval_opL(cmpnt_ty, 0, 0, 0, 0) :
+	    make_constval_op(cmpnt_ty, 0, 0);
     op_ineg->next = gen_extract_value(cse1, dt, et, 1);
     op_ineg =
         ad_csed_instr(I_FSUB, 0, cmpnt_ty, op_ineg, InstrListFlagsNull, true);
@@ -9198,6 +9343,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_CSEIR:
   case IL_CSESP:
   case IL_CSEDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_CSEQP:
+#endif
   case IL_CSEAR:
   case IL_CSECS:
   case IL_CSECD:
@@ -9512,12 +9660,19 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_UKMIN:
   case IL_FMIN:
   case IL_DMIN:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QMIN:
+#endif
   case IL_IMAX:
   case IL_UIMAX:
   case IL_KMAX:
   case IL_UKMAX:
   case IL_FMAX:
-  case IL_DMAX: {
+  case IL_DMAX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QMAX:
+#endif
+  {
     LL_Type *llTy;
     lhs_ili = ILI_OPND(ilix, 2);
     rhs_ili = ILI_OPND(ilix, 1);
@@ -11786,6 +11941,9 @@ make_type_from_opc(ILI_OP opc)
   case IL_UINEG:
   case IL_DFIX:
   case IL_DFIXU:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFIX:
+#endif
   case IL_ICMP:
   case IL_ICMPZ:
   case IL_ISELECT:
@@ -11834,6 +11992,9 @@ make_type_from_opc(ILI_OP opc)
   case IL_UKCMP:
   case IL_DFIXK:
   case IL_DFIXUK:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFIXK:
+#endif
   case IL_UKCJMP:
   case IL_UKADD:
   case IL_UKSUB:
@@ -11860,6 +12021,9 @@ make_type_from_opc(ILI_OP opc)
   case IL_FLOATUK:
   case IL_FMOD:
   case IL_SNGL:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_SNGQ:
+#endif
   case IL_FSUB:
   case IL_FMUL:
   case IL_FDIV:
@@ -11884,6 +12048,9 @@ make_type_from_opc(ILI_OP opc)
   case IL_DFLOATUK:
   case IL_DMOD:
   case IL_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_DBLEQ:
+#endif
   case IL_DADD:
   case IL_DSUB:
   case IL_DNEG:
@@ -11897,6 +12064,24 @@ make_type_from_opc(ILI_OP opc)
   case IL_DABS:
     llt = make_lltype_from_dtype(DT_DBLE);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_RQUAD:
+  case IL_DQUAD:
+  case IL_QFLOATK:
+  case IL_QFLOAT:
+  case IL_QCJMP:
+  case IL_QCJMPZ:
+  case IL_QADD:
+  case IL_QSUB:
+  case IL_QMUL:
+  case IL_QDIV:
+  case IL_QMAX:
+  case IL_QMIN:
+  case IL_QNEG:
+  case IL_QCMP:
+    llt = make_lltype_from_dtype(DT_QUAD);
+    break;
+#endif
   case IL_CSSELECT:
   case IL_SCMPLXADD:
     llt = make_lltype_from_dtype(DT_CMPLX);
@@ -13497,6 +13682,9 @@ exprjump(ILI_OP opc)
   case IL_ICJMP:
   case IL_FCJMP:
   case IL_DCJMP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMP:
+#endif
   case IL_ACJMP:
   case IL_UICJMP:
     return true;
@@ -13514,6 +13702,9 @@ zerojump(ILI_OP opc)
   case IL_ICJMPZ:
   case IL_FCJMPZ:
   case IL_DCJMPZ:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMPZ:
+#endif
   case IL_ACJMPZ:
   case IL_UICJMPZ:
     return true;

@@ -266,11 +266,32 @@ AINT intrinsic (converts real to real).
 .IL DINT arth lnk
 DINT intrinsic (converts double to double).
 .OP DINT r p1
+.IL QINT arth lnk
+QINT intrinsic (converts quad to quad).
+.OP QINT r p1
 .IL ANINT arth lnk
 ANINT intrinsic (converts real to real).
 .OP NULL t1 iv0
 .OP ARGSP t1 p1 t1
 .OP QJSR t2 =e'%s%__mth_i_anint t1
+.OP DFRSP r t2 spret
+.IL QQANINT arth lnk
+ANINT intrinsic (converts quad to quad).
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qanint t1
+.OP DFRQP r t2 qpret
+.IL DQANINT arth lnk
+ANINT intrinsic (converts quad to double).
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%d%__mth_i_dqanint t1
+.OP DFRDP r t2 dpret
+.IL AQANINT arth lnk
+ANINT intrinsic (converts quad to float).
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%s%__mth_i_aqanint t1
 .OP DFRSP r t2 spret
 .IL DNINT arth lnk
 DNINT intrinsic (converts double to double).
@@ -355,6 +376,8 @@ EXP intrinsic for single precision floating point values.
 .OP FEXP r p1
 .IL DEXP arth lnk
 .OP DEXP r p1
+.IL QEXP arth lnk
+.OP QEXP r p1
 .IL CEXP arth lnk
 .AT spec
 .IL CDEXP arth lnk
@@ -963,6 +986,8 @@ Exponentiation - integer to an integer power.
 .OP FPOWI r p1 p2
 .IL DTOI arth lnk lnk
 .OP DPOWI r p1 p2
+.IL QTOI arth lnk lnk
+.OP QPOWI r p1 p2
 .CL MOD arth lnk lnk
 Integer remainder
 .OP MOD r p1 p2
@@ -1252,6 +1277,9 @@ Compare two single precision floating point numbers.
 .IL DCMP arth lnk lnk
 Compare two double precision floating point numbers.
 .AT spec
+.IL QCMP arth lnk lnk
+Compare two quad precision floating point numbers.
+.AT spec
 .IL UICMP arth lnk lnk
 Unsigned integer comparison.
 .AT spec
@@ -1433,6 +1461,11 @@ Arithmetic if branch on real expression.
 .OP DCJMPZ null p1 le v2
 .OP DCJMPZ null p1 eq v3
 .OP DCJMPZ null p1 gt v4
+.IL QAIF branch lnk sym1 sym2 sym3
+.AT spec trm
+.OP QCJMPZ null p1 le v2
+.OP QCJMPZ null p1 eq v3
+.OP QCJMPZ null p1 gt v4
 .IL AGOTO branch n lnk sym*
 Assigned GOTO.
 \'lnk' is to an ILD ILM.
@@ -2437,6 +2470,8 @@ Exponentiation - integer to an integer power.
 .OP FPOWK r p1 p2
 .IL DTOK intr lnk lnk
 .OP DPOWK r p1 p2
+.IL QTOK intr lnk lnk
+.OP QPOWK r p1 p2
 .IL CTOK intr lnk lnk
 .AT spec
 .IL CDTOK intr lnk lnk
@@ -3824,3 +3859,114 @@ Logical .LAND8. operation for unixlogical
 Logical .LNOT8. operation for unixlogical
 .AT i8
 .OP KCMPZ kr p1 eq
+.IL QFLD load lnk
+Load quad precision
+.AT spec
+.IL QFST store lnk lnk
+Store quad precision
+.AT spec trm
+.IL QADD arth lnk lnk
+Add quad precision
+.OP QADD r p1 p2
+
+.IL QSUB arth lnk lnk
+Sub quad precision
+.OP QSUB r p1 p2
+
+.IL QMUL arth lnk lnk
+.OP QMUL r p1 p2
+
+.IL QDIV arth lnk lnk
+.OP QDIV r p1 p2
+
+.IL QNEG arth lnk
+.OP QNEG r p1
+
+
+.IL QMAX arth lnk lnk
+.OP QMAX p p1 p2
+
+.IL QMIN arth lnk lnk
+.OP QMIN r p1 p2
+
+.IL QFLOAT arth lnk
+Convert integer to quad precision (DFLOAT intrinsic).
+.OP QFLOAT r p1
+
+.IL QFLOATK arth lnk
+Convert integer to quad precision (DFLOAT intrinsic).
+.AT i8
+.OP QFLOATK r p1
+
+.IL RQUAD arth lnk
+Convert single precision floating point value to quad precision.
+.OP RQUAD r p1
+
+.IL DQUAD arth lnk
+Convert double precision floating point value to quad precision.
+.OP DQUAD r p1
+
+
+.IL QTOQ intr lnk lnk
+.OP QPOWQ r p1 p2
+.IL QCON cons sym
+.OP QCON r v1
+
+.IL UITOQ arth lnk
+.OP NULL t1 iv0
+.OP ARGIR t1 p1 t1
+.OP QJSR t2 =e'%d%ftn_i_ir2qp t1
+
+.IL K2Q arth lnk
+Cast a 64-bit integer to a single precision real.
+.OP KR2QP r p1
+
+.IL QFIX arth lnk
+Convert quad precision floating point number to integer.
+.OP QFIX r p1
+
+.IL KQFIX arth lnk
+Convert quad precision floating point number to integer*8.
+.AT i8
+.OP QFIXK r p1
+
+.IL QTOUI arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%i%ftn_i_qp2ir t1
+.OP DFRIR r t2 drret
+
+.IL Q2K arth lnk
+Cast a 128-bit unsigned integer (dword) to a 64-bit integer.
+.AT i8
+.OP MVKR r p1 iv-1
+.IL SNGQ arth lnk
+Convert quad precision number to single precision (SNGQ intrinsic).
+.OP SNGQ r p1
+
+.IL DBLEQ arth lnk
+Convert quad precision number to double (DBLEQ intrinsic).
+.OP DBLEQ r p1
+.IL PQFUNCA proc n stc sym lnk lnk*
+Call quad function through procedure pointer
+.AT spec
+.IL QABS arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qabs t1
+.OP DFRQP r t2 qpret
+
+.IL IQNINT arth lnk
+IQNINT intrinsic (converts quad to integer).
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%l%__mth_i_iqnint t1
+.OP DFRKR r t2 krret
+
+.IL KQNINT intr lnk
+KIQNINT intrinsic (converts quad to integer*8).
+.AT i8
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%l%__mth_i_kiqnint t1
+.OP DFRKR r t2 krret

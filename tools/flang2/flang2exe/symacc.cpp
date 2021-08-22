@@ -367,6 +367,24 @@ add_fp_constants(void)
   xdneg(tmp, res);
   stb.dblm0 = getcon(res, DT_DBLE);
 
+  tmp[0] = 0x80000000;
+  tmp[1] = 0;
+  tmp[2] = 0;
+  tmp[3] = 0;
+  stb.quadm0 = getcon(tmp, DT_QUAD);
+
+  xqneg(tmp, res);
+  stb.quad0 = getcon(res, DT_QUAD);
+
+  tmp[0] = 0x3fff0000;
+  stb.quad1 = getcon(tmp, DT_QUAD);
+
+  tmp[0] = 0x40000000;
+  stb.quad2 = getcon(tmp, DT_QUAD);
+
+  tmp[0] = 0x3ffe0000;
+  stb.quadhalf = getcon(tmp, DT_QUAD);
+
 #ifdef LONG_DOUBLE_FLOAT128
   atoxq("0.0", &tmp[0], 4);
   stb.float128_0 = getcon(tmp, DT_FLOAT128);

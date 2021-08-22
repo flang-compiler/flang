@@ -10,8 +10,8 @@
 in10: run
 	
 
-fcheck.$(OBJX): $(SRC)/check_mod.f90
-	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.f90 -o fcheck.$(OBJX)
+fcheck.$(OBJX): $(SRC)/check_mod.F90
+	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.F90 -o fcheck.$(OBJX)
 
 build:  $(SRC)/in10.f90 $(SRC)/in10_expct.c fcheck.$(OBJX)
 	-$(RM) in10.$(EXESUFFIX) in10.$(OBJX) in10_expct.$(OBJX)

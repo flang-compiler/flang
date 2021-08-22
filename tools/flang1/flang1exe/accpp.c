@@ -896,6 +896,10 @@ accpp(void)
   sp->flags |= F_PREDEF;
   sp->nformals = -1;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  chkdef("__flang_quadfp__", "1");
+#endif
+
 #undef chkdef
 
 /* now undef from command line */

@@ -67,7 +67,7 @@ program p
 
   rslts(11:14) = INTEGER_KINDS
   rslts(15:18) = LOGICAL_KINDS
-  rslts(19:20) = REAL_KINDS
+  rslts(19:20) = REAL_KINDS(1:2)
 
   WRITE(internal_file, *, iostat = iostat) d
   rslts(21) = iostat

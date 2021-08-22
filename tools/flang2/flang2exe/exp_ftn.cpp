@@ -121,7 +121,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
   int tmp;
   int nme;
   SPTR nmsym;
-  INT val[2];
+  INT val[4];
   int ilix, ilixi, ilixr;
   int op1, op2, op3;
   /*
@@ -724,6 +724,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       tmp = exp_mac(opc, ilmp, curilm);
     }
     return;
+
   case IM_CONJG:
     if (XBIT(70, 0x40000000)) {
       /* convert to xorps signbit*/
@@ -1158,6 +1159,11 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_DCMP:
     ILM_NME(curilm) = IL_DCMP;
     return;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IM_QCMP:
+    ILM_NME(curilm) = IL_QCMP;
+    return;
+#endif
   case IM_UICMP:
     ILM_NME(curilm) = IL_UICMP;
     return;
@@ -3377,7 +3383,7 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
     ILI_OP subop;  /* subtract op */
     ILI_OP cjmpop; /* compare and jump op */
     short msz;    /* msz for load/store */
-  } aif[5] = {
+  } aif[6] = {
       {IL_ICJMPZ, IL_CSEIR, DT_INT, IL_ST, IL_LD, IL_ICMPZ, IL_ISUB, IL_ICJMP,
        MSZ_WORD},
       {IL_FCJMPZ, IL_CSESP, DT_REAL, IL_STSP, IL_LDSP, IL_FCMPZ, IL_FSUB,
@@ -3388,6 +3394,10 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
        IL_HFCJMP, MSZ_F2},
       {IL_KCJMPZ, IL_CSEKR, DT_INT8, IL_STKR, IL_LDKR, IL_KCMPZ, IL_KSUB,
        IL_KCJMP, MSZ_I8},
+#ifdef TARGET_SUPPORTS_QUADFP
+      {IL_QCJMPZ, IL_CSEQP, DT_QUAD, IL_STQP, IL_LDQP, IL_QCMPZ, IL_QSUB,
+       IL_QCJMP, MSZ_F16},
+#endif
   };
   int i;    /* temp */
   int ilix; /* ILI index */
@@ -3425,6 +3435,11 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
     goto comaif;
   case IM_HFAIF: /* half precision arithmetic IF */
     type = 3;
+#ifdef TARGET_SUPPORTS_QUADFP
+    goto comaif;
+  case IM_QAIF: /* quad precision arithmetic IF */
+    type = 5;
+#endif
   comaif:
     /* arithmetic if processing */
     ilix = ILM_RESULT(ILM_OPND(ilmp, 1));

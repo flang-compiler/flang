@@ -12,6 +12,29 @@
     \brief Fortran global variables and flags.
 */
 
+
+/* this number is - 2^112  */
+#define MMAX_MANTI_BIT0_31 0xc06f0000
+#define MMAX_MANTI_BIT32_63 0x00000000
+#define MMAX_MANTI_BIT64_95 0x00000000
+#define MMAX_MANTI_BIT96_127 0x00000000
+/* this number is + 2^112  */
+#define MAX_MANTI_BIT0_31 0x406f0000
+#define MAX_MANTI_BIT32_63 0x00000000
+#define MAX_MANTI_BIT64_95 0x00000000
+#define MAX_MANTI_BIT96_127 0x00000000
+
+/* this number is + minimum of quad precision */
+#define MIN_QUAD_VALUE_BIT96_127 0x00000000
+
+#define MAX_EXP_QVALUE 4931 /* max value exponent */
+#define MAX_EXP_OF_QMANTISSA 33 /* 2^112 : 5.19e+33 */
+#define EPSILON_BIT96_127 0 /* quad precision allowed error 1.0_16  */
+#define REAL_16 16
+#define REAL_0 0
+
+#define QVM4_SIZE 4 /* qvm4[] has 4 elements and 128 bits */
+
 /* An index into the symbol table. */
 typedef enum SPTR {
   NME_NULL = -1,
@@ -210,6 +233,7 @@ typedef struct {
   int tpvalue[TPNVERSION]; /* target processor(s), for unified binary */
   int accmp;
   const char *cmdline; /* command line used to invoke the compiler */
+  LOGICAL qp; /* Enable quad-precision REAL and quad-precision COMPLEX. */
 } FLG;
 
 extern FLG flg;

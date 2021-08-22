@@ -1951,7 +1951,11 @@ collapse_assignment(int asn, int std)
       break;
     default:
       if (cnst == stb.i0 || cnst == stb.k0 || cnst == stb.flt0 ||
-          cnst == stb.dbl0)
+          cnst == stb.dbl0
+#ifdef TARGET_SUPPORTS_QUADFP
+          || cnst == stb.quad0
+#endif
+         )
         is_zero = 1;
       break;
     }

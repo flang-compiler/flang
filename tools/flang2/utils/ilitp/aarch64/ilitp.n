@@ -484,6 +484,11 @@ Double precision absolute value.
 .AT arth null dp cse
 .CG notAILI
 
+.IL QABS qplnk
+Quad precision absolute value.
+.AT arth null qp cse
+.CG notAILI
+
 .IL DAND dplnk dplnk
 Used to implement DABS operation.
 .AT arth null dp cse
@@ -630,6 +635,11 @@ Double-precision exponential.
 .AT arth null dp cse
 .CG notCG
 
+.IL QEXP qplnk
+quad-precision exponential.
+.AT arth null qp cse
+.CG notCG
+
 .IL FACOS splnk
 Single-precision floating-point arccosine.
 .AT arth null sp cse
@@ -640,6 +650,14 @@ Double-precision  arccosine.
 .AT arth null dp cse
 .CG notCG
 
+.IL DFRQP lnk qp
+Define quad precision function result returned in xmm register 'dp'.
+.AT define null qp cse
+.CG terminal asm_nop
+.IL DAQP qplnk qp lnk
+Define a quad precision argument in xmm register for a JSR.
+.AT define null lnk
+.CG "movsd" move
 .IL FASIN splnk
 Single-precision floating-point arcsine.
 .AT arth null sp cse
@@ -722,6 +740,11 @@ Double NINT.
 .AT arth null ir cse
 .CG notCG
 
+.IL IQNINT qplnk
+quad NINT.
+.AT arth null ir cse
+.CG notCG
+
 .IL ISIGN irlnk irlnk
 Integer sign intrinsic.
 .AT arth null ir cse
@@ -780,6 +803,11 @@ Single precision trunction.
 .IL DINT dplnk
 Double precision trunction.
 .AT arth null dp cse
+.CG notAILI
+
+.IL QINT qplnk
+Quad precision trunction.
+.AT arth null qp cse
 .CG notAILI
 
 .IL SCMPLXEXP cslnk
@@ -1691,6 +1719,21 @@ Double raised to a double power.
 .AT arth null dp cse
 .CG notCG
 
+.IL QPOWI qplnk irlnk
+Quad precision raised to a integre power.
+.AT arth null qp cse
+.CG notCG
+
+.IL QPOWK qplnk krlnk
+Quad precision raised to a integre power.
+.AT arth null qp cse
+.CG notCG
+
+.IL QPOWQ qplnk qplnk
+Quad precision raised to a quad precision power.
+.AT arth null qp cse
+.CG notCG
+
 .IL ICMP irlnk irlnk stc
 Integer compare with result of true or false.
 For C the value of true is 1, and for Fortran, -1.
@@ -1730,6 +1773,7 @@ stc is a floating point condition code: one of the 12 values defined in ili.h.
 Double precision compare with result of true or false.
 .AT arth null ir cse
 .CG asm_special "ucomisd" ccmod
+
 
 .IL SCMPLXCMP dplnk dplnk stc
 Single precision complex compare with result of true or false.
@@ -1774,6 +1818,11 @@ Single float compare with zero; result is TRUE or FALSE.
 
 .IL DCMPZ dplnk stc
 Double precision compare with zero.
+.AT arth null ir cse
+.CG notCG
+
+.IL QCMPZ qplnk stc
+Quad precision compare with zero.
 .AT arth null ir cse
 .CG notCG
 
@@ -2103,6 +2152,12 @@ if the condition, denoted by stc, is true.
 .AT branch null trm dom
 .CG terminal conditional_branch notAILI
 
+.IL QCJMP qplnk qplnk stc sym
+Quad precision compare and jump to the label 'sym'
+if the condition, denoted by stc, is true.
+.AT branch null trm dom
+.CG terminal conditional_branch notAILI
+
 .IL ICJMPZ irlnk stc sym
 Integer compare with zero and branch to label 'sym' -
 the allowed values (and meanings) for stc are the same as for the ICJMP ILI.
@@ -2149,6 +2204,11 @@ Double compare with zero and branch to label 'sym'.
 .AT branch null trm dom
 .CG notCG conditional_branch
 
+.IL QCJMPZ qplnk stc sym
+quad compare with zero and branch to label 'sym'.
+.AT branch null trm dom
+.CG notCG conditional_branch
+
 .IL JCC
 Conditional jump based on immediately preceding compare operation.
 Used only in the AILI.
@@ -2172,6 +2232,11 @@ Single precision register cse.
 .IL CSEDP dplnk
 Double precision register cse.
 .AT arth null dp
+.CG notCG
+
+.IL CSEQP qplnk
+Quad precision register cse.
+.AT arth null qp
 .CG notCG
 
 .IL CSECS cslnk
@@ -2336,6 +2401,14 @@ Store single precision complex quantity.  'stc' is not used.
 Store double precision complex quantity.  'stc' is not used.
 .AT store null trm
 .CG terminal "movups" move sse_avx
+.SI ld double fadd fmul fst lat(3)
+.SI st direct fst lat(2)
+.SI direct fadd fmul lat(2)
+
+.IL STQCMPLX cqlnk arlnk nme stc
+Store quad precision complex quantity.  'stc' is not used.
+.AT store null trm
+.CG notCG
 .SI ld double fadd fmul fst lat(3)
 .SI st direct fst lat(2)
 .SI direct fadd fmul lat(2)
@@ -2720,14 +2793,10 @@ Return double precision real part of a double complex value.
 .AT other null dp cse
 .CG sse_avx asm_special
 
-.IL MVQ dplnk dp
+.IL MVQ qplnk qp
 This ili represents a m128 function return value.
-For X86_64, the value is moved into the specified xmm register.
 .AT move null trm
-.CG terminal "movapd" move sse_avx
-.SI ld double fadd fmul fst lat(3)
-.SI st direct fst lat(2)
-.SI direct fadd fmul lat(2)
+.CG notCG
 
 .IL MV256 dplnk dp
 This ili represents a m256 function return value.
@@ -2807,6 +2876,10 @@ The FREExx ili are eliminated by the linearizer phase of the code generator.
 .CG terminal notAILI
 
 .IL FREEDP dplnk
+.AT other null trm
+.CG terminal notAILI
+
+.IL FREEQP qplnk
 .AT other null trm
 .CG terminal notAILI
 
@@ -4980,7 +5053,7 @@ The 'stc' is an ACBLK index of this jump target.
 .CG notCG
 
 
-.IL ARGQP dplnk lnk
+.IL ARGQP qplnk lnk
 Defines a quad precision memory argument used in m128 support
 \'dplnk' points to the register value of the argument.
 \'lnk' points to the next ARG ILI.
@@ -5386,6 +5459,107 @@ Half-precision max
 .IL HFMIN hplnk hplnk
 Half-precision min
 .AT arth comm hp cse
+.CG notCG
+
+.IL LDQP arlnk nme stc
+Load quad-precision floating value.  'stc' is not used.
+.AT load null qp
+.CG notCG
+
+.IL STQP qplnk arlnk nme stc
+Store quad precision quantity.  'stc' must be MSZ_F16.
+.AT store null trm
+.CG notCG
+
+.IL QADD qplnk qplnk
+quad-precision floating-point addition.
+.AT arth comm qp cse
+.CG notCG
+
+.IL QSUB qplnk qplnk
+quad-precision floating-point addition.
+.AT arth null qp cse
+.CG notCG
+
+.IL QMUL qplnk qplnk
+quad-precision multiply.
+.AT arth comm qp cse
+.CG notCG
+
+.IL QNEG qplnk
+quad-precision negate.
+.AT arth null qp cse
+.CG notCG
+
+.IL QDIV qplnk qplnk
+quad divide.
+.AT arth null qp cse
+.CG notCG
+
+.IL QMAX qplnk qplnk
+quad precision maximum.
+.AT arth comm qp cse
+.CG notCG
+
+.IL QMIN qplnk qplnk
+quad precison minimum.
+.AT arth comm qp cse
+.CG notCG
+
+.IL QFLOAT irlnk
+Integer to quad-precision conversion.
+.AT arth null qp cse
+.CG notCG
+
+.IL QFLOATK krlnk
+Integer64 to quad-precision conversion.
+.AT arth null qp cse
+.CG notCG
+
+.IL RQUAD splnk
+Single to quad-precision conversion.
+.AT arth null qp cse
+.CG notCG
+
+.IL DQUAD dplnk
+double to quad-precision conversion.
+.AT arth null qp cse
+.CG notCG
+
+.IL QCON sym
+quad-precision floating-point constant.
+.AT cons null qp cse
+.CG "movsq" move
+
+.IL KR2QP krlnk
+To be eliminated?
+.AT arth null qp
+.CG notCG
+
+.IL QFIX qplnk
+quad-precision to integer conversion.
+.AT arth null ir cse
+.CG notCG
+
+.IL QFIXK qplnk
+quad-precision floating-point to integer64 conversion.
+Implemented by a library function.
+.AT arth null kr cse
+.CG notCG
+
+.IL SNGQ qplnk
+quad-precision to single conversion.
+.AT arth null sp cse
+.CG notCG
+
+.IL DBLEQ qplnk
+quad-precision to double conversion.
+.AT arth null dp cse
+.CG notCG
+
+.IL QCMP qplnk qplnk stc
+Quad precision compare with result of true or false.
+.AT arth null ir cse
 .CG notCG
 
 .so ilitp_atomic.n

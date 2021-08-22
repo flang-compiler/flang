@@ -11,8 +11,8 @@
 in21: run
 	
 
-fcheck.$(OBJX): $(SRC)/check_mod.f90
-	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.f90 -o fcheck.$(OBJX)
+fcheck.$(OBJX): $(SRC)/check_mod.F90
+	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.F90 -o fcheck.$(OBJX)
 
 build:  $(SRC)/in21.f90 $(SRC)/in21_expct.c fcheck.$(OBJX)
 	-$(RM) in21.$(EXESUFFIX) in21.$(OBJX) in21_expct.$(OBJX)

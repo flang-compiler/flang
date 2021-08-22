@@ -1211,7 +1211,14 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
     CHECK_NME(nme, DTY(dt_nme(nme)) != TY_128);
     load = ad3ili(IL_LDQ, addr, nme, MSZ_F16);
     goto cand_load;
-  case IM_M256LD: /*m256*/
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* transform the QFLD ilm to LDQP ili */
+  case IM_QFLD: /* fp128 */
+    CHECK_NME(nme, DTY(dt_nme(nme)) != TY_QUAD);
+    load = ad3ili(IL_LDQP, addr, nme, MSZ_F16);
+    goto cand_load;
+#endif
+  case IM_M256LD: /* m256 */
     CHECK_NME(nme, DTY(dt_nme(nme)) != TY_256);
     load = ad3ili(IL_LD256, addr, nme, MSZ_F32);
     goto cand_load;
@@ -1573,7 +1580,16 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
       nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
     CHECK_NME(nme, DTY(dt_nme(nme)) != TY_128);
     store = ad4ili(IL_STQ, (int)ILI_OF(op2), (int)ILI_OF(op1), nme, MSZ_F16);
+	goto cand_store;
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* transform the QFST ilm TO STQP ili */
+  case IM_QFST:
+    if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
+      nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
+    CHECK_NME(nme, DTY(dt_nme(nme)) != TY_QUAD);
+    store = ad4ili(IL_STQP, (int)ILI_OF(op2), (int)ILI_OF(op1), nme, MSZ_F16);
     goto cand_store;
+#endif
   case IM_M256ST: /*m256*/
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
       nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
@@ -2142,6 +2158,15 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
         interr("exp_mac: need DP_RETVAL", (int)ilmopr->type, ERR_Severe);
 #endif
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case ILMO_QPRET:
+#if defined(QP_RETVAL)
+        newili.opnd[i] = QP_RETVAL;
+#else
+        interr("exp_mac: need QP_RETVAL", (int)ilmopr->type, ERR_Severe);
+#endif
+        break;
+#endif
       case ILMO_KRRET:
 #if defined(KR_RETVAL)
         newili.opnd[i] = KR_RETVAL;
@@ -2261,6 +2286,11 @@ efunc(const char *nm)
     case 'd':
       resdt = DT_DBLE;
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case 'q':
+      resdt = DT_QUAD;
+      break;
+#endif
     case 'i':
       resdt = DT_INT;
       break;

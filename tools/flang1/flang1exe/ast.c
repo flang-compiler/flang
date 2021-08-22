@@ -33,6 +33,7 @@
 #include "extern.h"
 #include "rtlRtns.h"
 
+#define BYTE_NUMBER16 16
 static int reduce_iadd(int, INT);
 static int reduce_i8add(int, int);
 static int convert_cnst(int, int);
@@ -634,6 +635,9 @@ mk_cval1(INT v, DTYPE dtype)
   case TY_INT8:
   case TY_LOG8:
   case TY_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+#endif
   case TY_DWORD:
   case TY_CMPLX:
   case TY_DCMPLX:
@@ -1273,6 +1277,9 @@ mk_unop(int optype, int lop, DTYPE dtype)
         break;
 
       case TY_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+#endif
       case TY_CMPLX:
       case TY_DCMPLX:
       case TY_INT8:
@@ -1495,6 +1502,15 @@ convert_cnst(int cnst, int newtyp)
       num[1] = CONVAL2G(sptr);
       xdfix(num, &result);
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      num[0] = CONVAL1G(sptr);
+      num[1] = CONVAL2G(sptr);
+      num[2] = CONVAL3G(sptr);
+      num[3] = CONVAL4G(sptr);
+      xqfix(num, &result);
+      break;
+#endif
     default: /* TY_HOLL, TY_CHAR, TY_NCHAR */
       return cnst;
     }
@@ -1540,6 +1556,15 @@ convert_cnst(int cnst, int newtyp)
         num1[1] = CONVAL2G(sptr);
         xdfix64(num1, num);
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+        num1[0] = CONVAL1G(sptr);
+        num1[1] = CONVAL2G(sptr);
+        num1[2] = CONVAL3G(sptr);
+        num1[3] = CONVAL4G(sptr);
+        xqfix64(num1, num);
+        break;
+#endif
       default: /* TY_HOLL, TY_CHAR, TY_NCHAR */
         return cnst;
       }
@@ -1550,7 +1575,7 @@ convert_cnst(int cnst, int newtyp)
   case TY_REAL:
     if (from == TY_WORD || from == TY_DWORD)
       return cnst; /* don't convert typeless for now */
-                   /* result = CONVAL2G(sptr); */
+      /* result <- CONVAL2G(sptr) */
     else if (from == TY_INT8 || from == TY_LOG8) {
       num[0] = CONVAL1G(sptr);
       num[1] = CONVAL2G(sptr);
@@ -1571,6 +1596,16 @@ convert_cnst(int cnst, int newtyp)
         num[1] = CONVAL2G(sptr);
         xsngl(num, &result);
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+
+      case TY_QUAD:
+        num[0] = CONVAL1G(sptr);
+        num[1] = CONVAL2G(sptr);
+        num[2] = CONVAL3G(sptr);
+        num[3] = CONVAL4G(sptr);
+        xqtof(num, &result);
+        break;
+#endif
       default: /* TY_HOLL, TY_CHAR, TY_NCHAR */
         return cnst;
       }
@@ -1581,15 +1616,15 @@ convert_cnst(int cnst, int newtyp)
     if (from == TY_WORD) {
       return cnst; /* don't convert typeless for now */
       /*
-      num[0] = 0;
-      num[1] = CONVAL2G(sptr);
-      */
+       * num[0] <- 0
+       * num[1] <- CONVAL2G(sptr)
+       */
     } else if (from == TY_DWORD) {
       return cnst; /* don't convert typeless for now */
       /*
-      num[0] = CONVAL1G(sptr);
-      num[1] = CONVAL2G(sptr);
-      */
+       * num[0] <-  CONVAL1G(sptr)
+       * num[1] <-  CONVAL2G(sptr)
+       */
     } else if (from == TY_INT8 || from == TY_LOG8) {
       num1[0] = CONVAL1G(sptr);
       num1[1] = CONVAL2G(sptr);
@@ -1612,13 +1647,76 @@ convert_cnst(int cnst, int newtyp)
         oldval = CONVAL2G(sptr);
         xdble(oldval, num);
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+        num1[0] = CONVAL1G(sptr);
+        num1[1] = CONVAL2G(sptr);
+        num1[2] = CONVAL3G(sptr);
+        num1[3] = CONVAL4G(sptr);
+        xqtod(num1, num);
+        break;
+#endif
       default: /* TY_HOLL, TY_CHAR, TY_NCHAR */
         return cnst;
       }
     }
     result = getcon(num, DT_REAL8);
     break;
-
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    if (from == TY_WORD) {
+      return cnst; /* don't convert typeless for now */
+      /*
+       * num[0] <- 0
+       * num[1] <- 0
+       * num[2] <- 0
+       * num[3] <- CONVAL2G(sptr)
+       */
+    } else if (from == TY_DWORD) {
+      return cnst; /* don't convert typeless for now */
+      /*
+       * num[0] <- 0;
+       * num[1] <- 0;
+       * num[2] <-  CONVAL1G(sptr)
+       * num[3] <-  CONVAL2G(sptr)
+       */
+    } else if (from == TY_INT8 || from == TY_LOG8) {
+      num1[0] = CONVAL1G(sptr);
+      num1[1] = CONVAL2G(sptr);
+      xqflt64(num1, num);
+    } else if (TY_ISINT(from))
+      xqfloat(CONVAL2G(sptr), num);
+    else {
+      /* if a special 'named' constant, don't evaluate */
+      if ((XBIT(49, 0x400000) || XBIT(51, 0x40)) && NMPTRG(sptr))
+        return cnst;
+      switch (from) {
+      case TY_DCMPLX:
+        sptr = CONVAL1G(sptr);
+        num1[0] = CONVAL1G(sptr);
+        num1[1] = CONVAL2G(sptr);
+        xdtoq(num1, num);
+        break;
+      case TY_CMPLX:
+        oldval = CONVAL1G(sptr);
+        xftoq(oldval, num);
+        break;
+      case TY_REAL:
+        oldval = CONVAL2G(sptr);
+        xftoq(oldval, num);
+        break;
+      case TY_DBLE:
+        num1[0] = CONVAL1G(sptr);
+        num1[1] = CONVAL2G(sptr);
+        xdtoq(num1, num);
+        break;
+      default: /* TY_HOLL, TY_CHAR, TY_NCHAR */
+        return cnst;
+      }
+    }
+    result = getcon(num, DT_QUAD);
+    break;
+#endif
   case TY_CMPLX:
     /*  num[0] = real part
      *  num[1] = imaginary part
@@ -1628,16 +1726,16 @@ convert_cnst(int cnst, int newtyp)
       /* a la VMS */
       return cnst; /* don't convert typeless for now */
       /*
-      num[0] = 0;
-      num[1] = CONVAL2G(sptr);
-      */
+       * num[0] <- 0
+       * num[1] <- CONVAL2G(sptr)
+       */
     } else if (from == TY_DWORD) {
       /* a la VMS */
       return cnst; /* don't convert typeless for now */
       /*
-      num[0] = CONVAL1G(sptr);
-      num[1] = CONVAL2G(sptr);
-      */
+       * num[0] <- CONVAL1G(sptr)
+       * num[1] <- CONVAL2G(sptr)
+       */
     } else if (from == TY_INT8 || from == TY_LOG8) {
       num1[0] = CONVAL1G(sptr);
       num1[1] = CONVAL2G(sptr);
@@ -1654,6 +1752,15 @@ convert_cnst(int cnst, int newtyp)
         num1[1] = CONVAL2G(sptr);
         xsngl(num1, &num[0]);
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+        num1[0] = CONVAL1G(sptr);
+        num1[1] = CONVAL2G(sptr);
+        num1[2] = CONVAL3G(sptr);
+        num1[3] = CONVAL4G(sptr);
+        xqtof(num1, &num[0]);
+        break;
+#endif
       case TY_DCMPLX:
         num1[0] = CONVAL1G(CONVAL1G(sptr));
         num1[1] = CONVAL2G(CONVAL1G(sptr));
@@ -1673,19 +1780,19 @@ convert_cnst(int cnst, int newtyp)
     if (from == TY_WORD) {
       return cnst; /* don't convert typeless for now */
       /*
-      num[0] = 0;
-      num[1] = CONVAL2G(sptr);
-      num[0] = getcon(num, DT_REAL8);
-      num[1] = stb.dbl0;
-      */
+       * num[0] <- 0
+       * num[1] <- CONVAL2G(sptr)
+       * num[0] <- getcon(num, DT_REAL8)
+       * num[1] <- stb.dbl0
+       */
     } else if (from == TY_DWORD) {
       return cnst; /* don't convert typeless for now */
       /*
-      num[0] = CONVAL1G(sptr);
-      num[1] = CONVAL2G(sptr);
-      num[0] = getcon(num, DT_REAL8);
-      num[1] = stb.dbl0;
-      */
+       * num[0] <- CONVAL1G(sptr)
+       * num[1] <- CONVAL2G(sptr)
+       * num[0] <- getcon(num, DT_REAL8)
+       * num[1] <- stb.dbl0;
+       */
     } else if (from == TY_INT8 || from == TY_LOG8) {
       num1[0] = CONVAL1G(sptr);
       num1[1] = CONVAL2G(sptr);
@@ -1707,6 +1814,17 @@ convert_cnst(int cnst, int newtyp)
         num[0] = sptr;
         num[1] = stb.dbl0;
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+        num1[0] = CONVAL1G(sptr);
+        num1[1] = CONVAL2G(sptr);
+        num1[2] = CONVAL3G(sptr);
+        num1[3] = CONVAL4G(sptr);
+        xqtod(num1, num);
+        num[0] = getcon(num, DT_REAL8);
+        num[1] = stb.dbl0;
+        break;
+#endif
       case TY_CMPLX:
         xdble(CONVAL1G(sptr), num1);
         num[0] = getcon(num1, DT_REAL8);
@@ -2630,7 +2748,7 @@ mk_extent(int lb, int ub, int dim)
         (STYPEG(sptr) == ST_MEMBER && DESCARRAYG(sptr))) {
       extent = get_extent(sptr, dim);
     } else {
-      /*extent = mk_extent_expr(lb, ub);*/
+      /* extent <- call mk_extent_expr(lb, ub) */
       extent = mk_bnd_ast();
     }
   } else {
@@ -5712,13 +5830,13 @@ ast_trav_recurse(int ast, int *extra_arg)
 #if DEBUG
     assert(A_LOPG(ast), "_ast_trav, A_MASTER LOP field not set", ast, 2);
 #endif
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     break;
   case A_ENDMASTER:
 #if DEBUG
     assert(A_LOPG(ast), "_ast_trav, A_ENDMASTER LOP field not set", ast, 2);
 #endif
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     cnt = A_ARGCNTG(ast);
     argt = A_ARGSG(ast);
     for (i = 0; i < cnt; i++)
@@ -5729,7 +5847,7 @@ ast_trav_recurse(int ast, int *extra_arg)
 #if DEBUG
     assert(A_LOPG(ast), "_ast_trav, A_[END]CRITICAL LOP field not set", ast, 2);
 #endif
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     break;
   case A_ATOMIC:
   case A_ATOMICCAPTURE:
@@ -5751,14 +5869,14 @@ ast_trav_recurse(int ast, int *extra_arg)
       _ast_trav((int)A_ENDLABG(ast), extra_arg);
     if (A_PROCBINDG(ast))
       _ast_trav((int)A_PROCBINDG(ast), extra_arg);
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     break;
   case A_MP_ENDPARALLEL:
 #if DEBUG
     assert(A_LOPG(ast), "_ast_trav, A_MP_ENDPARALLEL LOP field not set", ast,
            2);
 #endif
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     break;
   case A_MP_TEAMS:
 #if DEBUG
@@ -5768,7 +5886,7 @@ ast_trav_recurse(int ast, int *extra_arg)
       _ast_trav((int)A_NTEAMSG(ast), extra_arg);
     if (A_THRLIMITG(ast))
       _ast_trav((int)A_THRLIMITG(ast), extra_arg);
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     break;
   case A_MP_TARGET:
 #if DEBUG
@@ -5781,7 +5899,7 @@ ast_trav_recurse(int ast, int *extra_arg)
 #if DEBUG
     assert(A_LOPG(ast), "_ast_trav, A_MP_ENDTARGET LOP field not set", ast, 2);
 #endif
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     break;
   case A_MP_TARGETDATA:
 #if DEBUG
@@ -5795,7 +5913,7 @@ ast_trav_recurse(int ast, int *extra_arg)
     assert(A_LOPG(ast), "_ast_trav, A_MP_ENDTARGETDATA LOP field not set", ast,
            2);
 #endif
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     break;
 
   case A_MP_TARGETUPDATE:
@@ -5813,13 +5931,13 @@ ast_trav_recurse(int ast, int *extra_arg)
       _ast_trav((int)A_IFPARG(ast), extra_arg);
     if (A_ENDLABG(ast))
       _ast_trav((int)A_ENDLABG(ast), extra_arg);
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     break;
   case A_MP_ENDTASK:
 #if DEBUG
     assert(A_LOPG(ast), "_ast_trav, A_MP_ENDTASK LOP field not set", ast, 2);
 #endif
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     break;
   case A_MP_TASKLOOP:
 #if DEBUG
@@ -5831,13 +5949,13 @@ ast_trav_recurse(int ast, int *extra_arg)
       _ast_trav((int)A_FINALPARG(ast), extra_arg);
     if (A_PRIORITYG(ast))
       _ast_trav((int)A_PRIORITYG(ast), extra_arg);
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     break;
   case A_MP_ETASKLOOP:
 #if DEBUG
     assert(A_LOPG(ast), "_ast_trav, A_MP_ETASKLOOP LOP field not set", ast, 2);
 #endif
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     break;
   case A_MP_CRITICAL:
   case A_MP_ENDCRITICAL:
@@ -5845,7 +5963,7 @@ ast_trav_recurse(int ast, int *extra_arg)
     assert(A_LOPG(ast), "_ast_trav, A_MP_[END]CRITICAL LOP field not set", ast,
            2);
 #endif
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     break;
   case A_MP_ATOMIC:
   case A_MP_ENDATOMIC:
@@ -5874,7 +5992,7 @@ ast_trav_recurse(int ast, int *extra_arg)
     assert(A_LOPG(ast), "_ast_trav, A_MP_[END]MASTER LOP field not set", ast,
            2);
 #endif
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     break;
   case A_MP_SINGLE:
   case A_MP_ENDSINGLE:
@@ -5882,7 +6000,7 @@ ast_trav_recurse(int ast, int *extra_arg)
     assert(A_LOPG(ast), "_ast_trav, A_MP_[END]SINGLE LOP field not set", ast,
            2);
 #endif
-    /*_ast_trav((int)A_LOPG(ast), extra_arg);*/
+    /* call _ast_trav((int)A_LOPG(ast), extra_arg) */
     break;
   case A_MP_TASKFIRSTPRIV:
 #if DEBUG
@@ -7173,6 +7291,17 @@ _huge(DTYPE dtype)
       val[1] = 0xffffffff;
     }
     goto const_dble_val;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    sname = "huge(1.0_16)";
+    /* the largest number that is not an infinity in quad precision.
+       Approximating 1.189731e+4932 */
+    val[0] = 0x7ffeffff;
+    val[1] = 0xffffffff;
+    val[2] = 0xffffffff;
+    val[3] = 0xffffffff;
+    goto const_quad_val;
+#endif
   default:
     return 0; /* caller must check */
   }
@@ -7203,6 +7332,15 @@ const_dble_val:
     NMPTRP(sptr, putsname(sname, strlen(sname)));
   return ast;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+const_quad_val:
+  tmp = getcon(val, DT_QUAD);
+  ast = mk_cnst(tmp);
+  sptr = A_SPTRG(ast);
+  if (NMPTRG(sptr) == 0 && (XBIT(49, 0x400000) || XBIT(51, 0x40)))
+    NMPTRP(sptr, putsname(sname, strlen(sname)));
+  return ast;
+#endif
 }
 
 /* utility function to ensure that an expression has type dt_needed.
@@ -7288,6 +7426,9 @@ mk_smallest_val(DTYPE dtype)
     return (mk_cval1(tmp, DT_INT8));
   case TY_REAL:
   case TY_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+#endif
     tmp = _huge(dtype);
     tmp = mk_unop(OP_SUB, tmp, dtype);
     return tmp;
@@ -7756,6 +7897,9 @@ negate_const(INT conval, DTYPE dtype)
 {
   SNGL result, realrs, imagrs;
   DBLE dresult, drealrs, dimagrs;
+#ifdef TARGET_SUPPORTS_QUADFP
+  IEEE128 qresult;
+#endif
   static INT num[4];
 
   switch (DTY(dtype)) {
@@ -7780,6 +7924,16 @@ negate_const(INT conval, DTYPE dtype)
     num[1] = CONVAL2G(conval);
     xdneg(num, dresult);
     return getcon(dresult, DT_REAL8);
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    num[0] = CONVAL1G(conval);
+    num[1] = CONVAL2G(conval);
+    num[2] = CONVAL3G(conval);
+    num[3] = CONVAL4G(conval);
+    xqneg(num, qresult);
+    return getcon(qresult, DT_QUAD);
+#endif
 
   case TY_CMPLX:
     xfneg(CONVAL1G(conval), &realrs);
@@ -7808,6 +7962,9 @@ negate_const(INT conval, DTYPE dtype)
 INT
 const_fold(int opr, INT conval1, INT conval2, DTYPE dtype)
 {
+#ifdef TARGET_SUPPORTS_QUADFP
+  IEEE128 qresult, qnum1, qnum2;
+#endif
   DBLE dtemp, dresult, num1, num2;
   DBLE dreal1, dreal2, drealrs, dimag1, dimag2, dimagrs;
   DBLE dtemp1, dtemp2;
@@ -7969,6 +8126,42 @@ const_fold(int opr, INT conval1, INT conval2, DTYPE dtype)
       goto err_exit;
     }
     return getcon(dresult, DT_REAL8);
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* support quad precision const fold */
+  case TY_QUAD:
+    qnum1[0] = CONVAL1G(conval1);
+    qnum1[1] = CONVAL2G(conval1);
+    qnum1[2] = CONVAL3G(conval1);
+    qnum1[3] = CONVAL4G(conval1);
+    qnum2[0] = CONVAL1G(conval2);
+    qnum2[1] = CONVAL2G(conval2);
+    qnum2[2] = CONVAL3G(conval2);
+    qnum2[3] = CONVAL4G(conval2);
+    switch (opr) {
+    case OP_ADD:
+      xqadd(qnum1, qnum2, qresult);
+      break;
+    case OP_SUB:
+      xqsub(qnum1, qnum2, qresult);
+      break;
+    case OP_MUL:
+      xqmul(qnum1, qnum2, qresult);
+      break;
+    case OP_DIV:
+      xqdiv(qnum1, qnum2, qresult);
+      break;
+    case OP_CMP:
+      return xqcmp(qnum1, qnum2);
+    case OP_XTOI:
+    case OP_XTOX:
+      xqpow(qnum1, qnum2, qresult);
+      break;
+    default:
+      goto err_exit;
+    }
+    return getcon(qresult, DT_QUAD);
+#endif
 
   case TY_CMPLX:
     real1 = CONVAL1G(conval1);
@@ -8442,6 +8635,15 @@ cngcon(INT oldval, int oldtyp, int newtyp)
       num[1] = CONVAL2G(oldval);
       xdfix(num, &result);
       return result;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      num[0] = CONVAL1G(oldval);
+      num[1] = CONVAL2G(oldval);
+      num[2] = CONVAL3G(oldval);
+      num[3] = CONVAL4G(oldval);
+      xqfix(num, &result);
+      return result;
+#endif
     case TY_HOLL:
       cp = stb.n_base + CONVAL1G(CONVAL1G(oldval));
       goto char_to_int;
@@ -8499,6 +8701,15 @@ cngcon(INT oldval, int oldtyp, int newtyp)
         num1[1] = CONVAL2G(oldval);
         xdfix64(num1, num);
         return getcon(num, newtyp);
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+        num1[0] = CONVAL1G(oldval);
+        num1[1] = CONVAL2G(oldval);
+        num1[2] = CONVAL3G(oldval);
+        num1[3] = CONVAL4G(oldval);
+        xqfix64(num1, num);
+        return getcon(num, newtyp);
+#endif
       case TY_HOLL:
         cp = stb.n_base + CONVAL1G(CONVAL1G(oldval));
         goto char_to_int8;
@@ -8552,6 +8763,15 @@ cngcon(INT oldval, int oldtyp, int newtyp)
         num[1] = CONVAL2G(oldval);
         xsngl(num, &result);
         return result;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+        num[0] = CONVAL1G(oldval);
+        num[1] = CONVAL2G(oldval);
+        num[2] = CONVAL3G(oldval);
+        num[3] = CONVAL4G(oldval);
+        xqtof(num, &result);
+        return result;
+#endif
       case TY_HOLL:
         cp = stb.n_base + CONVAL1G(CONVAL1G(oldval));
         goto char_to_real;
@@ -8591,6 +8811,15 @@ cngcon(INT oldval, int oldtyp, int newtyp)
       case TY_REAL:
         xdble(oldval, num);
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+        num1[0] = CONVAL1G(oldval);
+        num1[1] = CONVAL2G(oldval);
+        num1[2] = CONVAL3G(oldval);
+        num1[3] = CONVAL4G(oldval);
+        xqtod(num1, num);
+        break;
+#endif
       case TY_HOLL:
         cp = stb.n_base + CONVAL1G(CONVAL1G(oldval));
         goto char_to_dble;
@@ -8616,6 +8845,68 @@ cngcon(INT oldval, int oldtyp, int newtyp)
       }
     }
     return getcon(num, DT_REAL8);
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    if (from == TY_WORD) {
+      num[0] = 0;
+      num[1] = 0;
+      num[2] = 0;
+      num[3] = oldval;
+    } else if (from == TY_DWORD) {
+      num[0] = 0;
+      num[1] = 0;
+      num[2] = CONVAL1G(oldval);
+      num[3] = CONVAL2G(oldval);
+    } else if (from == TY_INT8 || from == TY_LOG8) {
+      num1[0] = CONVAL1G(oldval);
+      num1[1] = CONVAL2G(oldval);
+      xqflt64(num1, num);
+    } else if (TY_ISINT(from))
+      xqfloat(oldval, num);
+    else {
+      switch (from) {
+      case TY_CMPLX:
+        oldval = CONVAL1G(oldval);
+      case TY_REAL:
+        xftoq(oldval, num);
+        break;
+      case TY_DCMPLX:
+        oldval = CONVAL1G(oldval);
+      case TY_DBLE:
+        num1[0] = CONVAL1G(oldval);
+        num1[1] = CONVAL2G(oldval);
+        xdtoq(num1, num);
+        break;
+      case TY_HOLL:
+        cp = stb.n_base + CONVAL1G(CONVAL1G(oldval));
+        goto char_to_quad;
+      case TY_CHAR:
+        if (flg.standard)
+          conversion_warning();
+        cp = stb.n_base + CONVAL1G(oldval);
+      char_to_quad:
+        holtonum(cp, num, BYTE_NUMBER16);
+        if (flg.endian == 0) {
+          /* for little endian, need to swap words in each double word
+           * quantity.  Order of bytes in a word is okay, but not the
+           * order of words.
+           */
+          swap = num[0];
+          num[0] = num[3];
+          num[3] = swap;
+          swap = num[1];
+          num[1] = num[2];
+          num[2] = swap;
+        }
+        return getcon(num, DT_QUAD);
+      default:
+        errsev(S_0091_Constant_expression_of_wrong_data_type);
+        return (stb.quad0);
+      }
+    }
+    return getcon(num, DT_QUAD);
+#endif
 
   case TY_CMPLX:
     /*  num[0] = real part
@@ -8646,6 +8937,15 @@ cngcon(INT oldval, int oldtyp, int newtyp)
         num1[1] = CONVAL2G(oldval);
         xsngl(num1, &num[0]);
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+        num1[0] = CONVAL1G(oldval);
+        num1[1] = CONVAL2G(oldval);
+        num1[2] = CONVAL3G(oldval);
+        num1[3] = CONVAL4G(oldval);
+        xqtof(num1, num);
+        break;
+#endif
       case TY_DCMPLX:
         num1[0] = CONVAL1G(CONVAL1G(oldval));
         num1[1] = CONVAL2G(CONVAL1G(oldval));
@@ -8704,6 +9004,17 @@ cngcon(INT oldval, int oldtyp, int newtyp)
         num[0] = oldval;
         num[1] = stb.dbl0;
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+        num1[0] = CONVAL1G(oldval);
+        num1[1] = CONVAL2G(oldval);
+        num1[2] = CONVAL3G(oldval);
+        num1[3] = CONVAL4G(oldval);
+        xqtod(num1, num);
+        num[0] = getcon(num, DT_REAL8);
+        num[1] = stb.dbl0;
+	break;
+#endif
       case TY_CMPLX:
         xdble(CONVAL1G(oldval), num1);
         num[0] = getcon(num1, DT_REAL8);
@@ -8804,7 +9115,6 @@ cngcon(INT oldval, int oldtyp, int newtyp)
       oldtyp = DTYPEG(oldval);
     }
     oldcvlen = string_length(oldtyp);
-
     if (oldcvlen > newcvlen) {
       /* truncate character string: */
       errinfo(122);

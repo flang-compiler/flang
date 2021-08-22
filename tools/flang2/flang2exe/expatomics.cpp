@@ -2635,6 +2635,9 @@ is_cse(int ilix)
   case IL_CSEIR:
   case IL_CSESP:
   case IL_CSEDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_CSEQP:
+#endif
   case IL_CSECS:
   case IL_CSECD:
   case IL_CSEAR:

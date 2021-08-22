@@ -1165,7 +1165,7 @@ semantio(int rednum, SST *top)
                    (dtype == DT_INT8 || dtype == DT_INT4 || dtype == DT_SINT ||
                     dtype == DT_BINT || dtype == DT_LOG8 || dtype == DT_LOG ||
                     dtype == DT_SLOG || dtype == DT_BLOG || dtype == DT_REAL4 ||
-                    dtype == DT_REAL8 || dtype == DT_CMPLX8 ||
+                    dtype == DT_REAL8 || dtype == DT_QUAD || dtype == DT_CMPLX8 ||
                     dtype == DT_CMPLX16 ||
                     (DTY(dtype) == TY_CHAR && fmttyp == FT_LIST_DIRECTED))) {
 

@@ -11,6 +11,8 @@
 #include "gbldefs.h"
 #include "symtab.h"
 
+#define AREA_SIZE 16
+
 /**
    \brief ...
  */

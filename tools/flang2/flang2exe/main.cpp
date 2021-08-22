@@ -638,6 +638,9 @@ init(int argc, char *argv[])
   register_boolean_arg(arg_parser, "reentrant", &arg_reentrant, false);
   register_integer_arg(arg_parser, "terse", &flg.terse, 1);
   register_boolean_arg(arg_parser, "quad", &flg.quad, false);
+#ifdef TARGET_SUPPORTS_QUADFP
+  register_boolean_arg(arg_parser, "qp", &flg.qp, true);
+#endif
   register_boolean_arg(arg_parser, "save", &flg.save, false);
   register_string_arg(arg_parser, "tp", &tp, NULL);
   register_integer_arg(arg_parser, "astype", &flg.astype, 0);
