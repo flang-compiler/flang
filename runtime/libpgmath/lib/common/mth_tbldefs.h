@@ -47,6 +47,7 @@ typedef enum {
 typedef enum {
 	sv_ss=0,	// single scalar
 	sv_ds,		// double scalar
+	sv_qs, 		// quad scalar
 	sv_cs,		// single complex - C ABI
 	sv_zs,		// double complex - C ABI
 	sv_cv1,		// single complex - vector

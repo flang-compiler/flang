@@ -8,6 +8,15 @@
 # called from the directories that contains the source files
 # Second arg is the name of the output file created
 
+if [ "$3" != "True" ]; then
+	pattern='/#ifdef TARGET_SUPPORTS_QUADFP/,/#endif/d'
+else
+	pattern=''
+fi
+
+sed \
+		"$pattern" \
+	$1/mth_128defs.c |
 awk \
 		'/^MTH_DISPATCH_FUNC/ { \
 			f = $1; \
@@ -19,5 +28,4 @@ awk \
 			print "DO_MTH_DISPATCH_FUNC(" f ", " s[2] \
 				", " s[3] ", ", s[4] ")"; f=""; \
 		}' \
-	$1/mth_128defs.c \
 	> $2

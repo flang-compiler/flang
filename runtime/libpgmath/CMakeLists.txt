@@ -61,6 +61,8 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64")
   else()
     message(STATUS "Libpgmath CPU target explicitly set to ${LLVM_FLANG_CPU_TARGET}")
   endif()
+  add_definitions(-DTARGET_SUPPORTS_QUADFP)
+  set(TARGET_SUPPORTS_QUADFP True)
 endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND ${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "x86_64|aarch64")

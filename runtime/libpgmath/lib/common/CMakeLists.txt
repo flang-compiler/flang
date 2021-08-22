@@ -294,6 +294,15 @@ set(SRCS
   sign.c
   sind.c
   tand.c)
+
+set(SRCS_QUADFP
+  iqnint.c
+  kqnint.c)
+
+if(TARGET_SUPPORTS_QUADFP)
+  LIST(APPEND SRCS ${SRCS_QUADFP})
+endif()
+
 libmath_add_object_library("${SRCS}" "${FLAGS}" "${DEFINITIONS}" "")
 
 set(DEFINITIONS_CMPLX ${DEFINITIONS} MTH_CMPLX_C99_ABI)
@@ -449,7 +458,7 @@ endif()
 # Generate tmp-mth_statsdefs.h
 set(TARGET_NAME "tmp-mth_statsdefs")
 add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
-  COMMAND ${SH_PROGRAM} "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}_${PROCESSOR}.sh" ${CMAKE_CURRENT_SOURCE_DIR} ${TARGET_NAME}.h)
+  COMMAND ${SH_PROGRAM} "${LIBPGMATH_TOOLS_DIR}/${TARGET_NAME}_${PROCESSOR}.sh" ${CMAKE_CURRENT_SOURCE_DIR} ${TARGET_NAME}.h ${TARGET_SUPPORTS_QUADFP})
 
 add_custom_target(${TARGET_NAME} ALL DEPENDS "${TARGET_NAME}.h")
 libmath_add_object_library("dispatch.c" "${FLAGS}" "${DEFINITIONS}" "dispatch")
