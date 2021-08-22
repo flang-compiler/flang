@@ -179,6 +179,7 @@ static char *csv[] = {
         /* List needs to follow sv_e in mth_tbldefs.h */
         [sv_ss]         = "ss",
         [sv_ds]         = "ds",
+        [sv_qs]         = "qs",
         [sv_cs]         = "cs",
         [sv_zs]         = "zs",
         [sv_cv1]        = "cv1",
@@ -404,6 +405,8 @@ static  sv2attributes_t sv2attributes[] = {
 
         [sv_ds]     = { .elmtsz=elmtsz_64,     .nelmt=1},
         [sv_zs]     = { .elmtsz=elmtsz_64,     .nelmt=1},
+
+        [sv_qs]     = { .elmtsz=elmtsz_128,    .nelmt=1},
 
         [sv_sv4]    = { .elmtsz=elmtsz_128,    .nelmt=4*1},
         [sv_dv2]    = { .elmtsz=elmtsz_128,    .nelmt=2*1},

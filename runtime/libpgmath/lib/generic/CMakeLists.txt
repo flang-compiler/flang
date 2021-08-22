@@ -68,5 +68,20 @@ set(GENERIC_SRCS
   sqrt.c
   tan.c
   tanh.c)
+
+set(GENERIC_SRCS_QUADFP
+  aqanint.c
+  dqanint.c
+  qabs.c
+  qanint.c
+  qexp.c
+  qint.c
+  qremainder.c
+  qround.c)
+
+if(TARGET_SUPPORTS_QUADFP)
+  LIST(APPEND GENERIC_SRCS ${GENERIC_SRCS_QUADFP})
+endif()
+
 set(GENERIC_FLAGS "${FLAGS} -ffast-math ")
 libmath_add_object_library("${GENERIC_SRCS}" "${GENERIC_FLAGS}" "${DEFINITIONS}" "")

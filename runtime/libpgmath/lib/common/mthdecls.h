@@ -30,6 +30,15 @@
 #include <complex.h>
 #endif
 
+#ifdef TARGET_SUPPORTS_QUADFP
+#define I_SIZE 2 /* i[] has 2 elements and 128 bits */
+#define LITTLE_SIGN_MASK  0x7fffffff
+#define BIG_SIGN_MASK 0xffffff7f
+
+static const int g_one = 1;
+#define is_little_endian()    (*(const char *) & g_one != 0)
+#endif
+
 /*
  * Windows does not recognize the "_Complex" keyword for complex types but does
  * know about the "_Fcomplex" (float) and "_Dcomplex" (double) types.
@@ -498,6 +507,15 @@ double __mth_i_dbessel_yn(int n, double arg);
 double __f90_dbessel_yn(int n1, int n, double d);
 double __mth_i_dceil(double);
 double __mth_i_dfloor(double);
+#ifdef TARGET_SUPPORTS_QUADFP
+double __mth_i_dqanint(long double d);
+int  __mth_i_iqnint(long double q);
+long long __mth_i_kiqnint(long double q);
+long double __mth_i_qexp(long double q);
+long double __mth_i_qabs(long double q);
+long double __mth_i_qint(long double q);
+long double __mth_i_qanint(long double q);
+#endif
 
 #if	! defined (TARGET_X8664) && ! defined(LINUX8664)
 /*
