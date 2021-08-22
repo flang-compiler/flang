@@ -30,7 +30,7 @@ extern void add_osx_init_fini(char *, int);
 #endif
 
 #if DEBUG
-static char *xx[] = {"no", "loop", "routine", "na", "global"};
+static const char *xx[] = {"no", "loop", "routine", "na", "global"};
 #define TR0(s)         \
   if (DBGBIT(1, 1024)) \
     fprintf(gbl.dbgfil, s);
@@ -266,7 +266,7 @@ static int upper_to_lower = 0;
 
 static char *skip_ws(char *);
 static int gtok(void);
-static int g_id(char *);
+static int g_id(const char *);
 
 static void lcase(char *);
 
@@ -415,7 +415,7 @@ p_pragma(char *pg, int pline)
 #define SW_FORCEINLINE 73
 
 struct c {
-  char *cmd;
+  const char *cmd;
   int caselabel;
   bool no;
   int def_scope;
@@ -1786,7 +1786,7 @@ retry:
 }
 
 static int
-g_id(char *errstr)
+g_id(const char *errstr)
 {
   /*
    *  "general" scan routine to find identifiers.  syntax allows:

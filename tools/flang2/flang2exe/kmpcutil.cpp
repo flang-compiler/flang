@@ -1423,7 +1423,7 @@ ll_make_kmpc_threadprivate(int data_ili, int size_ili)
 int
 ll_make_kmpc_atomic_write(int *opnd, DTYPE dtype)
 {
-  char *type = "";
+  const char *type = "";
   int args[4];
   DTYPE arg_types[4] = {DT_CPTR, DT_INT, DT_CPTR, DT_CPTR};
   args[3] = gen_null_arg();        /* ident     */
@@ -1468,7 +1468,7 @@ ll_make_kmpc_atomic_write(int *opnd, DTYPE dtype)
 int
 ll_make_kmpc_atomic_read(int *opnd, DTYPE dtype)
 {
-  char *type = "";
+  const char *type = "";
   int args[4];
   DTYPE arg_types[5] = {DT_CPTR, DT_INT, DT_CPTR, DT_CPTR};
   args[3] = gen_null_arg();        /* ident     */

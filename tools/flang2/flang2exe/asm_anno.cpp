@@ -40,7 +40,7 @@ extern void annomod_end(void);
 static char *get_anno_line(FILE *fptr);
 static void put_anno_line(char *p);
 static int find_idx(ANNO *, int, int, int);
-static void emit_str(char *p, int lptr);
+static void emit_str(const char *p, int lptr);
 static void dmp_all_anno(ANNO *, FILE *, int);
 static void dmp_anno(ANNO *, FILE *);
 
@@ -518,7 +518,7 @@ find_idx(ANNO *p, int cnt, /* # of records in linear list */
  * \param lptr is the label sptr used for delay br filling.
  */
 static void
-emit_str(char *p, int lptr)
+emit_str(const char *p, int lptr)
 {
   if (p == NULL && lptr != 0)
     return; /* Called from sched_blkinit */
@@ -538,7 +538,7 @@ emit_str(char *p, int lptr)
 static void
 dmp_all_anno(ANNO *panno, FILE *fp, int flag)
 {
-  static char *msg[] = {" linked list dump ", " linear list dump "};
+  static const char *msg[] = {" linked list dump ", " linear list dump "};
   ANNO *p;
   int cnt = 0;
 

@@ -39,10 +39,10 @@ a1tos1(INT *from, INT *to, INT count)
 }
 
 void
-a4tos1(char *from, INT *to, INT count)
+a4tos1(const char *from, INT *to, INT count)
 {
   INT n;
-  char *a4; /* pointer used in letting C convert to S1 */
+  const char *a4; /* pointer used in letting C convert to S1 */
   INT *s1;
 
 #ifdef TRACE
@@ -1031,7 +1031,7 @@ lower_to_upper(INT cur_arg, INT arg_table[ARG_TABLE_ROWS][ARG_TABLE_COLS])
 }
 
 void
-util_error(char *p, INT err, INT flag)
+util_error(const char *p, INT err, INT flag)
 {
   printf("%s\n", p);
   exit(0);

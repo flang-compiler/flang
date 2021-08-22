@@ -82,8 +82,8 @@ inline DTYPE ILI_DTyOPND(int i, int opn) {
 /***** ILI Attributes Declarations *****/
 
 typedef struct {
-  char *name;          /* ili name */
-  char *opcod;         /* machine instruction mnemonic (CG only) */
+  const char *name;    /* ili name */
+  const char *opcod;   /* machine instruction mnemonic (CG only) */
   short oprs;          /* number of operands */
   unsigned short attr; /* AT attributes. e.g. cse, dom,  -
                         * Field size (right to left):

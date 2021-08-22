@@ -2909,7 +2909,7 @@ smsz(int m)
   return B;
 } /* smsz */
 
-char* scond(int);
+const char* scond(int);
 
 static void
 putstc(ILI_OP opc, int opnum, int opnd)

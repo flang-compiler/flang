@@ -679,7 +679,7 @@ check_tp(bool skip)
 }
 
 #if DEBUG
-char *
+const char *
 sxtp(int tp)
 {
   switch (tp) {
@@ -740,7 +740,7 @@ sxtp(int tp)
   }
 } /* sxtp */
 
-char *
+const char *
 sxtype(int m)
 {
   switch (m) {
@@ -791,7 +791,7 @@ sxtype(int m)
   }
 } /* sxtype */
 
-char *
+const char *
 sxfeature(int f)
 {
   switch (f) {

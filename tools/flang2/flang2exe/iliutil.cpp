@@ -83,7 +83,7 @@ static int new_ili(ILI *);
 static int ad1altili(ILI_OP, int, int);
 static int ad2altili(ILI_OP, int, int, int);
 static int ad3altili(ILI_OP, int, int, int, int);
-static int ad2func_int(ILI_OP, char *, int, int);
+static int ad2func_int(ILI_OP, const char *, int, int);
 static int gen_sincos(ILI_OP, int, ILI_OP, ILI_OP, MTH_FN, DTYPE, ILI_OP);
 #if defined(TARGET_X8664) || defined(TARGET_POWER)
 static int _newton_fdiv(int, int);
@@ -96,7 +96,7 @@ static int _xpowi(int, int, ILI_OP);
 #if defined(TARGET_X8664) || defined(TARGET_POWER) || !defined(TARGET_LLVM_ARM)
 static int _frsqrt(int);
 #endif
-static int _mkfunc(char *);
+static int _mkfunc(const char *);
 static int DblIsSingle(SPTR dd);
 static int _lshift_one(int);
 static int cmpz_of_cmp(int, CC_RELATION);
@@ -471,7 +471,7 @@ ad2altili(ILI_OP opc, int opn1, int opn2, int alt)
  * \param opc must be a function call ili opcode: QJSR, JSR
  */
 static int
-ad2func_int(ILI_OP opc, char *name, int opn1, int opn2)
+ad2func_int(ILI_OP opc, const char *name, int opn1, int opn2)
 {
   int tmp, tmp1, tmp2;
   tmp1 = ad1ili(IL_NULL, 0);
@@ -699,7 +699,7 @@ ad2mathfunc_cmplx(MTH_FN fn, ILI_OP opc, int op1, int op2, DTYPE res_dt,
  * WARNING - the arguments to ad_func are in lexical order
  */
 static int
-ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
+ad_func(ILI_OP result_opc, ILI_OP call_opc, const char *func_name, int nargs, ...)
 {
   va_list vargs;
   int rg;
@@ -889,7 +889,7 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, char *func_name, int nargs, ...)
 
 #if defined(TARGET_X8664)
 static char *
-fmth_name(char *root)
+fmth_name(const char *root)
 {
   static char bf[64];
   char *suf;
@@ -910,7 +910,7 @@ fmth_name(char *root)
  *   [L]    - vector length, i.e., 2, 4, 8, 16
  */
 char *
-gnr_math(char *root, int widthc, int typec, char *oldname, int masked)
+gnr_math(const char *root, int widthc, int typec, const char *oldname, int masked)
 {
   static char bf[32];
 /*
@@ -935,7 +935,7 @@ gnr_math(char *root, int widthc, int typec, char *oldname, int masked)
 }
 
 static char *
-vect_math(MTH_FN fn, char *root, int nargs, DTYPE vdt, int vopc, int vdt1,
+vect_math(MTH_FN fn, const char *root, int nargs, DTYPE vdt, int vopc, int vdt1,
           int vdt2, bool mask)
 {
   int typec;
@@ -1080,7 +1080,7 @@ vect_math(MTH_FN fn, char *root, int nargs, DTYPE vdt, int vopc, int vdt1,
  *   [L]    - vector length, i.e., 2, 4, 8, 16
  */
 char *
-fast_math(char *root, int widthc, int typec, char *oldname)
+fast_math(const char *root, int widthc, int typec, const char *oldname)
 {
   /*
    * widthc  - width indicator: 's' (scalar), 'v' (vector),
@@ -1090,7 +1090,7 @@ fast_math(char *root, int widthc, int typec, char *oldname)
    * oldname - old 'fastmath' name
    */
   static char bf[32];
-  char *suf;
+  const char *suf;
   int avxp;
   suf = "";
   avxp = 0;
@@ -1103,7 +1103,7 @@ fast_math(char *root, int widthc, int typec, char *oldname)
     }
     sprintf(bf, "%s%s", oldname, suf);
   } else {
-    char *simdw;
+    const char *simdw;
     simdw = "";
     if ((typec == 's' && widthc == 8) || (typec == 'd' && widthc == 4))
       simdw = "_256";
@@ -1138,7 +1138,7 @@ fast_math(char *root, int widthc, int typec, char *oldname)
  *   [L]    - vector length, i.e., 2, 4, 8, 16
  */
 char *
-fast_math(char *root, int widthc, int typec, char *oldname)
+fast_math(const char *root, int widthc, int typec, const char *oldname)
 {
   static char bf[32];
   /*
@@ -1157,13 +1157,13 @@ fast_math(char *root, int widthc, int typec, char *oldname)
  * -Mfprelaxed=intrinsic version of the routine.
  */
 char *
-relaxed_math(char *root, int widthc, int typec, char *oldname)
+relaxed_math(const char *root, int widthc, int typec, const char *oldname)
 {
   static char bf[32];
   /*
    * widthc - width indicator: 's' (scalar), 'v' (vector)
    */
-  char *suf;
+  const char *suf;
   int avxp;
 
   avxp = 0;
@@ -1200,7 +1200,7 @@ relaxed_math(char *root, int widthc, int typec, char *oldname)
  * \param opc must be a function call ili opcode: QJSR, JSR
  */
 int
-ad2func_kint(ILI_OP opc, char *name, int opn1, int opn2)
+ad2func_kint(ILI_OP opc, const char *name, int opn1, int opn2)
 {
   int tmp, tmp1, tmp2;
   tmp1 = ad1ili(IL_NULL, 0);
@@ -2406,7 +2406,7 @@ addarth(ILI *ilip)
     DBLE numd;
   } res, num1, num2;
   CC_RELATION cond;
-  char *root;
+  const char *root;
   char *fname;
   SPTR funcsptr;
   MTH_FN mth_fn;
@@ -10087,10 +10087,10 @@ simplified_cmp_ili(int cmp_ili)
   return cmp_ili;
 }
 
-char *
+const char *
 dump_msz(MSZ ms)
 {
-  char *msz;
+  const char *msz;
   switch (ms) {
   case MSZ_SBYTE:
     msz = "sb";
@@ -10193,9 +10193,9 @@ dump_ili(FILE *f, int i)
 {
   int j, noprs;
   ILI_OP opc;
-  static char *cond[] = {"eq",    "ne",    "lt",    "ge",    "le",    "gt",
-                         "noteq", "notne", "notlt", "notge", "notle", "notgt"};
-  static char *msz;
+  static const char *cond[] = {"eq",    "ne",    "lt",    "ge",    "le",    "gt",
+                               "noteq", "notne", "notlt", "notge", "notle", "notgt"};
+  static const char *msz;
 
   if (f == NULL)
     f = stderr;
@@ -10718,8 +10718,8 @@ prilitree(int i)
   int k, j, opn, noprs, o;
   ILI_OP opc;
   int n;
-  char *opval;
-  static char *ccval[] = {
+  const char *opval;
+  static const char *ccval[] = {
       "??",    "==",    "!=",    "<",     ">=",    "<=",   ">",
       "noteq", "notne", "notlt", "notge", "notle", "notgt"};
 
@@ -13105,7 +13105,7 @@ mkfunc_avx(char *nmptr, int avxp)
 }
 
 static int
-_mkfunc(char *name)
+_mkfunc(const char *name)
 {
   int ss;
   if (!XBIT(15, 0x40))
@@ -13449,11 +13449,11 @@ ilstckind(ILI_OP opc, int opnum)
   }
 } /* ilstckind */
 
-char *
+const char *
 scond(int c)
 {
-  static char *cond[] = {"..",  "eq",  "ne",  "lt",  "ge",  "le", "gt",
-                         "neq", "nne", "nlt", "nge", "nle", "ngt"};
+  static const char *cond[] = {"..",  "eq",  "ne",  "lt",  "ge",  "le", "gt",
+                               "neq", "nne", "nlt", "nge", "nle", "ngt"};
   static char B[15];
   if (c <= 0 || (size_t)c >= SIZEOF(cond)) {
     snprintf(B, 15, "%d", c);
@@ -13859,12 +13859,12 @@ char *
 make_math_name(MTH_FN fn, int vectlen, bool mask, DTYPE res_dt)
 {
   static char name[32]; /* return buffer */
-  static char *fn2str[] = {"acos", "asin",  "atan",  "atan2", "cos",    "cosh",
-                           "div",  "exp",   "log",   "log10", "pow",    "powi",
-                           "powk", "powi1", "powk1", "sin",   "sincos", "sinh",
-                           "sqrt", "tan",   "tanh",  "mod", "floor", "ceil",
-                           "aint"};
-  char *fstr;
+  static const char *fn2str[] = {"acos", "asin",   "atan",  "atan2", "cos",
+                                 "cosh", "div",    "exp",   "log",   "log10",
+                                 "pow",  "powi",   "powk",  "powi1", "powk1",
+                                 "sin",  "sincos", "sinh",  "sqrt",  "tan",
+                                 "tanh", "mod",    "floor", "ceil",  "aint"};
+  const char *fstr;
   char ftype = 'f';
   if (flg.ieee)
     ftype = 'p';

@@ -34,9 +34,9 @@ static struct {
   bool set; /* True if set by IMPLICIT stmt */
 } dtimplicit[26 + 26 + 2];
 
-static void cng_generic(char *, char *);
-static void cng_specific(char *, char *);
-static void cng_inttyp(char *, int);
+static void cng_generic(const char *, const char *);
+static void cng_specific(const char *, const char *);
+static void cng_inttyp(const char *, int);
 static void clear_vc(void);
 
 /* entry hack? */
@@ -217,7 +217,7 @@ sym_init(void)
 }
 
 static void
-cng_generic(char *old, char *New)
+cng_generic(const char *old, const char *New)
 {
   int os, ns;
 
@@ -241,7 +241,7 @@ cng_generic(char *old, char *New)
 }
 
 static void
-cng_specific(char *old, char *New)
+cng_specific(const char *old, const char *New)
 {
   int os, ns;
 
@@ -263,7 +263,7 @@ cng_specific(char *old, char *New)
 }
 
 static void
-cng_inttyp(char *old, int dt)
+cng_inttyp(const char *old, int dt)
 {
   int ss;
   ss = getsym(old, strlen(old));
@@ -672,12 +672,12 @@ sign_extend(INT val, int width)
 }
 
 SPTR
-getstring(char *value, int length)
+getstring(const char *value, int length)
 {
   SPTR sptr;   /* symbol table pointer */
   int hashval; /* index into hashtb */
   char *np;    /* pointer to string characters */
-  char *p;
+  const char *p;
   int i;
 
   /*
@@ -719,7 +719,7 @@ getstring(char *value, int length)
 }
 
 SPTR
-getntstring(char *value)
+getntstring(const char *value)
 {
   int len_string = strlen(value);
 
@@ -846,7 +846,7 @@ reapply_implicit(void)
  *
  * \param sptr - symbol table pointer
  */
-char *
+const char *
 parmprint(int sptr)
 {
   DTYPE dtype;
@@ -1013,7 +1013,7 @@ getprint(int sptr)
 /*
  * dump symbol table information for symbol sptr.
  */
-static void putaltname(FILE *, int, char *);
+static void putaltname(FILE *, int, const char *);
 static void putcuda(FILE *, int);
 
 #undef _PFG
@@ -1464,7 +1464,7 @@ symdentry(FILE *file, int sptr)
 #endif
 
 static void
-putaltname(FILE *dfil, int sptr, char *pref)
+putaltname(FILE *dfil, int sptr, const char *pref)
 {
   int ss, len;
   char *np;
@@ -1649,7 +1649,7 @@ getcctemp_sc(char *name, SYMTYPE stype, SC_KIND sc)
 }
 
 SPTR
-getccssym(char *pfx, int n, SYMTYPE stype)
+getccssym(const char *pfx, int n, SYMTYPE stype)
 {
   char name[32];
   SPTR sptr;
@@ -1674,7 +1674,7 @@ getccssym(char *pfx, int n, SYMTYPE stype)
 }
 
 SPTR
-getccssym_sc(char *pfx, int n, SYMTYPE stype, SC_KIND sc)
+getccssym_sc(const char *pfx, int n, SYMTYPE stype, SC_KIND sc)
 {
   SPTR sptr;
 

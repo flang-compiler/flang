@@ -52,11 +52,11 @@ extern int init_list_count;
 static int llvm_stb_processing = 0;
 
 static int read_line(void);
-static void checkversion(char *text);
+static void checkversion(const char *text);
 static int checkname(const char *text);
 static ISZ_T getval(const char *valname);
-static long getlval(char *valname);
-static int getbit(char *bitname);
+static long getlval(const char *valname);
+static int getbit(const char *bitname);
 
 #define STB_UPPER() (gbl.stbfil != NULL)
 #ifdef FLANG2_UPPER_UNUSED
@@ -115,8 +115,8 @@ static CGR_LIST *deferred_cgr_list = NULL;
 #define DESC_ELM_DT (XBIT(68, 1) ? DT_INT8 : DT_INT)
 
 typedef struct {
-  char *keyword;
-  char *shortkeyword;
+  const char *keyword;
+  const char *shortkeyword;
   int keyvalue;
 } namelist;
 
@@ -329,7 +329,7 @@ typedef struct upper_syminfo {
 } upper_syminfo;
 
 static void restore_saved_syminfo(int);
-static int getkeyword(char *keyname, const namelist NL[]);
+static int getkeyword(const char *keyname, const namelist NL[]);
 
 static IPAB ipab;
 static int errors;
@@ -1215,7 +1215,7 @@ read_line(void)
 } /* read_line */
 
 static void
-checkversion(char *text)
+checkversion(const char *text)
 {
   int ret;
   char check[50];
@@ -1300,7 +1300,7 @@ checkname(const char *name)
 
 /* check that the name matches */
 static int
-checkbitname(char *name)
+checkbitname(const char *name)
 {
   int i;
   if ((line[pos] == name[0]) &&
@@ -1359,7 +1359,7 @@ getval(const char *valname)
 } /* getval */
 
 static long
-getlval(char *valname)
+getlval(const char *valname)
 {
   long val, neg;
 
@@ -1397,7 +1397,7 @@ getlval(char *valname)
 } /* getlval */
 
 static int
-getbit(char *bitname)
+getbit(const char *bitname)
 {
   if (endilmfile) {
     fprintf(stderr, "ILM file: looking past end-of-file for bit %s\n", bitname);
@@ -1539,7 +1539,7 @@ gethex(void)
 } /* gethex */
 
 static int
-match(char *K)
+match(const char *K)
 {
   int j;
   for (j = 0; K[j]; ++j) {
@@ -1555,7 +1555,7 @@ match(char *K)
 } /* match */
 
 static int
-getkeyword(char *keyname, const namelist NL[])
+getkeyword(const char *keyname, const namelist NL[])
 {
   int i;
   if (endilmfile) {

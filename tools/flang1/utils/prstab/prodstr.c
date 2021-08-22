@@ -37,8 +37,8 @@ static void output();
 #define TOK_BREAK 5
 #define TOK_OTHER 6
 
-static char *tok_name[] = {"id",  "equal", "or",   "eoln",
-                           "eof", "break", "other"};
+static const char *tok_name[] = {"id",  "equal", "or",   "eoln",
+                                 "eof", "break", "other"};
 
 int
 main()
@@ -207,7 +207,7 @@ header()
   fprintf(outfile, "  case SYSTEM_GOAL_SYMBOL1:\n");
   fprintf(outfile, "    break;\n");
 
-  fprintf(prodfile, "static char *prodstr[] = {\"SYSTEM GOAL\",\n");
+  fprintf(prodfile, "static const char *prodstr[] = {\"SYSTEM GOAL\",\n");
 
   return;
 }

@@ -892,9 +892,10 @@ type_conv_error:
    always uppercase)
  */
 bool
-sem_eq_str(int con, char *pattern)
+sem_eq_str(int con, const char *pattern)
 {
-  char *p1, *p2;
+  char *p1;
+  const char *p2;
   int len;
   int c1, c2;
 

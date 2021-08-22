@@ -7791,7 +7791,7 @@ sem_strcmp(char *str, char *pattern)
            (pattern is always uppercase).
   */
 LOGICAL
-sem_eq_str(int con, char *pattern)
+sem_eq_str(int con, const char *pattern)
 {
   char *p1, *p2;
   int len;

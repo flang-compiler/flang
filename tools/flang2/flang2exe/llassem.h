@@ -236,7 +236,7 @@ extern int ag_funcptr; /* list of function pointer - should be a member
                                  LOCAL(any?) and STATIC in same list */
 
 void put_i32(int);
-void put_string_n(char *, ISZ_T, int);
+void put_string_n(const char *, ISZ_T, int);
 void put_short(int);
 void put_int4(INT);
 

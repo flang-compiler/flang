@@ -84,10 +84,10 @@ get_ot_name(unsigned ot)
 
 #define DT_SBYTE DT_BINT
 
-static char *llvm_cc_names[LLCC_LAST] = {
+static const char *llvm_cc_names[LLCC_LAST] = {
     "none", "eq", "ne", "ugt", "uge", "ult", "ule", "sgt", "sge", "slt", "sle"};
 
-static char *llvm_ccfp_names[LLCCF_LAST] = {
+static const char *llvm_ccfp_names[LLCCF_LAST] = {
     "none", "false", "oeq", "ogt", "oge", "olt", "ole", "one", "ord",
     "ueq",  "ugt",   "uge", "ult", "ule", "une", "uno", "true"};
 
@@ -1755,7 +1755,7 @@ print_space_tobuf(int num, char *buf)
    \brief Write any line which does not need a tab
  */
 void
-print_line(char *ln)
+print_line(const char *ln)
 {
   if (ln != NULL)
     fprintf(LLVMFIL, "%s\n", ln);
@@ -2230,7 +2230,6 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
   OPERAND *new_op;
   LL_Type *llt;
   LL_Type *pllt;
-  char *name;
   const bool uns = (flags & FLG_AS_UNSIGNED) != 0;
   int sptr = p->val.sptr;
   if (p->flags & OPF_CONTAINS_UNDEF) {
@@ -2319,7 +2318,6 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
     break;
   case OT_VAR:
     assert(sptr, "write_operand(): no sptr when expected", 0, ERR_Fatal);
-    name = p->string;
     pllt = p->ll_type;
     if (pllt->data_type == LL_FUNCTION)
       pllt = make_ptr_lltype(pllt);
@@ -2334,7 +2332,7 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
     if (p->flags & OPF_SRARG_TYPE)
       print_token(" byval");
     print_space(1);
-    print_token(name);
+    print_token(p->string);
     break;
   case OT_DEF:
   case OT_CALL: /* currently just used for llvm intrinsics */
@@ -2600,10 +2598,10 @@ get_param_equiv_dtype(DTYPE dtype)
 /**
    \brief return string for a first class type
  */
-char *
+const char *
 llvm_fc_type(DTYPE dtype)
 {
-  char *retc;
+  const char *retc;
   ISZ_T sz;
 
   switch (DTY(dtype)) {

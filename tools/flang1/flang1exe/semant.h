@@ -954,7 +954,7 @@ int get_shape_arr_temp(int);
 SPTR get_ch_temp(DTYPE);
 int need_alloc_ch_temp(DTYPE);
 int sem_strcmp(char *, char *);
-LOGICAL sem_eq_str(int, char *);
+LOGICAL sem_eq_str(int, const char *);
 void add_case_range(int, int, int);
 int _i4_cmp(int, int);
 int _i8_cmp(int, int);

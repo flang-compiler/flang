@@ -1123,7 +1123,7 @@ assemble_end(void)
 {
   int gblsym, tdefsym, align_value, cmem;
   char *name, *typed, gname[MXIDLN + 50];
-  char *tls = " thread_local";
+  const char *tls = " thread_local";
 
   if (gbl.has_program) {
     /* If huge page table support (-Mhugetlb) emit the constructor init */
@@ -1451,8 +1451,8 @@ write_extern_inits(void)
       int dummy;
       char *bare = get_struct_from_dsrt(SPTR_NULL, dsrtp, SIZEG(sptr), &dummy,
                                         true, dsrtp->offset);
-      char *alTy = "";
-      char *alSep = "";
+      const char *alTy = "";
+      const char *alSep = "";
       fprintf(ASMFIL,
               "%%struct%s = type %s\n"
               "@%s.%d = internal %s<{%s}> <{ ",
@@ -1497,7 +1497,7 @@ write_bss(void)
    *      this case: http://llvm.org/bugs/show_bug.cgi?id=17246
    */
   int gblsym;
-  char *type_str = "internal global";
+  const char *type_str = "internal global";
   char *bss_nm = bss_name;
 
   if (gbl.bss_addr) {
@@ -1554,7 +1554,7 @@ write_statics(void)
    *      a segfault will ensue, as llvm will emit the section as read-only in
    *      this case: http://llvm.org/bugs/show_bug.cgi?id=17246
    */
-  char *type_str = "internal global";
+  const char *type_str = "internal global";
   char gname[MXIDLN + 50];
   char *typed = NULL, *type_only = NULL;
   int align8 = 16;
@@ -2323,7 +2323,7 @@ put_ll_table_addr(const char *name, const char *suffix, bool is_struct,
 {
   int gblsym;
   char buf[256];
-  char *elem_type;
+  const char *elem_type;
 
   elem_type = "";
   /* Decide if we need extra element type argument to GEP */
@@ -3526,7 +3526,7 @@ getextfuncname(SPTR sptr)
   return name;
 } /* getextfuncname */
 
-static char *
+static const char *
 getfuncname(SPTR sptr)
 {
   if (!sptr)
@@ -3551,10 +3551,11 @@ getsname(SPTR sptr)
   static char name[MXIDLN]; /* 1 for null, 3 for extra '_' ,
                              * 4 for @### with mscall
                              */
-  char *p, *q, ch;
+  char *p, ch;
+  const char *q;
   bool has_underscore = false;
   int stype, m;
-  char *prepend = "\0";
+  const char *prepend = "\0";
 
   switch (stype = STYPEG(sptr)) {
   case ST_LABEL:
@@ -4782,10 +4783,11 @@ get_llvm_name(SPTR sptr)
   static char name[MXIDLN]; /* 1 for null, 3 for extra '_' ,
                              * 4 for @### with mscall
                              */
-  char *p, *q, ch;
+  char *p, ch;
+  const char *q;
   bool has_underscore = false;
   int m;
-  char *prepend = "\0";
+  const char *prepend = "\0";
   const SYMTYPE stype = STYPEG(sptr);
 
   switch (stype) {

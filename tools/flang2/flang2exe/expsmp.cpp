@@ -611,7 +611,7 @@ jsrAddArg(int arglist, ILI_OP opc, int argili)
  * \param argili argument list
  */
 static int
-makeCall(char *fname, ILI_OP opc, int argili)
+makeCall(const char *fname, ILI_OP opc, int argili)
 {
   int ili;
   bool old_share_proc, old_share_qjsr;
@@ -940,7 +940,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   SPTR tpv;
   int pv;
   int savex14;
-  char *doschedule;
+  const char *doschedule;
   int semaphore, dotarget;
   static int assign_rou = 0; /* C++ only, lets avoid more ifdefs */
   ILM_T rou_op;

@@ -115,7 +115,7 @@ void exp_header(SPTR sym);
 /**
    \brief ...
  */
-void exp_qjsr(char *ext, DTYPE res_dtype, ILM *ilmp, int curilm);
+void exp_qjsr(const char *ext, DTYPE res_dtype, ILM *ilmp, int curilm);
 
 /**
    \brief ...

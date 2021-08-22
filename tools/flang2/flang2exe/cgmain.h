@@ -53,17 +53,7 @@ char *get_label_name(int sptr);
 /**
    \brief ...
  */
-char *get_llvm_mips_sname(SPTR sptr);
-
-/**
-   \brief ...
- */
-char *get_llvm_sname(SPTR sptr);
-
-/**
-   \brief ...
- */
-char *match_names(MATCH_Kind match_val);
+const char *match_names(MATCH_Kind match_val);
 
 /**
    \brief ...

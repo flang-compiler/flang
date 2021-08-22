@@ -3768,7 +3768,8 @@ static CONST *
 eval_trim(CONST *arg, DTYPE dtype)
 {
   CONST *rslt = eval_init_expr(arg);
-  char *p, *cp, *str;
+  const char *str;
+  char *p, *cp;
   int i, cvlen, newlen;
 
   p = stb.n_base + CONVAL1G(rslt->u1.conval);

@@ -8,7 +8,7 @@
 /*  define structures and data for keyword processing: */
 
 typedef struct {
-  char *keytext;       /* keyword text in lower case */
+  const char *keytext; /* keyword text in lower case */
   int toktyp;          /* token id (as used in parse tables) */
   LOGICAL nonstandard; /* TRUE if nonstandard (extension to f90) */
 } KWORD;
