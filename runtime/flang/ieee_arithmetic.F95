@@ -156,56 +156,97 @@ module IEEE_ARITHMETIC
   !--------------------
   interface ieee_class
     module procedure ieee_classr4, ieee_classr8
+#ifdef TARGET_SUPPORTS_QUADFP
+    module procedure ieee_classr16
+#endif
   end interface
 
   interface ieee_copy_sign
     module procedure ieee_copy_signr4, ieee_copy_signr8
+#ifdef TARGET_SUPPORTS_QUADFP
+    module procedure ieee_copy_signr16
+#endif
   end interface
 
   interface ieee_is_finite
     module procedure ieee_is_finiter4, ieee_is_finiter8
+#ifdef TARGET_SUPPORTS_QUADFP
+    module procedure ieee_is_finiter16
+#endif
   end interface
 
   interface ieee_is_nan
     module procedure ieee_is_nanr4, ieee_is_nanr8
+#ifdef TARGET_SUPPORTS_QUADFP
+    module procedure ieee_is_nanr16
+#endif
   end interface
 
   interface ieee_is_negative
     module procedure ieee_is_negativer4, ieee_is_negativer8
+#ifdef TARGET_SUPPORTS_QUADFP
+    module procedure ieee_is_negativer16
+#endif
   end interface
 
   interface ieee_is_normal
     module procedure ieee_is_normalr4, ieee_is_normalr8
+#ifdef TARGET_SUPPORTS_QUADFP
+    module procedure ieee_is_normalr16
+#endif
   end interface
 
   interface ieee_logb
     module procedure ieee_logbr4, ieee_logbr8
+#ifdef TARGET_SUPPORTS_QUADFP
+    module procedure ieee_logbr16
+#endif
   end interface
 
   interface ieee_next_after
     module procedure ieee_nextafterr4, ieee_nextafterr8
+#ifdef TARGET_SUPPORTS_QUADFP
+    module procedure ieee_nextafterr16
+#endif
   end interface
 
   interface ieee_rem
     module procedure ieee_rem4x4, ieee_rem4x8
     module procedure ieee_rem8x4, ieee_rem8x8
+#ifdef TARGET_SUPPORTS_QUADFP
+    module procedure ieee_rem4x16
+    module procedure ieee_rem8x16
+    module procedure ieee_rem16x4, ieee_rem16x8, ieee_rem16x16
+#endif
   end interface
 
   interface ieee_rint
     module procedure ieee_rintr4, ieee_rintr8
+#ifdef TARGET_SUPPORTS_QUADFP
+    module procedure ieee_rintr16
+#endif
   end interface
 
   interface ieee_scalb
     module procedure ieee_scalbr4, ieee_scalbr8
     module procedure ieee_scalbr4i8, ieee_scalbr8i8
+#ifdef TARGET_SUPPORTS_QUADFP
+    module procedure ieee_scalbr16, ieee_scalbr16i8
+#endif
   end interface
 
   interface ieee_unordered
     module procedure ieee_unorderedr4, ieee_unorderedr8
+#ifdef TARGET_SUPPORTS_QUADFP
+    module procedure ieee_unorderedr16
+#endif
   end interface
 
   interface ieee_value
     module procedure ieee_valuer4, ieee_valuer8
+#ifdef TARGET_SUPPORTS_QUADFP
+    module procedure ieee_valuer16
+#endif
   end interface
 
   ! External interfaces
@@ -237,6 +278,15 @@ module IEEE_ARITHMETIC
     end function __fenv_fesetzerodenorm
   end interface
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  interface
+    pure function __nearbyintl(x) bind(c)
+      use, intrinsic :: iso_c_binding
+      real(c_long_double), value :: x
+      real(c_long_double) :: __nearbyintl
+    end function __nearbyintl
+  end interface
+#endif
   interface
     pure function __nearbyint(x) bind(c)
       use, intrinsic :: iso_c_binding
@@ -252,6 +302,15 @@ module IEEE_ARITHMETIC
     end function __nearbyintf
   end interface
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  interface
+    pure function __remainderl(x, y) bind(c)
+      use, intrinsic :: iso_c_binding
+      real(c_long_double), value :: x, y
+      real(c_long_double) :: __remainderl
+    end function __remainderl
+  end interface
+#endif
   interface
     pure function __remainder(x, y) bind(c)
       use, intrinsic :: iso_c_binding
@@ -267,6 +326,15 @@ module IEEE_ARITHMETIC
     end function __remainderf
   end interface
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  interface
+    pure function __nextafterl(x, y) bind(c)
+      use, intrinsic :: iso_c_binding
+      real(c_long_double), value :: x, y
+      real(c_long_double) :: __nextafterl
+      end function __nextafterl
+  end interface
+#endif
   interface
     pure function __nextafter(x, y) bind(c)
       use, intrinsic :: iso_c_binding
@@ -282,6 +350,16 @@ module IEEE_ARITHMETIC
     end function __nextafterf
   end interface
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  interface
+    pure function __scalbnl(x, i) bind(c)
+    use, intrinsic :: iso_c_binding
+    real(c_long_double), value :: x
+    integer(c_int), value :: i
+    real(c_long_double) :: __scalbnl
+    end function __scalbnl
+  end interface
+#endif
   interface
     pure function __scalbn(x, i) bind(c)
       use, intrinsic :: iso_c_binding
@@ -708,6 +786,53 @@ contains
     return
   end function
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  elemental type(ieee_class_type) function ieee_classr16(x)
+    real*16 x, ex
+    integer*4 ir(4), iw, ix, iy, iz, iexp, imant
+    equivalence(ex, ir)
+    ex = x
+    iw = ir(4)
+    ix = ir(3)
+    iy = ir(2)
+    iz = ir(1)
+    iexp = ishft(iw, -16)
+    iexp = iand(iexp, z'7fff')
+
+    if (iexp .eq. 0) then
+      if((iw .eq. 0 ) .and. (ix .eq. 0) .and. (iy .eq. 0) .and. (iz .eq. 0)) then
+        ieee_classr16 = ieee_positive_zero
+      else if ((iand(iw, z'7fffffff') .eq. 0) .and. (ix .eq. 0) .and. (iy .eq. 0) .and. (iz .eq. 0)) then
+        ieee_classr16 = ieee_negative_zero
+      else if (iand(iw, z'80000000') .eq. 0) then
+        ieee_classr16 = ieee_positive_denormal
+      else
+        ieee_classr16 = ieee_negative_denormal
+      endif
+    else  if (iexp .lt. 32767) then
+      if (iand(iw, z'80000000') .eq. 0) then
+        ieee_classr16 = ieee_positive_normal
+      else
+        ieee_classr16 = ieee_negative_normal
+      endif
+    else
+      imant = ior(ior(ior(iand(iw, z'ffff'), ix), iy), iz)
+      if (imant .eq. 0) then
+        if (iand(iw, z'80000000') .eq. 0) then
+          ieee_classr16 = ieee_positive_inf
+        else
+          ieee_classr16 = ieee_negative_inf
+        endif
+      else if (iand(iw, z'8000') .ne. 0) then
+        ieee_classr16 = ieee_quiet_nan
+      else
+        ieee_classr16 = ieee_signaling_nan
+      end if
+    end if
+    return
+  end function
+#endif
+
   elemental real*4 function ieee_valuer4(x, cl)
     real*4 x, ex
     type(ieee_class_type) :: cl
@@ -762,6 +887,30 @@ contains
 #endif
   end function
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  elemental real*16 function ieee_valuer16(x, cl)
+    real*16 x, ex
+    type(ieee_class_type) :: cl
+    integer*4 ix, iz(4)
+    equivalence(ex, iz)
+    if (cl%ct .eq. 0) ix = z'00000000'
+    if (cl%ct .eq. 1) ix = z'80000000'
+    if (cl%ct .eq. 2) ix = z'00008000'
+    if (cl%ct .eq. 3) ix = z'80008000'
+    if (cl%ct .eq. 4) ix = z'3fff0000'
+    if (cl%ct .eq. 5) ix = z'bfff0000'
+    if (cl%ct .eq. 6) ix = z'7fff0000'
+    if (cl%ct .eq. 7) ix = z'ffff0000'
+    if (cl%ct .eq. 8) ix = z'7fff4000'
+    if (cl%ct .eq. 9) ix = z'7fff8000'
+    iz(1) = 0
+    iz(2) = 0
+    iz(3) = 0
+    iz(4) = ix
+    ieee_valuer16 = ex
+  end function
+#endif
+
   elemental real*4 function ieee_copy_signr4(x, y)
     real*4 x, y, ex, ey
     integer*4 ix, iy
@@ -815,6 +964,23 @@ contains
 #endif
   end function
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  elemental real*16 function ieee_copy_signr16(x, y)
+    real*16 x, y, ex
+    integer*4 ix, iy, iz(4)
+    equivalence(ex, iz)
+    ex = y
+    iy = iz(4)
+    iy = iand(iy, z'80000000')
+    ex = x
+    ix = iz(4)
+    ix = iand(ix, z'7fffffff')
+    ix = ior(ix, iy)
+    iz(4) = ix
+    ieee_copy_signr16 = ex
+  end function
+#endif
+
   elemental logical function ieee_is_finiter4(x)
 !pgi$ defaultkind
     real*4 x
@@ -838,6 +1004,20 @@ contains
       ieee_is_finiter8 = .false.
     end if
   end function
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  elemental logical function ieee_is_finiter16(x)
+!pgi$ defaultkind
+    real*16 x
+    type(ieee_class_type) :: cl
+    cl = ieee_class(x)
+    if (cl%ct .lt. 6) then
+      ieee_is_finiter16 = .true.
+    else
+      ieee_is_finiter16 = .false.
+    end if
+  end function
+#endif
 
   elemental logical function ieee_is_nanr4(x)
 !pgi$ defaultkind
@@ -863,6 +1043,20 @@ contains
     end if
   end function
 
+#ifdef TARGET_SUPPORTS_QUADFP
+elemental logical function ieee_is_nanr16(x)
+!pgi$ defaultkind
+    real*16 x
+    type(ieee_class_type) :: cl
+    cl = ieee_class(x)
+    if ((cl%ct .eq. 8) .or. (cl%ct .eq. 9)) then
+      ieee_is_nanr16 = .true.
+    else
+      ieee_is_nanr16 = .false.
+    end if
+  end function
+#endif
+
   elemental logical function ieee_unorderedr4(x, y)
 !pgi$ defaultkind
     real*4 x, y
@@ -874,6 +1068,14 @@ contains
     real*8 x, y
     ieee_unorderedr8 = (ieee_is_nanr8(x) .or. ieee_is_nanr8(y))
   end function
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  elemental logical function ieee_unorderedr16(x, y)
+!pgi$ defaultkind
+    real*16 x, y
+    ieee_unorderedr16 = (ieee_is_nanr16(x) .or. ieee_is_nanr16(y))
+  end function
+#endif
 
   elemental logical function ieee_is_negativer4(x)
 !pgi$ defaultkind
@@ -899,6 +1101,20 @@ contains
     end if
   end function
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  elemental logical function ieee_is_negativer16(x)
+!pgi$ defaultkind
+    real*16 x
+    type(ieee_class_type) :: cl
+    cl = ieee_class(x)
+    if ((cl%ct .lt. 8) .and. (iand(cl%ct, 1) .eq. 1)) then
+      ieee_is_negativer16 = .true.
+    else
+      ieee_is_negativer16 = .false.
+    end if
+  end function
+#endif
+
   elemental logical function ieee_is_normalr4(x)
 !pgi$ defaultkind
     real*4 x
@@ -922,6 +1138,20 @@ contains
       ieee_is_normalr8 = .false.
     end if
   end function
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  elemental logical function ieee_is_normalr16(x)
+!pgi$ defaultkind
+    real*16 x
+    type(ieee_class_type) :: cl
+    cl = ieee_class(x)
+    if ((cl%ct .lt. 6) .and. (iand(cl%ct, 2) .eq. 0)) then
+      ieee_is_normalr16 = .true.
+    else
+      ieee_is_normalr16 = .false.
+    end if
+  end function
+#endif
 
   elemental real*4 function ieee_logbr4(x)
     real*4 x, ex
@@ -1001,6 +1231,99 @@ contains
     end if
   end function
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  elemental real*16 function ieee_logbr16(x)
+    real*16 x, ex
+    integer*4 iz(4), ix, iy, ix2, iy2, iexp, imant
+    equivalence(ex, iz)
+    ex = x
+    ix = iz(4)
+    ix2 = iz(3)
+    iy = iz(2)
+    iy2 = iz(1)
+    iexp = ishft(ix, -16)
+    iexp = iand(iexp, z'7fff')
+    if ((iand(ix, z'7fffffff') .eq. 0) .and. (ix2 .eq. 0) &
+        .and. (iy .eq. 0) .and. (iy2 .eq. 0)) then
+      ieee_logbr16 = ieee_value(x, ieee_negative_inf)
+    else if (iexp .eq. 0) then
+      imant = iand(ix, z'0000ffff')
+      if (imant .ne. 0) then
+        ibitp = z'00010000'
+        do while (imant .lt. ibitp)
+          ibitp = ibitp / 2
+          iexp = iexp - 1
+        end do
+      else
+        iexp = iexp - 16
+        imant = iand(ishft(ix2, -16), z'0000ffff')
+        if (imant .ne. 0) then
+          ibitp = z'00010000'
+          do while (imant .lt. ibitp)
+            ibitp = ibitp / 2
+            iexp = iexp - 1
+          end do
+        else
+          iexp = iexp - 16
+          imant = iand(ix2, z'0000ffff')
+          if (imant .ne. 0) then
+            ibitp = z'00010000'
+            do while (imant .lt. ibitp)
+              ibitp = ibitp / 2
+              iexp = iexp - 1
+            end do
+          else
+            iexp = iexp - 16
+            imant = iand(ishft(iy, -16), z'0000ffff')
+            if (imant .ne. 0) then
+              ibitp = z'00010000'
+              do while (imant .lt. ibitp)
+                ibitp = ibitp / 2
+                iexp = iexp - 1
+              end do
+            else
+              iexp = iexp - 16
+              imant = iand(iy, z'0000ffff')
+              if (imant .ne. 0) then
+                ibitp = z'00010000'
+                do while (imant .lt. ibitp)
+                  ibitp = ibitp / 2
+                  iexp = iexp - 1
+                end do
+              else
+                iexp = iexp - 16
+                imant = iand(ishft(iy2, -16), z'0000ffff')
+                if (imant .ne. 0) then
+                  ibitp = z'00010000'
+                  do while (imant .lt. ibitp)
+                    ibitp = ibitp / 2
+                    iexp = iexp - 1
+                  end do
+                else
+                  iexp = iexp - 16
+                  imant = iand(iy2, z'0000ffff')
+                  if (imant .ne. 0) then
+                    ibitp = z'00010000'
+                    do while (imant .lt. ibitp)
+                      ibitp = ibitp / 2
+                      iexp = iexp - 1
+                    end do
+                  endif
+                endif
+              endif
+            endif
+          endif
+        endif
+      endif
+      ieee_logbr16 = real(iexp - 16382, kind = 16)
+    else if (iexp .eq. 32767 ) then
+      ieee_logbr16 = x
+    else
+      ieee_logbr16 = real(iexp - 16383, kind = 16)
+    end if
+  end function
+#endif
+
   elemental real*4 function ieee_nextafterr4(x,y)
     real*4 x, y
     ieee_nextafterr4 = __nextafterf(x, y)
@@ -1010,6 +1333,13 @@ contains
     real*8 x, y
     ieee_nextafterr8 = __nextafter(x, y)
   end function
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  elemental real*16 function ieee_nextafterr16(x,y)
+    real*16 x, y
+    ieee_nextafterr16 = __nextafterl(x, y)
+  end function
+#endif
 
   elemental real*4 function ieee_rem4x4(x,y)
     real*4 x, y
@@ -1022,6 +1352,14 @@ contains
     ieee_rem4x8 = __remainder(dble(x), y)
   end function
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  elemental real*16 function ieee_rem4x16(x,y)
+    real*4 x
+    real*16 y
+    ieee_rem4x16 = __remainderl(real(x, kind = 16), y)
+  end function
+#endif
+
   elemental real*8 function ieee_rem8x4(x,y)
     real*8 x
     real*4 y
@@ -1033,6 +1371,31 @@ contains
     ieee_rem8x8 = __remainder(x, y)
   end function
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  elemental real*16 function ieee_rem8x16(x,y)
+    real*8 x
+    real*16 y
+    ieee_rem8x16 = __remainderl(real(x, kind = 16), y)
+  end function
+
+  elemental real*16 function ieee_rem16x4(x,y)
+    real*16 x
+    real*4 y
+    ieee_rem16x4 = __remainderl(x, real(y, kind = 16))
+  end function
+
+  elemental real*16 function ieee_rem16x8(x,y)
+    real*16 x
+    real*8 y
+    ieee_rem16x8 = __remainderl(x, real(y, kind = 16))
+  end function
+
+  elemental real*16 function ieee_rem16x16(x,y)
+    real*16 x, y
+    ieee_rem16x16 = __remainderl(x, y)
+  end function
+#endif
+
   elemental real*4 function ieee_rintr4(x)
     real*4 x
     ieee_rintr4 = __nearbyintf(x)
@@ -1042,6 +1405,13 @@ contains
     real*8 x
     ieee_rintr8 = __nearbyint(x)
   end function
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  elemental real*16 function ieee_rintr16(x)
+    real*16 x
+    ieee_rintr16 = __nearbyintl(x)
+  end function
+#endif
 
   elemental real*4 function ieee_scalbr4(x, i)
     real*4 x
@@ -1054,6 +1424,14 @@ contains
     integer*4 i
     ieee_scalbr8 = __scalbn(x, i)
   end function
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  elemental real*16 function ieee_scalbr16(x, i)
+    real*16 x
+    integer*4 i
+    ieee_scalbr16 = __scalbnl(x, i)
+  end function
+#endif
 
   elemental real*4 function ieee_scalbr4i8(x, i)
     real*4 x
@@ -1082,5 +1460,21 @@ contains
     end if
     ieee_scalbr8i8 = __scalbn(x, j)
   end function
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  elemental real*16 function ieee_scalbr16i8(x, i)
+    real*16 x
+    integer*8 i
+    integer*4 j
+    if (i .gt. 32768) then
+      j = 32768
+    else if (i .lt. -32768) then
+      j = -32768
+    else
+      j = i
+    end if
+    ieee_scalbr16i8 = __scalbnl(x, j)
+  end function
+#endif
 
 end module IEEE_ARITHMETIC

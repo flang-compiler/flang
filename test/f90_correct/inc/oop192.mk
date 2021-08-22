@@ -7,8 +7,8 @@
 
 ########## Make rule for test oop192  ########
 
-fcheck.o check_mod.mod: $(SRC)/check_mod.f90
-	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.f90 -o fcheck.o
+fcheck.o check_mod.mod: $(SRC)/check_mod.F90
+	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.F90 -o fcheck.o
 
 oop192.o:  $(SRC)/oop192.f90 check_mod.mod
 	@echo ------------------------------------ building test $@

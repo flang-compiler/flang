@@ -1370,6 +1370,7 @@ lower_init_sym(void)
   lowersym.intone = lower_getintcon(1);
   lowersym.realzero = stb.flt0;
   lowersym.dblezero = stb.dbl0;
+  lowersym.quadzero = stb.quad0;
   lowersym.ptrnull = lower_getnull();
   if (XBIT(68, 0x1)) {
     lowersym.bnd.zero = stb.k0;

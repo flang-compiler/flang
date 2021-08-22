@@ -10,8 +10,8 @@
 in31: run
 	
 
-fcheck.$(OBJX): $(SRC)/check_mod.f90
-	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.f90 -o fcheck.$(OBJX)
+fcheck.$(OBJX): $(SRC)/check_mod.F90
+	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.F90 -o fcheck.$(OBJX)
 
 build:  $(SRC)/in31.f90 $(SRC)/in31_expct.c fcheck.$(OBJX)
 	-$(RM) in31.$(EXESUFFIX) in31.$(OBJX) in31_expct.$(OBJX)

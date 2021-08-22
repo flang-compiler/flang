@@ -59,6 +59,7 @@ union ATOMIC_ENCODER {
 
 #define IL_spfunc IL_DFRSP
 #define IL_dpfunc IL_DFRDP
+#define IL_qpfunc IL_DFRQP
 
 bool share_proc_ili = false;
 bool share_qjsr_ili = false;
@@ -768,6 +769,14 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, const char *func_name, int nargs, ..
         rg++;
         frg++;
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case ILIA_QP:
+        args[i].opc = IL_DAQP;
+        args[i].reg = QP(frg);
+        rg++;
+        frg++;
+        break;
+#endif
       case ILIA_CS:
         args[i].opc = IL_DACS;
         args[i].reg = DP(frg);
@@ -865,6 +874,11 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, const char *func_name, int nargs, ..
   case IL_DFRDP:
     ilix = ad2ili(result_opc, ilix, DP_RETVAL);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_DFRQP:
+    ilix = ad2ili(result_opc, ilix, QP_RETVAL);
+    break;
+#endif
   case IL_DFRCS:
     ilix = ad2ili(result_opc, ilix, CS_RETVAL);
     break;
@@ -1362,6 +1376,11 @@ ad_cse(int ilix)
   case ILIA_DP:
     ilix = ad1ili(IL_CSEDP, ilix);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case ILIA_QP:
+    ilix = ad1ili(IL_CSEQP, ilix);
+    break;
+#endif
 #ifdef ILIA_CS
   case ILIA_CS:
     ilix = ad1ili(IL_CSECS, ilix);
@@ -1702,6 +1721,9 @@ insert_argrsrv(ILI *ilip)
     case IL_ARGIR:
     case IL_ARGSP:
     case IL_ARGDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+    case IL_ARGQP:
+#endif
     case IL_ARGAR:
     case IL_ARGKR:
 #ifdef LONG_DOUBLE_FLOAT128
@@ -2357,9 +2379,15 @@ inline bool IS_DBL0(int x)
 {
   return is_dbl0(static_cast<SPTR>(x));
 }
+
+inline bool IS_QUAD0(int x)
+{
+  return is_quad0(static_cast<SPTR>(x));
+}
 #else
 #define IS_FLT0 is_flt0
 #define IS_DBL0 is_dbl0
+#define IS_QUAD0 is_quad0
 #endif
 
 /**
@@ -2402,6 +2430,13 @@ addarth(ILI *ilip)
     UINT numu[2];
     DBLE numd;
   } res, num1, num2;
+#ifdef TARGET_SUPPORTS_QUADFP
+  union { /* quad constant value structure */
+    INT numi[NUMI_SIZE];
+    UINT numu[NUMU_SIZE];
+    QUAD numq;
+  } qres, qnum1, qnum2;
+#endif
   CC_RELATION cond;
   const char *root;
   char *fname;
@@ -2409,15 +2444,30 @@ addarth(ILI *ilip)
   MTH_FN mth_fn;
 
 #define GETVAL64(a, b)       \
-  {                          \
+  do {                       \
     a.numd[0] = CONVAL1G(b); \
     a.numd[1] = CONVAL2G(b); \
-  }
+  } while (0)
 #define GETVALI64(a, b)      \
-  {                          \
+  do {                       \
     a.numi[0] = CONVAL1G(b); \
     a.numi[1] = CONVAL2G(b); \
-  }
+  } while (0)
+
+#define GETVAL128(a, b)      \
+  do {                       \
+    a.numq[0] = CONVAL1G(b); \
+    a.numq[1] = CONVAL2G(b); \
+    a.numq[2] = CONVAL3G(b); \
+    a.numq[3] = CONVAL4G(b); \
+  } while (0)
+#define GETVALI128(a, b)     \
+  do {                       \
+    a.numi[0] = CONVAL1G(b); \
+    a.numi[1] = CONVAL2G(b); \
+    a.numi[2] = CONVAL3G(b); \
+    a.numi[3] = CONVAL4G(b); \
+  } while (0)
 
   ncons = 0;
   opc = ilip->opc;
@@ -2546,6 +2596,13 @@ addarth(ILI *ilip)
     ilix = ad_func(IL_DFRIR, IL_QJSR, MTH_I_IDNINT, 1, op1);
     ilix = ad1altili(opc, op1, ilix);
     return ilix;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_IQNINT:
+    /* add constant folding later */
+    ilix = ad_func(IL_DFRIR, IL_QJSR, MTH_I_IQNINT, 1, op1);
+    ilix = ad1altili(opc, op1, ilix);
+    return ilix;
+#endif
 #ifdef IL_KIDNINT
   case IL_KIDNINT:
     /* add constant folding later */
@@ -2717,7 +2774,15 @@ addarth(ILI *ilip)
       goto add_dcon;
     }
     break;
-
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QABS:
+    if (ncons == 1) {
+      GETVAL128(qnum1, cons1);
+      xqabsv(qnum1.numq, qres.numq);
+      goto add_qcon;
+    }
+    break;
+#endif
   case IL_KNEG:
   case IL_UKNEG:
     if (ncons == 1) {
@@ -2830,6 +2895,26 @@ addarth(ILI *ilip)
     }
     break;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QNEG:
+    if (ncons == 1) {
+      GETVAL128(qnum2, cons1);
+      xqneg(qnum2.numq, qres.numq);
+      goto add_qcon;
+    }
+    if (!flg.ieee && ILI_OPC(op1) == IL_QSUB) {
+      /* -(a - b) --> b - a */
+      op2 = ILI_OPND(op1, 1);
+      op1 = ILI_OPND(op1, 2);
+      return ad2ili(IL_QSUB, op1, op2);
+    }
+    if (ILI_OPC(op1) == IL_QMUL) {
+      ilix = red_negate(op1, IL_QNEG, IL_QMUL, IL_QDIV);
+      if (ilix != op1)
+        return ilix;
+    }
+    break;
+#endif
   case IL_FIX:
     if (ncons == 1) {
       xfix(con1v2, &res.numi[1]);
@@ -3356,6 +3441,32 @@ addarth(ILI *ilip)
       op2 = ILI_OPND(op2, 1);
     }
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QADD:
+    if (ncons == 2 && is_quad0(cons2))
+      return op1;
+#ifdef FPSUB2ADD
+  like_qadd:
+#endif
+    if (!flg.ieee && ncons == 3) {
+      GETVAL128(qnum1, cons1);
+      GETVAL128(qnum2, cons2);
+      xqadd(qnum1.numq, qnum2.numq, qres.numq);
+      goto add_qcon;
+    }
+    if (ILI_OPC(op1) == IL_QNEG) {
+      /* -a + b --> b - a */
+      opc = IL_QSUB;
+      tmp = op2;
+      op2 = ILI_OPND(op1, 1);
+      op1 = tmp;
+    } else if (ILI_OPC(op2) == IL_QNEG) {
+      /* a + -b --> a - b */
+      opc = IL_QSUB;
+      op2 = ILI_OPND(op2, 1);
+    }
+    break;
+#endif
   case IL_SCMPLXADD:
     if (ncons == 2 && IS_FLT0(con2v1) && IS_FLT0(con2v2))
       return op1;
@@ -3385,7 +3496,7 @@ addarth(ILI *ilip)
 #endif
     if (!flg.ieee && ncons == 3) {
       GETVAL64(num1, con1v1);
-      GETVAL64(num2, con2v1)
+      GETVAL64(num2, con2v1);
       xdadd(num1.numd, num2.numd, res.numd);
       cons1 = getcon(res.numd, DT_DBLE);
       GETVAL64(num1, con1v2);
@@ -3580,6 +3691,39 @@ addarth(ILI *ilip)
       op2 = ILI_OPND(op2, 1);
     }
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QSUB:
+#ifdef FPSUB2ADD
+    if (!flg.ieee && ncons >= 2) {
+      GETVAL128(qnum1, stb.quad0);
+      GETVAL128(qnum2, cons2);
+      xqsub(qnum1.numq, qnum2.numq, qres.numq);
+      cons2 = getcon(qres.numi, DT_QUAD);
+      op2 = ad1ili(IL_QCON, cons2);
+      opc = IL_QADD;
+      goto like_qadd;
+    }
+#else
+    if (!flg.ieee && ncons == 3) {
+      GETVAL128(qnum1, cons1);
+      GETVAL128(qnum2, cons2);
+      xqsub(qnum1.numq, qnum2.numq, qres.numq);
+      goto add_qcon;
+    }
+    if (ncons == 2 && is_quad0(cons2))
+      return op1;
+#endif
+    if (ncons == 1 && is_quad0(cons1))
+      return ad1ili(IL_QNEG, op2);
+    if (ILI_OPC(op2) == IL_QNEG) {
+      /* a - -b --> a + b */
+      opc = IL_QADD;
+      op2 = ILI_OPND(op2, 1);
+    }
+    break;
+#endif
+
   case IL_SCMPLXSUB:
 #ifdef FPSUB2ADD
     if (!flg.ieee && ncons >= 2) {
@@ -5469,6 +5613,9 @@ addarth(ILI *ilip)
   case IL_CSEIR:
   case IL_CSESP:
   case IL_CSEDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_CSEQP:
+#endif
   case IL_CSEAR:
   case IL_CSECS:
   case IL_CSECD:
@@ -6067,9 +6214,7 @@ addarth(ILI *ilip)
         ilix = ad_func(IL_DFRDP, IL_QJSR,
                        relaxed_math("exp", 's', 'd', FMTH_I_DEXP), 1, op1);
       } else {
-/*
- * try the new naming convention -- only for exp
- */
+        /* Try the new naming convention -- only for exp. */
         (void)mk_prototype(gnr_math("exp", 's', 'd', FMTH_I_DEXP, 0), "f pure",
                            DT_DBLE, 1, DT_DBLE);
         ilix = ad_func(IL_DFRDP, IL_QJSR,
@@ -6102,6 +6247,42 @@ addarth(ILI *ilip)
 #endif
 #endif /*if !defined(PGOCL) && !defined(TARGET_LLVM_ARM) */
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QEXP:
+    if (ncons == 1 && is_quad0(cons1)) {
+      GETVAL128(qres, stb.quad1);
+      goto add_qcon;
+    }
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_exp, &funcsptr, 1, false, DT_QUAD, 1, DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+#if defined(TARGET_X8664)
+    if (!flg.ieee) {
+      if (XBIT_NEW_RELAXEDMATH) {
+        (void)mk_prototype(relaxed_math("exp", 's', 'q', FMTH_I_QEXP), "f pure",
+                           DT_QUAD, 1, DT_QUAD);
+        ilix = ad_func(IL_DFRQP, IL_QJSR,
+                       relaxed_math("exp", 's', 'q', FMTH_I_QEXP), 1, op1);
+      } else {
+        /* Try the new naming convention -- only for exp. */
+        (void)mk_prototype(gnr_math("exp", 's', 'q', FMTH_I_QEXP, 0), "f pure",
+                           DT_QUAD, 1, DT_QUAD);
+        ilix = ad_func(IL_DFRQP, IL_QJSR,
+                       gnr_math("exp", 's', 'q', FMTH_I_QEXP, 0), 1, op1);
+      }
+    } else {
+      (void)mk_prototype(MTH_I_QEXP, "f pure", DT_QUAD, 1, DT_QUAD);
+      ilix = ad_func(IL_DFRQP, IL_QJSR, MTH_I_QEXP, 1, op1);
+    }
+    ilix = ad1altili(opc, op1, ilix);
+    return ilix;
+#endif
+    break;
+#endif
 
   /*
    * getting here for the ensuing cmplex intrinsics means XBIT_NEW_MATH_NAMES
@@ -7152,6 +7333,28 @@ addarth(ILI *ilip)
 #endif
     break;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QINT:
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_aint, &funcsptr, 1, false, DT_QUAD, 1, DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+#if defined(TARGET_LLVM_ARM) || defined(TARGET_WIN)
+    else {
+      (void)mk_prototype(MTH_I_QINT, "f pure", DT_QUAD, 1, DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, MTH_I_QINT, 1, op1);
+      return ad1altili(opc, op1, ilix);
+    }
+#else
+    else
+      interr("addarth: old math name for ili not handled",
+             opc, ERR_Informational);
+#endif
+     break;
+#endif
+
   default:
 
 #if DEBUG
@@ -7179,6 +7382,11 @@ add_rcon:
 
 add_dcon:
   return ad1ili(IL_DCON, getcon(res.numi, DT_DBLE));
+
+#ifdef TARGET_SUPPORTS_QUADFP
+add_qcon:
+  return ad1ili(IL_QCON, getcon(qres.numi, DT_QUAD));
+#endif
 }
 
 static int
@@ -7984,6 +8192,9 @@ addbran(ILI *ilip)
     case IL_ICMP:
     case IL_FCMP:
     case IL_DCMP:
+#ifdef TARGET_SUPPORTS_QUADFP
+    case IL_QCMP:
+#endif
     case IL_ACMP:
 #if defined(TARGET_X8664)
     case IL_KCMPZ:
@@ -8064,6 +8275,14 @@ addbran(ILI *ilip)
         break;
       return ad3ili(IL_DCJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
 
+#ifdef TARGET_SUPPORTS_QUADFP
+    case IL_QCMPZ:
+      new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), cc_op2);
+      if (new_cond == 0)
+        break;
+      return ad3ili(IL_QCJMPZ, ILI_OPND(op1, 1), new_cond, ilip->opnd[2]);
+#endif
+
     case IL_ACMPZ:
       new_cond = combine_int_ccs(CC_ILI_OPND(op1, 2), cc_op2);
       if (new_cond == 0)
@@ -8114,6 +8333,17 @@ addbran(ILI *ilip)
         break;
       return ad4ili(IL_DCJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
                     ilip->opnd[2]);
+
+#ifdef TARGET_SUPPORTS_QUADFP
+    case IL_QCMP:
+      new_cond = (!IEEE_CMP)
+                     ? combine_int_ccs(CC_ILI_OPND(op1, 3), cc_op2)
+                     : combine_ieee_ccs(CC_ILI_OPND(op1, 3), cc_op2);
+      if (new_cond == 0)
+        break;
+      return ad4ili(IL_QCJMP, ILI_OPND(op1, 1), ILI_OPND(op1, 2), new_cond,
+                    ilip->opnd[2]);
+#endif
 
     case IL_ACMP:
       if ((new_cond = combine_int_ccs(CC_ILI_OPND(op1, 3), cc_op2)) ==
@@ -8501,6 +8731,61 @@ addbran(ILI *ilip)
     if (!IEEE_CMP)
       goto cjmp_2; /* check if operands are identical */
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMPZ:
+    if (ILI_OPC(op1) == IL_QCON && IS_QUAD0(ILI_OPND(op1, 1))) {
+      if (op2 == CC_EQ || op2 == CC_GE || op2 == CC_LE || op2 == CC_NOTNE ||
+          op2 == CC_NOTLT || op2 == CC_NOTGT)
+        return ad1ili(IL_JMP, ilip->opnd[2]);
+      RFCNTD(ilip->opnd[2]);
+      return 0;
+    }
+#if defined(TARGET_X86)
+    if (mach.feature[FEATURE_SCALAR_SSE]) {
+      /* scalar sse code gen. don't use QCJMPZ */
+      tmp = ad1ili(IL_QCON, stb.quad0);
+      return ad4ili(IL_QCJMP, op1, tmp, op2, (int)ilip->opnd[2]);
+    }
+#endif
+#ifndef TM_QCJMPZ
+    tmp = ad1ili(IL_QCON, stb.quad0);
+    return ad4ili(IL_QCJMP, op1, tmp, op2, (int)ilip->opnd[2]);
+#endif
+    break;
+
+  case IL_QCJMP:
+#if defined(TARGET_X86)
+    if (mach.feature[FEATURE_SCALAR_SSE]) {
+      /* scalar sse code gen. don't use QCJMPZ; it costs less to
+       * 'compute' 0.0 rather than fetch from memory
+       */
+      goto nogen_qcjmpz;
+    }
+#endif
+#ifdef TM_QCJMPZ
+    if (ILI_OPC(op1) == IL_QCON && IS_QUAD0(ILI_OPND(op1, 1)))
+      return ad3ili(IL_QCJMPZ, op2, commute_cc(CCRelationILIOpnd(ilip, 2)),
+                    ilip->opnd[3]);
+    if (ILI_OPC(op2) == IL_QCON && IS_QUAD0(ILI_OPND(op2, 1)))
+      return ad3ili(IL_QCJMPZ, op1, ilip->opnd[2], ilip->opnd[3]);
+#endif
+#if defined(TARGET_X86)
+  nogen_qcjmpz:
+#endif
+    if (op1 == op2 && (ILI_OPC(op2) == IL_QCON) &&
+        !_is_nand(ILI_SymOPND(op2, 1))) {
+      cond = CCRelationILIOpnd(ilip, 2);
+      if (cond == CC_EQ || cond == CC_GE || cond == CC_LE || cond == CC_NOTNE ||
+          cond == CC_NOTLT || cond == CC_NOTGT)
+        return ad1ili(IL_JMP, (int)ilip->opnd[3]);
+      RFCNTD(ilip->opnd[3]);
+      return 0;
+    }
+    if (!IEEE_CMP)
+      goto cjmp_2; /* check if operands are identical */
+    break;
+#endif
 
   case IL_ACJMPZ:
     if (ILI_OPC(op1) == IL_ACON) {
@@ -10012,6 +10297,11 @@ simplified_cmp_ili(int cmp_ili)
     case IL_DCMP:
       jump_opc = IL_DCJMP;
       goto shared_bin_cmp;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case IL_QCMP:
+      jump_opc = IL_QCJMP;
+      goto shared_bin_cmp;
+#endif
     case IL_ICMP:
       jump_opc = IL_ICJMP;
       goto shared_bin_cmp;
@@ -10047,6 +10337,11 @@ simplified_cmp_ili(int cmp_ili)
     case IL_DCMPZ:
       jump_opc = IL_DCJMPZ;
       goto shared_una_cmp;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case IL_QCMPZ:
+      jump_opc = IL_QCJMPZ;
+      goto shared_una_cmp;
+#endif
     case IL_ICMPZ:
       jump_opc = IL_ICJMPZ;
       goto shared_una_cmp;
@@ -10271,10 +10566,16 @@ dump_ili(FILE *f, int i)
       case IL_ICJMP:
       case IL_FCJMP:
       case IL_DCJMP:
+#ifdef TARGET_SUPPORTS_QUADFP
+      case IL_QCJMP:
+#endif
       case IL_ACJMP:
       case IL_ICJMPZ:
       case IL_FCJMPZ:
       case IL_DCJMPZ:
+#ifdef TARGET_SUPPORTS_QUADFP
+      case IL_QCJMPZ:
+#endif
       case IL_ACJMPZ:
 #ifdef TM_LPCMP
       case IL_ICLOOP:
@@ -10480,6 +10781,12 @@ dump_ili(FILE *f, int i)
     case ILIO_DP:
       fprintf(f, " dp(%2d)", opn);
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    /* just for debug to dump ili */
+    case ILIO_QP:
+      fprintf(f, " qp(%2d)", opn);
+      break;
+#endif
     case ILIO_CS:
       fprintf(f, " cs(%2d)", opn);
       break;
@@ -10695,6 +11002,9 @@ optype(ILI_OP opc)
   case IL_ICON:
   case IL_KCON:
   case IL_DCON:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCON:
+#endif
   case IL_FCON:
   case IL_ACON:
     return OT_LEAF;
@@ -11194,6 +11504,12 @@ prilitree(int i)
     n = 1;
     opval = "idnint";
     goto intrinsic;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_IQNINT:
+    n = 1;
+    opval = "iqnint";
+    goto intrinsic;
+#endif
 #ifdef IL_KIDNINT
   case IL_KIDNINT:
     n = 1;
@@ -11204,6 +11520,12 @@ prilitree(int i)
     n = 1;
     opval = "abs";
     goto intrinsic;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QABS:
+    n = 1;
+    opval = "abs";
+    goto intrinsic;
+#endif
   case IL_FABS:
     n = 1;
     opval = "abs";
@@ -11319,6 +11641,9 @@ prilitree(int i)
   case IL_ICJMP:
   case IL_FCJMP:
   case IL_DCJMP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMP:
+#endif
   case IL_ACJMP:
   case IL_UICJMP:
     prilitree(ILI_OPND(i, 1));
@@ -11332,6 +11657,9 @@ prilitree(int i)
   case IL_ICJMPZ:
   case IL_FCJMPZ:
   case IL_DCJMPZ:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMPZ:
+#endif
   case IL_ACJMPZ:
   case IL_UICJMPZ:
     prilitree(ILI_OPND(i, 1));
@@ -11484,6 +11812,9 @@ prilitree(int i)
   case IL_CSEIR:
   case IL_CSESP:
   case IL_CSEDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_CSEQP:
+#endif
   case IL_CSEAR:
   case IL_CSECS:
   case IL_CSECD:
@@ -12609,6 +12940,9 @@ is_argili_opcode(ILI_OP opc)
   case IL_ARGIR:
   case IL_ARGSP:
   case IL_ARGDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_ARGQP:
+#endif
   case IL_ARGAR:
   case IL_ARGKR:
   case IL_GARG:
@@ -12630,6 +12964,9 @@ is_cseili_opcode(ILI_OP opc)
   case IL_CSEIR:
   case IL_CSESP:
   case IL_CSEDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_CSEQP:
+#endif
   case IL_CSEAR:
   case IL_CSECS:
   case IL_CSECD:
@@ -12816,6 +13153,10 @@ is_floating_comparison_opcode(ILI_OP opc)
   case IL_FCJMPZ:
   case IL_DCJMP:
   case IL_DCJMPZ:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMP:
+  case IL_QCJMPZ:
+#endif
     return true;
   default:
     return false;
@@ -13374,10 +13715,16 @@ ilstckind(ILI_OP opc, int opnum)
   case IL_ICJMP:
   case IL_FCJMP:
   case IL_DCJMP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMP:
+#endif
   case IL_ACJMP:
   case IL_ICJMPZ:
   case IL_FCJMPZ:
   case IL_DCJMPZ:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMPZ:
+#endif
   case IL_ACJMPZ:
 #ifdef TM_LPCMP
   case IL_ICLOOP:
@@ -13820,6 +14167,10 @@ dt_to_mthtype(char mtype)
     return 'c';
   case DT_DCMPLX:
     return 'z';
+#ifdef TARGET_SUPPORTS_QUADFP
+  case DT_QUAD:
+    return 'q';
+#endif
   }
   interr("iliutil.c:dt_to_mthtype, unexpected mtype", mtype, ERR_Severe);
   return '?';

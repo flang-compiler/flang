@@ -3231,6 +3231,9 @@ _printili(int i)
   case IL_ICJMP:
   case IL_FCJMP:
   case IL_DCJMP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMP:
+#endif
   case IL_ACJMP:
   case IL_UICJMP:
     _printili(ILI_OPND(i, 1));
@@ -3251,6 +3254,9 @@ _printili(int i)
   case IL_ICJMPZ:
   case IL_FCJMPZ:
   case IL_DCJMPZ:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMPZ:
+#endif
   case IL_ACJMPZ:
   case IL_UICJMPZ:
     _printili(ILI_OPND(i, 1));
@@ -3413,6 +3419,9 @@ _printili(int i)
   case IL_CSEIR:
   case IL_CSESP:
   case IL_CSEDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_CSEQP:
+#endif
   case IL_CSEAR:
   case IL_CSECS:
   case IL_CSECD:
@@ -4151,6 +4160,12 @@ dili(int ilix)
       case ILIO_DP:
         putint("dp", opnd);
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      /* just for debug to dump ili */
+      case ILIO_QP:
+        putint("qp", opnd);
+        break;
+#endif
       default:
         put2int("Unknown", IL_OPRFLAG(opc, j), opnd);
         break;
@@ -4210,6 +4225,9 @@ dilitreex(int ilix, int l, int notlast)
   case IL_CSEIR:
   case IL_CSESP:
   case IL_CSEDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_CSEQP:
+#endif
   case IL_CSECS:
   case IL_CSECD:
   case IL_CSEAR:

@@ -567,6 +567,9 @@ jsrAddArg(int arglist, ILI_OP opc, int argili)
   case IL_ARGKR:
   case IL_ARGSP:
   case IL_ARGDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_ARGQP:
+#endif
     ili = ad2ili(opc, argili, arglist);
     return ili;
   default:

@@ -15,6 +15,9 @@
 #include "cgllvm.h"
 #include "ll_structure.h"
 
+#define FFAST_MATH_IS_PRESENT() XBIT(216, 1)
+#define QTMP_SIZE 4 /* tmp[] of union qtmp has 4 elements and 128 bits  */
+
 /**
    \brief ...
  */

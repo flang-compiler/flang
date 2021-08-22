@@ -15,6 +15,9 @@ struct SYM;
 #include "symtab.h"
 #include "sharedefs.h"
 
+#define STB_NSIZE 5059
+#define STR_LEN 4
+
 /**
  * \file
  * \brief Various definitions for symacc.

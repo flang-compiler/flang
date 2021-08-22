@@ -2146,6 +2146,11 @@ Double precision compare with zero.
 .AT arth null ir cse
 .CG notCG
 
+.IL QCMPZ qplnk stc
+Quad precision compare with zero.
+.AT arth null ir cse
+.CG notCG
+
 .IL TEST irlnk irlnk
 Compare register value with 0.
 .AT arth comm ir cse
@@ -2500,6 +2505,12 @@ if the condition, denoted by stc, is true.
 .AT branch null trm dom
 .CG terminal conditional_branch notAILI
 
+.IL QCJMP qplnk qplnk stc sym
+Quad precision compare and jump to the label 'sym'
+if the condition, denoted by stc, is true.
+.AT branch null trm dom
+.CG terminal conditional_branch notAILI
+
 .IL ICJMPZ irlnk stc sym
 Integer compare with zero and branch to label 'sym' -
 the allowed values (and meanings) for stc are the same as
@@ -2552,6 +2563,11 @@ Double compare with zero and branch to label 'sym'.
 .AT branch null trm dom
 .CG notCG conditional_branch
 
+.IL QCJMPZ qplnk stc sym
+quad compare with zero and branch to label 'sym'.
+.AT branch null trm dom
+.CG notCG conditional_branch
+
 .IL JCC
 Conditional jump based on immediately preceding compare operation.
 Used only in the AILI.
@@ -2577,6 +2593,11 @@ Single precision register cse.
 .IL CSEDP dplnk
 Double precision register cse.
 .AT arth null dp
+.CG notCG
+
+.IL CSEQP qplnk
+Quad precision register cse.
+.AT arth null qp
 .CG notCG
 
 .IL CSECS cslnk
@@ -6717,6 +6738,21 @@ Half-precision max
 .IL HFMIN hplnk hplnk
 Half-precision min
 .AT arth comm hp cse
+.CG notCG
+
+.IL LDQP arlnk nme stc
+Load quad-precision floating value.  'stc' is not used.
+.AT load null qp
+.CG notCG
+
+.IL STQP qplnk arlnk nme stc
+Store quad precision quantity.  'stc' must be MSZ_F16.
+.AT store null trm
+.CG notCG
+
+.IL QADD qplnk qplnk
+quad-precision floating-point addition.
+.AT arth comm qp cse
 .CG notCG
 
 .so ilitp_atomic.n

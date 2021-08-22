@@ -479,6 +479,9 @@ do_IL_line(int pass /* 1 or 2 */)
         k = ILIO_SP;
       if (strcmp(token[i], "dp") == 0)
         k = ILIO_DP;
+      /* just for debug to dump ili */
+      if (strcmp(token[i], "qp") == 0)
+        k = ILIO_QP;
       if (strcmp(token[i], "cs") == 0)
         k = ILIO_CS;
       if (strcmp(token[i], "cd") == 0)

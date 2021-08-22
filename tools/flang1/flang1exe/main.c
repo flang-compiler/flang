@@ -746,6 +746,7 @@ init(int argc, char *argv[])
   register_boolean_arg(arg_parser, "hpf", (bool *)&(flg.hpf), true);
   register_boolean_arg(arg_parser, "static", (bool *)&(flg.doprelink), true);
   register_boolean_arg(arg_parser, "quad", (bool *)&(flg.quad), true);
+  register_boolean_arg(arg_parser, "qp", (bool *)&(flg.qp), true);
   register_boolean_arg(arg_parser, "freeform", &arg_freeform, false);
   register_string_arg(arg_parser, "tp", &tp, NULL);
   register_string_arg(arg_parser, "stdinc", &(flg.stdinc), (char *)1);
@@ -884,6 +885,13 @@ init(int argc, char *argv[])
   flg.defaultsequence = flg.sequence = TRUE;
   /* set -x 58 0x20000, allocate temps only as big as needed */
   set_xflag(58, 0x20000);
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  if (flg.qp) {
+    /* set -y 57 0x4, enable quad precision REAL and COMPLEX */
+    set_yflag(57, 0x4);
+  }
+#endif
 
   if (XBIT(25, 0xf0)) {
     fprintf(stderr, "%s-I-Beta Release Optimizations Activated\n", version.lang);

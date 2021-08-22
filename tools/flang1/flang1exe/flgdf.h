@@ -71,4 +71,5 @@ FLG flg = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },      /* tpvalue */
     0,     /* accmp */
     "",    /* cmdline */
+    FALSE, /* qp */
 };

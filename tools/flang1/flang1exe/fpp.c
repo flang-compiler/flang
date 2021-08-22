@@ -458,6 +458,10 @@ fpp(void)
 #define PGIF_MINOR "__PGIF90_MINOR__"
 #define PGIF_PATCHLEVEL "__PGIF90_PATCHLEVEL__"
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  chkdef("__flang_quadfp__", "1");
+#endif
+
   if (XBIT(124, 0x200000)) {
     chkdef("pgi", "\3771"); /* define to be 1 */
   }

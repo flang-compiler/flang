@@ -50,7 +50,7 @@ sym_init_first(void)
     STG_ALLOC(stb, 1000);
     assert(stb.stg_base, "sym_init: no room for symtab", stb.stg_size,
            ERR_Fatal);
-    stb.n_size = 5024;
+    stb.n_size = STB_NSIZE;
     NEW(stb.n_base, char, stb.n_size);
     assert(stb.n_base, "sym_init: no room for namtab", stb.n_size, ERR_Fatal);
     stb.n_base[0] = 0;
@@ -347,7 +347,7 @@ void
 add_fp_constants(void)
 {
   INT tmp[4];
-#ifdef LONG_DOUBLE_FLOAT128
+#if defined(LONG_DOUBLE_FLOAT128) || defined(TARGET_SUPPORTS_QUADFP)
   INT res[4];
 #endif
 
@@ -382,6 +382,19 @@ add_fp_constants(void)
   stb.dbl2 = getcon(tmp, DT_REAL8);
   atoxd("0.5", &tmp[0], 3);
   stb.dblhalf = getcon(tmp, DT_REAL8);
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  atoxq("0.0", &tmp[0], STR_LEN);
+  stb.quad0 = getcon(tmp, DT_QUAD);
+  xqneg(tmp, res);
+  stb.quadm0 = getcon(res, DT_QUAD);
+  atoxq("1.0", &tmp[0], 4);
+  stb.quad1 = getcon(tmp, DT_QUAD);
+  atoxq("0.5", &tmp[0], STR_LEN);
+  stb.quadhalf = getcon(tmp, DT_QUAD);
+  atoxq("2.0", &tmp[0], STR_LEN);
+  stb.quad2 = getcon(tmp, DT_QUAD);
+#endif
 
 #ifdef LONG_DOUBLE_FLOAT128
   atoxq("0.0", &tmp[0], 4);

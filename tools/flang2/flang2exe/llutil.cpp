@@ -285,11 +285,17 @@ ll_convert_basic_dtype_with_addrspace(LL_Module *module, DTYPE dtype, int addrsp
     break;
   case TY_DBLE:
   case TY_DCMPLX:
+#ifndef TARGET_SUPPORTS_QUADFP
   case TY_QUAD:
     /* TY_QUAD represents a long double on systems that map long
      * double to IEEE64. */
+#endif
     basetype = LL_DOUBLE;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    /* TY_QUAD maps to an IEEE128 quad precision. */
+#endif
   case TY_FLOAT128:
   case TY_CMPLX128:
     /* TY_FLOAT128 represents a long double (or __float128) on
@@ -966,6 +972,11 @@ get_dtype_from_arg_opc(ILI_OP opc)
   case IL_ARGDP:
   case IL_DADP:
     return DT_DBLE;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_ARGQP:
+  case IL_DAQP:
+    return DT_QUAD;
+#endif
   case IL_ARGAR:
   case IL_DAAR:
     return DT_CPTR;
@@ -1151,6 +1162,10 @@ dtype_from_return_type(ILI_OP ret_opc)
 #endif
   case IL_DFRDP:
     return DT_DBLE;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_DFRQP:
+    return DT_QUAD;
+#endif
   case IL_DFRIR:
     return DT_INT;
   case IL_DFRKR:
@@ -2065,13 +2080,19 @@ write_constant_value(int sptr, LL_Type *type, INT conval0, INT conval1,
     fprintf(LLVMFIL, "0xK%08x%08x%04x", CONVAL1G(sptr), CONVAL2G(sptr),
             (unsigned short)(CONVAL3G(sptr) >> 16));
     return;
-
+#ifdef TARGET_LLVM_ARM
+  case LL_FP128:
+    assert(sptr, "write_constant_value(): fp128 constant without sptr", 0, ERR_Fatal);
+    fprintf(LLVMFIL, "0xL%08x%08x%08x%08x", CONVAL3G(sptr), CONVAL4G(sptr),
+            CONVAL1G(sptr), CONVAL2G(sptr));
+    return;
+#else
   case LL_FP128:
     assert(sptr, "write_constant_value(): fp128 constant without sptr", 0, ERR_Fatal);
     fprintf(LLVMFIL, "0xL%08x%08x%08x%08x", CONVAL1G(sptr), CONVAL2G(sptr),
             CONVAL3G(sptr), CONVAL4G(sptr));
     return;
-
+#endif
   case LL_PPC_FP128:
     assert(sptr, "write_constant_value(): double-double constant without sptr",
            0, ERR_Fatal);
@@ -2242,8 +2263,17 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
         write_type(p->ll_type);
         print_space(1);
       }
-      write_constant_value(0, p->ll_type, p->val.conval[0], p->val.conval[1],
-                           uns);
+
+      /* write_constant_value() can't handle LL_FP128 when sptr is 0.
+       * Build a sptr with getcon() before calling it. */
+      if (p->ll_type->data_type == LL_FP128) {
+        SPTR sptr = getcon(p->val.conval, DT_QUAD);
+        write_constant_value(sptr, p->ll_type, p->val.conval[0],
+                             p->val.conval[1], uns);
+      } else {
+        write_constant_value(0, p->ll_type, p->val.conval[0],
+                             p->val.conval[1], uns);
+      }
     }
     break;
   case OT_UNDEF:
@@ -2631,9 +2661,14 @@ llvm_fc_type(DTYPE dtype)
     retc = "float";
     break;
   case TY_DBLE:
+#ifndef TARGET_SUPPORTS_QUADFP
   case TY_QUAD:
+#endif
     retc = "double";
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+#endif
   case TY_FLOAT128:
   case TY_128:
     retc = "fp128";

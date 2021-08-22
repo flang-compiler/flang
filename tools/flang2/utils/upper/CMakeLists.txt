@@ -8,22 +8,27 @@ add_executable(upperl
   upperl.c
   )
 
-# Generate upper tables
-file(STRINGS "${UTILS_UPPER_DIR}/upperilm.in" UPPERILM_H_CONTENTS)
-list(SORT UPPERILM_H_CONTENTS)
-set(UPPERILM_H_CONTENTS_SORTED "")
-foreach(Line ${UPPERILM_H_CONTENTS})
-  # Don't modify the line if it contains #local at the end.
-  string(SUBSTRING "${Line}" 0 1 FIRST_CHAR)
-  if(NOT "${FIRST_CHAR}" STREQUAL "#")
-    set(UPPERILM_H_CONTENTS_SORTED "${UPPERILM_H_CONTENTS_SORTED}${Line}\n")
-  endif()
-endforeach()
-file(WRITE ${UTILS_UPPER_BIN_DIR}/upperilm.sort "${UPPERILM_H_CONTENTS_SORTED}")
+# Generate upper tables.
+# FIXME: Preprocessing and sorting should be part of add_custom_command below.
+get_property(cdefs DIRECTORY PROPERTY COMPILE_DEFINITIONS)
+list(TRANSFORM cdefs PREPEND "-D")
+execute_process(COMMAND "${CMAKE_C_COMPILER}" -E -P -x c ${cdefs} ${UTILS_UPPER_DIR}/upperilm.in
+  WORKING_DIRECTORY ${UTILS_UPPER_BIN_DIR}
+  RESULT_VARIABLE cpp_result
+  OUTPUT_VARIABLE cpp_output
+  ERROR_QUIET)
+if(cpp_result EQUAL 0)
+  string(REPLACE "\n" ";" UPPERILM_H_CONTENTS ${cpp_output})
+  list(SORT UPPERILM_H_CONTENTS)
+  list(JOIN UPPERILM_H_CONTENTS "\n" UPPERILM_H_CONTENTS_SORTED)
+  file(WRITE ${UTILS_UPPER_BIN_DIR}/upperilm.sort "${UPPERILM_H_CONTENTS_SORTED}")
+else()
+  message(FATAL_ERROR "Preprocessing of upperilm.in failed; aborting.")
+endif()
 
 add_custom_command( 
   OUTPUT ${UTILS_UPPER_BIN_DIR}/upperilm.h
-  COMMAND upperl ${UTILS_UPPER_BIN_DIR}/upperilm.sort ${UTILS_UPPER_BIN_DIR}/upperilm.h
+  COMMAND ${CMAKE_BINARY_DIR}/bin/upperl ${UTILS_UPPER_BIN_DIR}/upperilm.sort ${UTILS_UPPER_BIN_DIR}/upperilm.h
   DEPENDS upperl ${UTILS_UPPER_DIR}/upperilm.in
   )
 

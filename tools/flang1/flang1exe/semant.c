@@ -6183,7 +6183,7 @@ semant1(int rednum, SST *top)
         sem.bounds[sem.arrdim.ndim].lwast = ast;
       }
     }
-    if (constarraysize && arraysize <= 0) {
+    if (constarraysize && arraysize < 0) {
       error(435, 2, gbl.lineno, "", CNULL);
       if (arraysize < 0) {
         /*

@@ -10,8 +10,8 @@
 in32: run
 	
 
-fcheck.$(OBJX): $(SRC)/check_mod.f90
-	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.f90 -o fcheck.$(OBJX)
+fcheck.$(OBJX): $(SRC)/check_mod.F90
+	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.F90 -o fcheck.$(OBJX)
 
 build:  $(SRC)/in32.f90 $(SRC)/in32_expct.c fcheck.$(OBJX)
 	-$(RM) in32.$(EXESUFFIX) in32.$(OBJX) in32_expct.$(OBJX)

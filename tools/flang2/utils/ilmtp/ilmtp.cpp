@@ -168,6 +168,7 @@ public:
     ilmo.push_back(ILMO("arret", 5, ILMO_ARRET, 0));
     ilmo.push_back(ILMO("spret", 5, ILMO_SPRET, 0));
     ilmo.push_back(ILMO("dpret", 5, ILMO_DPRET, 0));
+    ilmo.push_back(ILMO("qpret", 5, ILMO_QPRET, 0));
     ilmo.push_back(ILMO("krret", 5, ILMO_KRRET, 0));
     ilmo.push_back(ILMO("drpos", 5, ILMO_DRPOS, 0));
     ilmo.push_back(ILMO("arpos", 5, ILMO_ARPOS, 0));
@@ -698,6 +699,7 @@ private:
       case ILMO_ARRET:
       case ILMO_SPRET:
       case ILMO_DPRET:
+      case ILMO_QPRET:
       case ILMO_KRRET:
         iliopr[1] = 0;
         ilmtp.push_back(find_op(iliopr));

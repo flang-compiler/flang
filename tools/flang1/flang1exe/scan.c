@@ -1893,6 +1893,8 @@ bl_firstchar:
     return (ct_init);
   if (*++p != 'd' && *p != 'D')
     return (ct_init);
+  if (*++p != 'q' && *p != 'Q')
+    return (ct_init);
 
   /*  have a statement which begins with END -- this is the END statement
    *  if what follows are zero or more blanks and/or tabs followed by the
@@ -6395,6 +6397,7 @@ get_number(int cplxno)
   INT num[4];
   int sptr;
   LOGICAL d_exp;
+  LOGICAL q_exp;
   int kind_id_len;
   int errcode;
   int nmptr;
@@ -6404,6 +6407,7 @@ get_number(int cplxno)
   chk_octal = TRUE; /* Attempt to recognize Cray's octal extension */
   kind_id_len = 0;
   d_exp = FALSE;
+  q_exp = FALSE;
   nmptr = 0;
   c = *(cp = currc);
   if (c == '-' || c == '+')
@@ -6434,13 +6438,14 @@ get_number(int cplxno)
         goto return_integer; /* digits .eq */
       goto state2;           /* digits .e */
     }
-    if (isdig(cp[1]) || cp[1] == 'd')
-      goto state2; /* digits . digits|d */
+    if (isdig(cp[1]) || cp[1] == 'd' || cp[1] == 'q')
+      goto state2; /* digits . digits|d|q */
     if (islower(cp[1]))
       goto return_integer; /* digits . <lowercase letter> */
     goto state2;           /* could still be digits . E|D */
   }
-  if (c == 'e' || c == 'E' || c == 'd' || c == 'D')
+  if (c == 'e' || c == 'E' || c == 'd' || c == 'D' ||
+      c == 'q' || c == 'Q')
     goto state3;
   goto return_integer;
 state2: /* digits . [ digits ]  */
@@ -6448,12 +6453,15 @@ state2: /* digits . [ digits ]  */
     c = *++cp;
   } while (isdig(c));
   assert(cp > currc + 1, "get_number:single dot", (int)c, 3);
-  if (c == 'e' || c == 'E' || c == 'd' || c == 'D')
+  if (c == 'e' || c == 'E' || c == 'd' || c == 'D' ||
+      c == 'q' || c == 'Q')
     goto state3;
   goto return_real;
 
-state3: /* digits [ . [ digits ] ] { e | d }  */
-  if (c == 'd') {
+state3: /* digits [ . [ digits ] ] { e | d | q }  */
+  if (c == 'q') {
+    q_exp = TRUE;
+  } else if (c == 'd') {
     d_exp = TRUE;
   }
   c = *++cp;
@@ -6491,9 +6499,10 @@ return_integer:
         if ((cplxno == 1 && c != ',') || (cplxno == 2 && c != ')'))
           return;
         num[0] = 0;
-        errcode = atosi32(currc, &num[1], (int)(cp - currc), 10);
-        if (dtype == DT_INT8 && (errcode == -2 || errcode == -3))
+        if (dtype == DT_INT8)
           errcode = atoxi64(currc, num, (int)(cp - currc), 10);
+        else
+          errcode = atosi32(currc, &num[1], (int)(cp - currc), 10);
         tkntyp = TK_K_ICON;
         tknval = getcon(num, dtype);
         goto chk_err;
@@ -6578,19 +6587,25 @@ return_real:
   if (*cp == '_' && (kind_id_len = get_kind_id(cp + 1))) {
     if (kind_id) { /* kind_id is non-zero if ident is a KIND parameter */
       kind = select_kind(DT_REAL, TY_REAL, get_kind_value(kind_id));
-      if (d_exp) /* can't say 'D' and kind */
+      if (q_exp || d_exp) /* can't say 'D' or 'Q' and kind */
         error(84, 3, gbl.lineno, SYMNAME(kind_id), "- KIND parameter");
     }
     kind_id_len++; /* account for '_' */
     /* save the string */
     nmptr = putsname(currc, cp - currc + kind_id_len);
     if (XBIT(57, 0x10) && DTY(kind) == TY_QUAD) {
-      error(437, 2, gbl.lineno, "Constant with kind type 16 ", "REAL");
+      error(437, 2, gbl.lineno, "Constant with kind type 16 ", "REAL(8)");
       kind = DT_REAL8;
     }
   } else {
     /* constant was not explicitly kinded */
-    if (d_exp) {
+    if (q_exp) {
+      kind = DT_QUAD;
+      if (XBIT(57, 0x10) && DTY(kind) == TY_QUAD) {
+        error(437, 2, gbl.lineno, "Constant with kind type 16 ", "REAL(8)");
+        kind = DT_REAL8;
+      }
+    } else if (d_exp) {
       kind = DT_DBLE;
       if (!XBIT(49, 0x200))
         /* not -dp */
@@ -6610,6 +6625,28 @@ return_real:
       return;
   }
   switch (DTY(kind)) {
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* deal with the quad precision literal constant */
+  case TY_QUAD:
+    tkntyp = TK_QCON;
+    errcode = atoxq(currc, num, (int)(cp - currc));
+    switch (errcode) {
+    case 0:
+      break;
+    case -1:
+    default:
+      CERROR(28, 3, gbl.lineno, currc, cp, CNULL);
+      break;
+    case -2:
+      CERROR(112, 1, gbl.lineno, currc, cp, CNULL);
+      break;
+    case -3:
+      CERROR(111, 1, gbl.lineno, currc, cp, CNULL);
+      break;
+    }
+    sptr = tknval = getcon(num, DT_QUAD);
+    break;
+#endif
   case TY_DBLE:
     tkntyp = TK_DCON;
     errcode = atoxd(currc, num, (int)(cp - currc));
@@ -6671,6 +6708,11 @@ get_nondec(int radix)
 
   tkntyp = TK_NONDEC;
   ndig = cp - currc;
+
+  if (RADIX2_FMT_ERR(radix, ndig) || RADIX8_FMT_ERR(radix, ndig, currc) ||
+      RADIX16_FMT_ERR(radix, ndig))
+    CERROR(1219, 3, gbl.lineno, "boz feature", cp, currc);
+
   if ((rtn = atoxi(currc, &tknval, ndig, radix)) < 0) {
     if ((rtn == -1) && (radix == 8)) {
       /* illegal digit */
@@ -7073,6 +7115,11 @@ check_ccon(void)
     case TK_DCON:
       num[0] = cngcon(val[0], DTYPEG(num[0]), DT_REAL8);
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TK_QCON:
+      num[0] = cngcon(val[0], DTYPEG(num[0]), DT_QUAD);
+      break;
+#endif
     default:
       interr("check_ccon: unexp.constant", tkntyp, 3);
       tkntyp = TK_RCON;
@@ -7089,6 +7136,12 @@ check_ccon(void)
       tkntyp = TK_DCCON;
       tknval = getcon(val, DT_CMPLX16);
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TK_QCON:
+      tkntyp = TK_QCCON;
+      tknval = getcon(val, DT_QCMPLX);
+      break;
+#endif
     }
   } else {
     if (tok1 == TK_DCON) {

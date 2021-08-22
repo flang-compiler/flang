@@ -1419,6 +1419,11 @@ Arithmetic if branch on real expression.
 .OP DCJMPZ null p1 le v2
 .OP DCJMPZ null p1 eq v3
 .OP DCJMPZ null p1 gt v4
+.IL QAIF branch lnk sym1 sym2 sym3
+.AT spec trm
+.OP QCJMPZ null p1 le v2
+.OP QCJMPZ null p1 eq v3
+.OP QCJMPZ null p1 gt v4
 .IL AGOTO branch n lnk sym*
 Assigned GOTO.
 'lnk' is to an ILD ILM.
@@ -3768,3 +3773,13 @@ Logical .LAND8. operation for unixlogical
 Logical .LNOT8. operation for unixlogical
 .AT i8
 .OP KCMPZ kr p1 eq
+
+.IL QFLD load lnk
+Load quad precision
+.AT spec
+.IL QFST store lnk lnk
+Store quad precision
+.AT spec trm
+.IL QADD arth lnk lnk
+Add quad precision
+.OP QADD r p1 p2

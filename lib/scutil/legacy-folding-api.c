@@ -786,7 +786,7 @@ xfisint(IEEE32 f, int *i)
  *  Copy a floating-point literal into a null-terminated buffer
  *  so that it may be passed to strtod() et al.  Insert a leading "0x"
  *  after the sign, if requested; also transform a Fortran double-precision
- *  exponent character 'd'/'D' into 'e'.
+ *  exponent character 'd'/'D'/'q'/'Q' into 'e'.
  */
 static void
 get_literal(char *buffer, size_t length, const char *s, int n, bool is_hex)
@@ -810,7 +810,7 @@ get_literal(char *buffer, size_t length, const char *s, int n, bool is_hex)
   while (n > 0 && *s && length > 1) {
     char ch = *s++;
     --n;
-    if (!is_hex && (ch == 'd' || ch == 'D'))
+    if (!is_hex && (ch == 'd' || ch == 'D' || ch == 'q' || ch == 'Q'))
       ch = 'e';
     *p++ = ch;
     --length;
@@ -1874,7 +1874,6 @@ hxatoxdd(const char *s, IEEE6464 dd, int n)
 }
 #endif /* FOLD_LDBL_DOUBLEDOUBLE */
 
-#ifdef FOLD_LDBL_128BIT
 static void
 unwrap_q(float128_t *x, IEEE128 q)
 {
@@ -2023,8 +2022,8 @@ void
 xqadd(IEEE128 q1, IEEE128 q2, IEEE128 r)
 {
   float128_t x, y, z;
-  unwrap_q(&x, q1);
-  unwrap_q(&y, q2);
+  unwrap_q(&y, q1);
+  unwrap_q(&z, q2);
   check(fold_real128_add(&x, &y, &z));
   wrap_q(r, &x);
 }
@@ -2033,8 +2032,8 @@ void
 xqsub(IEEE128 q1, IEEE128 q2, IEEE128 r)
 {
   float128_t x, y, z;
-  unwrap_q(&x, q1);
-  unwrap_q(&y, q2);
+  unwrap_q(&y, q1);
+  unwrap_q(&z, q2);
   check(fold_real128_subtract(&x, &y, &z));
   wrap_q(r, &x);
 }
@@ -2052,8 +2051,8 @@ void
 xqmul(IEEE128 q1, IEEE128 q2, IEEE128 r)
 {
   float128_t x, y, z;
-  unwrap_q(&x, q1);
-  unwrap_q(&y, q2);
+  unwrap_q(&y, q1);
+  unwrap_q(&z, q2);
   check(fold_real128_multiply(&x, &y, &z));
   wrap_q(r, &x);
 }
@@ -2062,14 +2061,14 @@ void
 xqdiv(IEEE128 q1, IEEE128 q2, IEEE128 r)
 {
   float128_t x, y, z;
-  unwrap_q(&x, q1);
-  unwrap_q(&y, q2);
+  unwrap_q(&y, q1);
+  unwrap_q(&z, q2);
   check(fold_real128_divide(&x, &y, &z));
   wrap_q(r, &x);
 }
 
 void
-xqabs(IEEE128 q, IEEE128 r)
+xqabsv(IEEE128 q, IEEE128 r)
 {
   float128_t x, y;
   unwrap_q(&y, q);
@@ -2090,8 +2089,8 @@ void
 xqpow(IEEE128 q1, IEEE128 q2, IEEE128 r)
 {
   float128_t x, y, z;
-  unwrap_q(&x, q1);
-  unwrap_q(&y, q2);
+  unwrap_q(&y, q1);
+  unwrap_q(&z, q2);
   check(fold_real128_pow(&x, &y, &z));
   wrap_q(r, &x);
 }
@@ -2154,8 +2153,8 @@ void
 xqatan2(IEEE128 q1, IEEE128 q2, IEEE128 r)
 {
   float128_t x, y, z;
-  unwrap_q(&x, q1);
-  unwrap_q(&y, q2);
+  unwrap_q(&y, q1);
+  unwrap_q(&z, q2);
   check(fold_real128_atan2(&x, &y, &z));
   wrap_q(r, &x);
 }
@@ -2196,6 +2195,29 @@ xqcmp(IEEE128 q1, IEEE128 q2)
   return fold_real128_compare(&y, &z);
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
+int
+xqisint(IEEE128 q, int *i)
+{
+  float128_t x, y;
+  int64_t k;
+  unwrap_q(&x, q);
+  check(fold_int32_from_real128(i, &x));
+  if (i == NULL)
+    return 0;
+
+  k = *i;
+  check(fold_real128_from_int64(&y, &k));
+  return fold_real128_compare(&x, &y) == FOLD_EQ;
+}
+
+void
+xmqtoq(float128_t mq, IEEE128 q)
+{
+  wrap_q(q, &mq);
+}
+#endif
+
 static int
 parse_q(const char *s, IEEE128 q, int n, bool is_hex)
 {
@@ -2221,7 +2243,6 @@ hxatoxq(const char *s, IEEE128 q, int n)
 {
   return parse_q(s, q, n, true);
 }
-#endif /* FOLD_LDBL_128BIT */
 
 /*
  *  Miscellaneous, possibly unused

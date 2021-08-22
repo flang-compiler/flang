@@ -2817,6 +2817,13 @@ iface_intrinsic(int sptr)
     dtyper = DT_DBLE;
     argdtype = DT_DBLE;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QABS: /* qabs */
+    paramct = 1;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+#endif
   case I_DACOS: /* dacos */
     paramct = 1;
     dtyper = DT_DBLE;
@@ -2927,6 +2934,18 @@ iface_intrinsic(int sptr)
     dtyper = DT_REAL;
     argdtype = DT_REAL;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QEXP: /* qexp */
+    paramct = 1;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+  case I_QINT: /* qint */
+    paramct = 1;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+#endif
   case I_IABS: /* iabs */
     paramct = 1;
     dtyper = DT_INT;
