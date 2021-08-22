@@ -261,8 +261,8 @@ make_dwtag(LL_DebugInfo *db, int tag)
 }
 
 static LL_MDRef
-lldbg_create_module_flag_mdnode(LL_DebugInfo *db, int severity, char *name,
-                                int value)
+lldbg_create_module_flag_mdnode(LL_DebugInfo *db, int severity,
+                                const char *name, int value)
 {
   LLMD_Builder mdb = llmd_init(db->module);
 
@@ -542,8 +542,8 @@ lldbg_reset_module(LL_DebugInfo *db)
 
 static LL_MDRef
 lldbg_create_global_variable_mdnode(LL_DebugInfo *db, LL_MDRef context,
-                                    const char *display_name, char *name,
-                                    char *mips_linkage_name,
+                                    const char *display_name, const char *name,
+                                    const char *mips_linkage_name,
                                     LL_MDRef def_context, int line,
                                     LL_MDRef type_mdnode, int is_local,
                                     int is_definition, LL_Value *var_ptr,
@@ -693,10 +693,10 @@ lldbg_create_basic_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
 }
 
 static LL_MDRef
-lldbg_create_pointer_type_mdnode(LL_DebugInfo *db, LL_MDRef context, char *name,
-                                 LL_MDRef fileref, int line, ISZ_T sz,
-                                 DBLINT64 alignment, DBLINT64 offset, int flags,
-                                 LL_MDRef pts_to)
+lldbg_create_pointer_type_mdnode(LL_DebugInfo *db, LL_MDRef context,
+                                 const char *name, LL_MDRef fileref, int line,
+                                 ISZ_T sz, DBLINT64 alignment, DBLINT64 offset,
+                                 int flags, LL_MDRef pts_to)
 {
   DBLINT64 size;
   LLMD_Builder mdb = llmd_init(db->module);
@@ -2345,7 +2345,7 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
   LL_MDRef lv_list_mdnode;
   LL_MDRef context_mdnode;
   LL_MDRef scope;
-  char *mips_linkage_name = "";
+  const char *mips_linkage_name = "";
   const char *func_name;
   int virtuality = 0;
   int vindex = 0;

@@ -30,7 +30,7 @@ typedef struct {
 /* ***  ILM Attributes Declarations  *****/
 
 typedef struct {
-  char *name;
+  const char *name;
   char type;
   short oprs;
   unsigned int oprflag;
@@ -127,11 +127,11 @@ typedef struct {
 
 /* ***  ILM External Data Declarations  *****/
 
-extern ILMB ilmb;       /*  defined in ilmutil.c  */
-extern ILMINFO ilms[];  /*  defined in ilmtpdf.h  */
-extern short ilmtp[];   /*  defined in ilmtpdf.h  */
-extern short ilmopnd[]; /*  defined in ilmtpdf.h  */
-extern char *ilmaux[];  /*  defined in ilmtpdf.h  */
+extern ILMB ilmb;            /*  defined in ilmutil.c  */
+extern ILMINFO ilms[];       /*  defined in ilmtpdf.h  */
+extern short ilmtp[];        /*  defined in ilmtpdf.h  */
+extern short ilmopnd[];      /*  defined in ilmtpdf.h  */
+extern const char *ilmaux[]; /*  defined in ilmtpdf.h  */
 
 /* for non array parameters, default set by attributes of the function
  */

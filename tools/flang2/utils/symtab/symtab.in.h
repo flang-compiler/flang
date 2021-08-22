@@ -330,7 +330,7 @@ char *getprint(int sptr);
 /**
    \brief ...
  */
-char *parmprint(int sptr);
+const char *parmprint(int sptr);
 
 /**
    \brief Add a new symbol with same name as an existing symbol
@@ -358,14 +358,14 @@ int dbg_symdentry(int sptr);
    \brief Create (or possibly reuse) a compiler created symbol whose name is of
    the form . <pfx> dddd where dddd is the decimal representation of n.
  */
-SPTR getccssym(char *pfx, int n, SYMTYPE stype);
+SPTR getccssym(const char *pfx, int n, SYMTYPE stype);
 
 /**
    \brief Similar to getccssym, but storage class is an argument. Calls
    getccssym if the storage class is not private; if private, a 'p' is appended
    to the name.
  */
-SPTR getccssym_sc(char *pfx, int n, SYMTYPE stype, SC_KIND sc);
+SPTR getccssym_sc(const char *pfx, int n, SYMTYPE stype, SC_KIND sc);
 
 /**
    \brief ...
@@ -421,12 +421,12 @@ SPTR get_semaphore(void);
    If the constant was already in the table, returns a pointer to the existing
    entry instead.
  */
-SPTR getstring(char *value, int length);
+SPTR getstring(const char *value, int length);
 
 /**
    \brief Similar to getstring except the character string is null terminated
  */
-SPTR getntstring(char *value);
+SPTR getntstring(const char *value);
 
 SPTR getstringaddr(SPTR sptr);
 

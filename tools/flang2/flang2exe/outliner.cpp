@@ -327,10 +327,10 @@ ll_get_outlined_funcname(int fileno, int lineno, bool isompaccel, ILM_OP opc) {
   int nmSize;
   int r;
   char *name_currfunc = getsname(GBL_CURRFUNC);
-  char *prefix = "";
+  const char *prefix = "";
   int plen;
-  char *host_prefix = "__nv_";
-  char *device_prefix = "nvkernel_";
+  const char *host_prefix = "__nv_";
+  const char *device_prefix = "nvkernel_";
   if(isompaccel) {
     prefix = device_prefix;
   } else {

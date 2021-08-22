@@ -908,8 +908,8 @@ conflict(int nm1, int nm2)
   r = _conflict(nm1, nm2);
   if (DBGBIT(10, 0x10000) || (r != NOCONFLICT && DBGBIT(10, 0x40000))) {
     int s = r;
-    static char *cname[] = {"same", "noconflict", "conflict", "unconflict",
-                            "?"};
+    static const char *cname[] = {"same", "noconflict", "conflict",
+                                  "unconflict", "?"};
     if (s < -1 || s > 3)
       s = 4;
     fprintf(gbl.dbgfil, "conflict(%d=", nm1);

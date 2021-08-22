@@ -180,17 +180,17 @@ char *sxaccfeature(int a);
 /**
    \brief ...
  */
-char *sxfeature(int f);
+const char *sxfeature(int f);
 
 /**
    \brief ...
  */
-char *sxtp(int tp);
+const char *sxtp(int tp);
 
 /**
    \brief ...
  */
-char *sxtype(int m);
+const char *sxtype(int m);
 
 /**
    \brief return \c ACC_TYPE value from accelerator value

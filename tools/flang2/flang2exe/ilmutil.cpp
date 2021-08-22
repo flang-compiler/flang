@@ -910,7 +910,7 @@ _dumponeilm(ILM_T *ilm_base, int i, int check)
     }
   } while (true);
   if (pr) {
-    char *s;
+    const char *s;
     switch (opc) {
     case IM_MP_MAP:
     case IM_PRAGMA:

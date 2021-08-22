@@ -97,6 +97,6 @@ void put_short(int val);
 /**
    \brief ...
  */
-void put_string_n(char *p, ISZ_T len, int size);
+void put_string_n(const char *p, ISZ_T len, int size);
 
 #endif // LLASSEM_COMMON_H_

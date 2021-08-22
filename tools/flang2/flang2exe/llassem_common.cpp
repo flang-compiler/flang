@@ -67,11 +67,11 @@ static void put_i16(int);
 static void put_r4(INT);
 static void put_r8(int, int);
 static void put_cmplx_n(int, int);
-static void add_ctor(char *);
+static void add_ctor(const char *);
 static void write_proc_pointer(SPTR sptr);
 
 static void
-add_ctor(char *constructor)
+add_ctor(const char *constructor)
 {
   LL_Type *ret = ll_create_basic_type(cpu_llvm_module, LL_VOID, 0);
   LL_Function *fn;
@@ -673,11 +673,11 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
 }
 
 void
-put_string_n(char *p, ISZ_T len, int size)
+put_string_n(const char *p, ISZ_T len, int size)
 {
   int n;
   char ch;
-  char *ptrch = "i8";
+  const char *ptrch = "i8";
   char chnm[10];
 
   /* check for wide string - size is given by caller */
@@ -706,7 +706,7 @@ put_ncharstring_n(char *p, ISZ_T len, int size_of_char)
 {
   int n, bytes;
   char ch;
-  char *ptrch = "i8";
+  const char *ptrch = "i8";
   char chnm[10];
   union {
     char a[2];

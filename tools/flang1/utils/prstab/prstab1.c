@@ -790,7 +790,7 @@ intArrayToCharArray(INT *intarr, CHAR *charr, INT count)
 }
 
 INT
-error(char *msg, INT msglen, INT ibad, INT sym, INT alias)
+error(const char *msg, INT msglen, INT ibad, INT sym, INT alias)
 {
   INT i_1;
   INT jbad, iend, ibase;

@@ -325,6 +325,8 @@ static ComplexResultList_t complexResultList;
 static void fma_rewrite(INSTR_LIST *isns);
 static void undo_recip_div(INSTR_LIST *isns);
 static char *set_local_sname(int sptr, const char *name);
+static const char *get_llvm_sname(SPTR sptr);
+static const char *get_llvm_mips_sname(SPTR sptr);
 static int is_special_return_symbol(int sptr);
 static bool cgmain_init_call(int);
 static OPERAND *gen_call_llvm_intrinsic(const char *, OPERAND *, LL_Type *,
@@ -527,10 +529,10 @@ get_label_name(int sptr)
   return nm;
 }
 
-char *
+const char *
 get_llvm_sname(SPTR sptr)
 {
-  char *p = SNAME(sptr);
+  const char *p = SNAME(sptr);
   if (p == NULL) {
     process_sptr(sptr);
     p = SNAME(sptr);
@@ -539,7 +541,7 @@ get_llvm_sname(SPTR sptr)
     p = SYMNAME(sptr);
     if (p == NULL)
       return "";
-    p = (char*) map_to_llvm_name(p); // ???
+    p = map_to_llvm_name(p);
     SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(p) + 1);
     p = strcpy(SNAME(sptr), p);
     return p;
@@ -549,7 +551,7 @@ get_llvm_sname(SPTR sptr)
   return p;
 }
 
-char *
+const char *
 get_llvm_mips_sname(SPTR sptr)
 {
   return get_llvm_sname(sptr);
@@ -2178,7 +2180,7 @@ gen_call_vminmax_intrinsic(int ilix, OPERAND *op1, OPERAND *op2)
   int type_size;
   char sign = 'u';
   char type = 'i';
-  char *mstr = "maxnum";
+  const char *mstr = "maxnum";
   static char buf[MAXIDLEN];
 
   if (ILI_OPC(ilix) == IL_VMIN) {
@@ -2393,8 +2395,8 @@ msz_dtype(MSZ msz)
 
 /* Begin define calling conventions */
 #define CALLCONV                         \
-  PRESENT(cc_default, "")                \
-  , PRESENT(arm_aapcscc, "arm_aapcscc"), \
+  PRESENT(cc_default, ""),               \
+    PRESENT(arm_aapcscc, "arm_aapcscc"), \
       PRESENT(arm_aapcs_vfpcc, "arm_aapcs_vfpcc")
 
 #define PRESENT(x, y) x
@@ -2402,7 +2404,7 @@ enum calling_conventions { CALLCONV };
 #undef PRESENT
 
 #define PRESENT(x, y) y
-char *cc_as_str[] = {CALLCONV};
+const char *cc_as_str[] = {CALLCONV};
 #undef PRESENT
 
 #undef CALLCONV
@@ -2941,7 +2943,7 @@ should_suppress_debug_loc(INSTR_LIST *instrs)
       // call void (i8*, i8*, i8*, i8*, i8*, i8*, ...) %8(i8*
       //      %2, i8* %3, i8* %4, i8* %5, i8* %6, i8* %7)
 
-      if (char *name_str = instrs->prev->operands->string) {
+      if (const char *name_str = instrs->prev->operands->string) {
         return (!strncmp(name_str, "@fort_init", strlen("@fort_init")) ||
                 !strncmp(name_str, "@f90_", strlen("@f90_")));
       }
@@ -4702,8 +4704,9 @@ gen_call_llvm_intrinsic(const char *fname, OPERAND *params,
 }
 
 static OPERAND *
-gen_call_pgocl_intrinsic(char *fname, OPERAND *params, LL_Type *return_ll_type,
-                         INSTR_LIST *Call_Instr, LL_InstrName i_name)
+gen_call_pgocl_intrinsic(const char *fname, OPERAND *params,
+                         LL_Type *return_ll_type, INSTR_LIST *Call_Instr,
+                         LL_InstrName i_name)
 {
   static char buf[MAXIDLEN];
 
@@ -4861,7 +4864,7 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
   EXFUNC_LIST *exfunc;
   OPERAND *call_op;
   static bool dbg_declare_defined = false;
-  char *gname;
+  const char *gname;
   INSTR_LIST *Curr_Instr;
 
   Curr_Instr = make_instr(I_CALL);
@@ -4918,7 +4921,7 @@ insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
   }
 }
 
-char *
+const char *
 match_names(MATCH_Kind match_val)
 {
   char *tt;
@@ -5547,7 +5550,7 @@ insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode, SPTR sptr, LL_Type *type)
 
   if (!defined) {
     EXFUNC_LIST *exfunc;
-    char *gname =
+    const char *gname =
         "declare void @llvm.dbg.value(metadata, i64, metadata, metadata)";
     exfunc = (EXFUNC_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
     memset(exfunc, 0, sizeof(EXFUNC_LIST));
@@ -10180,7 +10183,8 @@ vect_llvm_intrinsic_name(int ilix)
   int type, n, fsize;
   DTYPE dtype;
   ILI_OP opc = ILI_OPC(ilix);
-  char *basename, *retc;
+  const char *basename;
+  char *retc;
   assert(IL_VECT(opc), "vect_llvm_intrinsic_name(): not vect ili", ilix,
          ERR_Fatal);
   dtype = ili_get_vect_dtype(ilix);
@@ -11154,7 +11158,8 @@ process_extern_function_sptr(SPTR sptr)
   DTYPE dtype = DTYPEG(sptr);
   DTYPE return_dtype;
   EXFUNC_LIST *exfunc;
-  char *name, *gname, *extend_prefix;
+  char *name, *gname;
+  const char *extend_prefix;
   LL_Type *ll_ttype;
 
   assert(SCG(sptr) == SC_EXTERN, "Expected extern sptr", sptr, ERR_Fatal);
@@ -12693,7 +12698,7 @@ gen_constant(SPTR sptr, DTYPE tdtype, INT conval0, INT conval1, int flags)
     INT tmp[2];
   } dtmp, dtmp2;
   char *constant, *constant1, *constant2;
-  char *ctype = "";
+  const char *ctype = "";
   int size = 0;
 
   static char d[MAXIDLEN];

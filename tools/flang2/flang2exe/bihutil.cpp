@@ -505,7 +505,7 @@ split_extended()
 } /* split_extended */
 
 void
-dump_blocks(FILE *ff, int bih, char *fmt, int fihflag)
+dump_blocks(FILE *ff, int bih, const char *fmt, int fihflag)
 {
   dump_one_block(ff, bih, fmt);
   if (ff == NULL)
@@ -527,7 +527,7 @@ dump_blocks(FILE *ff, int bih, char *fmt, int fihflag)
 }
 
 void
-dump_one_block(FILE *ff, int bih, char *fmt)
+dump_one_block(FILE *ff, int bih, const char *fmt)
 {
   if (ff == NULL)
     ff = stderr;

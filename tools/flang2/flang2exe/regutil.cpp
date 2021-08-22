@@ -50,9 +50,9 @@
 
 #define RATA_ALL RATA_KR
 
-static char *atype_names[] = {"nme ", "cons", "ili ", "temp",
-                              "ind ", "arr ", "rpl "};
-static char *get_msize(int);
+static const char *atype_names[] = {"nme ", "cons", "ili ", "temp",
+                                    "ind ", "arr ", "rpl "};
+static const char *get_msize(int);
 
 /* NOTE: init. is dependent on defines in regutil.h */
 int il_rtype_df[RATA_RTYPES_TOTAL] = {
@@ -554,10 +554,10 @@ dmp_rat(int rat)
   fprintf(gbl.dbgfil, "\n");
 }
 
-static char *
+static const char *
 get_msize(int msz)
 {
-  char *p;
+  const char *p;
 
   switch (msz) {
   case MSZ_SBYTE:
@@ -844,13 +844,13 @@ storedums(int exitbih, int first_rat)
     regutil.h.
 */
 
-static struct {  /* Register temporary information */
-  char prefix;   /* beginning char of name */
-  char *arg1pfx; /* ARG1PTR Q&D - SEE f13720 */
-  DTYPE dt;      /* data type chosen for the temp */
-  int current;   /* current index to be used in name */
-  int start;     /* start value of index for a function */
-  int max;       /* maximum index used for the file */
+static struct {        /* Register temporary information */
+  const char prefix;   /* beginning char of name */
+  const char *arg1pfx; /* ARG1PTR Q&D - SEE f13720 */
+  DTYPE dt;            /* data type chosen for the temp */
+  int current;         /* current index to be used in name */
+  int start;           /* start value of index for a function */
+  int max;             /* maximum index used for the file */
 } rtemps[] = {
     {'D', "Da", DT_INT, 0, 0, -1},    /* 0: data register temps */
     {'G', "Ga", DT_CPTR, 0, 0, -1},   /* 1: address register temps */

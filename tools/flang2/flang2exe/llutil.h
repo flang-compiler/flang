@@ -141,11 +141,11 @@ typedef struct GBL_TAG {
 
 /** \brief Extern function list node */
 typedef struct EXFUNC_LIST {
-  SPTR sptr;         /**< sptr of the variable */
-  SPTR ha_sptr;      /**< sptr of hidden structure argument, if present */
-  char *func_def;    /**< external function definition */
-  unsigned flags;    /**< details about the external function */
-  DTYPE use_dtype;   /**< the dtype to use when generating prototypes */
+  SPTR sptr;                /**< sptr of the variable */
+  SPTR ha_sptr;             /**< sptr of hidden structure argument, if present */
+  const char *func_def;     /**< external function definition */
+  unsigned flags;           /**< details about the external function */
+  DTYPE use_dtype;          /**< the dtype to use when generating prototypes */
   struct EXFUNC_LIST *next;
 } EXFUNC_LIST;
 
@@ -174,7 +174,7 @@ typedef struct OPERAND {
       unsigned long long undef_mask;
     } sptr_undef;
   } val;
-  char *string;         /**< hold routine name for llvm intrinsic calls */
+  const char *string;   /**< hold routine name for llvm intrinsic calls */
   unsigned flags;       /**< dependent on operand */
   struct OPERAND *next; /**< link to next in list */
 } OPERAND;
@@ -1020,7 +1020,7 @@ char *ll_get_cstring_buf(int sptr, int skip_quotes);
 /**
    \brief ...
  */
-char *llvm_fc_type(DTYPE dtype);
+const char *llvm_fc_type(DTYPE dtype);
 
 /**
    \brief ...
@@ -1479,7 +1479,7 @@ void llutil_struct_def_reset(void);
 /**
    \brief ...
  */
-void print_line(char *ln);
+void print_line(const char *ln);
 
 /**
    \brief ...

@@ -27,7 +27,7 @@ zprntk(void)
     error("unable to open tokname file", 27, 2, 0, 27);
     return 0;
   }
-  fprintf(filptr, "%s", "static char *tokname[] = { \" \",\n"); /* } */
+  fprintf(filptr, "%s", "static const char *tokname[] = { \" \",\n"); /* } */
   istart = 4;
   ie = istart;
   i_1 = istart;

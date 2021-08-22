@@ -1968,7 +1968,7 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
   ILI newili;
   ILMOPND *ilmopr;
   ILMMAC *ilmtpl;
-  char *nmptr;
+  const char *nmptr;
 
   /*
    * locate the following for the ilm - the number of ili the ilm expands
@@ -2075,7 +2075,7 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
         dtype = DT_DBLE;
         {
           int len;
-          char *p;
+          const char *p;
           for (len = 0, p = nmptr; *p != ','; p++) {
             if (*p)
               len++;

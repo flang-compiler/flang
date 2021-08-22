@@ -46,7 +46,7 @@ static int exp_strx(int, STRDESC *, STRDESC *);
 static int exp_strcpy(STRDESC *, STRDESC *);
 static bool strovlp(STRDESC *, STRDESC *);
 static STRDESC *getstr(int);
-static STRDESC *getstrconst(char *, int);
+static STRDESC *getstrconst(const char *, int);
 static STRDESC *storechartmp(STRDESC *str, int mxlenili, int clenili);
 static char *getcharconst(STRDESC *);
 static int ftn_strcmp(char *, char *, int, int);
@@ -4422,7 +4422,7 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
    the "standard" fortran.
  */
 void
-exp_qjsr(char *ext, DTYPE res_dtype, ILM *ilmp, int curilm)
+exp_qjsr(const char *ext, DTYPE res_dtype, ILM *ilmp, int curilm)
 {
   int nargs;
   int ililnk;  /* ili link */
@@ -5203,7 +5203,7 @@ exp_strx(int opc, STRDESC *str1, STRDESC *str2)
   char *nstr_index_nm;
   char *strcmp_nm;
   char *nstrcmp_nm;
-  char *ftn_str_kindex_nm;
+  const char *ftn_str_kindex_nm;
 
   if (CHARLEN_64BIT) {
     str_index_nm = mkRteRtnNm(RTE_str_index_klen);
@@ -5723,7 +5723,7 @@ getstr(int ilm)
 }
 
 static STRDESC *
-getstrconst(char *str, int len)
+getstrconst(const char *str, int len)
 {
   SPTR s0;
   STRDESC *item;
