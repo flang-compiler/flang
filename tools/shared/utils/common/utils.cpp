@@ -437,7 +437,12 @@ collectIncludePaths(int argc, char *argv[])
       while (*cp && isspace(*cp)) {
         cp++;
       }
+      /* On Windows we have a drive letter before the first path separator. */
+#ifdef _WIN64
+      if (strlen(cp) < 3 || !(isalpha(*cp) && *(cp+1) == ':' && isPathSeparator(*(cp+2)))) {
+#else
       if (!isPathSeparator(*cp)) {
+#endif
           put_err(3, "Include file path must be a full path name\n");
       }
       std::string inclStr(cp);
