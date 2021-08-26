@@ -38,7 +38,7 @@ xrefinit(void)
   baseptr = NULL;
 
   /* create temporary file and open it for writing */
-  if ((fd = tmpf("b")) == NULL)
+  if ((fd = tmpfile()) == NULL)
     errfatal(5);
 }
 

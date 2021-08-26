@@ -65,7 +65,7 @@ void
 lower_ilm_header(void)
 {
   /* open the output file */
-  lower_ilm_file = tmpf("i");
+  lower_ilm_file = tmpfile();
   if (lower_ilm_file == NULL) {
     error(0, 4, 0, "could not open temporary ILM file", "");
   }

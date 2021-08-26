@@ -574,7 +574,7 @@ apply_use(MODULE_ID m_id)
   /* -MD option:  Print list of include files to file <program>.d */
   if (sem.which_pass == 0 && ((XBIT(123, 2) || XBIT(123, 8)))) {
     if (gbl.dependfil == NULL) {
-      if ((gbl.dependfil = tmpf("a")) == NULL)
+      if ((gbl.dependfil = tmpfile()) == NULL)
         errfatal(5);
     } else
       fprintf(gbl.dependfil, "\\\n  ");
@@ -1289,7 +1289,7 @@ end_module(void)
   }
   if (sem.which_pass == 0 && ((XBIT(123, 2) || XBIT(123, 8)))) {
     if (gbl.moddependfil == NULL) {
-      if ((gbl.moddependfil = tmpf("a")) == NULL)
+      if ((gbl.moddependfil = tmpfile()) == NULL)
         errfatal(5);
     }
     if (!XBIT(123, 0x40000)) {

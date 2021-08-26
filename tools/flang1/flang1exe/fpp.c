@@ -737,7 +737,7 @@ fpp(void)
   if (XBIT(123, 2) || XBIT(123, 8)) {
     int count;
     if (gbl.dependfil == NULL) {
-      if ((gbl.dependfil = tmpf("a")) == NULL)
+      if ((gbl.dependfil = tmpfile()) == NULL)
         errfatal(5);
     }
     count = strlen(gbl.module) + strlen(gbl.src_file) + 6;

@@ -101,7 +101,7 @@ dinit(VAR *ivl, CONST *ict)
   ILM_T *p;
 
   if (df == NULL) {
-    if ((df = tmpf("b")) == NULL)
+    if ((df = tmpfile()) == NULL)
       errfatal(F_0005_Unable_to_open_temporary_file);
   }
   ptr = (char *)ivl;

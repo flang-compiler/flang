@@ -3896,7 +3896,7 @@ put_data_statement(int lineno, int anyivl, int anyict, lzhandle *fdlz,
   ACL *ict;
 
   if (astb.df == NULL) {
-    astb.df = tmpf("b");
+    astb.df = tmpfile();
     if (astb.df == NULL)
       errfatal(5);
   }

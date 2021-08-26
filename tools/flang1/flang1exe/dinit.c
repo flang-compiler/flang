@@ -63,7 +63,7 @@ dinit(VAR *ivl, ACL *ict)
   char *ptr;
 
   if (astb.df == NULL) {
-    if ((astb.df = tmpf("b")) == NULL)
+    if ((astb.df = tmpfile()) == NULL)
       errfatal(5);
     sem.dinit_nbr_inits = 0;
   }
@@ -1657,7 +1657,7 @@ void rw_dinit_state(RW_ROUTINE, RW_FILE)
   seq_astb_df = 0;
   if (ISREAD()) {
     if (astb.df == NULL) {
-      if ((astb.df = tmpf("b")) == NULL)
+      if ((astb.df = tmpfile()) == NULL)
         errfatal(5);
     } else {
       nw = fseek(astb.df, 0L, 0);

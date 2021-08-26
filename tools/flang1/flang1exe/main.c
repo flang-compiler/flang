@@ -1129,7 +1129,7 @@ init(int argc, char *argv[])
           else if ((gbl.cppfil = fopen(cppfile, "w")) == NULL)
             errfatal(5);
         } else {
-          if ((gbl.cppfil = tmpf("a")) == NULL)
+          if ((gbl.cppfil = tmpfile()) == NULL)
             errfatal(5);
         }
         fpp();
