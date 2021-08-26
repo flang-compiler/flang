@@ -6126,6 +6126,8 @@ semant1(int rednum, SST *top)
       sem.bounds[sem.arrdim.ndim].uptype = S_STAR;
       sem.bounds[sem.arrdim.ndim].upb = 0;
       sem.bounds[sem.arrdim.ndim].upast = 0;
+      SST_LSYMP(RHS(rhstop), 0);
+      SST_DTYPEP(RHS(rhstop), DT_INT);
     } else {
       constarraysize = 0;
       sem.bounds[sem.arrdim.ndim].uptype = S_EXPR;
@@ -8604,6 +8606,7 @@ semant1(int rednum, SST *top)
     set_char_attributes(sptr, &dtype);
 
     if (DTY(DTYPEG(sptr)) == TY_ARRAY) {
+      int dims, idx, lbast;
       if (sem.new_param_dt && has_type_parameter(DTY(DTYPEG(sptr) + 1))) {
         /* Make sure we use the new parameterized dtype */
         dtype = sem.new_param_dt;
@@ -8614,6 +8617,24 @@ semant1(int rednum, SST *top)
         error(451, 3, gbl.lineno, SYMNAME(sptr), CNULL);
       }
       dtype = DTYPEG(sptr);
+      if (AD_ASSUMSZ(AD_DPTR(dtype)) && DTY(dtype + 1) == TY_INT &&
+          SCG(sptr) != SC_DUMMY && !(entity_attr.exist & ET_B(ET_PARAMETER))) {
+        error(155, 3, gbl.lineno,
+              "Implied-shape array must have the PARAMETER attribute -",
+              SYMNAME(sptr));
+        goto entity_decl_end;
+      }
+      dims = AD_NUMDIM(AD_DPTR(dtype));
+      for (idx = 0; idx < dims; idx++) {
+        lbast = AD_LWAST(AD_DPTR(dtype), idx);
+        if (AD_ASSUMSZ(AD_DPTR(dtype)) && DTY(dtype + 1) == TY_INT &&
+            SCG(sptr) != SC_DUMMY && A_TYPEG(lbast) != A_CNST) {
+          error(155, 3, gbl.lineno,
+                "Implied-shape array lower bound is not constant -",
+                SYMNAME(sptr));
+          goto entity_decl_end;
+        }
+      }
     } else if (DTY(DTYPEG(sptr)) == TY_PTR &&
                DTY(DTY(DTYPEG(sptr) + 1)) == TY_PROC) {
       /* ptr to a function, set the func return value and the pointer flag */
@@ -9032,9 +9053,16 @@ semant1(int rednum, SST *top)
         do_fixup_param_vars_for_derived_arrays(inited, sptr, 
                                                SST_IDG(RHS(3)))) {
       if (inited) {
+        if (DTY(dtype) == TY_ARRAY && AD_ASSUMSZ(AD_DPTR(dtype)) &&
+            DTY(SST_DTYPEG(RHS(3))) != TY_ARRAY) {
+          error(155, 3, gbl.lineno, "Implied-shape array must be initialized "
+                "with a constant array -", SYMNAME(sptr));
+          goto entity_decl_end;
+        }
         fixup_param_vars(top, RHS(3));
-        if (DTY(dtype) != TY_DERIVED && (DTY(dtype) != TY_ARRAY)) {
-          /* don't build ACLs for scalar parameters */
+        /* Don't build ACLS for scalar or unknown data type array parameters. */
+        if (((DTY(dtype) != TY_DERIVED) && (DTY(dtype) != TY_ARRAY)) ||
+            ((DTY(dtype) == TY_ARRAY) && (DTY(dtype + 1) == DT_NONE))) {
           goto entity_decl_end;
         }
       } else {
@@ -13301,12 +13329,51 @@ fixup_param_vars(SST *var, SST *init)
     sptr1 = get_param_alias_var(sptr, dtype);
   } else if (DTY(dtype) == TY_ARRAY) {
     ad = AD_DPTR(dtype);
-    if (AD_ASSUMSZ(ad) || AD_ADJARR(ad) || AD_DEFER(ad)) {
+    if (AD_ADJARR(ad) || AD_DEFER(ad)) {
       error(84, 3, gbl.lineno, SYMNAME(sptr),
             "- a named constant array must have constant extents");
       return;
     }
+    if (AD_ASSUMSZ(ad)) {
+      int i, dtype2;
+      dtype2 = SST_DTYPEG(init);
+      ADSC *ad2 = AD_DPTR(dtype2);
+      int ndim1 = AD_NUMDIM(ad);
+      int ndim2 = AD_NUMDIM(ad2);
+      int lb1, ub1, lb2, ub2, zbase;
 
+      if (ndim1 != ndim2) {
+        error(155, 3, gbl.lineno, "Implied-shape array must be initialized "
+              "with an array of the same rank -", SYMNAME(sptr));
+        DTY(dtype + 1) = DT_NONE;
+        return ;
+      }
+      zbase = 0;
+      for (i = 0; i < ndim1; i++) {
+        lb2 = ad_val_of(sym_of_ast(AD_LWAST(ad2, i)));
+        ub2 = ad_val_of(sym_of_ast(AD_UPAST(ad2, i)));
+        lb1 = ad_val_of(sym_of_ast(AD_LWAST(ad, i)));
+        if (ADD_LWAST(dtype2, i) == ADD_LWAST(dtype, i)) {
+          AD_UPBD(ad, i) = AD_UPAST(ad, i) = AD_UPAST(ad2, i);
+          AD_EXTNTAST(ad, i) = AD_EXTNTAST(ad2, i);
+        } else {
+          ub1 = ub2 - lb2  + lb1;
+          AD_UPBD(ad, i) = AD_UPAST(ad, i) =
+            mk_bnd_int(mk_isz_cval(ub1, astb.bnd.dtype));
+          AD_EXTNTAST(ad, i) =
+            mk_shared_extent(AD_LWAST(ad, i), AD_UPAST(ad, i), i);
+        }
+        if (i == 0)
+          zbase = zbase + lb1;
+        else
+          zbase = zbase + lb1 * (ub2 - lb2 + 1);
+        AD_MLPYR(ad, i) = AD_MLPYR(ad2, i);
+      }
+      AD_ZBASE(ad) = mk_isz_cval(zbase, astb.bnd.dtype);
+      if (i == ndim1)
+        AD_MLPYR(ad, i) = AD_MLPYR(ad2, i);
+      AD_ASSUMSZ(ad) = 0;
+    }
     sptr1 = get_param_alias_var(sptr, dtype);
     STYPEP(sptr1, ST_ARRAY);
     if (sem.interface == 0) {

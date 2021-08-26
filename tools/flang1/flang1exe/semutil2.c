@@ -545,7 +545,7 @@ _mk_arrdsc(int start_of_base)
       break;
     default:
       /* S_STAR: "*" was specified for this upper bound. */
-      if (i + 1 != sem.arrdim.ndim)
+      if (i + 1 != sem.arrdim.ndim && !is_parameter_context())
         error(48, 3, gbl.lineno, CNULL, CNULL);
       AD_UPAST(ad, i) = sem.bounds[i].upast; /* == NULL */
       AD_ASSUMSZ(ad) = 1;
