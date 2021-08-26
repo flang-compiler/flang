@@ -831,7 +831,7 @@ do_curr_file:
   gbl.ilmfil = gbl.objfil = NULL;
   if (!flg.es && (flg.object || flg.code)) {
     /* create temporary file for ilms */
-    if ((gbl.ilmfil = tmpf("b")) == NULL)
+    if ((gbl.ilmfil = tmpfile()) == NULL)
       errfatal((error_code_t)5);
   }
   /* process listing file */

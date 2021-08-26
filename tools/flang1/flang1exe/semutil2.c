@@ -12963,7 +12963,7 @@ save_host_state(int wherefrom)
       fseek(state_file, 0L, 0);
     }
   } else {
-    state_file = tmpf("b");
+    state_file = tmpfile();
     if (state_file == NULL)
       errfatal(5);
   }
@@ -13107,7 +13107,7 @@ restore_host_state(int whichpass)
     /* write the 'append' symbols into the 'append_file' */
     state_append_file_full = TRUE;
     if (!state_append_file) {
-      state_append_file = tmpf("b");
+      state_append_file = tmpfile();
       if (state_append_file == NULL)
         errfatal(5);
       state_file_position = 0;
@@ -13299,7 +13299,7 @@ save_module_state1()
   if (modstate_file) {
     fseek(modstate_file, 0L, 0);
   } else {
-    modstate_file = tmpf("m");
+    modstate_file = tmpfile();
     if (modstate_file == NULL)
       errfatal(5);
   }
@@ -13326,7 +13326,7 @@ save_imported_modules_state()
   if (modsave_file) {
     fseek(modsave_file, 0L, 0);
   } else {
-    modsave_file = tmpf("m");
+    modsave_file = tmpfile();
     if (modsave_file == NULL)
       errfatal(5);
   }
@@ -13422,7 +13422,7 @@ reset_module_state()
   } else {
     /* export the module-contained subprogram */
     if (!modstate_append_file) {
-      modstate_append_file = tmpf("m");
+      modstate_append_file = tmpfile();
       if (modstate_append_file == NULL)
         errfatal(5);
     } else {

@@ -49,7 +49,7 @@ dinit_put(DTYPE dtype, ISZ_T conval)
   if (mode == 'e') {
     mode = 'w';
   } else if (mode == ' ') {
-    if ((df = tmpf("b")) == NULL)
+    if ((df = tmpfile()) == NULL)
       errfatal(F_0005_Unable_to_open_temporary_file);
     mode = 'w';
   } else if (mode != 'w') {

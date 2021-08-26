@@ -445,7 +445,7 @@ scan_init(FILE *fd)
       errfatal(5);
   } else
 #endif
-      if ((astb.astfil = tmpf("b")) == NULL)
+      if ((astb.astfil = tmpfile()) == NULL)
     errfatal(5);
 
   put_astfil(FR_SRC, gbl.file_name, TRUE);
@@ -7294,7 +7294,7 @@ push_include(char *p)
       /* -MD option:  Print list of include files to file <program>.d */
       if (XBIT(123, 2) || XBIT(123, 8)) {
         if (gbl.dependfil == NULL) {
-          if ((gbl.dependfil = tmpf("a")) == NULL)
+          if ((gbl.dependfil = tmpfile()) == NULL)
             errfatal(5);
         } else
           fprintf(gbl.dependfil, "\\\n  ");
@@ -7407,7 +7407,7 @@ scan_include(char *str)
       /* -MD option:  Print list of include files to file <program>.d */
       if (XBIT(123, 2) || XBIT(123, 8)) {
         if (gbl.dependfil == NULL) {
-          if ((gbl.dependfil = tmpf("a")) == NULL)
+          if ((gbl.dependfil = tmpfile()) == NULL)
             errfatal(5);
         } else
           fprintf(gbl.dependfil, "\\\n  ");

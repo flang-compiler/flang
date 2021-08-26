@@ -36,7 +36,7 @@ dinit_put(int dtype, INT conval)
   int n;
 
   if (mode != 'w') { /* create a new file */
-    if ((df = tmpf("b")) == NULL)
+    if ((df = tmpfile()) == NULL)
       errfatal(5);
     mode = 'w';
 #if DEBUG

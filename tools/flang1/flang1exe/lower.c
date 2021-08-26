@@ -149,7 +149,7 @@ lower(int staticinit)
     case 1:
       /* an outer subprogram that contains others */
       /* create a temporary file */
-      lowersym.lowerfile = tmpf("l");
+      lowersym.lowerfile = tmpfile();
       if (lowersym.lowerfile == NULL) {
         error(0, 4, 0, "could not open temporary ILM symbol file", "");
       }

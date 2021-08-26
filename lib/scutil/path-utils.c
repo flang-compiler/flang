@@ -95,12 +95,6 @@ fndpath(const char *target, char *path, size_t max_length, const char *dirlist)
   return -1;
 }
 
-FILE *
-tmpf(char *ignored)
-{
-  return tmpfile();
-}
-
 char *
 mkperm(char *pattern, const char *oldext, const char *newext)
 {
