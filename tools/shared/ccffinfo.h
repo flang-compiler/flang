@@ -18,17 +18,17 @@
 
 #include <stdarg.h>
 
- void *ccff_bih_info(int msgtype, const char *msgid, int bihx,
-                           const char *message, ...);
+void *ccff_bih_info(int msgtype, const char *msgid, int bihx,
+                    const char *message, ...);
 
- void *subccff_bih_info(void *xparent, int msgtype, const char *msgid, int bihx,
-                              const char *message, ...);
+void *subccff_bih_info(void *xparent, int msgtype, const char *msgid, int bihx,
+                       const char *message, ...);
 
- void *subccff_ilt_info(void *xparent, int msgtype, const char *msgid, int iltx,
-                              int bihx, const char *message, ...);
+void *subccff_ilt_info(void *xparent, int msgtype, const char *msgid, int iltx,
+                       int bihx, const char *message, ...);
 
- void *ccff_ilt_info(int msgtype, const char *msgid, int iltx, int bihx,
-                           const char *message, ...);
+void *ccff_ilt_info(int msgtype, const char *msgid, int iltx, int bihx,
+                    const char *message, ...);
 
 void ccff_init_f90(void);
 
@@ -68,13 +68,14 @@ void ipa_report(void); /* ipa.c */
 #define MSGOMPACCEL 0x24
 #define MSGPCAST 0x25
 
-int addfile(const char *filename, char *funcname, int tag, int flags, int lineno,
-            int srcline, int level);
+int addfile(const char *filename, const char *funcname, int tag, int flags,
+            int lineno, int srcline, int level);
 
 /**
    \brief ...
  */
-int addinlfile(char *filename, char *funcname, int tag, int flags, int lineno, int srcline, int level, int parent);
+int addinlfile(const char *filename, const char *funcname, int tag, int flags,
+               int lineno, int srcline, int level, int parent);
 
 /**
    \brief ...
@@ -114,25 +115,26 @@ void ccff_close(void);
 /**
    \brief ...
  */
-void *ccff_func_info(int msgtype, const char *msgid, char *funcname,
+void *ccff_func_info(int msgtype, const char *msgid, const char *funcname,
                      const char *message, ...);
 
 /**
    \brief ...
  */
-void *ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *message, ...);
+void *ccff_info(int msgtype, const char *msgid, int fihx, int lineno,
+                const char *message, ...);
 
 /**
    \brief ...
  */
 void *_ccff_info(int msgtype, const char *msgid, int fihx, int lineno,
                  const char *varname, const char *funcname,
-                 const void *xparent, const char *message, va_list argptr);
+                 void *xparent, const char *message, va_list argptr);
 
 /**
    \brief ...
  */
-void ccff_open(char *ccff_filename, const char *srcfile);
+void ccff_open(const char *ccff_filename, const char *srcfile);
 
 /**
    \brief ...
@@ -157,7 +159,8 @@ void ccff_seq(int seq);
 /**
    \brief ...
  */
-void *ccff_var_info(int msgtype, const char *msgid, char *varname, const char *message, ...);
+void *ccff_var_info(int msgtype, const char *msgid, const char *varname,
+                    const char *message, ...);
 
 /**
    \brief ...
@@ -187,7 +190,7 @@ void restore_ccff_mark(void);
 /**
    \brief ...
  */
-void save_ccff_arg(char *argname, char *argvalue);
+void save_ccff_arg(const char *argname, const char *argvalue);
 
 /**
    \brief ...
@@ -203,7 +206,7 @@ void save_ccff_msg(int msgtype, const char *msgid, int fihx, int lineno,
 /**
    \brief ...
  */
-void save_ccff_text(char *message);
+void save_ccff_text(const char *message);
 
 /**
    \brief ...
@@ -213,7 +216,7 @@ void set_allfiles(int save);
 /**
    \brief ...
  */
-void setfile(int f, char *funcname, int tag);
+void setfile(int f, const char *funcname, int tag);
 
 /**
    \brief ...

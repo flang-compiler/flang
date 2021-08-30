@@ -18,6 +18,7 @@
 #include "machar.h"
 #include "upper.h"
 #include "fih.h"
+#include "ccffinfo.h"
 #include "cgraph.h"
 #include "x86.h"
 #include "dbg_out.h"

@@ -11,9 +11,9 @@
 
 typedef struct {
   char *dirname;  /**< directory name */
-  char *filename; /**< file name (only) */
-  char *fullname; /**< full file name */
-  char *funcname; /**< function name */
+  const char *filename; /**< file name (only) */
+  const char *fullname; /**< full file name */
+  const char *funcname; /**< function name */
   void *ccffinfo; /**< opaque pointer used for CCFF info */
   int functag;    /**< integer function tag; ilm index of the function header */
   int parent;     /**< file into which this is inlined or included */
