@@ -145,7 +145,7 @@ xmlintout2(int value1, int value2)
  * output <entity>
  */
 static void
-xmlopen(char *entity, char *shortentity)
+xmlopen(const char *entity, const char *shortentity)
 {
   if (!ccff_file)
     return;
@@ -159,7 +159,7 @@ xmlopen(char *entity, char *shortentity)
  * output <entity> without newline
  */
 static void
-xmlopenn(char *entity, char *shortentity)
+xmlopenn(const char *entity, const char *shortentity)
 {
   if (!ccff_file)
     return;
@@ -173,7 +173,8 @@ xmlopenn(char *entity, char *shortentity)
  * output <entity attr="attrval">
  */
 static void
-xmlopenattri(char *entity, char *shortentity, char *attr, int attrval)
+xmlopenattri(const char *entity, const char *shortentity, const char *attr,
+             int attrval)
 {
   if (!ccff_file)
     return;
@@ -188,7 +189,8 @@ xmlopenattri(char *entity, char *shortentity, char *attr, int attrval)
  */
 #ifdef FLANG_CCFFINFO_UNUSED
 static void
-xmlopenattrs(char *entity, char *shortentity, char *attr, char *attrval)
+xmlopenattrs(const char *entity, const char *shortentity, const char *attr,
+             const char *attrval)
 {
   if (!ccff_file)
     return;
@@ -203,8 +205,8 @@ xmlopenattrs(char *entity, char *shortentity, char *attr, char *attrval)
  * output <entity attr1="attr1val" attr2="attr2val">
  */
 static void
-xmlopenattrs2(char *entity, char *shortentity, char *attr1, char *attr1val,
-              char *attr2, char *attr2val)
+xmlopenattrs2(const char *entity, const char *shortentity, const char *attr1,
+              const char *attr1val, const char *attr2, const char *attr2val)
 {
   if (!ccff_file)
     return;
@@ -220,7 +222,7 @@ xmlopenattrs2(char *entity, char *shortentity, char *attr1, char *attr1val,
  * output </entity>
  */
 static void
-xmlclose(char *entity, char *shortentity)
+xmlclose(const char *entity, const char *shortentity)
 {
   if (!ccff_file)
     return;
@@ -234,7 +236,7 @@ xmlclose(char *entity, char *shortentity)
  * output <entity>string</entity>
  */
 static void
-xmlentity(char *entity, char *shortentity, const char *string)
+xmlentity(const char *entity, const char *shortentity, const char *string)
 {
   if (!ccff_file)
     return;
@@ -253,7 +255,7 @@ xmlentity(char *entity, char *shortentity, const char *string)
  * output <entity>string1 string2</entity>
  */
 static void
-xmlentity2(char *entity, char *shortentity, const char *string1,
+xmlentity2(const char *entity, const char *shortentity, const char *string1,
            const char *string2)
 {
   if (!ccff_file)
@@ -273,7 +275,7 @@ xmlentity2(char *entity, char *shortentity, const char *string1,
  * output <entity>value</entity>
  */
 static void
-xmlintentity(char *entity, char *shortentity, int value)
+xmlintentity(const char *entity, const char *shortentity, int value)
 {
   if (!ccff_file)
     return;
@@ -292,7 +294,7 @@ xmlintentity(char *entity, char *shortentity, int value)
  * output <entity>value1 value2</entity>
  */
 static void
-xmlintentity2(char *entity, char *shortentity, int value1, int value2)
+xmlintentity2(const char *entity, const char *shortentity, int value1, int value2)
 {
   if (!ccff_file)
     return;
@@ -312,7 +314,7 @@ xmlintentity2(char *entity, char *shortentity, int value1, int value2)
  * called from main()
  */
 void
-ccff_open(char *ccff_filename, const char *srcfile)
+ccff_open(const char *ccff_filename, const char *srcfile)
 {
   char *cwd, ch;
   int cwdlen;
@@ -716,7 +718,7 @@ ifih_sort_children(int ifihx)
  * return TRUE if the string is numeric
  */
 static bool
-_numeric(char *s, int *v)
+_numeric(const char *s, int *v)
 {
   int r = 0;
   while (*s) {
@@ -1182,10 +1184,9 @@ fih_message(MESSAGE *mptr)
 static void
 print_func(FILE *ofile)
 {
-  char *funcname;
   if (!anymessages) {
     anymessages = true;
-    funcname = FIH_FUNCNAME(1);
+    const char *funcname = FIH_FUNCNAME(1);
     fprintf(ofile, "%s:\n", funcname);
   }
 } /* print_func */
@@ -1344,7 +1345,6 @@ ifih_message_ofile(FILE *ofile, int nest, int lineno, int childnest,
                    MESSAGE *mptr)
 {
   MESSAGE *child;
-  char *funcname;
   if (flg.x[161] != 0 || flg.x[162] != 0) {
     switch (mptr->msgtype) {
     case MSGINLINER:
@@ -1454,7 +1454,7 @@ ifih_message_ofile(FILE *ofile, int nest, int lineno, int childnest,
   }
   if (!anymessages) {
     anymessages = true;
-      funcname = IFIH_FUNCNAME(1);
+    const char *funcname = IFIH_FUNCNAME(1);
     fprintf(ofile, "%s:\n", funcname);
   }
   fprintf(ofile, "%*s  ", nest * INDENT, "");
@@ -1488,7 +1488,6 @@ fih_messages(int fihx, FILE *ofile, int nest)
 #ifndef FE90
   int child, c;
   MESSAGE *mptr, *firstmptr, *nextmptr;
-  char *funcname;
 
   if (ccff_file && fihx > 1) {
 
@@ -1509,7 +1508,7 @@ fih_messages(int fihx, FILE *ofile, int nest)
       xmlintentity("inlineline", "ll", FIH_LINENO(fihx));
       if (FIH_SRCLINE(fihx) > 0)
         xmlintentity("inlinesrcline", "lsl", FIH_SRCLINE(fihx));
-      funcname = FIH_FUNCNAME(fihx);
+      const char *funcname = FIH_FUNCNAME(fihx);
       xmlentity("inlinename", "ln", funcname);
       if (funcname != FIH_FUNCNAME(fihx) &&
           strcmp(funcname, FIH_FUNCNAME(fihx)) != 0) {
@@ -1606,7 +1605,6 @@ ifih_messages(int ifihx, FILE *ofile, int nest)
 #ifndef FE90
   int child, c;
   MESSAGE *mptr, *firstmptr;
-  char *funcname;
 
   if (ccff_file && ifihx > 0) {
 
@@ -1627,7 +1625,7 @@ ifih_messages(int ifihx, FILE *ofile, int nest)
       xmlintentity("inlineline", "ll", IFIH_LINENO(ifihx));
       if (IFIH_SRCLINE(ifihx) > 0)
         xmlintentity("inlinesrcline", "lsl", IFIH_SRCLINE(ifihx));
-      funcname = IFIH_FUNCNAME(ifihx);
+      const char *funcname = IFIH_FUNCNAME(ifihx);
       xmlentity("inlinename", "ln", funcname);
       if (funcname != IFIH_FUNCNAME(ifihx) &&
           strcmp(funcname, IFIH_FUNCNAME(ifihx)) != 0) {
@@ -2084,7 +2082,7 @@ fillformat(const char *format, int len)
  * allocate a new buffer to hold the snprintf output
  */
 static char *
-newbuff(char *oldstring, int len, int *pl)
+newbuff(const char *oldstring, int len, int *pl)
 {
   int l;
   char *buff;
@@ -2099,7 +2097,7 @@ newbuff(char *oldstring, int len, int *pl)
 } /* newbuff */
 
 static char *
-newprintfl(char *oldstring, const char *format, int len, long data)
+newprintfl(const char *oldstring, const char *format, int len, long data)
 {
   char dummybuffer[50];
   char *buff;
@@ -2114,7 +2112,7 @@ newprintfl(char *oldstring, const char *format, int len, long data)
 } /* newprintfl */
 
 static char *
-newprintfi(char *oldstring, const char *format, int len, int data)
+newprintfi(const char *oldstring, const char *format, int len, int data)
 {
   char dummybuffer[50];
   char *buff;
@@ -2129,7 +2127,7 @@ newprintfi(char *oldstring, const char *format, int len, int data)
 } /* newprintfi */
 
 static char *
-newprintfd(char *oldstring, const char *format, int len, double data)
+newprintfd(const char *oldstring, const char *format, int len, double data)
 {
   char dummybuffer[50];
   char *buff;
@@ -2144,7 +2142,7 @@ newprintfd(char *oldstring, const char *format, int len, double data)
 } /* newprintfd */
 
 static char *
-newprintfs(char *oldstring, const char *format, int len, char *data)
+newprintfs(const char *oldstring, const char *format, int len, char *data)
 {
   char *buff;
   int n, l;
@@ -2174,7 +2172,7 @@ newprintfs(char *oldstring, const char *format, int len, char *data)
 } /* newprintfs */
 
 static char *
-newprintfx(char *oldstring, const char *format, int len)
+newprintfx(const char *oldstring, const char *format, int len)
 {
   char dummybuffer[50];
   char *buff;
@@ -2197,7 +2195,7 @@ newprintfx(char *oldstring, const char *format, int len)
  */
 void *
 _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *varname,
-           const char *funcname, const void *xparent, const char *message,
+           const char *funcname, void *xparent, const char *message,
            va_list argptr)
 {
   MESSAGE *mptr;
@@ -2450,7 +2448,7 @@ subccff_info(void *xparent, int msgtype, const char *msgid, int fihx, int lineno
  * Save information for a variable symbol
  */
 void *
-ccff_var_info(int msgtype, const char *msgid, char *varname, const char *message, ...)
+ccff_var_info(int msgtype, const char *msgid, const char *varname, const char *message, ...)
 {
   va_list argptr;
   va_start(argptr, message);
@@ -2461,7 +2459,7 @@ ccff_var_info(int msgtype, const char *msgid, char *varname, const char *message
  * Save information for a function symbol
  */
 void *
-ccff_func_info(int msgtype, const char *msgid, char *funcname, const char *message,
+ccff_func_info(int msgtype, const char *msgid, const char *funcname, const char *message,
                ...)
 {
   va_list argptr;
@@ -2481,11 +2479,11 @@ ccff_seq(int seq)
   }
 } /* ccff_seq */
 
-static char *nullname = "";
+static const char *nullname = "";
 
 int
-addfile(const char *filename, char *funcname, int tag, int flags, int lineno,
-        int srcline, int level)
+addfile(const char *filename, const char *funcname, int tag, int flags,
+        int lineno, int srcline, int level)
 {
   int f, len;
   char *pfilename, *slash, *cp, *pfuncname;
@@ -2537,16 +2535,18 @@ addfile(const char *filename, char *funcname, int tag, int flags, int lineno,
     /* l = 12 */
     if (l == 0)
       l = 1; /* allow for /file */
-    FIH_DIRNAME(f) = getitem(8, l + 1);
-    strncpy(FIH_DIRNAME(f), pfilename, l);
-    FIH_DIRNAME(f)[l] = '\0'; /* strncpy does not terminate string */
+    char *s = getitem(8, l + 1);
+    strncpy(s, pfilename, l);
+    s[l] = '\0'; /* strncpy does not terminate string */
+    FIH_DIRNAME(f) = s;
     l = slash - pfilename;    /* recompute, in case we incremented l */
     l = len - l;
     /* len-l = 8, but we'll split off the slash,
      * leaving room for the string terminator */
-    FIH_FILENAME(f) = getitem(8, l);
-    strncpy(FIH_FILENAME(f), slash + 1, l - 1);
-    FIH_FILENAME(f)[l - 1] = '\0';
+    s = getitem(8, l);
+    strncpy(s, slash + 1, l - 1);
+    s[l - 1] = '\0';
+    FIH_FILENAME(f) = s;
   }
   if (funcname == NULL) {
     FIH_FUNCNAME(f) = nullname;
@@ -2583,8 +2583,8 @@ addfile(const char *filename, char *funcname, int tag, int flags, int lineno,
 /* This function is used in global_inline when importing bottom-up
    auto-inlining information */
 int
-addinlfile(char *filename, char *funcname, int tag, int flags, int lineno,
-           int srcline, int level, int parent)
+addinlfile(const char *filename, const char *funcname, int tag, int flags,
+           int lineno, int srcline, int level, int parent)
 {
   int f, len;
   char *pfilename, *slash, *cp, *pfuncname;
@@ -2634,16 +2634,18 @@ addinlfile(char *filename, char *funcname, int tag, int flags, int lineno,
     /* l = 12 */
     if (l == 0)
       l = 1; /* allow for /file */
-    FIH_DIRNAME(f) = getitem(8, l + 1);
-    strncpy(FIH_DIRNAME(f), pfilename, l);
-    FIH_DIRNAME(f)[l] = '\0'; /* strncpy does not terminate string */
+    char *s = getitem(8, l + 1);
+    strncpy(s, pfilename, l);
+    s[l] = '\0'; /* strncpy does not terminate string */
+    FIH_DIRNAME(f) = s;
     l = slash - pfilename;    /* recompute, in case we incremented l */
     l = len - l;
     /* len-l = 8, but we'll split off the slash,
      * leaving room for the string terminator */
-    FIH_FILENAME(f) = getitem(8, l);
-    strncpy(FIH_FILENAME(f), slash + 1, l - 1);
-    FIH_FILENAME(f)[l - 1] = '\0';
+    s = getitem(8, l);
+    strncpy(s, slash + 1, l - 1);
+    s[l - 1] = '\0';
+    FIH_FILENAME(f) = s;
   }
   if (funcname == NULL) {
     FIH_FUNCNAME(f) = nullname;
@@ -2698,7 +2700,7 @@ subfih(int fihindex, int tag, int flags, int lineno)
 } /* subfih */
 
 void
-setfile(int f, char *funcname, int tag)
+setfile(int f, const char *funcname, int tag)
 {
   char *pfuncname;
   bool firsttime = true;
@@ -2918,7 +2920,7 @@ save_ccff_msg(int msgtype, const char *msgid, int fihx, int lineno,
  * save CCFF argument and value
  */
 void
-save_ccff_arg(char *argname, char *argvalue)
+save_ccff_arg(const char *argname, const char *argvalue)
 {
   ARGUMENT *aptr;
     aptr = GETITEM(CCFFAREA, ARGUMENT);
@@ -2938,7 +2940,7 @@ save_ccff_arg(char *argname, char *argvalue)
  * save CCFF message text
  */
 void
-save_ccff_text(char *message)
+save_ccff_text(const char *message)
 {
   if (prevmessage && prevmessage->message == NULL)
       prevmessage->message = COPYSTRING(message);
