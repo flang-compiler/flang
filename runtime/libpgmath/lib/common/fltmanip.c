@@ -224,7 +224,7 @@ __nextafter(double x, double y)
 
   /* x infinity, return -_MAXDOUBLE, +_MAXDOUBLE, or x */
   if ((ixh & 0x7ff00000) == 0x7ff00000) {
-    if ((iyh & 0x7f800000) == 0x7f800000) {
+    if ((iyh & 0x7ff00000) == 0x7ff00000) {
       if (!(ixh & 0x80000000)) {
         if (iyh & 0x80000000)
           /* inf, -inf */
