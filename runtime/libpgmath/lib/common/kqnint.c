@@ -12,11 +12,11 @@
 #define LONG_LONG_MAX 9223372036854775807
 long long __mth_i_kiqnint(long double d)
 {
-  if (d > 0 && (d > LONG_LONG_MAX))
+  if ((d > 0.0L) && (d > LONG_LONG_MAX))
     return LONG_LONG_MAX;
 
-  if (d < 0 && (d < -LONG_LONG_MAX - 1))
-    return -LONG_LONG_MAX - 1;
+  if ((d < 0.0L) && (d < -LONG_LONG_MAX - 1LL))
+    return -LONG_LONG_MAX - 1LL;
 
   return lroundl(d);
 }

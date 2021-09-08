@@ -100,16 +100,16 @@ __nextafterl(long double x, long double y)
   int idflag, subflag;
 
   ex = y;
-  iyl = *((int*)(&(ex)));
-  iyk = *((int*)(&(ex)) + 1);
-  iyj = *((int*)(&(ex)) + 2);
-  iyh = *((int*)(&(ex)) + 3);
+  iyl = *((int *)(&(ex)));
+  iyk = *((int *)(&(ex)) + 1);
+  iyj = *((int *)(&(ex)) + 2);
+  iyh = *((int *)(&(ex)) + 3);
 
   ex = x;
-  ixl = *((int*)(&(ex)));
-  ixk = *((int*)(&(ex)) + 1);
-  ixj = *((int*)(&(ex)) + 2);
-  ixh = *((int*)(&(ex)) + 3);
+  ixl = *((int *)(&(ex)));
+  ixk = *((int *)(&(ex)) + 1);
+  ixj = *((int *)(&(ex)) + 2);
+  ixh = *((int *)(&(ex)) + 3);
 
   izl = *((long long *)(&(ex)));
   izh = *((long long *)(&(ex)) + 1);
