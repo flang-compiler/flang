@@ -2491,7 +2491,11 @@ extent_of_shape(int shape, int dim)
         return astb.bnd.zero;
     }
   } else {
-    int mask = mk_binop(OP_GE, ub, lb, astb.bnd.dtype);
+    /* 'a' is calculated as ((ub - lb + s) / s)
+     * which works for negative strides as well.
+     * Negative results are converted to zero.
+     */
+    int mask = mk_binop(OP_GE, a, astb.bnd.zero, astb.bnd.dtype);
     a = mk_merge(a, astb.bnd.zero, mask, astb.bnd.dtype);
   }
 
