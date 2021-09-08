@@ -12,10 +12,10 @@
 #define INT_MAX 2147483647
 int __mth_i_iqnint(long double d)
 {
-  if (d > 0 && (d > INT_MAX))
+  if ((d > 0.0L) && (d > INT_MAX))
     return INT_MAX;
 
-  if (d < 0 && (d < -INT_MAX - 1))
+  if ((d < 0.0L) && (d < -INT_MAX - 1))
     return -INT_MAX - 1;
 
   return lroundl(d);
