@@ -21,13 +21,8 @@ jobs:
         cc: [clang]
         cpp: [clang++]
         version: [10, 11]
-        llvm_branch: [release_100, release_11x, release_12x]
+        llvm_branch: [release_11x, release_12x]
         include:
-          - target: X86
-            cc: gcc
-            cpp: g++
-            version: 10
-            llvm_branch: release_100
           - target: X86
             cc: gcc
             cpp: g++
