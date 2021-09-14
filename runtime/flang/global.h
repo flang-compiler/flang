@@ -321,13 +321,7 @@ typedef struct {
 #include <errno.h>
 
 extern FIO_TBL fioFcbTbls;
-#ifdef WINNT
-extern FIO_FCB *__get_fio_fcbs(void);
-#define GET_FIO_FCBS __get_fio_fcbs()
-#else
 #define GET_FIO_FCBS fioFcbTbls.fcbs
-
-#endif
 
 extern int next_newunit; /* newunit counter */
 
