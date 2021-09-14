@@ -114,7 +114,7 @@ __pgi_getbv(uint32_t f, uint64_t *r)
   uint32_t *u32;
   u32 = (uint32_t *)r;
   asm(
-#if	defined(__WIN64)
+#if	defined(_WIN64)
 "\t.byte\t0x0f, 0x01, 0xd0"
 #else
 "\txgetbv"

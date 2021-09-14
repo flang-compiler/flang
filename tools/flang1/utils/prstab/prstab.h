@@ -28,7 +28,7 @@
 #define min(a, b) ((a) <= (b) ? (a) : (b))
 #define max(a, b) ((a) >= (b) ? (a) : (b))
 
-#if defined(__WIN64__) || defined(__WIN32__)
+#if defined(_WIN64)
 #define SNPRINTF _snprintf
 #else
 #define SNPRINTF snprintf
