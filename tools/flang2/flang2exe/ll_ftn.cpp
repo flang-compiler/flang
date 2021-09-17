@@ -891,8 +891,6 @@ get_entries_argnum(void)
   int fvaldt = 0;
   int found = 0;
   char name[100];
-  bool ret_scalar;
-  int entry;
 
   if (SYMLKG(sptr) <= NOSYM) /* no Entry */
     return 0;
@@ -924,16 +922,8 @@ get_entries_argnum(void)
   aux.dpdsc_base[master_dpdsc] = opt;
   i = 1;
 
-  ret_scalar = false;
-  for (entry = gbl.currsub; entry > NOSYM ; entry = SYMLKG(entry)) {
-    int fval1 = FVALG(entry);
-    if(fval1 && SCG(fval1) != SC_DUMMY && SCG(fval1) != SC_BASED) {
-      ret_scalar = true;
-      break;
-    }
-  }
   /* Add second arg if the following is true */
-  if (has_multiple_entries(gbl.currsub) && ret_scalar) {
+  if (fval && SCG(fval) != SC_DUMMY) {
     sprintf(name, "%s%d", "__master_entry_rslt", stb.stg_avail);
     opt = addnewsym(name);
     max_cnt++;
@@ -1063,7 +1053,7 @@ write_dummy_as_local_in_entry(int sptr)
     }
   }
 
-  if (FVALG(sptr) && SCG(FVALG(sptr)) != SC_DUMMY && SCG(FVALG(sptr)) != SC_BASED) {
+  if (FVALG(sptr) && SCG(FVALG(sptr)) != SC_DUMMY) {
     DeclareSPtrAsLocal(FVALG(sptr), 1);
   }
 }
@@ -1135,7 +1125,7 @@ print_entry_subroutine(LL_Module *module)
     } else {
       rettype = DT_NONE;
     }
-    if (fval && SCG(fval) != SC_DUMMY && SCG(fval) != SC_BASED) {
+    if (fval && SCG(fval) != SC_DUMMY) {
       /* Bitcast fval which is local variable to i8*.
        * We will pass this fval to master routine.
        */
@@ -1181,8 +1171,7 @@ print_entry_subroutine(LL_Module *module)
       write_type(dummy_type);
       print_space(1);
       print_tmp_name(tmp);
-    } else if (fval && SCG(fval) != SC_DUMMY && SCG(fval) != SC_BASED &&
-               fval != FVALG(gbl.currsub)) {
+    } else if (fval && SCG(fval) != SC_DUMMY && fval != FVALG(gbl.currsub)) {
       TY_KIND ThisIsABug; // FIXME
       DTYPE ThisIsABug2;  // FIXME
       /* If it is a dummy, it should already in the master dpdsc.  */
