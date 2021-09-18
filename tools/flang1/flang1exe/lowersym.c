@@ -1239,21 +1239,32 @@ replace_fval_in_params(SPTR entry, SPTR entrysame)
   SPTR fval, fvalsame, newdsc, newdscsame, newarg, newargsame;
   int params, narg, i;
 
+  narg = PARAMCTG(entry);
+  if (narg == 0)
+    return;
+  params = DPDSCG(entry);
   fval = FVALG(entry);
   fvalsame = FVALG(entrysame);
   newdsc = NEWDSCG(fval);
   newarg = NEWARGG(fval);
+  /* If the return variable is an adjustable length character without POINTER
+   * attribute, its NEWARG keeps SPTR_NULL(see init_newargs in bblock.c), and
+   * itself will be put into dummy parameters(see newargs_for_entry in
+   * dpm_out.c), so we match and replace the return variable directly.
+   */
+  if (newarg == SPTR_NULL)
+    newarg = fval;
   newdscsame = NEWDSCG(fvalsame);
   newargsame = NEWARGG(fvalsame);
-  params = DPDSCG(entry);
-  narg = PARAMCTG(entry);
+  if (newargsame == SPTR_NULL)
+    newargsame = fvalsame;
   for (i = 0; i < narg; i++) {
     int arg = aux.dpdsc_base[params + i];
-    if (arg != 0 && arg == newarg) {
+    if (arg != SPTR_NULL && arg == newarg) {
       aux.dpdsc_base[params + i] = newargsame;
       continue;
     }
-    if (arg != 0 && arg == newdsc) {
+    if (arg != SPTR_NULL && arg == newdsc) {
       aux.dpdsc_base[params + i] = newdscsame;
       continue;
     }
@@ -1316,6 +1327,11 @@ replace_fval_in_ast(SPTR fval, SPTR fvalsame)
 
   var = SDSCG(fval);
   var_same = SDSCG(fvalsame);
+  add_replace_map(var, var_same);
+  replace_sptr_in_ast(var);
+
+  var = CVLENG(fval);
+  var_same = CVLENG(fvalsame);
   add_replace_map(var, var_same);
   replace_sptr_in_ast(var);
 }

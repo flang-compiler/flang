@@ -37,6 +37,21 @@ entry e5 ()
   e5 = (/1,2,3,4,5/)
 end function
 
+function f6 (n)
+  integer :: n
+  character(n) :: f6, e6
+entry e6 (n)
+  e6 = "hello1"
+end function
+
+function f7 (n)
+  integer :: n
+  character(n), pointer :: f7, e7
+entry e7 (n)
+  allocate(e7)
+  e7 = "hello2"
+end function
+
 program test
   interface
     function f1 ()
@@ -69,10 +84,27 @@ program test
     function e5 ()
       integer, dimension(:), pointer :: e5
     end function
+    function f6 (n)
+      integer :: n
+      character(n) :: f6
+    end function
+    function e6 (n)
+      integer :: n
+      character(n) :: e6
+    end function
+    function f7 (n)
+      integer :: n
+      character(n), pointer :: f7
+    end function
+    function e7 (n)
+      integer :: n
+      character(n), pointer :: e7
+    end function
   end interface
 
-  integer, parameter :: n = 10
+  integer, parameter :: n = 14
   integer :: rslts(n), expect(n)
+  character(6), pointer :: p
 
   rslts = 0
   expect = 1
@@ -86,6 +118,18 @@ program test
   if (all(e4() == (/1,2,3,4/))) rslts(8) = 1
   if (all(f5() == (/1,2,3,4,5/))) rslts(9) = 1
   if (all(e5() == (/1,2,3,4,5/))) rslts(10) = 1
+  if (len(f6(6)) == 6 .and. f6(6) == "hello1") rslts(11) = 1
+  if (len(e6(6)) == 6 .and. e6(6) == "hello1") rslts(12) = 1
+  p => f7(6)
+  if (associated(p)) then
+    if (len(p) == 6 .and. p == "hello2") rslts(13) = 1
+    deallocate(p)
+  endif
+  p => e7(6)
+  if (associated(p)) then
+    if (len(p) == 6 .and. p == "hello2") rslts(14) = 1
+    deallocate(p)
+  endif
 
   call check(rslts, expect, n)
 end program
