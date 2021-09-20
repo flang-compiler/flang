@@ -768,16 +768,6 @@ semant2(int rednum, SST *top)
       } else {
         int dty = TBPLNKG(sptr);
         itemp = ITEM_END;
-        if (generic_tbp_has_pass_and_nopass(dty, sptr)) {
-          int parent, sp;
-          e1 = (SST *)getitem(0, sizeof(SST));
-          sp = sym_of_ast(ast);
-          SST_SYMP(e1, sp);
-          SST_DTYPEP(e1, DTYPEG(sp));
-          mkident(e1);
-          mkexpr(e1);
-          itemp = mkitem(e1);
-        }
         goto var_ref_common;
       }
     }
@@ -966,7 +956,13 @@ semant2(int rednum, SST *top)
           mem2 = get_specific_member(TBPLNKG(sptr), VTABLEG(mem));
           argno = get_tbp_argno(BINDG(mem2), TBPLNKG(sptr));
           if (!argno && NOPASSG(mem2)) {
-            goto var_ref_common; /* assume NOPASS tbp */
+            if (STYPEG(sptr) == ST_USERGENERIC) {
+              // One tbp argument will be added to a type bound procedure call
+              // with NOPASS clause.
+              argno = 1;
+            } else {
+              goto var_ref_common; /* assume NOPASS tbp */
+            }
           }
         } else {
           argno = get_tbp_argno(sptr, DTYPEG(pass_sym_of_ast(ast)));
