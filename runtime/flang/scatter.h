@@ -43,7 +43,7 @@ struct gathscat_dim {
 };
 
 struct gathscat_parm {
-  char *what; /* "GATHER"/"XXX_SCATTER" */
+  const char *what;           /* "GATHER"/"XXX_SCATTER" */
   void (*xfer_request)(struct chdr *, int, void *, long, long, int,
                        long); /* scatter: __fort_sendl; gather: __fort_recvl */
   void (*xfer_respond)(struct chdr *, int, void *, long, long, int,
@@ -101,9 +101,10 @@ void *ENTFTN(COMM_START, comm_start)();
 void ENTFTN(COMM_FINISH, comm_finish)();
 void ENTFTN(COMM_FREE, comm_free)();
 
-void *I8(__fort_adjust_index_array)(char *what, char *idx_array, char *src,
-                                   int dim, F90_Desc *is, F90_Desc *bs);
+void *I8(__fort_adjust_index_array)(const char *what, char *idx_array,
+                                    char *src, int dim, F90_Desc *is,
+                                    F90_Desc *bs);
 
-void *I8(__fort_create_conforming_index_array)(char *what, char *ab, void *ib,
-                                              F90_Desc *as, F90_Desc *is,
-                                              F90_Desc *new_is);
+void *I8(__fort_create_conforming_index_array)(const char *what, char *ab,
+                                               void *ib, F90_Desc *as,
+                                               F90_Desc *is, F90_Desc *new_is);

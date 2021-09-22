@@ -39,8 +39,8 @@ Ftn_date(char *buf,     /* date buffer */
   INT idx1;
   time_t ltime;
   struct tm *lt;
-  static char *month[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+  static const char *month[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
   /* procedure */
 

@@ -15,9 +15,6 @@
 #include <unistd.h>
 #endif
 
-extern double __fort_second();
-extern long __fort_getoptn(char *, long);
-
 /*
  * Hacks to return complex-valued functions.
  * mergec & mergedc for the Cray are defined in miscsup_com.c.

@@ -159,9 +159,9 @@ static void I8(store_vector_int)(void *ab, F90_Desc *as, int *vector,
   }
 }
 
-static void ftnstrcpy(char *dst, /*  destination string, blank-filled */
-                      size_t len,   /*  length of destination space */
-                      char *src) /*  null terminated source string  */
+static void ftnstrcpy(char *dst,       /* destination string, blank-filled */
+                      size_t len,      /* length of destination space */
+                      const char *src) /* null terminated source string  */
 {
   char *end = dst + len;
   while (dst < end && *src != '\0')
@@ -265,7 +265,7 @@ void ENTFTN(DIST_DISTRIBUTIONA, dist_distributiona)(
   proc *p;
   procdim *pd;
   __INT_T i, rank, vector[MAXDIMS];
-  char *src;
+  const char *src;
   __CLEN_T len;
 
   if (F90_TAG_G(distributee) == __DESC) {
@@ -397,7 +397,7 @@ void ENTFTN(DIST_TEMPLATEA,
   proc *p;
   __INT_T i, rank, n_alnd, ux;
   __INT_T alignee_axis[MAXDIMS], vector[MAXDIMS];
-  char *src;
+  const char *src;
   __CLEN_T len;
 
   if (F90_TAG_G(alignee) == __DESC) {
@@ -585,7 +585,7 @@ void ENTFTN(GLOBAL_DISTRIBUTIONA, global_distributiona)(
   proc *p;
   procdim *pd;
   __INT_T i, rank, vector[MAXDIMS];
-  char *src;
+  const char *src;
   __CLEN_T len;
 
   if (F90_TAG_G(array_s) == __DESC) {
@@ -722,7 +722,7 @@ void ENTFTN(GLOBAL_TEMPLATEA, global_templatea)(
   proc *p;
   __INT_T i, rank, n_alnd, ux;
   __INT_T alignee_axis[MAXDIMS], vector[MAXDIMS];
-  char *src;
+  const char *src;
   __CLEN_T len;
 
   if (F90_TAG_G(array_s) == __DESC) {

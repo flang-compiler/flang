@@ -13,8 +13,6 @@
 #include <sys/time.h>
 #endif
 
-extern char *__fort_getopt();
-
 /* tid comparison routine called by qsort */
 
 static int
@@ -58,7 +56,8 @@ static void
 __fort_getmap(int *processormap)
 {
   int j, k, m, n, tcpus, *usedmap;
-  char *argp, *endp;
+  const char *argp;
+  char *endp;
 
   /* -map <j>:<m>..<n>,... = map processors <m>..<n> to processors <l>..  */
 

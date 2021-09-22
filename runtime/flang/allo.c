@@ -391,9 +391,8 @@ I8(__alloc04)(__NELEM_T nelem, dtype kind, size_t len,
   if (*pointer && I8(__fort_allocated)(*pointer)
       && ISPRESENT(stat) && *stat == 2) {
     int i;
-    char *mp;
+    const char *mp = "array already allocated";
     MP_P_STDIO;
-    mp = "array already allocated";
     for (i = 0; i < errlen; i++)
       errmsg[i] = (*mp ? *mp++ : ' ');
     MP_V_STDIO;

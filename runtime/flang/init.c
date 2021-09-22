@@ -16,7 +16,7 @@
 
 static int tid = 0;
 
-char *__fort_transnam = "rpm1";
+const char *__fort_transnam = "rpm1";
 
 #ifdef WINNT
 

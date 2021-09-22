@@ -33,7 +33,7 @@ __fort_red_unimplemented()
 }
 
 void
-__fort_red_abort(char *msg)
+__fort_red_abort(const char *msg)
 {
   char str[80];
 
@@ -1292,9 +1292,9 @@ void ENTFTN(REDUCE_DESCRIPTOR,
   I8(__fort_finish_descriptor)(rd);
 }
 
-void *I8(__fort_create_conforming_mask_array)(char *what, char *ab, char *mb,
-                                             F90_Desc *as, F90_Desc *ms,
-                                             F90_Desc *new_ms)
+void *I8(__fort_create_conforming_mask_array)(const char *what, char *ab,
+                                              char *mb, F90_Desc *as,
+                                              F90_Desc *ms, F90_Desc *new_ms)
 {
 
   /* Create a conforming mask array. Returns a pointer to the

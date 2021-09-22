@@ -8,9 +8,6 @@
 #include "stdioInterf.h"
 #include "fioMacros.h"
 
-char *__fort_getopt(char *opt);
-long __fort_strtol(char *str, char **ptr, int base); /* atol.c */
-
 static int tracing = 0;
 static int call_level = 0;
 
@@ -18,7 +15,8 @@ static int call_level = 0;
 int
 __fort_trac_init(void)
 {
-  char *p, *q;
+  const char *p;
+  char *q;
   int n;
 
   p = __fort_getopt("-trace");

@@ -15,8 +15,6 @@
 #include "fioMacros.h"
 #include "llcrit.h"
 
-extern char *__fort_getopt(char *opt);
-
 void ENTF90(EXIT, exit)(__INT_T *exit_status)
 {
   __fort_exit(ISPRESENT(exit_status) ? *exit_status : 0);

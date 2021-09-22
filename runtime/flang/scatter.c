@@ -61,7 +61,7 @@ extern void local_scatter_WRAPPER();
 static __INT_T id_map[MAXDIMS] = {1, 2, 3, 4, 5, 6, 7};
 
 static void
-gathscat_abort(char *what, char *msg)
+gathscat_abort(const char *what, const char *msg)
 {
   char str[80];
   sprintf(str, "%s: %s", what, msg);
@@ -72,7 +72,7 @@ gathscat_abort(char *what, char *msg)
 
 typedef struct {
   sked sked;            /* schedule header */
-  char *what;           /* "GATHER"/"XXX_SCATTER" */
+  const char *what;     /* "GATHER"/"XXX_SCATTER" */
   void (*gathscatfn)(); /* local gather-scatter-reduction function */
   void (*scatterfn)();  /* local scatter-reduction function */
   chdr *repchn;         /* replication channel */
@@ -1170,8 +1170,9 @@ zero_lsize_ok_for_gen_block:
   return &sk->sked;
 }
 
-void *I8(__fort_adjust_index_array)(char *what, char *idx_array, char *src,
-                                   int dim, F90_Desc *is, F90_Desc *bs)
+void *I8(__fort_adjust_index_array)(const char *what, char *idx_array,
+                                    char *src, int dim, F90_Desc *is,
+                                    F90_Desc *bs)
 {
 
   /* Adjust Index array for scatter routines. This needs to be called
@@ -1250,9 +1251,9 @@ void *I8(__fort_adjust_index_array)(char *what, char *idx_array, char *src,
   return idx_array;
 }
 
-void *I8(__fort_create_conforming_index_array)(char *what, char *ab, void *ib,
-                                              F90_Desc *as, F90_Desc *is,
-                                              F90_Desc *new_is)
+void *I8(__fort_create_conforming_index_array)(const char *what, char *ab,
+                                               void *ib, F90_Desc *as,
+                                               F90_Desc *is, F90_Desc *new_is)
 {
 
   /* Create a conforming index array. Returns a pointer to the

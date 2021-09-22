@@ -46,7 +46,7 @@ typedef struct {
 
 static int ufpdnorm(UFP *, int);
 
-static void mtherr(char *, int);
+static void mtherr(const char *, int);
 static void fperror(int x);
 
 /* fperror error msg selectors */
@@ -2207,7 +2207,7 @@ struct etypdat_tag etypdat = {
     }};
 
 static void
-mtherr(char *s, int c)
+mtherr(const char *s, int c)
 {
   fperror(c);
 }

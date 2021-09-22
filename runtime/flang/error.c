@@ -26,7 +26,7 @@ static src_info_struct src_info;
 static int current_unit;
 static INT *iostat_ptr;
 static int iobitv;
-static char *err_str = "?";
+static const char *err_str = "?";
 char *envar_fortranopt;
 
 static char *iomsg; /* pointer for optional IOMSG area */
@@ -42,7 +42,7 @@ typedef struct {
   bool newunit;
   INT *iostat_ptr;
   int iobitv;
-  char *err_str;
+  const char *err_str;
   char *envar_fortranopt;
   char *iomsg;
   __CLEN_T iomsgl;
@@ -225,7 +225,7 @@ save_fmtgbl()
 /* --------------------------------------------------------------- */
 
 extern void
-__fortio_errinit(__INT_T unit, __INT_T bitv, __INT_T *iostat, char *str)
+__fortio_errinit(__INT_T unit, __INT_T bitv, __INT_T *iostat, const char *str)
 {
   if (fioFcbTbls.fcbs == NULL)
     __fortio_init();
@@ -249,7 +249,7 @@ __fortio_errinit(__INT_T unit, __INT_T bitv, __INT_T *iostat, char *str)
 }
 
 extern void
-__fortio_errinit03(__INT_T unit, __INT_T bitv, __INT_T *iostat, char *str)
+__fortio_errinit03(__INT_T unit, __INT_T bitv, __INT_T *iostat, const char *str)
 {
   if (fioFcbTbls.fcbs == NULL)
     __fortio_init();
@@ -302,7 +302,7 @@ __fortio_fmtend(void)
 
 #define X(str) str,
 
-static char *errtxt[] = {
+static const char *errtxt[] = {
     X("xxx")                                           /* 200 */
     X("illegal value for specifier")                   /* ESPEC 201 */
     X("conflicting specifiers")                        /* ECOMPAT 202 */
@@ -378,7 +378,7 @@ int
 __fortio_error(int errval)
 {
   FIO_FCB *fdesc;
-  char *eoln, *txt;
+  const char *eoln, *txt;
   int one = 1;
   int retval;
 
@@ -451,10 +451,10 @@ __fortio_error(int errval)
 /* FIXME: this routine is a duplicate of
  *   runtime/lib/pgftn/error.h:__fio_errmsg
  */
-extern char *
+extern const char *
 __fortio_errmsg(int errval)
 {
-  char *txt;
+  const char *txt;
   static char buf[128];
   if (errval == 0) {
     buf[0] = ' ';
@@ -489,7 +489,7 @@ int
 __fortio_eoferr(int errval)
 {
   FIO_FCB *fdesc;
-  char *eoln, *txt, *tmp;
+  const char *eoln, *txt;
   int one = 1;
 
   assert(errval > FIO_ERROR_OFFSET);
@@ -539,7 +539,7 @@ int
 __fortio_eorerr(int errval)
 {
   FIO_FCB *fdesc;
-  char *eoln, *txt;
+  const char *eoln, *txt;
   int one = 1;
 
   assert(errval > FIO_ERROR_OFFSET);
@@ -580,7 +580,7 @@ __fortio_eorerr(int errval)
 static void
 ioerrinfo(FIO_FCB *fdesc)
 {
-  char *eoln;
+  const char *eoln;
   FILE *fp; /* stderr */
 
   fp = __io_stderr();
@@ -855,7 +855,7 @@ __fortio_init(void)
 
   f->fp = __io_stdin();
   f->unit = -5;
-  f->name = "stdin ";
+  f->name = strdup("stdin ");
   f->reclen = 0;
   f->wordlen = 1;
   f->nextrec = 1;
@@ -886,7 +886,7 @@ __fortio_init(void)
 
   f->fp = __io_stdout();
   f->unit = -6;
-  f->name = "stdout ";
+  f->name = strdup("stdout ");
   f->reclen = 0;
   f->wordlen = 1;
   f->nextrec = 1;
@@ -917,7 +917,7 @@ __fortio_init(void)
 
   f->fp = __io_stdin();
   f->unit = 5;
-  f->name = "stdin ";
+  f->name = strdup("stdin ");
   f->reclen = 0;
   f->wordlen = 1;
   f->nextrec = 1;
@@ -948,7 +948,7 @@ __fortio_init(void)
 
   f->fp = __io_stdout();
   f->unit = 6;
-  f->name = "stdout ";
+  f->name = strdup("stdout ");
   f->reclen = 0;
   f->wordlen = 1;
   f->nextrec = 1;
@@ -979,7 +979,7 @@ __fortio_init(void)
 
   f->fp = __io_stderr();
   f->unit = 0;
-  f->name = "stderr ";
+  f->name = strdup("stderr ");
   f->reclen = 0;
   f->wordlen = 1;
   f->nextrec = 1;

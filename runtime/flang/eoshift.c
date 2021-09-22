@@ -351,7 +351,8 @@ void ENTFTN(EOSHIFTSZ, eoshiftsz)(char *rb,     /* result base */
 
   shift = *sb;
   dim = *db;
-  bb = (F90_KIND_G(rs) == __STR) ? " " : (char *)GET_DIST_ZED;
+  /* FIXME: bb is passed to many non-const parameters; just cast it for now. */
+  bb = (F90_KIND_G(rs) == __STR) ? (char *)" " : (char *)GET_DIST_ZED;
 
 #if defined(DEBUG)
   if (__fort_test & DEBUG_EOSH) {
@@ -600,7 +601,8 @@ void ENTFTN(EOSHIFTZ, eoshiftz)(char *rb,     /* result base */
   __INT_T dim;
 
   dim = *db;
-  bb = (F90_KIND_G(rs) == __STR) ? " " : (char *)GET_DIST_ZED;
+  /* FIXME: bb is passed to many non-const parameters; just cast it for now. */
+  bb = (F90_KIND_G(rs) == __STR) ? (char *)" " : (char *)GET_DIST_ZED;
   bs = (F90_Desc *)&F90_KIND_G(rs);
 
 #if defined(DEBUG)
