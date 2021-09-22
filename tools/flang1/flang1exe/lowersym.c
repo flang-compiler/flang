@@ -3954,6 +3954,7 @@ lower_symbol(int sptr)
     putbit("frommod", frommod);
     putbit("modcmn", MODCMNG(sptr));
     putsym("scope", SCOPEG(sptr));
+    putbit("restricted", RESTRICTEDG(SCOPEG(sptr)));
     putbit("device", 0);
     putbit("constant", 0);
     putbit("create", 0);

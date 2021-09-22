@@ -2019,9 +2019,8 @@ read_symbol(void)
                  nomixedstrlen, target, param, thread, task, tqaln, typed,
     uplevel, vararg, Volatile, fromMod, modcmn, elemental;
   SPTR parent;
-  int internref,
-                 Class, denorm, Scope, vtable, iface, vtoff, tbplnk, invobj,
-                 invobjinc, reref, libm, libc, tls, etls;
+  int internref, Class, denorm, Scope, restricted, vtable, iface, vtoff, tbplnk,
+      invobj, invobjinc, reref, libm, libc, tls, etls;
   int reflected, mirrored, create, copyin, resident, acclink, devicecopy,
       devicesd, devcopy;
   int unlpoly, allocattr, f90pointer, final, finalized, kindparm;
@@ -2382,6 +2381,7 @@ read_symbol(void)
     fromMod = getbit("frommod");
     modcmn = getbit("modcmn");
     Scope = getval("scope");
+    restricted = getbit("restricted");
     if (cudaflags) {
       device = getbit("device");
       constant = getbit("constant");
@@ -2421,6 +2421,7 @@ read_symbol(void)
     FROMMODP(newsptr, fromMod);
     MODCMNP(newsptr, modcmn);
     SCOPEP(newsptr, Scope);
+    RESTRICTEDP(newsptr, restricted);
 
     CMEMFP(newsptr, member);
     SIZEP(newsptr, size);

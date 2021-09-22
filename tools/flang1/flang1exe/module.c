@@ -548,6 +548,7 @@ apply_use(MODULE_ID m_id)
   used->module = import_module(use_fd, use_file_name, used->module,
                                INCLUDE_PRIVATES, save_sem_scope_level);
   DINITP(used->module, TRUE);
+  RESTRICTEDP(used->module, used->unrestricted ? 0 : 1);
   dbg_dump("apply_use", 0x2000);
 
   if ((seen_contains && sem.mod_cnt) || gbl.internal > 1 || sem.interface) {

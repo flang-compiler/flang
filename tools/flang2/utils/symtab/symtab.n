@@ -375,6 +375,8 @@ Set for a label that marks the beginning of a lexical scope for symbols.
 Set for a label that marks the beginning of a lexical scope for symbols.
 .FL SWIGNORE f94
 Set for a label that is part of switch statement and it is replaced by optimizer.
+.FL RESTRICTED f95
+Set for restricted use of module.
 .lp
 .ul
 Flags2
