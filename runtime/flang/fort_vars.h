@@ -24,7 +24,7 @@ typedef	struct	__fort_vars {
 	int64_t	heap_block;	/*  48: prcoessor heap size (not power of 2)  */
 	int32_t	*tids;		/*  56: tid for each processor                */
 	int32_t	dummy1[16];	/*  64:                                       */
-	char	*red_what;	/* 128: !! NOT THREAD-SAFE !!                 */
+	const char *red_what;	/* 128: !! NOT THREAD-SAFE !!                 */
 	int32_t	dummy2[30];	/* 136:                                       */
 } __fort_vars_t;
 

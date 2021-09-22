@@ -66,7 +66,7 @@ typedef struct {
 
 void __fort_red_unimplemented();
 
-void __fort_red_abort(char *msg);
+void __fort_red_abort(const char *msg);
 
 void I8(__fort_red_scalar)(red_parm *z, char *rb, char *ab, char *mb,
                           F90_Desc *rs, F90_Desc *as, F90_Desc *ms, __INT_T *xb,
@@ -93,7 +93,7 @@ void I8(__fort_kred_arraylk)(red_parm *z, char *rb0, char *ab, char *mb,
                             F90_Desc *ds, red_enum op);
 
 void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
-                             F90_Desc *hd, char *what, void (*fn[__NTYPES])());
+                             F90_Desc *hd, const char *what, void (*fn[__NTYPES])());
 
 /* prototype local reduction function (name beginning with l_):
 

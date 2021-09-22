@@ -66,7 +66,7 @@ int __fort_size_of[__NTYPES] = {
     sizeof(__PROCPTR_T),    /*   F procedure pointer */
 };
 
-char *__fort_typenames[__NTYPES] = {
+const char *__fort_typenames[__NTYPES] = {
     "none",               /*     no type (absent optional argument) */
     "short",              /* C   signed short */
     "unsigned short",     /* C   unsigned short */
@@ -592,7 +592,7 @@ __get_fort_trues(int idx)
   return __fort_trues[idx];
 }
 
-char *
+const char *
 __get_fort_typenames(int idx)
 {
   return __fort_typenames[idx];
@@ -635,7 +635,7 @@ __set_fort_trues(int idx, void *val)
 }
 
 void
-__set_fort_typenames(int idx, char *val)
+__set_fort_typenames(int idx, const char *val)
 {
   __fort_typenames[idx] = val;
 }

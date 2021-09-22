@@ -28,7 +28,9 @@ ENTFTN(TEMPLATE, template)(F90_Desc *dd, __INT_T *p_rank,
 #endif
 static void store_int_kind(void *, __INT_T *, int);
 static void ftn_msgcpy(char*, const char*, int);
-static char *intents[] = {"INOUT", "IN", "OUT", "??"};
+#if defined(DEBUG)
+static const char *intents[] = {"INOUT", "IN", "OUT", "??"};
+#endif
 
 /** \brief Compare alignments and local storage sequences.  Return true if all
    elements of s1 are ultimately aligned to elements of s2 that reside
@@ -274,7 +276,7 @@ invalid_flags(int flags)
 #endif
 
 static void
-copy_in_abort(char *msg)
+copy_in_abort(const char *msg)
 {
   char str[120];
   sprintf(str, "COPY_IN: %s", msg);

@@ -22,9 +22,9 @@
 
 static FIO_FCB *f2; /* save fcb for inquire2 */
 
-static void copystr(char *dst, /*  destination string, blank-filled */
-                    int len,   /*  length of destination space */
-                    char *src) /*  null terminated source string  */
+static void copystr(char *dst,       /* destination string, blank-filled */
+                    int len,         /* length of destination space */
+                    const char *src) /* null terminated source string  */
 {
   char *end = dst + len;
   while (dst < end && *src != '\0')
@@ -56,7 +56,7 @@ inquire(__INT_T *unit, char *file_ptr, __INT_T *bitv, __INT_T *iostat,
 {
   FIO_FCB *f;
   __CLEN_T i;
-  char *cp;
+  const char *cp;
   __CLEN_T len, nleadb;
 
   __fortio_errinit03(*unit, *bitv, iostat, "INQUIRE");
@@ -1459,7 +1459,7 @@ ENTF90IO(INQUIRE2A, inquire2a)
      DCLEN64(stream))
 {
   FIO_FCB *f;
-  char *cp;
+  const char *cp;
 
   if (*istat)
     return *istat;

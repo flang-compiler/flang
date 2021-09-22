@@ -85,7 +85,7 @@ static INT fw_get_val(G *);
 static int fw_writenum(int, char *, int);
 static int fw_OZwritenum(int, char *, int, int);
 static int fw_Bwritenum(char *, int, __CLEN_T);
-static int fw_write_item(char *, int);
+static int fw_write_item(const char *, int);
 static int fw_check_size(long);
 static int fw_write_record(void);
 /* ----------------------------------------------------------------------- */
@@ -2581,7 +2581,7 @@ fw_OZbyte(unsigned int c)
 
 /**  \return ERR_FLAG or 0 */
 static int
-fw_write_item(char *p, int len)
+fw_write_item(const char *p, int len)
 {
   G *g = gbl;
   char *q;

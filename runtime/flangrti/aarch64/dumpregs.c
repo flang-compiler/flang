@@ -17,7 +17,7 @@
 
 typedef struct {
     size_t  ro;     // Register offset in to mcontext_t structure
-    char    *s;     // Symbolic name of register
+    const char *s;  // Symbolic name of register
 } xregs_t;
 
 

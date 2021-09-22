@@ -45,7 +45,6 @@ WIN_MSVCRT_IMP char **environ;
 char *__fort_getgbuf(long);
 extern void __fort_init_consts();
 
-long __fort_strtol(char *str, char **ptr, int base); /* atol.c */
 void __fort_print_version();                         /* version.c */
 
 extern int __io_get_argc();
@@ -328,7 +327,7 @@ __fort_is_ioproc()
 /* abort with message */
 
 void
-__fort_abort(char *s)
+__fort_abort(const char *s)
 {
   char buf[256];
 
@@ -342,7 +341,7 @@ __fort_abort(char *s)
 /* abort with perror message */
 
 void
-__fort_abortp(char *s)
+__fort_abortp(const char *s)
 {
   fprintf(__io_stderr(), "%d: ", __fort_lcpu);
   perror(s);
@@ -450,11 +449,12 @@ __fort_initopt()
 }
 
 /* get option (command line -xx and environment */
-
-char *__fort_getopt(opt) char *opt;
+const char
+*__fort_getopt(const char *opt)
 {
   char env[64];
-  char *p, *q;
+  char *p;
+  const char *q;
   int n;
 
   if (arg == NULL)
@@ -464,7 +464,7 @@ char *__fort_getopt(opt) char *opt;
     if (strcmp(arg[n], opt) == 0) {
       p = arg[n + 1];
       if (p == NULL) {
-        p = "";
+        return "";
       }
       break;
     }
@@ -484,27 +484,29 @@ char *__fort_getopt(opt) char *opt;
       if (strcmp(opts[n], opt) == 0) {
         p = opts[n + 1];
         if (p == NULL) {
-          p = "";
+          return "";
         }
         break;
       }
     }
   }
   if ((strcmp(opt, "-g") == 0) && (p != NULL) && (*p == '-')) {
-    p = "";
+    return "";
   }
-  return (p);
+  return p;
 }
 
 /* abort because of problem with command/environment option */
 
 static void
-getopt_abort(char *problem, char *opt)
+getopt_abort(const char *problem, const char *opt)
 {
-  char buf[128], *p, *q;
+  char buf[128], *p;
+  const char *q;
 
   p = buf;
   q = opt;
+
   while (*++q != '\0')
     *p++ = toupper(*q);
   *p++ = '\0';
@@ -516,9 +518,10 @@ getopt_abort(char *problem, char *opt)
 /* get numeric option */
 
 long
-__fort_getoptn(char *opt, long def)
+__fort_getoptn(const char *opt, long def)
 {
-  char *p, *q;
+  const char *p;
+  char *q;
   long n;
 
   p = __fort_getopt(opt);
@@ -533,10 +536,10 @@ __fort_getoptn(char *opt, long def)
 /* get yes/no option */
 
 int
-__fort_getoptb(char *opt, int def)
+__fort_getoptb(const char *opt, int def)
 {
-  char *p;
-  int n;
+  const char *p;
+  int n = 0;
 
   p = __fort_getopt(opt);
   if (p == NULL)
@@ -555,7 +558,7 @@ __fort_getoptb(char *opt, int def)
 static void
 __fort_istat()
 {
-  char *p;
+  const char *p;
 
   p = __fort_getopt("-stat");
   if (p == NULL) {
@@ -603,7 +606,8 @@ __fort_istat()
 static void
 __fort_initcom()
 {
-  char *p, *q;
+  const char *p;
+  char *q;
   int n;
 
   /* -test [<n>] */

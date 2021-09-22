@@ -17,7 +17,6 @@
 #define write _write
 #endif
 
-extern char *__fort_getopt();
 extern void __fort_gettb();
 
 static struct tb tb0 = {/* stats at beginning of program */
@@ -58,10 +57,10 @@ __fort_stat_init(void)
 
 /* scale byte quantity */
 
-static char *
+static const char *
 scale_bytes(double d, double *ds)
 {
-  char *s;
+  const char *s;
 
   s = "B";
   if (d >= 1024) {
@@ -86,10 +85,10 @@ scale_bytes(double d, double *ds)
 
 /* scale byte quantity, beginning with kilobytes */
 
-static char *
+static const char *
 scale_kbytes(double d, double *ds)
 {
-  char *s;
+  const char *s;
 
   d = (d + 1023) / 1024;
   s = "KB";
@@ -181,7 +180,7 @@ static void mem(tbp) struct tb *tbp;
   double tsbrk;   /* total heap used (local) */
   double tgsbrk;  /* total heap used (global) */
   int i, quiet, tcpus;
-  char *s_sbrk, *s_gsbrk;
+  const char *s_sbrk, *s_gsbrk;
   double d_sbrk, d_gsbrk;
   char buf[256];
 
@@ -233,7 +232,7 @@ static void msg(tbp) struct tb *tbp;
   int i, quiet, tcpus;
   double ds, dr, dc, dst, drt, dct;
   double mst, mrt, mct, ast, art, act;
-  char *ss, *sr, *sc, *as, *ar, *ac;
+  const char *ss, *sr, *sc, *as, *ar, *ac;
   double d;
   char buf[256];
 

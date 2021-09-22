@@ -38,12 +38,12 @@ static struct {
 /* open file */
 
 int
-__fort_par_open(char *fn, char *par)
+__fort_par_open(const char *fn, const char *par)
 {
   int nflags;
   int mode;
   int fd;
-  char *p;
+  const char *p;
 
   nflags = 0;
   mode = 0666;
@@ -65,8 +65,10 @@ __fort_par_open(char *fn, char *par)
       p += 5;
       nflags |= O_CREAT;
       if (*p == '=') {
+        char *q;
         p++;
-        mode = strtol(p, &p, 0);
+        mode = strtol(p, &q, 0);
+        p = q;
       }
     } else if (strncmp(p, "trunc", 5) == 0) {
       p += 5;

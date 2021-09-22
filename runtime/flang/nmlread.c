@@ -2227,7 +2227,7 @@ dtio_read_scalar(NML_DESC *descp, char *loc_addr)
   __INT_T tmp_iostat = 0;
   __INT_T *iostat;
   __INT_T *unit;
-  void (*dtio)(char *, INT *, char *, INT *, INT *, char *, F90_Desc *,
+  void (*dtio)(char *, INT *, const char *, INT *, INT *, char *, F90_Desc *,
                F90_Desc *, __CLEN_T, __CLEN_T);
   char *dtv;
   F90_Desc *dtv_sd;
@@ -2239,7 +2239,7 @@ dtio_read_scalar(NML_DESC *descp, char *loc_addr)
   __CLEN_T iomsglen = 250;
   static char iomsg[250];
   int k, num_consts, ret_err, j;
-  char *iotype = "NAMELIST";
+  const char *iotype = "NAMELIST";
   char *start_addr;
   char *mem_addr;
   __POINT_T *desc_dims, new_ndims;

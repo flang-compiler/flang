@@ -72,7 +72,7 @@ static int gbl_size = GBL_SIZE;
 
 /* local functions */
 
-static int write_item(char *, int);
+static int write_item(const char *, int);
 static int write_record(void);
 
 static void
@@ -767,7 +767,7 @@ ENTCRF90IO(LDWA, ldwa) (type, length, stride, CADR(item), (__CLEN_T)CLEN(item));
 /* --------------------------------------------------------------------- */
 
 static int
-write_item(char *p, int len)
+write_item(const char *p, int len)
 {
   int newlen;
   int ret_err;

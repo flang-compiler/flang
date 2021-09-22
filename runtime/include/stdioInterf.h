@@ -108,7 +108,7 @@ extern void *__aligned_malloc(size_t, size_t); /* pgmemalign.c */
 extern void __aligned_free(void *);
 extern int __fenv_fegetzerodenorm(void);
 
-void __abort(int sv, char *msg);
+void __abort(int sv, const char *msg);
 void __abort_trace(int skip);
 void __abort_sig_init(void);
 

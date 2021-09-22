@@ -14,13 +14,11 @@
 #define write _write
 #endif
 
-extern char *__fort_getopt(char *);
-
 /* signals handled and message strings */
 
 struct sigs {
-  int sig;   /* signal value */
-  char *str; /* message string */
+  int sig;          /* signal value */
+  const char *str;  /* message string */
 };
 
 static struct sigs sigs[] = {
@@ -98,7 +96,8 @@ static void sighand(s) int s;
 void
 __fort_sethand()
 {
-  char *p;
+  const char *p;
+  char *q;
   int n;
 
   p = __fort_getopt("-sigmsg");
@@ -112,12 +111,12 @@ __fort_sethand()
       signal(sigs[n].sig, sighand);
       n++;
     }
-  } else {
-    while (*p != '\0') {
-      n = __fort_strtol(p, &p, 0);
+  } else if (*p != '\0') {
+    do {
+      n = __fort_strtol(p, &q, 0);
       signal(n, sighand);
-      p = (*p == ',' ? p + 1 : p);
-    }
+      p = (*q == ',' ? q + 1 : q);
+    } while (*q != '\0');
   }
 }
 

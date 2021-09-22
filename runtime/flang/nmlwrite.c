@@ -70,7 +70,7 @@ static int gbl_size = GBL_SIZE;
 
 static int emit_eol(void);
 static int write_nml_val(NML_DESC **, NML_DESC *, char *);
-static int write_item(char *, int);
+static int write_item(const char *, int);
 static int write_char(int);
 static int eval(int, char *, NML_DESC *, NML_DESC **);
 static int eval_dtio(int, char *, NML_DESC *, NML_DESC **);
@@ -490,7 +490,7 @@ write_nml_val(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr)
 }
 
 static int
-write_item(char *p, int len)
+write_item(const char *p, int len)
 {
   int newlen;
 
@@ -923,7 +923,7 @@ dtio_write_scalar(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr,
   __INT_T tmp_iostat = 0;
   __INT_T *iostat;
   __INT_T *unit;
-  void (*dtio)(char *, INT *, char *, INT *, INT *, char *, F90_Desc *,
+  void (*dtio)(char *, INT *, const char *, INT *, INT *, char *, F90_Desc *,
                F90_Desc *, __CLEN_T, __CLEN_T);
   char *dtv;
   F90_Desc *dtv_sd;
@@ -935,7 +935,7 @@ dtio_write_scalar(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr,
   __CLEN_T iomsglen = 250;
   static char iomsg[250];
   int k, num_consts, ret_err, j;
-  char *iotype = "NAMELIST";
+  const char *iotype = "NAMELIST";
   char *start_addr;
   char *mem_addr;
   __POINT_T *desc_dims, new_ndims;

@@ -169,15 +169,16 @@ void I8(__fort_show_section)(F90_Desc *d)
   fprintf(__io_stderr(), ")[%d]", F90_GSIZE_G(d));
 }
 
-static char *intentnames[4] = {"INOUT", "IN", "OUT", "??"};
+static const char *intentnames[4] = {"INOUT", "IN", "OUT", "??"};
 
-static char *specnames[4] = {"OMITTED", "PRESCRIPTIVE", "DESCRIPTIVE",
-                             "TRANSCRIPTIVE"};
+static const char *specnames[4] = {"OMITTED", "PRESCRIPTIVE", "DESCRIPTIVE",
+                                   "TRANSCRIPTIVE"};
 
-static char *dfmtnames[] = {"*",      "BLOCK",     "BLOCK",   "CYCLIC",
-                            "CYCLIC", "GEN_BLOCK", "INDIRECT"};
+static const char *dfmtnames[] = {"*",      "BLOCK",     "BLOCK",   "CYCLIC",
+                                  "CYCLIC", "GEN_BLOCK", "INDIRECT"};
 
-static char *dfmtabbrev[] = {"*", "BLK", "BLKK", "CYC", "CYCK", "GENB", "IND"};
+static const char *dfmtabbrev[] = {"*", "BLK", "BLKK", "CYC", "CYCK", "GENB",
+                                   "IND"};
 
 #if !defined(DESC_I8)
 
