@@ -467,10 +467,13 @@ semfin(void)
             error(45, 3, gbl.lineno, SYMNAME(sptr), SYMNAME(gbl.entries));
         pointer_check:
           STYPEP(FVALG(sptr), ST_VAR);
-          if (POINTERG(sptr) || ALLOCATTRG(FVALG(sptr))) {
+          if (POINTERG(FVALG(sptr)) || ALLOCATTRG(FVALG(sptr))) {
             /* We convert a pointer-valued function into a subroutine whose
              * first dummy argument is the result now, really late in
              * semantic analysis.
+             * Check the attributes of fval instead of the attributes of entry,
+             * because only the first entry can get all attributes defined by
+             * fval through copy_type_to_entry(semant.c).
              */
             prepend_func_result_as_first_arg(sptr);
             gbl.rutype = RU_SUBR;
