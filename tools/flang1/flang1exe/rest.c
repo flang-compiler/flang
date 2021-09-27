@@ -873,6 +873,9 @@ transform_section_arg(int ele, int std, int callast, int entry, int *descr,
       sec = make_simple_template_from_ast(secss, std,
                                           needs_type_in_descr(entry, argnbr));
       retval = first_element_from_section(ele);
+      if (SCG(sptr) == SC_DUMMY && CLASSG(sptr)) {
+        retval = gen_poly_element_arg(retval, sptr, std);
+      }
       if (POINTERG(sptr) && is_whole_array(ele)) {
         retval = A_LOPG(retval);
       }
@@ -1598,7 +1601,14 @@ transform_call(int std, int ast)
              * compute its address based on the polymorphic size of the
              * object.
              */
-             ARGT_ARG(newargt, newi) = gen_poly_element_arg(ele, sptr, std);
+            /* Use temporary variable instead of assign directly.
+             * Compiling with gcc may cause the direct assignment to fail,
+             * but clang not. because the function gen_poly_element_arg()
+             * will change astb.argt.stg_base in mk_argt() when there are not
+             * enough room for "argt".
+             */
+            int element_addr = gen_poly_element_arg(ele, sptr, std);
+            ARGT_ARG(newargt, newi) = element_addr;
           } else if (A_TYPEG(ele) == A_SUBSCR) {
             /* This case occurs when we branch from
              * the A_SUBSCR case below to the class_arg label above.
