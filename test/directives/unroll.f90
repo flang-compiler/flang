@@ -34,7 +34,7 @@ subroutine func1(a, b)
   ! CHECK-O0-SAME:      !llvm.loop [[MD_LOOP1:![0-9]+]]
   ! CHECK-O1-COUNT-10:  store i32
   ! CHECK-O1-NOT:       store i32
-  ! CHECK-O1-NOT:       br i1 {{.*}}, label %[[BB1]]
+  ! CHECK-O1-NOT:       br i1 {{.*}}, label %{{L.LB[0-9]_[0-9]+}}
   ! CHECK-O1-NOT:       !llvm.loop !{{[0-9]+}}
   ! CHECK-O1:           ret void
   ! CHECK-DISABLED:     [[BB1:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB1]],

@@ -19,6 +19,4 @@ end subroutine
 ! CHECK: load <[[VF:[0-9]+]] x i32>
 ! CHECK: sub {{.*}} <[[VF]] x i32>
 ! CHECK: store <[[VF]] x i32>
-! NOVECTOR-NOT: load <[[VF:[0-9]+]] x i32>
-! NOVECTOR-NOT: sub {{.*}} <[[VF]] x i32>
-! NOVECTOR-NOT: store <[[VF]] x i32>
+! NOVECTOR-NOT: <{{[0-9]+}} x {{.+}}>

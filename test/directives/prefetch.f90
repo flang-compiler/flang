@@ -11,13 +11,13 @@ subroutine prefetch_dir(a1, a2)
   end do
 end subroutine prefetch_dir
 
-!! Ensure that the offset generated for the prefetch of a2(i + 256) is correct.
 ! CHECK-PREFETCH: [[a1:%[0-9]+]] = bitcast i64* %a1 to i8*
 ! CHECK-PREFETCH: [[a2:%[0-9]+]] = bitcast i64* %a2 to i8*
-! CHECK-PREFETCH: [[a2base:%[0-9]+]] = getelementptr i8, i8* [[a2]], i64 1020
 ! CHECK-PREFETCH: call void @llvm.prefetch{{.*}}(i8* [[a1]], i32 0, i32 3, i32 1)
 ! CHECK-PREFETCH: [[i:%[0-9]+]] = shl nuw nsw i64 %indvars.iv, 2
-! CHECK-PREFETCH: [[a2elem:%[0-9]+]] = getelementptr i8, i8* [[a2base]], i64 [[i]]
+!! Ensure that the offset generated for the prefetch of a2(i + 256) is correct.
+! CHECK-PREFETCH: [[a2offidx:%.*]] = add nuw nsw i64 [[i]], 1020
+! CHECK-PREFETCH: [[a2elem:%[0-9]+]] = getelementptr i8, i8* [[a2]], i64 [[a2offidx]]
 ! CHECK-PREFETCH: call void @llvm.prefetch{{.*}}(i8* [[a2elem]], i32 0, i32 3, i32 1)
 ! CHECK-PREFETCH: declare void @llvm.prefetch{{.*}}
 ! CHECK-NOPREFETCH-NOT: @llvm.prefetch

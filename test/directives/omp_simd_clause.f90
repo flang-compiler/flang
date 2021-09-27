@@ -13,9 +13,7 @@ subroutine sum(myarr1,myarr2,ub)
   end do
 end subroutine
 
-! CHECK-NOT:  {{.*}} add nsw <[[VF:[0-9]+]] x i32>{{.*}}
-! METADATA-NOT: load {{.*}}, !llvm.mem.parallel_loop_access ![[TAG1:[0-9]+]]
-! METADATA-NOT: store {{.*}}, !llvm.mem.parallel_loop_access ![[TAG1]]
-! METADATA-NOT: ![[TAG2:[0-9]+]] = !{!"llvm.loop.vectorize.enable", i1 true}
-! METADATA-NOT: ![[TAG1:[0-9]+]] = distinct !{![[TAG1]], ![[TAG2]]}
+! CHECK-NOT:  {{.*}} add nsw <{{[0-9]+}} x i32>{{.*}}
+! METADATA-NOT: llvm.mem.parallel_loop_access
+! METADATA-NOT: llvm.loop.vectorize.enable
 ! WARNING: F90-W-0604-Unsupported clause specified for the omp simd directive
