@@ -151,6 +151,11 @@ void cg_fetch_clen_parampos(SPTR *len, int *param, SPTR sptr);
 /**
    \brief ...
  */
+bool clen_parent_is_param(SPTR length);
+
+/**
+   \brief ...
+ */
 void cg_llvm_end(void);
 
 /**
