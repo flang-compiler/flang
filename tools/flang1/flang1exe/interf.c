@@ -70,7 +70,10 @@ static int modinclistsize = 0, modinclistavl = 0;
 void
 interf_init()
 {
-#if DEBUG
+/* Disable checking SYM size in Windows.
+ * https://github.com/flang-compiler/flang/issues/1043
+ */
+#if DEBUG && !defined(_WIN64)
   assert(sizeof(SYM) / sizeof(INT) == 44, "bad SYM size",
          sizeof(SYM) / sizeof(INT), 4);
   assert(sizeof(AST) / sizeof(int) == 19, "interf_init:inconsistent AST size",
