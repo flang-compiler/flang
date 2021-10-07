@@ -40,7 +40,12 @@ sym_init_first(void)
   int i;
 
   int sizeof_SYM = sizeof(SYM) / sizeof(INT);
+/* Disable checking SYM size on Windows
+ * https://github.com/flang-compiler/flang/issues/1043
+ */
+#ifndef _WIN64
   assert(sizeof_SYM == 44, "bad SYM size", sizeof_SYM, ERR_Fatal);
+#endif
 
   if (stb.stg_base == NULL) {
     STG_ALLOC(stb, 1000);
