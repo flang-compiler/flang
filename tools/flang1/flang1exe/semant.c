@@ -10554,6 +10554,35 @@ procedure_stmt:
     } else
       error(34, 3, gbl.lineno, np, CNULL);
     break;
+  /*
+   *   <only> ::= <id name> ( <only operator> ) '=>' <id name> ( <only operator
+   *   > )
+   */
+  case ONLY5:
+    np = scn.id.name + SST_CVALG(RHS(1));
+    if (sem_strcmp(np, "operator") == 0) {
+      np = scn.id.name + SST_CVALG(RHS(6));
+      if (sem_strcmp(np, "operator")) {
+        error(34, 3, gbl.lineno, np, CNULL);
+        break;
+      }
+    } else {
+      error(34, 3, gbl.lineno, np, CNULL);
+      break;
+    }
+    sptr = SST_SYMG(RHS(3));
+    if (STYPEG(sptr) == ST_OPERATOR && INKINDG(sptr)) {
+      error(34, 3, gbl.lineno, SYMNAME(sptr), CNULL);
+      break;
+    }
+    sptr = SST_SYMG(RHS(8));
+    if (STYPEG(sptr) == ST_OPERATOR && INKINDG(sptr)) {
+      error(34, 3, gbl.lineno, SYMNAME(sptr), CNULL);
+      break;
+    }
+    /* local (RHS(3)) => global (RHS(8)) */
+    (void)add_use_rename(SST_SYMG(RHS(3)), SST_SYMG(RHS(8)), 1);
+    break;
 
   /* ------------------------------------------------------------------ */
   /*

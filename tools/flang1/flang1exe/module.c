@@ -266,7 +266,6 @@ SPTR
 add_use_rename(SPTR local, SPTR global, LOGICAL is_operator)
 {
   RENAME *pr;
-  int original_global = global;
 
   assert(module_id != NO_MODULE, "module_id must be set", 0, ERR_Fatal);
   assert(global > NOSYM, "global must be set", global, ERR_Fatal);
@@ -275,64 +274,11 @@ add_use_rename(SPTR local, SPTR global, LOGICAL is_operator)
   pr->is_operator = is_operator;
   pr->next = usedb.base[module_id].rename;
   usedb.base[module_id].rename = pr;
-  /*
-   * NOTE: MAY want to skip the ensuing 'if' when the rename is
-   * for an OPERATOR (is_operator is set) since an ST_OPERATOR is in
-   * its own overloading class!
-   */
-  if (!VALID_RENAME_SYM(global)) {
-    SPTR sptr;
-    for (sptr = first_hash(global); sptr; sptr = HASHLKG(sptr)) {
-      if (NMPTRG(sptr) == NMPTRG(global) && SCOPEG(sptr) == SCOPEG(global) &&
-          VALID_RENAME_SYM(sptr)) {
-        if (ST_ISVAR(sptr) && SYMLKG(sptr) &&
-            STYPEG(SYMLKG(sptr)) == ST_ALIAS &&
-            SCOPEG(SYMLKG(sptr)) == usedb.base[module_id].module) {
-          global = SYMLKG(sptr);
-        } else {
-          global = sptr;
-        }
-      }
-    }
-  }
-
-  if (local && STYPEG(local) == ST_ALIAS && PRIVATEG(local) &&
-      SCOPEG(local) != curr_scope()->sptr) {
-    /* local is a private rename from another module
-     * build and use a rename symbol in this scope.
-     */
-    int newlocal = insert_sym(local);
-    DTYPEP(newlocal, DTYPEG(global));
-    SCOPEP(newlocal, curr_scope()->sptr);
-    pr->local = newlocal;
-    HIDDENP(SYMLKG(local), 0);
-    pr->global = SYMLKG(local);
-    pr->lineno = gbl.lineno;
-    return pr->global;
-  }
-  if (STYPEG(global) == ST_ALIAS && PRIVATEG(global) &&
-      SCOPEG(global) != curr_scope()->sptr) {
-    /* global is an alias from another scope, generate an alias for the
-     * current scope */
-    SPTR newglobal = insert_sym(global);
-    pr->global = newglobal;
-    pr->local = local;
-    SCOPEP(newglobal, curr_scope()->sptr);
-    ENCLFUNCP(newglobal, SCOPEG(newglobal));
-    DTYPEP(newglobal, DTYPEG(global));
-    STYPEP(newglobal, ST_ALIAS);
-    SYMLKP(newglobal, SYMLKG(global));
-    HIDDENP(SYMLKG(newglobal), 0);
-    pr->lineno = gbl.lineno;
-    return pr->global;
-  }
-
-  if (!local && global != original_global && seen_contains &&
-      STYPEG(original_global) == ST_UNKNOWN) {
-    pr->local = original_global;
-  } else {
-    pr->local = local;
-  }
+ 
+  if (local && local == global)
+    /* treat "use m, only: global => global" as "use m, only: global"*/
+    local = SPTR_NULL;
+  pr->local = local;
   pr->global = global;
   pr->lineno = gbl.lineno;
 
@@ -495,7 +441,8 @@ apply_use_stmts(void)
 }
 
 static int
-find_def_in_most_recent_scope(int sptr, int save_sem_scope_level)
+find_def_in_most_recent_scope(int sptr, LOGICAL is_operator,
+                              int save_sem_scope_level)
 {
   int sptr1;
   SCOPESTACK *scope;
@@ -543,6 +490,9 @@ find_def_in_most_recent_scope(int sptr, int save_sem_scope_level)
              NMPTRG(SYMLKG(ng)) == NMPTRG(sptr)) {
         ng = SYMLKG(ng);
       }
+      if ((is_operator && STYPEG(ng) != ST_OPERATOR) ||
+          (!is_operator && STYPEG(ng) == ST_OPERATOR))
+        continue;
       /* is the symbol visible in this scope: i.e. not on except list or
           in private USE or a private module variable */
       if (!is_except_in_scope(scope, sptr1) &&
@@ -632,14 +582,13 @@ apply_use(MODULE_ID m_id)
       continue;
     }
 
-    newglobal = find_def_in_most_recent_scope(pr->global, save_sem_scope_level);
-   
+    newglobal = find_def_in_most_recent_scope(pr->global, pr->is_operator,
+                                              save_sem_scope_level);
+
     /* mark syms that are not accessible based on the USE ONLY list */
     /* step2: reverse NOT_IN_USEONLYP flag to 0 for syms on the USE ONLY list*/
-    for (sptr = stb.firstusym; sptr < stb.stg_avail; ++sptr) {
-      if (sptr == newglobal && SCOPEG(sptr) == used->module)
-        NOT_IN_USEONLYP(sptr, 0);
-    }
+    if (newglobal > NOSYM && SCOPEG(newglobal) == used->module)
+       NOT_IN_USEONLYP(newglobal, 0);
 
     if (newglobal > NOSYM) {
       /* look for generic with same name */
