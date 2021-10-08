@@ -1044,12 +1044,6 @@ refsym_inscope(int first, OVCLASS oclass)
          */
         goto return0;
       }
-      if (gbl.internal > 1 && !INTERNALG(sptr)) {
-        /* This is a non-internal symbol in an internal subprogram. */
-        if (IS_INTRINSIC(STYPEG(sptr)))
-          goto returnit; // tentative intrinsic; may be overridden later
-        goto return0; // declare a new symbol
-      }
       if (ENCLFUNCG(sptr) && STYPEG(ENCLFUNCG(sptr)) == ST_MODULE &&
           ENCLFUNCG(sptr) != gbl.currmod) {
         /* see if the scope level makes this host associated */
@@ -1076,6 +1070,12 @@ refsym_inscope(int first, OVCLASS oclass)
         error(155, 3, gbl.lineno, SYMNAME(sptr),
               "is use associated and cannot be redeclared");
         goto return0;
+      }
+      if (gbl.internal > 1 && !INTERNALG(sptr)) {
+        /* This is a non-internal symbol in an internal subprogram. */
+        if (IS_INTRINSIC(STYPEG(sptr)))
+          goto returnit; // tentative intrinsic; may be overridden later
+        goto return0; // declare a new symbol
       }
       /*if ((int)SCOPEG(sptr) == stb.curr_scope)*/
       goto returnit;
