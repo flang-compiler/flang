@@ -560,12 +560,21 @@ set_property(
  PG_PIC
  )
 
-set_source_files_properties(
-  ${I8_FILES_DIR}/red_norm2_stride1.c
-  red_norm2_stride1.c
-  PROPERTIES
-  COMPILE_FLAGS "-ffast-math"
-  )
+if (NOT MSVC  OR "${CMAKE_C_COMPILER_FRONTEND_VARIANT}" STREQUAL "GNU")
+  set_source_files_properties(
+    ${I8_FILES_DIR}/red_norm2_stride1.c
+    red_norm2_stride1.c
+    PROPERTIES
+    COMPILE_FLAGS "-ffast-math"
+    )
+else()
+  set_source_files_properties(
+    ${I8_FILES_DIR}/red_norm2_stride1.c
+    red_norm2_stride1.c
+    PROPERTIES
+    COMPILE_FLAGS "/fp:fast"
+    )
+endif()
 
 ## CMake does not handle module dependencies between Fortran files,
 ## unless using the Ninja generator, we need to help it
