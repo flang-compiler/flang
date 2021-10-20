@@ -39,7 +39,6 @@
 #define F90_MATMUL(s) f90_mm_##s##_
 #define F90_NORM2(s) f90_norm2_##s##_
 #endif /* defined(DESC_I8) */
-
 #define ENTF90COMN(UC, LC) pgf90_##LC
 #define ENTCRF90(UC, LC) crf90_##LC	/* FIXME: HPF, delete all with this prefix*/
 #define ENTCRFTN(UC, LC) crftn_##LC	/* FIXME: HPF, delete all with this prefix*/ 
@@ -70,13 +69,10 @@
 #define CADR(ARG) (ARG##_adr)
 #define CLEN(ARG) (ARG##_len)
 
-/* #if defined(WIN64) || defined(WIN32) */
-#if defined(PGDLL) && defined(_DLL) &&                                         (defined(TARGET_WIN) || defined(WIN64) || defined(WIN32))
-#define WIN_EXP __declspec(dllexport)
-#define WIN_IMP extern __declspec(dllimport)
+#if defined(_WIN64) && defined(_DLL)
+   #define WIN_API extern __declspec(dllexport)
 #else
-#define WIN_EXP
-#define WIN_IMP extern
+  #define WIN_API extern
 #endif
 
 #define CORMEM ENTCOMN(0L, 0l)
