@@ -11395,8 +11395,9 @@ addDebugForLocalVar(SPTR sptr, LL_Type *type)
 {
   if (need_debug_info(sptr) || pointer_scalar_need_debug_info(sptr)) {
     /* Dummy sptrs are treated as local (see above) */
-    if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir) &&
-        ftn_array_need_debug_info(sptr)) {
+    if ((ll_feature_debug_info_ver90(&cpu_llvm_module->ir) &&
+        ftn_array_need_debug_info(sptr)) &&
+        (DTYPEG(REVMIDLNKG(sptr)) != DT_DEFERCHAR)) {
       SPTR array_sptr = (SPTR)REVMIDLNKG(sptr);
       LL_MDRef array_md =
           lldbg_emit_local_variable(cpu_llvm_module->debug_info, array_sptr,
