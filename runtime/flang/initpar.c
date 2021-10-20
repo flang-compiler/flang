@@ -66,16 +66,8 @@ static struct {
 /* common blocks containing values for inlined number_of_processors()
    and my_processor() functions */
 
-#if defined(WIN64) || defined(WIN32)
-WIN_IMP __INT_T ENTCOMN(NP, np)[];
-WIN_IMP __INT_T ENTCOMN(ME, me)[];
-#elif defined(C90) || defined(WINNT)
-__INT_T ENTCOMN(NP, np)[1];
-__INT_T ENTCOMN(ME, me)[1];
-#else
-extern __INT_T ENTCOMN(NP, np)[];
-extern __INT_T ENTCOMN(ME, me)[];
-#endif
+WIN_API __INT_T ENTCOMN(NP, np)[];
+WIN_API __INT_T ENTCOMN(ME, me)[];
 
 #if defined(WIN32) || defined(WIN64)
 #define write _write
