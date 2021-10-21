@@ -17,6 +17,7 @@
 WIN_API __INT_T LINENO[];
 
 #if defined(_WIN64)
+#include <io.h> // for _write
 #define write _write
 #endif
 

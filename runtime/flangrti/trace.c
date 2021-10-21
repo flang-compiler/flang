@@ -57,6 +57,7 @@ dbg_stop_before_exit(void)
  */
 
 #if defined(_WIN64)
+#include <process.h> // for _getpid, _exit
 #define getpid _getpid
 #define _Exit _exit
 #endif

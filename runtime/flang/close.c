@@ -19,6 +19,7 @@
 #include "stdioInterf.h"
 
 #if defined(_WIN64)
+#include <io.h> // for _access, _unlink
 #define unlink _unlink
 #define access _access
 #endif
