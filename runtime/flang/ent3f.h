@@ -12,6 +12,11 @@
  * \brief ent3f.h macros for building RTE routine names and arg lists
  */
 
+#if defined(_WIN64)
+#include <io.h> // for _access, _chmod, _ulink
+#include <direct.h> // for _chdir
+#endif
+
 #undef DCHAR
 #undef DCLEN
 #undef CADR

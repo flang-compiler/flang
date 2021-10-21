@@ -14,6 +14,7 @@
 #include <memory.h>
 
 #if defined(_WIN64)
+#include <io.h> // for _write
 #define write _write
 #endif
 
