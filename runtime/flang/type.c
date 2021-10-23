@@ -1236,6 +1236,7 @@ void I8(__fort_dump_type)(TYPE_DESC *d)
     break;
   case __LOG4:
     fprintf(__io_stderr(), "__LOG4'\n");
+    break;
   case __LOG8:
     fprintf(__io_stderr(), "__LOG8'\n");
     break;
