@@ -4461,9 +4461,9 @@ alpha(void)
     if (idlen == 8 && *cp == '(' && strncmp(id, "operator", 8) == 0) {
       scmode = SCM_OPERATOR;
     }
-  /* fall through */
-  fall_thru_scm_ident:
+    FLANG_FALLTHROUGH;
   case SCM_IDENT: /* look only for identifiers */
+  fall_thru_scm_ident:
     if (bind_state == B_RPAREN_FOUND) {
       if ((strncmp(id, "result", 6) == 0))
         bind_state = B_RESULT_FOUND;

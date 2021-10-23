@@ -485,7 +485,6 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_DBLE:
       break;
 #ifdef TARGET_SUPPORTS_QUADFP
-    /* fall thru ... */
     case TY_QUAD:
       break;
 #endif
@@ -493,7 +492,7 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_NCHAR:
     case TY_STRUCT:
     case TY_DERIVED:
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     default:
       goto type_error;
     }
@@ -524,7 +523,6 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_DBLE:
       break;
 #ifdef TARGET_SUPPORTS_QUADFP
-    /* fall thru ... */
     case TY_QUAD:
       break;
 #endif
@@ -532,7 +530,7 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_NCHAR:
     case TY_STRUCT:
     case TY_DERIVED:
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     default:
       goto type_error;
     }
@@ -559,7 +557,6 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_DBLE:
       break;
 #ifdef TARGET_SUPPORTS_QUADFP
-    /* fall thru ... */
     case TY_QUAD:
       break;
 #endif
@@ -567,7 +564,7 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_NCHAR:
     case TY_STRUCT:
     case TY_DERIVED:
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     default:
       goto type_error;
     }
@@ -595,7 +592,6 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_REAL:
       break;
 #ifdef TARGET_SUPPORTS_QUADFP
-    /* fall thru to */
     case TY_QUAD:
       break;
 #endif
@@ -603,7 +599,7 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_NCHAR:
     case TY_STRUCT:
     case TY_DERIVED:
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     default:
       goto type_error;
     }
@@ -618,7 +614,7 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_SINT:
       cngtyp(old, DT_INT);
       SST_DTYPEP(old, DT_INT);
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     case TY_LOG:
     case TY_INT:
     case TY_LOG8:
@@ -626,19 +622,19 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
       break;
     case TY_DCMPLX:
       mkexpr1(old);
-    /* fall thru to */
+      FLANG_FALLTHROUGH;
     case TY_DBLE:
       break;
     case TY_CMPLX:
       mkexpr1(old);
-    /* fall thru to */
+      FLANG_FALLTHROUGH;
     case TY_REAL:
       break;
     case TY_CHAR:
     case TY_NCHAR:
     case TY_STRUCT:
     case TY_DERIVED:
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     default:
       goto type_error;
     }
@@ -681,7 +677,7 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_NCHAR:
     case TY_STRUCT:
     case TY_DERIVED:
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
 
     default:
       goto type_error;
@@ -723,7 +719,7 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_NCHAR:
     case TY_STRUCT:
     case TY_DERIVED:
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
 
     default:
       goto type_error;
@@ -1160,7 +1156,7 @@ again:
       if (sptr == intast_sym[I_N_PES])
         return ref_pd(stkptr, ITEM_END);
 #endif
-    /*  fall thru  */
+      FLANG_FALLTHROUGH;
     case ST_INTRIN:
     case ST_GENERIC:
       if (sem.dinit_data) {
@@ -1482,8 +1478,8 @@ mklvalue(SST *stkptr, int stmt_type)
         else
           setimplicit(sptr);
       }
-      // fall through
       FLANG_FALLTHROUGH;
+
     case ST_PROC: /* Function/intrinsic reference used as an lvalue */
       if (stmt_type == 3) {
         SST_ASTP(stkptr, mk_id(sptr));

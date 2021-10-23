@@ -8868,11 +8868,13 @@ cngcon(INT oldval, int oldtyp, int newtyp)
       switch (from) {
       case TY_CMPLX:
         oldval = CONVAL1G(oldval);
+        FLANG_FALLTHROUGH;
       case TY_REAL:
         xftoq(oldval, num);
         break;
       case TY_DCMPLX:
         oldval = CONVAL1G(oldval);
+        FLANG_FALLTHROUGH;
       case TY_DBLE:
         num1[0] = CONVAL1G(oldval);
         num1[1] = CONVAL2G(oldval);
