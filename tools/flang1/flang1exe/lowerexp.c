@@ -1064,6 +1064,7 @@ static int conv_quad_ilm(int ast, int ilm, int dtype)
   case TY_SINT:
   case TY_SLOG:
     ilm = conv_int_ilm(ast, ilm, dtype);
+    FLANG_FALLTHROUGH;
   case TY_LOG:
   case TY_INT:
     ilm = plower("oi", "QFLOAT", ilm);
