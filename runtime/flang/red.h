@@ -128,7 +128,7 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
    ATYP = accumulator type
 */
 
-#define ARITHFN(OP, NAME, RTYP, ATYP)                                          \
+#define ARITHFNL(OP, NAME, RTYP, ATYP)                                          \
   static void l_##NAME(RTYP *r, __INT_T n, RTYP *v, __INT_T vs, __LOG_T *m,    \
                        __INT_T ms, __INT_T *loc, __INT_T li, __INT_T ls,       \
                        __INT_T len)                                            \
@@ -148,7 +148,9 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
       }                                                                        \
     }                                                                          \
     *r = x;                                                                    \
-  }                                                                            \
+  }
+
+#define ARITHFNG(OP, NAME, RTYP, ATYP)                                        \
   static void g_##NAME(__INT_T n, RTYP *lr, RTYP *rr, void *lv, void *rv)      \
   {                                                                            \
     __INT_T i;                                                                 \
@@ -181,7 +183,7 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
 
 /* note: all, any, parity, and count do not have mask arguments */
 
-#define LOGFN(OP, NAME, RTYP)                                                  \
+#define LOGFNL(OP, NAME, RTYP)                                                  \
   static void l_##NAME(RTYP *r, __INT_T n, RTYP *v, __INT_T vs, __LOG_T *m,    \
                        __INT_T ms, __INT_T *loc, __INT_T li, __INT_T ls,       \
                        __INT_T len)                                            \
@@ -194,7 +196,9 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
       x = x OP((v[i] & mask_log) != 0);                                        \
     }                                                                          \
     *r = (RTYP)(x ? GET_DIST_TRUE_LOG : 0);                                   \
-  }                                                                            \
+  }
+
+#define LOGFNG(OP, NAME, RTYP)                                                \
   static void g_##NAME(__INT_T n, RTYP *lr, RTYP *rr, void *lv, void *rv,      \
                        __INT_T len)                                            \
   {                                                                            \
