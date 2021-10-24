@@ -279,7 +279,7 @@ ilm_return_slot_index(ILM_T *ilmp)
 }
 
 /******************************************************************/
-static char *nullname = "";
+static const char *nullname = "";
 
 /*
  * allocate the ILMs, free the ILMs

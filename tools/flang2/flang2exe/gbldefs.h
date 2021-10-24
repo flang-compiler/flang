@@ -169,7 +169,7 @@ typedef enum RUTYPE {
  void *get_getitem_p(int);
  void free_getitem_p(void);
 
- char *mkfname(char *, char *, char *); /* from miscutil.c: */
+ char *mkfname(const char *, const char *, const char *); /* from miscutil.c: */
  void set_xflag(int, INT);
  void set_yflag(int, INT);
 #ifndef __cplusplus

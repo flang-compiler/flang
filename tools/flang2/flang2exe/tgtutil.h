@@ -41,7 +41,7 @@ enum {
 };
 
 typedef struct any_tgt_struct {
-  char *name;
+  const char *name;
   DTYPE dtype;
   int byval;
   int psptr;

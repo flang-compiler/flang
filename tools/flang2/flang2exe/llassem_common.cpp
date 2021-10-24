@@ -103,10 +103,10 @@ ISZ_T
 put_skip(ISZ_T old, ISZ_T New, bool is_char)
 {
   ISZ_T amt;
-  char *s = "i8 0";
-  char *str = "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,"
-              "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,"
-              "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0";
+  const char *s = "i8 0";
+  const char *str = "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,"
+                    "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,"
+                    "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0";
 
   if (is_char) {
     s = "i8 32";
@@ -744,7 +744,7 @@ put_ncharstring_n(char *p, ISZ_T len, int size_of_char)
       fprintf(ASMFIL, ",");
   }
 
-} /* put_string_n */
+} /* put_ncharstring_n */
 
 static void
 put_zeroes(ISZ_T len)
@@ -870,7 +870,7 @@ put_dcmplx_n(int sptr, int putval)
    The caller expects a string that is an i8*.
  */
 LL_Value *
-gen_ptr_offset_val(int offset, LL_Type *ret_type, char *ptr_nm)
+gen_ptr_offset_val(int offset, LL_Type *ret_type, const char *ptr_nm)
 {
   /* LL_Type for i8* (used as bitcast target for GEP to get byte offsets) */
   LL_Type *ll_type_i8_ptr =

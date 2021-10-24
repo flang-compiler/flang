@@ -890,7 +890,7 @@ static char *
 fmth_name(const char *root)
 {
   static char bf[64];
-  char *suf;
+  const char *suf;
   suf = "";
   if (TEST_MACH(MACH_AMD_GH)) {
     suf = "_gh";

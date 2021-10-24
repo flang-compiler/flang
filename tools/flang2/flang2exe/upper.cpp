@@ -64,7 +64,7 @@ static void do_llvm_sym_is_refd(void);
 #endif
 static void build_agoto(void);
 static void free_modvar_alias_list(void);
-static void save_modvar_alias(SPTR sptr, const char *alias_name);
+static void save_modvar_alias(SPTR sptr, char *alias_name);
 
 static void init_upper(void);
 static void read_fileentries(void);
@@ -302,7 +302,7 @@ TraceOutput(const char *fmt, ...)
 
 typedef struct alias_syminfo {
   SPTR sptr;
-  const char *alias;
+  char *alias;
   struct alias_syminfo *next;
 } alias_syminfo;
 static alias_syminfo *modvar_alias_list;
@@ -6494,7 +6494,7 @@ SPTR get_symbol_start(void) { return (SPTR)(oldsymbolcount + 1); }
    and add it to the linked list for later lookup.
  */
 static void
-save_modvar_alias(SPTR sptr, const char *alias_name)
+save_modvar_alias(SPTR sptr, char *alias_name)
 {
   alias_syminfo *new_alias_info;
   if (!alias_name || lookup_modvar_alias(sptr))

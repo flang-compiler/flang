@@ -1593,7 +1593,7 @@ set_ccflags(int sptr, SYMTYPE stype)
 }
 
 SPTR
-getccsym(int letter, int n, SYMTYPE stype)
+getccsym(char letter, int n, SYMTYPE stype)
 {
   char name[16];
   SPTR sptr;
@@ -1605,7 +1605,7 @@ getccsym(int letter, int n, SYMTYPE stype)
 }
 
 SPTR
-getnewccsym(int letter, int n, SYMTYPE stype)
+getnewccsym(char letter, int n, SYMTYPE stype)
 {
   char name[32];
   SPTR sptr;
@@ -1618,7 +1618,7 @@ getnewccsym(int letter, int n, SYMTYPE stype)
 }
 
 SPTR
-getccsym_sc(int letter, int n, SYMTYPE stype, SC_KIND sc)
+getccsym_sc(char letter, int n, SYMTYPE stype, SC_KIND sc)
 {
   SPTR sptr;
 
@@ -1637,7 +1637,7 @@ getccsym_sc(int letter, int n, SYMTYPE stype, SC_KIND sc)
 }
 
 SPTR
-getcctemp_sc(char *name, SYMTYPE stype, SC_KIND sc)
+getcctemp_sc(const char *name, SYMTYPE stype, SC_KIND sc)
 {
   SPTR sym;
 

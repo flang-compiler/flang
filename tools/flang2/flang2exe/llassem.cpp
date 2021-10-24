@@ -360,7 +360,7 @@ get_ag_searchnm(SPTR sptr)
 }
 
 SPTR
-get_typedef_ag(char *ag_name, char *typeName)
+get_typedef_ag(const char *ag_name, const char *typeName)
 {
   SPTR gblsym = find_ag(ag_name);
 
@@ -1056,9 +1056,8 @@ static void
 write_libomptarget_statics(SPTR sptr, char *gname, char *typed, int gblsym,
                     DSRT *dsrtp)
 {
-  char *linkage_type;
+  const char *linkage_type = "internal";
 
-  linkage_type = "internal";
   sprintf(gname, "struct%s", getsname(sptr));
   get_typedef_ag(gname, typed);
   free(typed);
@@ -2641,7 +2640,7 @@ write_externs(void)
       if (AG_TYPENMPTR(gblsym) == 0) {
         if (STYPEG(sptr) != ST_PROC) {
           llt = get_ftn_extern_lltype(sptr);
-          nmptr = add_ag_name((char *)llt->str);
+          nmptr = add_ag_name(llt->str);
           AG_TYPENMPTR(gblsym) = nmptr;
           continue;
         }
@@ -2664,10 +2663,10 @@ write_externs(void)
            *  llt = make_lltype_from_dtype(DTYPEG(sptr));
            *  assert(llt && llt->alt_type, "write_externs: Invalid LL_Type",
            * sptr, 4);
-           *  AG_TYPENMPTR(gblsym) = add_ag_name((char *)llt->alt_type->str);
+           *  AG_TYPENMPTR(gblsym) = add_ag_name(llt->alt_type->str);
            */
         } else {
-          nmptr = add_ag_name((char *)char_type(
+          nmptr = add_ag_name(char_type(
               get_return_dtype(DTYPEG(sptr), NULL, 0), SPTR_NULL));
           AG_TYPENMPTR(gblsym) = nmptr;
         }
@@ -3427,7 +3426,8 @@ char *
 getextfuncname(SPTR sptr)
 {
   static char name[MXIDLN]; /* 1 for null, 3 for extra '_' , */
-  char *p, *q, ch;
+  char *p, ch;
+  const char *q;
   bool has_underscore = false;
   int stype, m;
   stype = STYPEG(sptr);
@@ -5298,19 +5298,19 @@ deleteag_llvm_argdtlist(int gblsym)
   AG_ARGDTLIST(gblsym) = NULL;
 }
 
-char *
+DTLIST *
 get_argdtlist(int gblsym)
 {
   if (gblsym)
-    return (char *)AG_ARGDTLIST(gblsym);
+    return AG_ARGDTLIST(gblsym);
   return NULL;
 }
 
-char *
-get_next_argdtlist(char *argdtlist)
+DTLIST *
+get_next_argdtlist(DTLIST *argdtlist)
 {
   if (argdtlist)
-    return (char *)(((DTLIST *)argdtlist)->next);
+    return argdtlist->next;
   return NULL;
 }
 
@@ -5324,7 +5324,7 @@ get_argdt(SPTR gblsym, int arg_num)
   DTLIST *arg;
 
   for (i = 0, arg = AG_ARGDTLIST(gblsym); arg && (i < arg_num);
-       ++i, arg = (DTLIST *)get_next_argdtlist((char *)arg)) {
+       ++i, arg = get_next_argdtlist(arg)) {
     ; /* Iterate */
   }
 
@@ -5373,26 +5373,26 @@ addag_llvm_argdtlist(SPTR gblsym, int arg_num, SPTR arg_sptr, LL_Type *lltype)
 }
 
 LL_Type *
-get_lltype_from_argdtlist(char *argdtlist)
+get_lltype_from_argdtlist(DTLIST *argdtlist)
 {
   if (argdtlist)
-    return ((DTLIST *)argdtlist)->lltype;
+    return argdtlist->lltype;
   return NULL;
 }
 
 bool
-get_byval_from_argdtlist(const char *argdtlist)
+get_byval_from_argdtlist(DTLIST *argdtlist)
 {
   if (argdtlist)
-    return ((DTLIST *)argdtlist)->byval;
+    return argdtlist->byval;
   return false; /* Fortran is pass by ref by default */
 }
 
 SPTR
-get_sptr_from_argdtlist(char *argdtlist)
+get_sptr_from_argdtlist(DTLIST *argdtlist)
 {
   if (argdtlist)
-    return ((DTLIST *)argdtlist)->sptr;
+    return argdtlist->sptr;
   return SPTR_NULL;
 }
 

@@ -344,8 +344,8 @@ int ll_make_kmpc_single(void);
 /**
    \brief ...
  */
-DTYPE ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo,
-                               ISZ_T sz);
+DTYPE ll_make_kmpc_struct_type(int count, const char *name,
+                               KMPC_ST_TYPE *meminfo, ISZ_T sz);
 
 /// Return an sptr to the allocated task object:  __kmp_omp_task_alloc()
 /// \param base  sptr for storing return value from __kmpc_omp_task_alloc
