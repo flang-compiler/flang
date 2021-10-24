@@ -72,8 +72,7 @@ static void
 putentry(int elem)
 {
   char buf[200];
-  char *ptr;
-  const char *sc_p;
+  const char *ptr, *sc_p;
   int stype;
   DTYPE dtype;
   char hyp;
@@ -419,7 +418,7 @@ add_to_list(int *list, int index)
 }
 
 static void
-par_body(char *hdr, int *list)
+par_body(const char *hdr, int *list)
 {
   char *nm;
   char buf[200];

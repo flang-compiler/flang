@@ -456,7 +456,7 @@ mk_ompaccel_function_end(SPTR func_sptr)
 }
 
 static SPTR
-mk_ompaccel_function(char *name, int n_params, const SPTR *param_sptrs,
+mk_ompaccel_function(const char *name, int n_params, const SPTR *param_sptrs,
                      bool isDeviceFunc)
 {
   /* Create a function symbol along with parameters */
@@ -1241,13 +1241,13 @@ dumptargetsymbols(OMPACCEL_SYM *targetsyms, int n)
 }
 
 void
-ompaccel_msg_interr(char *id, const char *message)
+ompaccel_msg_interr(const char *id, const char *message)
 {
   interr(message, MSGOMPACCEL, ERR_Fatal);
 }
 
 void
-ompaccel_msg_info(char *id, const char *message)
+ompaccel_msg_info(const char *id, const char *message)
 {
   ccff_info(MSGOMPACCEL, id, gbl.findex, gbl.lineno, message, NULL);
 }
@@ -1269,7 +1269,7 @@ ompaccel_emit_tgt_register()
 {
   int ilix;
   SPTR sptrFn;
-  char *name = "ompaccel.register";
+  const char *name = "ompaccel.register";
   sptrFn = mk_ompaccel_function(name, 0, NULL, false);
   CONSTRUCTORP(sptrFn, 1);
   TEXTSTARTUPP(sptrFn, 1);

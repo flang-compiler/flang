@@ -325,9 +325,9 @@ annomod_initx(ANNO *ahead)
 static int
 qs_anno(const void *p1, const void *p2)
 {
-  if (((ANNO *)p1)->lineno < ((ANNO *)p2)->lineno)
+  if (((const ANNO *)p1)->lineno < ((const ANNO *)p2)->lineno)
     return (-1);
-  if (((ANNO *)p1)->lineno > ((ANNO *)p2)->lineno)
+  if (((const ANNO *)p1)->lineno > ((const ANNO *)p2)->lineno)
     return (1);
 #ifdef HOST_MSDOS
   return 0;

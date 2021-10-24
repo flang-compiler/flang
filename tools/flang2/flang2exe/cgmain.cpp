@@ -27,6 +27,7 @@
 #include "sharedefs.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "llassem.h"
 #include "ll_write.h"
 #include "expand.h"
@@ -279,7 +280,7 @@ static ComplexResultList_t complexResultList;
 
 static void fma_rewrite(INSTR_LIST *isns);
 static void undo_recip_div(INSTR_LIST *isns);
-static char *set_local_sname(int sptr, const char *name);
+static const char *set_local_sname(int sptr, const char *name);
 static const char *get_llvm_sname(SPTR sptr);
 static int is_special_return_symbol(int sptr);
 static bool cgmain_init_call(int);
@@ -464,7 +465,7 @@ map_to_llvm_name(const char *function_name)
   if (strcmp(function_name, "__builtin_frame_address") == 0) {
     return "llvm.frameaddress";
   }
-  return (char *)function_name;
+  return function_name;
 }
 
 void
@@ -474,10 +475,10 @@ set_llvm_sptr_name(OPERAND *operand)
   operand->string = SNAME(sptr);
 }
 
-char *
+const char *
 get_label_name(int sptr)
 {
-  char *nm = SNAME(sptr);
+  const char *nm = SNAME(sptr);
   if (*nm == '@')
     nm++;
   return nm;
@@ -496,9 +497,9 @@ get_llvm_sname(SPTR sptr)
     if (p == NULL)
       return "";
     p = map_to_llvm_name(p);
-    SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(p) + 1);
-    p = strcpy(SNAME(sptr), p);
-    return p;
+    char *buf = (char *)getitem(LLVM_LONGTERM_AREA, strlen(p) + 1);
+    SNAME(sptr) = strcpy(buf, p);
+    return SNAME(sptr);
   }
   if (*p == '@')
     p++;
@@ -10545,7 +10546,7 @@ get_intrinsic(const char *name, LL_Type *func_type, unsigned flags)
   op = make_operand();
   op->ot_type = OT_CALL;
   op->ll_type = make_ptr_lltype(func_type);
-  op->string = (char *)name;
+  op->string = name;
   return op;
 }
 
@@ -10738,10 +10739,10 @@ process_string(char *name, int pad, int string_length)
     \param dtype  dtype index
     \return string containing dtype name
  */
-char *
+const char *
 dtype_struct_name(DTYPE dtype)
 {
-  char *dtype_str = process_dtype_struct(dtype);
+  const char *dtype_str = process_dtype_struct(dtype);
   return dtype_str;
 }
 
@@ -10750,12 +10751,13 @@ dtype_struct_name(DTYPE dtype)
  * This is appropriate for external identifiers and internal identifiers with a
  * module-unique name.
  */
-static char *
+static const char *
 set_global_sname(int sptr, const char *name)
 {
   name = map_to_llvm_name(name);
-  SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 2);
-  sprintf(SNAME(sptr), "@%s", name);
+  char *buf = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 2);
+  sprintf(buf, "@%s", name);
+  SNAME(sptr) = buf;
   return SNAME(sptr);
 }
 
@@ -10764,11 +10766,12 @@ set_global_sname(int sptr, const char *name)
  * This is appropriate for internal globals that don't have a unique name
  * because they belong to some scope. The sptr suffix makes the name unique.
  */
-static char *
+static const char *
 set_numbered_global_sname(int sptr, const char *name)
 {
-  SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 12);
-  sprintf(SNAME(sptr), "@%s.%d", name, sptr);
+  char *buf = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 12);
+  sprintf(buf, "@%s.%d", name, sptr);
+  SNAME(sptr) = buf;
   return SNAME(sptr);
 }
 
@@ -10776,11 +10779,12 @@ set_numbered_global_sname(int sptr, const char *name)
  *
  * This is appropriate for function-local identifiers.
  */
-static char *
+static const char *
 set_local_sname(int sptr, const char *name)
 {
-  SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 2);
-  sprintf(SNAME(sptr), "%%%s", name);
+  char *buf = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 2);
+  sprintf(buf, "%%%s", name);
+  SNAME(sptr) = buf;
   return SNAME(sptr);
 }
 
@@ -11033,7 +11037,7 @@ process_blockaddr_sptr(int sptr, int label)
     LL_Type *ttype;
     char *sname, *gname;
     const char *retc;
-    char *labelName;
+    const char *labelName;
     GBL_LIST *gitem = (GBL_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(GBL_LIST));
     memset(gitem, 0, sizeof(GBL_LIST));
     gitem->sptr = gl_sptr;
@@ -11069,7 +11073,8 @@ process_extern_function_sptr(SPTR sptr)
   DTYPE dtype = DTYPEG(sptr);
   DTYPE return_dtype;
   EXFUNC_LIST *exfunc;
-  char *name, *gname;
+  char *gname;
+  const char *name;
   const char *extend_prefix;
   LL_Type *ll_ttype;
 
@@ -11175,7 +11180,7 @@ externVarMustInitialize(SPTR sptr)
 static void
 process_extern_variable_sptr(SPTR sptr, ISZ_T off)
 {
-  char *name;
+  const char *name;
   const char *retc;
   const char *flag_str;
   GBL_LIST *gitem;
@@ -11250,7 +11255,7 @@ process_local_sptr(SPTR sptr)
   sym_is_refd(sptr);
 
   if (REFG(sptr) && DINITG(sptr)) {
-    char *name = get_llvm_name(sptr);
+    const char *name = get_llvm_name(sptr);
     if (SCOPEG(sptr) == 0) {
       name = set_global_sname(sptr, name);
     } else {
@@ -11258,7 +11263,7 @@ process_local_sptr(SPTR sptr)
     }
     DBGTRACE2("#variable #%d(%s) is data initialized", sptr, SYMNAME(sptr))
   } else if (DINITG(sptr) || SAVEG(sptr)) {
-    char *name = get_llvm_name(sptr);
+    const char *name = get_llvm_name(sptr);
     GBL_LIST *gitem = (GBL_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(GBL_LIST));
     memset(gitem, 0, sizeof(GBL_LIST));
     gitem->sptr = sptr;
@@ -11292,7 +11297,7 @@ process_local_sptr(SPTR sptr)
     local =
         ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
                                "%s", get_llvm_name(sptr));
-    SNAME(sptr) = (char *)local->address.data;
+    SNAME(sptr) = local->address.data;
   }
 
   addDebugForLocalVar(sptr, type);
@@ -11317,7 +11322,7 @@ gen_name_private_sptr(SPTR sptr)
    */
   local = ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
                                  "%s", get_llvm_name(sptr));
-  SNAME(sptr) = (char *)local->address.data;
+  SNAME(sptr) = local->address.data;
   addDebugForLocalVar(sptr, type);
 }
 /* May need to be revisited */
@@ -11403,7 +11408,7 @@ process_auto_sptr(SPTR sptr)
    * emit an LLVM IR sret argument which is just a constant pointer.
    */
   if (ret_info.emit_sret && is_special_return_symbol(sptr)) {
-    SNAME(sptr) = (char *)ll_create_local_name(llvm_info.curr_func, "sretaddr");
+    SNAME(sptr) = ll_create_local_name(llvm_info.curr_func, "sretaddr");
     return;
   }
 
@@ -11416,7 +11421,7 @@ process_auto_sptr(SPTR sptr)
    * address of the local, name it "%foo.addr". */
   local = ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
                                  "%s.addr", SYMNAME(sptr));
-  SNAME(sptr) = (char *)local->address.data;
+  SNAME(sptr) = local->address.data;
 
   addDebugForLocalVar(sptr, type);
 }
@@ -11425,8 +11430,9 @@ static void
 process_label_sptr_c(SPTR sptr)
 {
   const char *name = get_llvm_name(sptr);
-  SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 1);
-  strcpy(SNAME(sptr), name);
+  char *buf = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 1);
+  strcpy(buf, name);
+  SNAME(sptr) = buf;
 }
 
 /**
@@ -13121,7 +13127,7 @@ process_formal_arguments(LL_ABI_Info *abi)
 
     /* Make a name for the real LLVM IR argument. This will also be used by
      * build_routine_and_parameter_entries(). */
-    arg_op->string = (char *)ll_create_local_name(
+    arg_op->string = ll_create_local_name(
         llvm_info.curr_func, "%s%s", SYMNAME(arg->sptr), suffix);
 
     /* Emit code in the entry block that saves the argument into the local
@@ -13176,7 +13182,7 @@ process_formal_arguments(LL_ABI_Info *abi)
 
             // Repurpose store_addr to the bigger storage
             store_addr->ll_type = ll_get_pointer_type(arg->type);
-            store_addr->string = (char *)bigger_local->address.data;
+            store_addr->string = bigger_local->address.data;
 
             // Replace last local in the list with the bigger one
             if (prev_object == NULL) {
@@ -13328,7 +13334,7 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
 
     if (print_arg_names && arg->sptr) {
       int key;
-      OPERAND *coerce_op = NULL;
+      const OPERAND *coerce_op = NULL;
       print_space(1);
       key = arg->sptr;
       if (SCG(arg->sptr) == SC_BASED && MIDNUMG(arg->sptr))
@@ -13979,7 +13985,6 @@ add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr)
   static hashset_t sptr_added;
   SPTR scope, var;
   const char *debug_name;
-  char *save_ptr;
   bool has_alias = false;
 
   if (!sptr_added)
@@ -14003,7 +14008,7 @@ add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr)
       if (hashset_lookup(sptr_added, debug_name))
         continue;
       hashset_insert(sptr_added, debug_name);
-      save_ptr = SNAME(var);
+      const char *save_ptr = SNAME(var);
       SNAME(var) = SYMNAME(var);
       addDebugForGlobalVar(var, variable_offset_in_aggregate(var, 0));
       SNAME(var) = save_ptr;

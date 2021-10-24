@@ -724,8 +724,9 @@ change_target_func_smbols(int outlined_func_sptr, int stblk_sptr)
     }
   }
 }
+
 DTYPE
-ll_make_struct(int count, char *name, TGT_ST_TYPE *meminfo, ISZ_T sz)
+ll_make_struct(int count, const char *name, TGT_ST_TYPE *meminfo, ISZ_T sz)
 {
   DTYPE dtype;
   int i;
@@ -769,7 +770,7 @@ ll_make_struct(int count, char *name, TGT_ST_TYPE *meminfo, ISZ_T sz)
  * struct __tgt_offload_entry { void*, char*, i64, i32, i32 }
  */
 DTYPE
-ll_make_tgt_offload_entry(char *name)
+ll_make_tgt_offload_entry(const char *name)
 {
   TGT_ST_TYPE meminfo[] = {{"addr", DT_ADDR, 0, 0},
                            {"name", DT_ADDR, 0, 0},
@@ -785,7 +786,7 @@ ll_make_tgt_offload_entry(char *name)
  * *,__tgt_offload_entry * }
  */
 DTYPE
-ll_make_tgt_device_image(char *name, DTYPE entrytype)
+ll_make_tgt_device_image(const char *name, DTYPE entrytype)
 {
   DTYPE dtype1, dtype2;
   dtype1 = get_type(2, TY_PTR, DT_BINT);
@@ -805,7 +806,7 @@ ll_make_tgt_device_image(char *name, DTYPE entrytype)
  * *,__tgt_offload_entry * }
  */
 DTYPE
-ll_make_tgt_bin_descriptor(char *name, DTYPE entrytype, DTYPE deviceimagetype)
+ll_make_tgt_bin_descriptor(const char *name, DTYPE entrytype, DTYPE deviceimagetype)
 {
   DTYPE dtype1, dtype2;
   dtype1 = get_type(2, TY_PTR, entrytype);

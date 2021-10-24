@@ -36,7 +36,7 @@ DTYPE mk_struct_for_llvm_init(const char *name, int size);
 /**
    \brief ...
  */
-LL_Value *gen_ptr_offset_val(int offset, LL_Type *ret_type, char *ptr_nm);
+LL_Value *gen_ptr_offset_val(int offset, LL_Type *ret_type, const char *ptr_nm);
 
 /**
    \brief ...

@@ -29,7 +29,7 @@ typedef struct LLDEF {
   int sptr;
   int rank;
   unsigned flags;	/**< bitmask value. See LLDEF_Flags */
-  char *name;
+  const char *name;
   int printed;
   int addrspace;
   OPERAND *values;
@@ -360,7 +360,7 @@ ll_convert_iface_sptr(LL_Module *module, SPTR iface_sptr)
   SPTR gblsym;
   LL_Type **args, *res;
   LL_Type *llt;
-  char *dtl;
+  DTLIST *dtl;
 
   if (INMODULEG(iface_sptr))
     gblsym = find_ag(get_llvm_name(iface_sptr));
@@ -377,8 +377,8 @@ ll_convert_iface_sptr(LL_Module *module, SPTR iface_sptr)
   llt = get_ag_lltype(gblsym);
   args[0] = ll_convert_dtype(module, DTYPEG(iface_sptr));
 
-  for (i = 1, dtl = (char *)get_argdtlist(gblsym); dtl;
-       dtl = (char *)get_next_argdtlist(dtl), ++i) {
+  for (i = 1, dtl = get_argdtlist(gblsym); dtl;
+       dtl = get_next_argdtlist(dtl), ++i) {
     llt = (LL_Type *)get_lltype_from_argdtlist(dtl);
     args[i] = llt;
   }
@@ -2587,7 +2587,7 @@ get_param_equiv_dtype(DTYPE dtype)
 const char *
 llvm_fc_type(DTYPE dtype)
 {
-  const char *retc;
+  const char *retc = "";
   ISZ_T sz;
 
   switch (DTY(dtype)) {
@@ -2702,7 +2702,7 @@ gen_copy_list_op(OPERAND *operands)
 }
 
 static LLDEF *
-make_def(DTYPE dtype, int sptr, int rank, char *name, int flags)
+make_def(DTYPE dtype, int sptr, int rank, const char *name, int flags)
 {
   LLDEF *new_def;
 
@@ -3191,10 +3191,10 @@ process_symlinked_sptr(int sptr, int total_init_sz, int is_union,
   return head.next;
 }
 
-char *
+const char *
 process_dtype_struct(DTYPE dtype)
 {
-  char *d_name;
+  const char *d_name;
   SPTR tag;
   TY_KIND dty;
   LLDEF *def;
@@ -3216,7 +3216,7 @@ process_dtype_struct(DTYPE dtype)
     return def->name;
   }
   /* Use consistent struct type names. */
-  d_name = (char *)ll_convert_struct_dtype(llvm_get_current_module(), dtype)->str;
+  d_name = ll_convert_struct_dtype(llvm_get_current_module(), dtype)->str;
   if (ZSIZEOF(dtype) == 0 && DTyAlgTyMember(dtype) == 0)
     def = make_def(dtype, 0, 0, d_name,
                    LLDEF_IS_TYPE | LLDEF_IS_EMPTY | LLDEF_IS_STRUCT);
@@ -3248,7 +3248,7 @@ process_dtype_struct(DTYPE dtype)
    printed out to the .ll output file.  If true, write_ftn_typedefs() will not
    print the type out (assuming that it has already been 'printed').
  */
-char *
+const char *
 process_ftn_dtype_struct(DTYPE dtype, char *tname, bool printed)
 {
   int tag;
@@ -3673,7 +3673,7 @@ process_ll_abi_func_ftn_mod(LL_Module *mod, SPTR func_sptr, bool update)
 {
   int i, ty;
   DTYPE ret_dtype;
-  char *param;
+  DTLIST *param;
   LL_ABI_Info *abi;
   LL_Type *llt;
   int gblsym = 0;
@@ -4154,7 +4154,8 @@ get_ftn_cbind_lltype(SPTR sptr)
   ISZ_T anum;
   int tag, numdim, gblsym, d;
   LL_Type *llt = NULL;
-  char *typed, *name;
+  const char *typed;
+  char *name;
   char tname[MXIDLN];
   ADSC *ad;
 

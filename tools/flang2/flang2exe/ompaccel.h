@@ -306,10 +306,10 @@ void dumpomptargets(void);
 /* OpenMP ACCEL - Error messages                    */
 /* ################################################ */
 #define OMPACCELMESSAGE "OpenMP Accelerator Model:"
-void ompaccel_msg_interr(char *, const char *);
-void ompaccel_msg_err(char *, const char *);
-void ompaccel_msg_warn(char *, const char *);
-void ompaccel_msg_info(char *, const char *);
+void ompaccel_msg_interr(const char *, const char *);
+void ompaccel_msg_err(const char *, const char *);
+void ompaccel_msg_warn(const char *, const char *);
+void ompaccel_msg_info(const char *, const char *);
 
 /* ################################################ */
 /* OpenMP ACCEL - Expander                          */

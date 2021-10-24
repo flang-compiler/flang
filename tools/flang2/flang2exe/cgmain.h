@@ -38,7 +38,7 @@ bool strict_match(LL_Type *ty1, LL_Type *ty2);
 /**
    \brief ...
  */
-char *dtype_struct_name(DTYPE dtype);
+const char *dtype_struct_name(DTYPE dtype);
 
 /**
    \brief ...
@@ -48,7 +48,7 @@ char *gen_llvm_vconstant(const char *ctype, int sptr, DTYPE tdtype, int flags);
 /**
    \brief ...
  */
-char *get_label_name(int sptr);
+const char *get_label_name(int sptr);
 
 /**
    \brief ...

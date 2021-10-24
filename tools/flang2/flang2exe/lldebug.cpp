@@ -171,10 +171,10 @@ struct LL_DebugInfo {
 static LL_MDRef lldbg_emit_modified_type(LL_DebugInfo *, DTYPE, SPTR, int);
 #ifdef FLANG_DEBUGINFO_UNUSED
 static LL_MDRef lldbg_create_module_flag_mdnode(LL_DebugInfo *db, int severity,
-                                                char *name, int value);
+                                                const char *name, int value);
 #endif
 static LL_MDRef lldbg_create_outlined_parameters_node(LL_DebugInfo *db);
-static LL_MDRef lldbg_create_file_mdnode(LL_DebugInfo *db, char *filename,
+static LL_MDRef lldbg_create_file_mdnode(LL_DebugInfo *db, const char *filename,
                                          char *sourcedir, LL_MDRef context,
                                          int index);
 static LL_MDRef lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr,
@@ -298,9 +298,10 @@ get_filedesc_mdnode(LL_DebugInfo *db, int index)
 }
 
 static LL_MDRef
-lldbg_create_compile_unit_mdnode(LL_DebugInfo *db, int lang_tag, char *filename,
-                                 char *sourcedir, char *producer, int main,
-                                 bool optimized, const char *compflags, int vruntime,
+lldbg_create_compile_unit_mdnode(LL_DebugInfo *db, int lang_tag,
+                                 const char *filename, char *sourcedir,
+                                 char *producer, int main, bool optimized,
+                                 const char *compflags, int vruntime,
                                  LL_MDRef *enum_types_list,
                                  LL_MDRef *retained_types_list,
                                  LL_MDRef *subprograms_list, LL_MDRef *gv_list,
@@ -417,8 +418,8 @@ lldbg_create_module_mdnode(LL_DebugInfo *db, LL_MDRef _, char *name,
 }
 
 static LL_MDRef
-lldbg_create_file_mdnode(LL_DebugInfo *db, char *filename, char *sourcedir,
-                         LL_MDRef context, int index)
+lldbg_create_file_mdnode(LL_DebugInfo *db, const char *filename,
+                         char *sourcedir, LL_MDRef context, int index)
 {
   LLMD_Builder mdb = llmd_init(db->module);
   LL_MDRef cur_mdnode;
@@ -3454,7 +3455,7 @@ lldbg_emit_global_variable(LL_DebugInfo *db, SPTR sptr, ISZ_T off, int findex,
 }
 
 #ifdef FLANG_ACCEL
-static char *
+static const char *
 lldbg_get_addrspace_suffix(int addrspace)
 {
   switch (addrspace) {

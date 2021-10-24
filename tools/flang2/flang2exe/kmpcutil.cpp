@@ -382,7 +382,7 @@ gen_null_arg()
 }
 
 DTYPE
-ll_make_kmpc_struct_type(int count, char *name, KMPC_ST_TYPE *meminfo, ISZ_T sz)
+ll_make_kmpc_struct_type(int count, const char *name, KMPC_ST_TYPE *meminfo, ISZ_T sz)
 {
   DTYPE dtype;
   int i;

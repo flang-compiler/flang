@@ -1014,22 +1014,17 @@ bool small_aggr_return(DTYPE dtype);
 /**
    \brief ...
  */
-char *ll_get_cstring_buf(int sptr, int skip_quotes);
-
-/**
-   \brief ...
- */
 const char *llvm_fc_type(DTYPE dtype);
 
 /**
    \brief ...
  */
-char *process_dtype_struct(DTYPE dtype);
+const char *process_dtype_struct(DTYPE dtype);
 
 /**
    \brief ...
  */
-char *process_ftn_dtype_struct(DTYPE dtype, char *tname, bool printed);
+const char *process_ftn_dtype_struct(DTYPE dtype, char *tname, bool printed);
 
 /**
    \brief ...
