@@ -5106,7 +5106,7 @@ get_llvm_name(SPTR sptr)
 char *
 get_string_constant(int sptr)
 {
-  char *name, *to, *from;
+  char *name = NULL, *to, *from;
   int c, len, newlen;
 
   if (STYPEG(sptr) == ST_CONST) {

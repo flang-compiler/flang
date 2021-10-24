@@ -913,7 +913,7 @@ void
 exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
 {
 #ifdef IM_BPAR
-  int ili;
+  int ili = 0;
   SPTR sym;
   SPTR sptr;
   int offset, savebih;

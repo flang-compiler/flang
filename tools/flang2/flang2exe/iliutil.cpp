@@ -185,9 +185,9 @@ ili_cleanup(void)
 int
 addili(ILI *ilip)
 {
-  ILI_OP opc; /* opcode of ili  */
-  int ilix;   /* ili area index where ili was added  */
-  int tmp;    /* temporary  */
+  ILI_OP opc;   /* opcode of ili  */
+  int ilix = 0; /* ili area index where ili was added  */
+  int tmp;      /* temporary  */
   int cons1;
   INT numi[2];
 
@@ -825,7 +825,7 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, const char *func_name, int nargs, ..
       argl = ad3ili(args[i].opc, args[i].arg, args[i].reg, argl);
     } else {
       if (IL_VECT(ILI_OPC(args[i].arg))) {
-        int arg_dtype, dtype_slot, arg_nme;
+        int arg_dtype = 0, dtype_slot, arg_nme = 0;
         switch (IL_TYPE(ILI_OPC(args[i].arg))) {
         case ILTY_CONS:
           arg_nme = 0;
@@ -950,7 +950,7 @@ static char *
 vect_math(MTH_FN fn, const char *root, int nargs, DTYPE vdt, int vopc, int vdt1,
           int vdt2, bool mask)
 {
-  int typec;
+  int typec = 0;
   int num_elem;
   DTYPE vdt_mask = DT_NONE;
   int func;
@@ -5253,7 +5253,7 @@ addarth(ILI *ilip)
 
       /* Can apply DeMorgan's Law */
 
-      int tmp, demorgans_opc;
+      int tmp, demorgans_opc = 0;
 
       switch (opc) {
       case IL_AND:

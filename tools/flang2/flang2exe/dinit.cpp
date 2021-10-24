@@ -1287,7 +1287,7 @@ _ddiv(INT *dividend, INT *divisor, INT *quotient)
 static int
 get_ast_op(int op)
 {
-  int ast_op;
+  int ast_op = -1;
 
   switch (op) {
   case AC_NEG:

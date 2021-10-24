@@ -2033,8 +2033,8 @@ exp_ompaccel_bteams(ILM *ilmp, int curilm, int outlinedCnt, SPTR uplevel_sptr,
 void
 exp_ompaccel_map(ILM *ilmp, int curilm, int outlinedCnt)
 {
-  int label, argilm;
-  SPTR sptr;
+  int label = 0, argilm;
+  SPTR sptr = SPTR_NULL;
   if (outlinedCnt >= 2)
     return;
   argilm = ILM_OPND(ilmp, 1);

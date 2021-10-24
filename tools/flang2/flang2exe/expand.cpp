@@ -961,7 +961,7 @@ void
 replace_by_zero(ILM_OP opc, ILM *ilmp, int curilm)
 {
   INT num[4];
-  int zero;
+  int zero = 0;
   ILM_OP newopc;
   int i1 = ILM_OPND(ilmp, 1);
   switch (opc) {
@@ -1015,6 +1015,7 @@ replace_by_zero(ILM_OP opc, ILM *ilmp, int curilm)
 
   default:
     interr("replace_by_zero opc not cased", opc, ERR_Severe);
+    newopc = IM_ICON;
     break;
   }
   /* CHANGE the ILM in place */
@@ -1060,7 +1061,7 @@ optional_present(int nme)
 void
 replace_by_one(ILM_OP opc, ILM *ilmp, int curilm)
 {
-  int one;
+  int one = 0;
   ILM_OP newopc;
   int i1;
   i1 = ILM_OPND(ilmp, 1);
@@ -1087,13 +1088,13 @@ void
 exp_load(ILM_OP opc, ILM *ilmp, int curilm)
 {
   int op1;
-  int imag; /* address of the imag. part if complex */
+  int imag;     /* address of the imag. part if complex */
 
-  int nme;  /* names entry			 */
-  int addr, /* address of the load		 */
-      load; /* load ili generated	         */
+  int nme;      /* names entry */
+  int addr,     /* address of the load */
+      load = 0; /* load ili generated */
   SPTR tmp;
-  int siz; /* MSZ value for load  */
+  int siz;      /* MSZ value for load */
   DTYPE dt;
   bool confl;
   ILM *tmpp;
@@ -1392,7 +1393,7 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
   int nme;       /* names entry                          */
   int op1,       /* operand 1 of the ILM                 */
       op2;       /* operand 2 of the ILM                 */
-  int store,     /* store ili generated                  */
+  int store = 0, /* store ili generated                  */
       addr,      /* address ili where value stored       */
       expr,      /* ili of value being stored            */
       siz,       /* size of the field in the field store */

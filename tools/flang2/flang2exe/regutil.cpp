@@ -1105,7 +1105,7 @@ assn_rtemp(int ili)
 static int
 _assn_rtemp(int ili, int temp)
 {
-  int rcand, rtype;
+  int rcand, rtype = 0;
   ILI_OP opc = ILI_OPC(ili);
   GET_RCAND(rcand);
 
