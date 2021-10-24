@@ -106,7 +106,6 @@ static void put_kstr(SPTR sptr, int add_null);
 static void upcase_name(char *);
 static char *write_ftn_type(LL_Type *, char *, int);
 static void write_module_as_subroutine(void);
-static int get_ag_size(int gblsym);
 static DSRT *process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect, ISZ_T addr);
 
 static char * get_struct_from_dsrt2(SPTR sptr, DSRT *dsrtp, ISZ_T size, 
@@ -117,7 +116,7 @@ static char * get_struct_from_dsrt(SPTR sptr, DSRT *dsrtp, ISZ_T size,
                      int *align8,
                      bool stop_at_sect, ISZ_T addr);
 #if DEBUG
-static void dump_all_dinits(void);
+void dump_all_dinits(void);
 
 static hashset_t CommonBlockInits;
 #endif
@@ -156,11 +155,7 @@ inline DSRT *DSRTG(int sptr) {
  * +   IS_DWARF is true => dwarf in coff, dwarf2, or ELF object file type
  * +   otherwise, the debug format is coff.
  */
-INLINE static bool
-is_stabs(void)
-{
-  return XBIT(120, 0x20);
-}
+#define is_stabs() XBIT(120, 0x20)
 
 #define ASMFIL gbl.asmfil
 
@@ -1121,7 +1116,7 @@ write_libomtparget(void)
 void
 assemble_end(void)
 {
-  int gblsym, tdefsym, align_value, cmem;
+  int gblsym, tdefsym, align_value;
   char *name, *typed, gname[MXIDLN + 50];
   const char *tls = " thread_local";
 
@@ -1270,9 +1265,7 @@ write_consts(void)
 static DSRT *
 process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect, ISZ_T addr)
 {
-  int al;
   DTYPE tdtype;
-  int putval;
   INT loc_base, skip_cnt;
   ISZ_T repeat_cnt;
   DREC *p;
@@ -1496,7 +1489,6 @@ write_bss(void)
    *      a segfault will ensue, as llvm will emit the section as read-only in
    *      this case: http://llvm.org/bugs/show_bug.cgi?id=17246
    */
-  int gblsym;
   const char *type_str = "internal global";
   char *bss_nm = bss_name;
 
@@ -2940,7 +2932,7 @@ dump_common_chain(hash_key_t key, void *_)
   dump_dinit_chain(buffer, DSRTG(sptr));
 }
 
-static void
+void
 dump_all_dinits(void)
 {
   if (!gbl.dbgfil)
@@ -3095,7 +3087,7 @@ dump_gblsym(int gblsym)
 }
 
 /* Dump the AG table, TODO: Add to coding.n for DBGBIT and gbl.dbgfil */
-static void
+void
 dump_ag(void)
 {
   int i;
@@ -3104,14 +3096,14 @@ dump_ag(void)
       dump_gblsym(i);
 }
 
-static void
+void
 dump_allag(void)
 {
   int i;
   for (i = 0; i < agb.s_avl; ++i)
     dump_gblsym(i);
 }
-#endif /* Debug */
+#endif /* DEBUG */
 
 /*
  * return ptr to assem's global symtab.
@@ -5191,12 +5183,6 @@ write_ftn_type(LL_Type *ll_type, char *argptr, int byval)
   return argptr + strlen(argptr);
 }
 
-static int
-get_ag_size(int gblsym)
-{
-  return gblsym ? AG_SIZE(gblsym) : 0;
-}
-
 int
 get_ag_argdtlist_length(int gblsym)
 {
@@ -5826,7 +5812,8 @@ _fixup_llvm_uplevel_symbol(void)
   }
 }
 
-static void
+#if DEBUG
+void
 dump_uplevel_sptr(int gblsym)
 {
   int i;
@@ -5835,6 +5822,7 @@ dump_uplevel_sptr(int gblsym)
            AG_UPLEVEL_NEW(gblsym, i), get_llvm_name(AG_UPLEVEL_NEW(gblsym, i)));
   }
 }
+#endif
 
 static int uplevelcnt = 0;
 static int *upptr = NULL;

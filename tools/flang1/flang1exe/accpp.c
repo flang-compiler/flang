@@ -617,7 +617,6 @@ static int dlookup(char *);
 static void dodef(int);
 static void doincl(LOGICAL);
 static void _doincl(char *, int, LOGICAL);
-static void preincl(char *);
 static void domodule(void);
 static INT doparse(void);
 static void doundef(int);
@@ -682,7 +681,7 @@ void
 print_and_check(FILE *ff, char *str, char end_c)
 {
   char *cp;
-  char ch, ch2;
+  char ch;
 
   for (cp = str; *cp; ++cp) {
     ch = *cp;
@@ -1154,7 +1153,6 @@ accpp(void)
         }
         break;
       default:
-      unrec_directive:
         if (!XBIT(123, 0x200000)) {
           if (ifstack(truth))
             pperror(236, tokval, 3);
@@ -1242,7 +1240,6 @@ static void
 pr_line(char *name, int line, LOGICAL from_stdinc)
 {
   static INT last_inclev = -1;
-  char *header_origin;
 
   /* -M option:  Print list of include files to stdout */
   if (XBIT(123, 2) || XBIT(123, 0x20000000) || XBIT(123, 0x40000000))
@@ -1923,11 +1920,9 @@ doincl(LOGICAL include_next)
 {
   int toktyp;
   char buff[MAX_PATHNAME_LEN];
-  char fullname[MAX_PATHNAME_LEN];
   char *p;
   int type;
   char tokval[TOKMAX];
-  int i;
   int missing = 0;
 
   /* parse file name */
@@ -2034,7 +2029,6 @@ static void
 add_to_incllist(char *fullname)
 {
   INT i;
-  char *cp;
 
   /* Bail early if dependency generation is not enabled. */
   if (!XBIT(123, 2) &&          /* -M / -MM    */
@@ -2080,7 +2074,6 @@ static void
 _doincl(char *name, int type, LOGICAL include_next)
 {
   char fullname[MAX_PATHNAME_LEN];
-  char *p;
   int i;
 
   NEED(inclev + 2, inclstack, INCLSTACK, incsize, incsize + MAXINC);
@@ -2289,7 +2282,7 @@ subst(PPSYM *sp)
   char *fstart;
   char tmp;
   int nlpar;
-  int i, j, waswhite, instr;
+  int i, waswhite, instr;
   char tokval[TOKMAX];
   int argbufsize, targbufsize, newsize;
   int nl;
@@ -2938,7 +2931,6 @@ dumpval(char *p, FILE *ff)
 static void
 dumpmac(PPSYM *sp)
 {
-  char *p;
   fprintf(stderr, "%s (%d args, %x flags, %d next): def: ", &deftab[sp->name],
           sp->nformals, sp->flags, sp->next);
   dumpval(&deftab[sp->value], stderr);
@@ -2949,7 +2941,6 @@ static void
 dumptab(void)
 {
   int i;
-  char *p;
   for (i = 1; i < next_hash; ++i) {
     fprintf(stderr, "%d: ", i);
     dumpmac(hashrec + i);
@@ -3181,7 +3172,6 @@ static void
 ptok(char *tok)
 {
   FILE *fp;
-  int space;
   static int state = 1;
   static int nchars;
   static int needspace = 0;
@@ -3559,12 +3549,10 @@ static int
 gettoken(void)
 {
   static int ifdef = 0;
-  int b;
   char *s;
   PPSYM *sp;
   char tokval[TOKMAX];
   int i, c;
-  int isuns;
   INT t;
 
   for (;;) {
@@ -4074,14 +4062,13 @@ findtok(char *tokval, int truth)
 static int
 nextok(char *tokval, int truth)
 {
-  int i, j;
+  int i;
   char *p, tmp;
   int delim;
   int c;
   int toktyp;
   int retval;
   char *savtokval = tokval;
-  PPSYM *sp;
   char *comment_ptr;
   int dot_seen;
 

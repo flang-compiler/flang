@@ -108,9 +108,6 @@ typedef struct CGR_LIST {
   SPTR func_sptr;
 } CGR_LIST;
 
-static CGR_LIST *deferred_cgr_func = NULL;
-static CGR_LIST *deferred_cgr_list = NULL;
-
 /* type of descriptor elements */
 #define DESC_ELM_DT (XBIT(68, 1) ? DT_INT8 : DT_INT)
 
@@ -432,7 +429,6 @@ upper(int stb_processing)
   ISZ_T size;
   SPTR first;
   int firstinternal, gstaticbase;
-  static long ilmpos;
   extern void set_private_size(ISZ_T);
 
   llvm_stb_processing = stb_processing;
@@ -760,7 +756,7 @@ do_pastilm:
    * get a temp for the character length */
 do_dchar:
   if (XBIT(14, 0x20000) || !XBIT(14, 0x10000)) {
-    int e, dpdsc, paramct, i, param;
+    int e, dpdsc, paramct, i;
     for (e = gbl.entries; e > NOSYM; e = SYMLKG(e)) {
       dpdsc = DPDSCG(e);
       paramct = PARAMCTG(e);
@@ -930,7 +926,6 @@ restore_saved_syminfo(int firstinternal)
         }
       }
       if (IS_THREAD_TP(newsptr)) {
-        int ss;
         int tptr;
         int psptr;
 
@@ -1036,8 +1031,7 @@ restore_saved_syminfo(int firstinternal)
 void
 upper_save_syminfo(void)
 {
-  int s, sptr, sc, ref;
-  ISZ_T address;
+  int s, sptr;
 
   if (gbl.internal != 1)
     return;
@@ -1182,7 +1176,6 @@ upper_init(void)
 static int
 read_line(void)
 {
-  char *ret;
   int i, ch;
   i = 0;
   pos = 0;
@@ -1626,7 +1619,6 @@ read_datatype(void)
 {
   DTYPE dtype, dt;
   TY_KIND dval;
-  int ty;
   SPTR member;
   int align;
   DTYPE subtype;
@@ -2012,7 +2004,7 @@ read_symbol(void)
   int val[4], namelen, i, dpdsc, inmod;
   /* flags: */
   int addrtkn, adjustable, afterentry, altname, altreturn, aret, argument,
-      assigned, assumedrank, assumedshape, assumedsize, autoarray, blank, Cfunc,
+      assigned, assumedrank, assumedshape, assumedsize, autoarray, Cfunc,
       ccsym, clen, cmode, common, constant, count, currsub, decl;
   SPTR descriptor;
   int intentin, texture, device, dll, dllexportmod, enclfunc, end, endlab,
@@ -2024,7 +2016,7 @@ read_symbol(void)
       plist, pointer, Private, ptrsafe, pure, pdaln, recursive, ref, refs,
       returnval, routx = 0, save, sdscs1, sdsccontig, contigattr, sdscsafe, seq,
                  shared, startlab, startline, stdcall, decorate, cref,
-                 nomixedstrlen, sym, target, param, thread, task, tqaln, typed,
+                 nomixedstrlen, target, param, thread, task, tqaln, typed,
     uplevel, vararg, Volatile, fromMod, modcmn, elemental;
   SPTR parent;
   int internref,
@@ -2038,7 +2030,7 @@ read_symbol(void)
   int agoto, parref, parsyms, parsymsct, paruplevel, is_interface;
   int typedef_init;
   int alldefaultinit;
-  int tpalloc, procdummy, procdesc, has_opts;
+  int tpalloc, procdesc, has_opts;
   SPTR assocptr, ptrtarget;
   int prociface;
   ISZ_T address, size;
@@ -3337,7 +3329,6 @@ read_overlap(void)
 static void
 read_program(void)
 {
-  int progtype;
   if (!checkname("procedure")) {
     fprintf(stderr,
             "ILM file line %d: expecting value for procedure\n"
@@ -3416,7 +3407,7 @@ addsafe(int sptr, int safetype, int val)
 static void
 read_ipainfo(void)
 {
-  int sptr, itype, targettype, targetid, func, smax;
+  int sptr, itype, targettype, targetid, func;
   long stride;
   sptr = getval("info");
   sptr = symbolxref[sptr];
@@ -3500,19 +3491,17 @@ read_ipainfo(void)
 static void
 fix_symbol(void)
 {
-  int s;
   SPTR sptr;
   int i, fval, smax;
   int altname;
   DTYPE dtype;
-  int parsyms, parsymsct, paruplevel;
-  int clen, common, count, dpdsc;
+  int parsyms, paruplevel;
+  int clen, common, dpdsc;
   SPTR desc;
   int enclfunc, inmod, scope;
   SPTR lab, link;
   int midnum, member, nml, paramcount, plist, val, origdum;
   int typedef_init;
-  int func_count;
 
   threadprivate_dtype = DT_NONE;
   tpcount = 0;
@@ -3983,8 +3972,7 @@ fix_symbol(void)
         ;
       CMEMLP(common, member);
       if (IS_THREAD_TP(common)) {
-        char *np;
-        int len, hashid, tptr;
+        int tptr;
         /* mark all members as thread-private */
         for (member = CMEMFG(common); member > NOSYM; member = SYMLKG(member)) {
           THREADP(member, 1);
@@ -5675,7 +5663,7 @@ newinfo(void)
 static int
 findindex(int sptr)
 {
-  int l, h, i, j;
+  int l, h, i;
   l = 0;
   h = ipab.indexavl - 1;
   while (l <= h) {
@@ -6081,7 +6069,7 @@ F90_struct_mbr_nme_conflict(int nme1, int nme2)
 int
 IPA_pointer_safe(int nme)
 {
-  int vnme, sym, n, subnme, nme2;
+  int vnme, sym, n, nme2;
   /* both -x 89 0x20000000 and -x 89 0x100 must be set */
   if (XBIT(89, 0x20000100) != 0x20000100 || XBIT(89, 0x80))
     return 0;
@@ -6479,7 +6467,6 @@ static void
 build_agoto(void)
 {
   extern void exp_build_agoto(int *, int); /* exp_rte.c */
-  int i;
   if (agotosz == 0)
     return;
   exp_build_agoto(agototab, agotomax);

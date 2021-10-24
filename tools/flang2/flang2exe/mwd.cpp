@@ -2909,8 +2909,6 @@ smsz(int m)
   return B;
 } /* smsz */
 
-const char* scond(int);
-
 static void
 putstc(ILI_OP opc, int opnum, int opnd)
 {
@@ -4767,7 +4765,7 @@ static const char *nmetypes[] = {"unknown ", "indirect", "variable",
 void
 _dumpnme(int n, bool dumpdefsuses)
 {
-  int store, pte;
+  int pte;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   if (n <= 0 || n >= nmeb.stg_avail) {
     fprintf(dfile, "\nNME %d out of %d\n", n, nmeb.stg_avail - 1);

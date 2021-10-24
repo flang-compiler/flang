@@ -67,7 +67,6 @@ extern bool ishft;
 static int addarth(ILI *);
 static int red_iadd(int, INT);
 static int red_kadd(int, INT[2]);
-static int red_eiadd(int, INT[2]);
 static int red_aadd(int, SPTR, ISZ_T, int);
 static int red_damv(int, int, int);
 static int red_minmax(ILI_OP, int, int);
@@ -708,8 +707,7 @@ ad_func(ILI_OP result_opc, ILI_OP call_opc, const char *func_name, int nargs, ..
   int func;
   int argl;
   int ilix;
-  int pos;
-  int n, i;
+  int i;
   struct {
     ILI_OP opc;
     int arg;
@@ -1927,7 +1925,7 @@ static int
 MULSH(int ilix, int iliy)
 {
   /* copied from the intrinsic function __muln */
-  int t1, t2, t3, t4, t5, t6, t7, t8, t9;
+  int t1, t2, t3;
 
   t1 = ad2ili(IL_KMUL, ilix, iliy);
   t2 = ICON(32);
@@ -1939,7 +1937,7 @@ static int
 KMULSH(int ilix, int iliy)
 {
   /* copied from the intrinsic function __muln */
-  int t1, t2, t3, t4, t5, t6, t7, t8, t9;
+  int t1;
 
   t1 = ad2ili(IL_KMULH, ilix, iliy);
   return t1;
@@ -1958,7 +1956,7 @@ static int
 MULUH(int ilix, int iliy)
 {
   /* copied from the intrinsic function __muln */
-  int t1, t2, t3, t4, t5, t6, t7, t8, t9;
+  int t1, t2, t3;
 
   t1 = ad2ili(IL_UKMUL, ilix, iliy);
   t2 = ICON(32);
@@ -1984,7 +1982,7 @@ static int
 MUL(int ilix, int iliy)
 {
   /* copied from the intrinsic function __muln */
-  int t1, t2, t3, t4, t5, t6, t7, t8, t9;
+  int t1;
 
   t1 = ad2ili(IL_IMUL, ilix, iliy);
 
@@ -2075,8 +2073,8 @@ test_mod_zero(int n, int d, int sgnd, int cc)
 static int
 reciprocal_division(int n, INT divisor, int sgnd)
 {
-  int l, mp, sh, N;
-  int t1, t2, q0, q3, q, recipsym;
+  int N;
+  int t1, t2, q0, q3, q;
   unsigned udiv;
 
   /* edge case, doesn't work */
@@ -2192,8 +2190,8 @@ reciprocal_division_64(int n, DBLINT64 divisor, int sgnd)
 
   /* TBD: 64-bit divides */
 
-  int l, mp, sh, N;
-  int t1, t2, q0, q3, q, recipsym;
+  int N;
+  int t1, t2, q0, q3, q;
   /*unsigned udiv;*/
   DBLUINT64 udiv;
   DBLINT64 tmp_64;
@@ -2308,7 +2306,7 @@ static int
 reciprocal_mod(int n, int d, int sgnd)
 {
   int div;
-  int mul, sub, t0;
+  int mul, sub;
 
   div = reciprocal_division(n, d, sgnd);
   if (div == 0)
@@ -2328,7 +2326,7 @@ static int
 reciprocal_mod_64(int n, DBLINT64 d, int sgnd)
 {
   int div, kcon;
-  int mul, sub, t0;
+  int mul, sub;
 
   /*
    * d[0] MSW
@@ -2390,14 +2388,13 @@ addarth(ILI *ilip)
                   /* 3 => both are constants	 */
       ilix,       /* ili result			 */
       mask_ili,   /* for potential mask with vector intrinsics */
-      rshfct,     /* rt. shft. cnt. for shift c.f. */
       vdt1, vdt2; /* data types of args 1 & 2 for VPOW[I,K] intrinsics */
 
   ISZ_T aconoff1v, /* constant ST one aconoff	 */
       aconoff2v;   /* constant ST two aconoff	 */
 
   int is_int, pw;
-  
+
   int i, tmp, tmp1; /* temporary                 */
 
   union { /* constant value structure */
@@ -4217,7 +4214,6 @@ addarth(ILI *ilip)
           return ilix;
         }
         if (XBIT(15, 0x10)) {
-          int x0;
           if (!XBIT(15, 0x20000) && ILI_OPC(op2) == IL_FSQRT) {
             /*
              * Newton's appx for recip sqrt:
@@ -7263,7 +7259,6 @@ static int
 _kpwr2(INT cv1, INT cv2, int max_pwr)
 {
   int i;
-  INT v;
   int mp;
 
   if (max_pwr > 31)
@@ -7786,9 +7781,9 @@ addother(ILI *ilip)
 {
   int ilix;
   int ncons;
-  ILI_OP opc, opc1, opc2;
-  int op1, cons1, con1v1, con1v2;
-  int op2, cons2, con2v1, con2v2;
+  ILI_OP opc, opc1;
+  int op1;
+  int op2, cons2, con2v2;
   opc = ilip->opc;
   ncons = 0;
   switch (opc) {
@@ -9084,8 +9079,6 @@ mark_ilitree(int ili, int val)
 static void
 mark_nme(int nme, int val)
 {
-  int sub, n1, n2;
-
   for (; nme; nme = NME_NM(nme)) {
     if (NME_TYPE(nme) == NT_ARR && NME_SUB(nme))
       mark_ilitree(NME_SUB(nme), val);
@@ -9813,7 +9806,6 @@ void
 rewr_cln_ili(void)
 {
   int i;
-  int tree;
 
 #if DEBUG
   assert(rewrb.cnt, "rewr_cln_ili: cnt is zero", 0, ERR_Severe);
@@ -10001,7 +9993,7 @@ int
 simplified_cmp_ili(int cmp_ili)
 {
   ILI_OP opc, new_opc, jump_opc;
-  int new_ili, icon_ili;
+  int new_ili;
   CC_RELATION new_cc;
   int invert_cc;
   int label_op;
@@ -10177,7 +10169,6 @@ atomic_rmw_op_name(ATOMIC_RMW_OP op)
 void
 dump_atomic_info(FILE *f, ATOMIC_INFO info)
 {
-  const char *s;
   if (f == NULL)
     f = stderr;
   fprintf(f, "{");
@@ -10715,7 +10706,7 @@ optype(ILI_OP opc)
 void
 prilitree(int i)
 {
-  int k, j, opn, noprs, o;
+  int k, j, noprs, o;
   ILI_OP opc;
   int n;
   const char *opval;
@@ -11769,10 +11760,9 @@ is_llvm_local(int sptr, int funcsptr)
 static int
 ll_internref_ili(SPTR sptr)
 {
-  int mem, homeval, ili, nme, off;
+  int mem, ili, nme, off;
   INT zoff;
   SPTR asym;
-  int anme;
 
   off = 0;
   mem = get_sptr_uplevel_address(sptr);
@@ -11843,7 +11833,7 @@ ll_taskprivate_inhost_ili(SPTR sptr)
 static int
 ll_uplevel_addr_ili(SPTR sptr, bool is_task_priv)
 {
-  int ilix, basenm, offset, homeval, device_sptr;
+  int ilix, basenm, offset;
   bool isLocalPriv;
 
   isLocalPriv = is_llvm_local_private(sptr);
@@ -11949,12 +11939,6 @@ mk_address(SPTR sptr)
   bool is_task_priv;
 
   if (UPLEVELG(sptr) && (SCG(sptr) == SC_LOCAL || SCG(sptr) == SC_DUMMY)) {
-    int ili;
-    int nme;
-    INT zoff;
-    int off;
-    int addr;
-
     if (INTERNREFG(sptr) && gbl.internal > 1) {
       return ll_internref_ili(sptr);
     }

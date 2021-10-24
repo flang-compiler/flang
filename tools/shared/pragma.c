@@ -79,8 +79,6 @@ typedef struct svstg {
   struct svstg *next;
 } SVS;
 
-static SVS *svs_list = NULL;
-
 #define GET_SVS (SVS *) getitem(12, sizeof(SVS))
 
 static bool do_sw(void);
@@ -264,7 +262,6 @@ static char ctok[TOKMAX];
 static INT itok;
 static int upper_to_lower = 0;
 
-static char *skip_ws(char *);
 static int gtok(void);
 static int g_id(const char *);
 
@@ -522,11 +519,9 @@ do_sw(void)
   int indx;
   int i, j, k, m, err;
   char *p;
-  char *errstr;
   int xindx;
   int xval;
   SPTR sptr;
-  int got_init;
   int backup_nowarn;
 #if defined(TARGET_X8664) && (!defined(FE90) || defined(PGF90))
   int tpvalue[TPNVERSION];
@@ -1490,9 +1485,6 @@ push_lpprg(int beg_line)
 
 }
 
-static bool entering_routine = false;
-static bool exiting_routine = false;
-
 void
 rouprg_enter(void)
 {
@@ -1507,8 +1499,6 @@ rouprg_enter(void)
 void
 apply_nodepchk(int dir_lineno, int dir_scope)
 {
-  int index, diroff;
-  DIRSET* tempdir;
   if (!ALLOW_NODEPCHK_SIMD)
     return;
   direct.loop_flag = true;
@@ -1539,9 +1529,7 @@ apply_nodepchk(int dir_lineno, int dir_scope)
 static int
 getindex(struct c table[], int num_elem, char *string)
 {
-  register int i;
-  register int k;
-  register int l;
+  int i, k, l;
   int fnd;
 
   no_specified = false;
@@ -1596,14 +1584,6 @@ return_it:
     }
   }
   return (fnd);
-}
-
-static char *
-skip_ws(char *p)
-{
-  while (iswhite(*p))
-    p++;
-  return p;
 }
 
 static int allowextended = 0;

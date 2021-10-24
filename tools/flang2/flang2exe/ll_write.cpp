@@ -2468,12 +2468,7 @@ ll_write_global_objects(FILE *out, LLVMModuleRef module)
 void
 ll_write_module(FILE *out, LL_Module *module, int generate_no_return_variants, const char *no_return_prefix)
 {
-  int i, j, met_idx;
-  LL_Function *function = module->first;
-  int num_functions;
-
   clear_prototypes();
-
   ll_write_module_header(out, module);
 
   fprintf(out, "; Begin User structs\n");
@@ -2485,7 +2480,6 @@ ll_write_module(FILE *out, LL_Module *module, int generate_no_return_variants, c
   for (unsigned i = 0; i < module->num_module_vars; i++) {
     const char *linkage_string;
     int addrspace;
-    const char *type_str;
     const char *initializer;
 
     switch (module->module_vars.values[i]->linkage) {
@@ -2572,14 +2566,16 @@ ll_write_module(FILE *out, LL_Module *module, int generate_no_return_variants, c
     }
   }
   ll_write_global_objects(out, module);
-/* TODO: This needs to be enabled generally */
+  /* TODO: This needs to be enabled generally */
   ll_write_llvm_used(out, module);
   fprintf(out, "; End module variables\n\n");
 
   if (generate_no_return_variants) {
     fprintf(out, "declare void @llvm.nvvm.exit() noreturn\n");
   }
-  num_functions = 0;
+
+  int num_functions = 0;
+  LL_Function *function = module->first;
   while (function) {
     ll_write_function(out, function, module, false, "");
     if (generate_no_return_variants) {

@@ -142,15 +142,14 @@ static void
 write_proc_pointer(SPTR sptr)
 {
   const char *fntype = "void()";
-  LL_Type * lt;
 
   if (PTR_INITIALIZERG(sptr) && PTR_TARGETG(sptr)) {
     sptr = (SPTR) PTR_TARGETG(sptr);
-  } 
+  }
   LL_ABI_Info *abi = ll_proto_get_abi(ll_proto_key(sptr));
   if (abi) {
     fntype = ll_abi_function_type(abi)->str;
-  } 
+  }
   fprintf(ASMFIL, "i8* bitcast(%s* @%s to i8*)", fntype, getsname(sptr));
 }
 
@@ -159,13 +158,11 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
           ISZ_T loc_base, ISZ_T *i8cnt, int *ptrcnt, char **cptr, bool is_char)
 {
   ISZ_T al;
-  int area, d;
+  int area;
   int size_of_item;
   int putval;
   INT skip_size;
   char str[32];
-  char *initstr = NULL;
-  DINIT_REC *item;
   area = LLVM_LONGTERM_AREA;
   const ISZ_T orig_tconval = tconval;
   char *oldptr;
@@ -723,9 +720,7 @@ static void
 put_ncharstring_n(char *p, ISZ_T len, int size_of_char)
 {
   int n, bytes;
-  char ch;
   const char *ptrch = "i8";
-  char chnm[10];
   union {
     char a[2];
     short i;
@@ -778,7 +773,6 @@ put_zeroes(ISZ_T len)
 static void
 put_i8(int val)
 {
-  int i;
   i8bit.i8 = (short)val;
   fprintf(ASMFIL, "i8 %u", i8bit.byte[0] & 0xff);
 }
@@ -976,7 +970,6 @@ mk_struct_for_llvm_init(const char *name, int size)
 {
   int tag;
   DTYPE dtype;
-  int gblsym;
   char sname[MXIDLN];
 
   snprintf(sname, sizeof(sname), "struct%s", name);

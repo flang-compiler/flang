@@ -657,7 +657,7 @@ void
 set_tp(const char *thistpname)
 {
   if (flg.tpcount <= TPNVERSION) {
-    int n, i, j;
+    int n;
     n = machvalue(thistpname);
     if (n <= 0) {
       interr("Unexpected value for -tp switch", 0, ERR_Fatal);

@@ -2761,7 +2761,7 @@ static int
 _huge(DTYPE dtype)
 {
   INT val[4];
-  int tmp, ast, sptr;
+  int tmp;
 
   switch (DTYG(dtype)) {
   case TY_BINT:
@@ -2812,8 +2812,7 @@ negate_const_be(INT conval, DTYPE dtype)
 {
   SNGL result, realrs, imagrs;
   DBLE dresult, drealrs, dimagrs;
-  IEEE128 qresult, qrealrs, qimagrs;
-  static INT num[4], numz[4];
+  static INT num[4];
 
   switch (DTY(dtype)) {
   case TY_BINT:
@@ -3006,7 +3005,6 @@ do_eval_minval_or_maxval(INDEX *index, DTYPE elem_dt, DTYPE loc_dt,
   unsigned locs_size;
   bool want_max = intrin == AC_I_maxloc || intrin == AC_I_maxval;
   bool want_val = intrin == AC_I_minval || intrin == AC_I_maxval;
-  CONST *result;
  
 /* vals[vals_size] contains the result for {min,max}val()
  * locs[locs_size] contains the result for {min,max}loc() */

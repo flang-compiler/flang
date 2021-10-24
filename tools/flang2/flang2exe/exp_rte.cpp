@@ -270,7 +270,6 @@ static void
 create_llvm_display_temp(void)
 {
   DTYPE dtype;
-  int size;
   SPTR display_temp, asym;
 
   if (!gbl.internal)
@@ -320,9 +319,6 @@ create_llvm_display_temp(void)
 void
 exp_header(SPTR sym)
 {
-  int tmp;
-  SPTR sptr;
-
   if (sym == SPTR_NULL) {
     smove_flag = 0;
     mscall_flag = 0;
@@ -530,7 +526,6 @@ pp_entries(void)
   int nargs;
   int *dpdscp;
   int sym;
-  int dtype;
   int curpos;
   int pos;
   int lenpos;
@@ -731,7 +726,7 @@ pp_entries(void)
      * for the first time are moved up to follow the arguments.
      */
     while (savlenpos < lenpos) {
-      int lsym, osym;
+      int osym;
 
       savlenpos++;
       curpos++;
@@ -1126,9 +1121,8 @@ exp_type_bound_proc_call(int arg, SPTR descno, int vtoff, int arglnk)
 {
 
   SPTR sym;
-  int ili, acon, con;
+  int ili;
   int type_offset, vft_offset, func_offset, sz;
-  INT v[2];
   int jsra_mscall_flag;
 
   sym = descno;
@@ -1441,12 +1435,9 @@ process_end_of_list(SPTR func, SPTR osym, int *nlens, DTYPE argdtype)
 static void
 pp_params(SPTR func)
 {
-  int tmp;
-  int op1;
   SPTR argsym;
   int asym;
   DTYPE argdtype;
-  int al;
   int nargs;
   int *dpdscp;
   int nlens;
@@ -1666,12 +1657,9 @@ scan_args:
 static void
 pp_params_mixedstrlen(int func)
 {
-  int tmp;
-  int op1;
   SPTR argsym;
   int asym;
   DTYPE argdtype;
-  int al;
   int nargs;
   int *dpdscp;
   int nlens;
@@ -2035,9 +2023,7 @@ cp_byval_mem_arg(SPTR argsptr)
 static void
 cp_memarg(int sym, INT off, int dtype)
 {
-  int ili;
   int asym;
-  int msz;
 
   HOMEDP(sym, 1);
   MEMARGP(sym, 0);
@@ -2107,8 +2093,6 @@ void
 exp_end(ILM *ilmp, int curilm, bool is_func)
 {
   int tmp;
-  int op1;
-  int i;
   int func;
   int sym;
   finfo_t *pf;
@@ -2341,7 +2325,6 @@ static void
 gen_bindC_retval(finfo_t *fp)
 {
   const SPTR fval = fp->fval;
-  const int fvaldtyp = DTY(DTYPEG(fval));
   const int retv = ad_acon(fval, 0);
   const int nme = addnme(NT_VAR, fval, 0, 0);
   int ilix = retv;
@@ -2408,7 +2391,7 @@ gen_funcret(finfo_t *fp)
 {
   int addr;
   int nme;
-  int ili1, ili2;
+  int ili1;
   int move;
   SPTR fval = fp->fval;
   int fvaltyp = DTY(DTYPEG(fval));
@@ -2496,7 +2479,6 @@ void
 exp_cgoto(ILM *ilmp, int curilm)
 {
   INT i;
-  int ilix;
   INT n; /* # of cases */
   INT cval;
 
@@ -2796,7 +2778,6 @@ static void from_addr_and_length(STRDESC *s, ainfo_t *ainfo_ptr);
 static void arg_ir(int, ainfo_t *);
 static void arg_kr(int, ainfo_t *);
 static void arg_ar(int, ainfo_t *, int);
-static void arg_hp(int, ainfo_t *);
 static void arg_sp(int, ainfo_t *);
 static void arg_dp(int, ainfo_t *);
 static void arg_charlen(int, ainfo_t *);
@@ -3262,7 +3243,6 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   DTYPE dtype;
   int val_flag;
   int arglnk;
-  int retval;
   int func_addr;
   int vtoff;
   int descno = 0;
@@ -4426,12 +4406,9 @@ exp_qjsr(const char *ext, DTYPE res_dtype, ILM *ilmp, int curilm)
 {
   int nargs;
   int ililnk;  /* ili link */
-  int argili;  /* ili for arg */
   int ilix;    /* ili pointer */
   ILM *ilmlnk; /* current ILM operand */
   int ilm1;
-  int sym;    /* symbol pointers */
-  int basenm; /* base nm entry */
   int i;      /* temps */
   static ainfo_t ainfo;
   SPTR res; /* sptr of function result temporary */
@@ -4558,12 +4535,9 @@ exp_zqjsr(char *ext, DTYPE res_dtype, ILM *ilmp, int curilm)
 {
   int nargs;
   int ililnk;  /* ili link */
-  int argili;  /* ili for arg */
   int ilix;    /* ili pointer */
   ILM *ilmlnk; /* current ILM operand */
   int ilm1;
-  int sym;    /* symbol pointers */
-  int basenm; /* base nm entry */
   int i;      /* temps */
   static ainfo_t ainfo;
   SPTR res; /* sptr of function result temporary */
@@ -4736,9 +4710,6 @@ expand_smove(int destilm, int srcilm, DTYPE dtype)
   int src_nme;   /* names entry				*/
   int dest_addr; /* pointer to ili for destination addr	*/
   int src_addr;  /* pointer to ili for source addr	*/
-  UINT n;        /* number of bytes left to copy		*/
-  int i;
-  INT offset; /* number of bytes from begin addr 	*/
 
   dest_nme = NME_OF(destilm);
   src_nme = NME_OF(srcilm);
@@ -4883,8 +4854,7 @@ void
 exp_szero(ILM *ilmp, int curilm, int to, int from, int dtype)
 {
   int nme;   /* names entry				*/
-  int store, /* store ili generated			*/
-      addr,  /* address ili where value stored	*/
+  int addr,  /* address ili where value stored	*/
       expr,  /* ili of value being stored		*/
       sym;   /* ST item				*/
   int tmp;
@@ -5259,7 +5229,6 @@ static int
 exp_strcpy(STRDESC *str1, STRDESC *str2)
 {
   int sym;
-  STRDESC *s;
   int n;
   int ili1;
   static ainfo_t ainfo;
@@ -5621,7 +5590,6 @@ allochartmp(int lenili)
 {
   SPTR sym;
   int sptr1;
-  int dtype;
   int ili;
   ainfo_t ainfo;
   char *str_malloc_nm;
@@ -5637,7 +5605,6 @@ allochartmp(int lenili)
      * will be initialized in each entry and the list of allocated areas
      * will be freed at the end of each subprogram.
      */
-    int ili;
     allocharhdr = getccsym('T', expb.chartmps++, ST_VAR);
     SCP(allocharhdr, SC_LOCAL);
     DTYPEP(allocharhdr, DT_ADDR);
@@ -5801,9 +5768,7 @@ storechartmp(STRDESC *str, int mxlenili, int clenili)
 int
 charlen(SPTR sym)
 {
-  int iliptr;
   SPTR lensym;
-  int nme;
   int addr;
 
   lensym = CLENG(sym);

@@ -785,7 +785,7 @@ ompaccel_create_device_symbol(SPTR sptr, int count)
 INLINE static SPTR
 add_symbol_to_function(SPTR func, SPTR sym)
 {
-  int dpdscp, paramct;
+  int paramct;
   paramct = PARAMCTG(func);
   paramct += 1;
   aux.dpdsc_base[paramct] = sym;
@@ -1205,7 +1205,7 @@ dumpomptarget(OMPACCEL_TINFO *tinfo)
 void
 dumpomptargets()
 {
-  int i, j;
+  int i;
   if (gbl.dbgfil == NULL)
     return;
   fprintf(gbl.dbgfil, "------------OpenMP Target Regions ---------------\n");
@@ -1289,7 +1289,6 @@ ompaccel_nvvm_emit_reduce(OMPACCEL_RED_SYM *ReductionItems, int NumReductions)
   SPTR sptrFn, sptrRhs, sptrReduceData, func_params[2];
   DTYPE dtypeReductionItem, dtypeReduceData;
   int nmeReduceData, nmeRhs;
-  int params_dtypes[2] = {DT_ADDR, DT_ADDR};
   char name[30];
 
   /* Generate function parameters */
@@ -1730,7 +1729,6 @@ exp_ompaccel_mploop(ILM *ilmp, int curilm)
 {
   SPTR nlower, nupper, nstride;
   int sched, ili;
-  char *doschedule;
   loop_args_t loop_args;
 #if LLVM_YKT
   /* frontend generates two MPLOOP ILM, one for distribute, other for parallel
@@ -1773,10 +1771,9 @@ exp_ompaccel_mploop(ILM *ilmp, int curilm)
   case KMP_SCH_STATIC:
   case KMP_SCH_STATIC_CHUNKED:
     if ((ILM_OPND(ilmp, 7) & 0xff00) == MP_SCH_CHUNK_1) {
-      doschedule = "static cyclic";
       ccff_info(MSGOPENMP, "OMP014", gbl.findex, gbl.lineno,
                 "Parallel loop activated with %schedule schedule",
-                "schedule=%s", doschedule, NULL);
+                "schedule=%s", "static cyclic", NULL);
     }
     FLANG_FALLTHROUGH;
   case KMP_DISTRIBUTE_STATIC_CHUNKED:
@@ -1809,10 +1806,9 @@ exp_ompaccel_btarget(ILM *ilmp, int curilm, SPTR uplevel_sptr, SPTR scopeSptr,
                      int(incrOutlinedCnt()), SPTR *targetfunc_sptr,
                      int *isTargetDevice)
 {
-  int ili, outlinedCnt;
   SPTR sptr;
   /* lexically nested begin parallel */
-  outlinedCnt = incrOutlinedCnt();
+  int outlinedCnt = incrOutlinedCnt();
   if (outlinedCnt > 1) {
     ll_rewrite_ilms(-1, curilm, 0);
     return;
@@ -1988,7 +1984,7 @@ void
 exp_ompaccel_bteams(ILM *ilmp, int curilm, int outlinedCnt, SPTR uplevel_sptr,
                     SPTR scopeSptr, int(incrOutlinedCnt()))
 {
-  int ili, opc;
+  int ili;
   SPTR sptr;
   if (flg.opt != 0) {
     wr_block();

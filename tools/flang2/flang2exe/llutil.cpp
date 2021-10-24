@@ -91,15 +91,13 @@ static const char *llvm_ccfp_names[LLCCF_LAST] = {
     "none", "false", "oeq", "ogt", "oge", "olt", "ole", "one", "ord",
     "ueq",  "ugt",   "uge", "ult", "ule", "une", "uno", "true"};
 
-/* struct definition only used in CPU llvm backend 
+/* struct definition only used in CPU llvm backend
  * accel takes a different approach */
 static LLDEF *struct_def_list = NULL;
 static LLDEF *llarray_def_list = NULL;
 /* global variable declaration for GPU llvm backend
  * CPU takes another approach, please check assemble_end in llassem_c.c. */
 static LLDEF *gblvar_def_list = NULL;
-/* not used yet */
-static LLDEF *ftn_struct_def_list = NULL;
 
 FTN_LLVM_ST ftn_llvm_st;
 FILE *LLVMFIL = NULL;
@@ -591,7 +589,6 @@ LL_Type *
 ll_convert_array_dtype(LL_Module *module, DTYPE dtype, int addrspace)
 {
   int len;
-  ADSC *ad;
   LL_Type *type = NULL;
 
   if (DTY(dtype) == TY_ARRAY) {
@@ -931,13 +928,9 @@ make_lltype_from_arg(int arg)
 LL_Type *
 make_lltype_from_arg_noproto(int arg)
 {
-  DTYPE sdtype, atype;
-  int anum;
   DTYPE dtype;
   LL_Type *llt, *llt2;
   int argili;
-
-  DBGTRACEIN2(" dtype %d = %s", sdtype, stb.tynames[DTY(sdtype)])
 
   argili = ILI_OPND(arg, 1);
   dtype = ILI_DTyOPND(arg, 3);
@@ -1209,15 +1202,13 @@ LL_Type *
 make_lltype_from_sptr(SPTR sptr)
 {
   DTYPE sdtype, atype;
-  int anum, midtype;
+  int anum;
   SPTR iface;
-  int len;
   int stype = 0, sc = 0;
-  LL_Type *llt, *llt2;
+  LL_Type *llt;
   int addrspace = LL_AddrSp_Default;
   ADSC *ad;
   INT d;
-  int midnum = 0;
 
   if (sptr) {
     sdtype = DTYPEG(sptr);
@@ -1857,7 +1848,6 @@ write_vconstant_value(int sptr, LL_Type *type, unsigned long long undef_bitmask)
   int vsize = type->sub_elements;
   int i;
   int edtype;
-  char *vctype, *constant;
 
   edtype = CONVAL1G(sptr);
 
@@ -2225,10 +2215,7 @@ make_param_op(SPTR sptr)
 void
 write_operand(OPERAND *p, const char *punc_string, int flags)
 {
-  int nme, dtype, ct;
-  char cnst[MAXIDLEN];
   OPERAND *new_op;
-  LL_Type *llt;
   LL_Type *pllt;
   const bool uns = (flags & FLG_AS_UNSIGNED) != 0;
   int sptr = p->val.sptr;
@@ -2446,7 +2433,6 @@ void
 write_operands(OPERAND *operand, int flags)
 {
   OPERAND *p;
-  int i_name, sptr;
 
   DBGTRACEIN1(" starting at operand %p", operand)
 
@@ -2754,7 +2740,7 @@ write_alt_struct_def(LLDEF *def)
 {
   char buf[80];
   DTYPE dtype = def->dtype;
-  int struct_sz, field_count, field_sz;
+  int struct_sz, field_sz;
 
   print_token(def->name);
   print_token(".alt = type ");
@@ -2922,8 +2908,6 @@ write_alt_field_types(LL_Type *llty)
 static void
 write_def(LLDEF *def, int check_type_in_struct_def_type)
 {
-  char buf[80];
-  DTYPE dtype = def->dtype;
   LLDEF *lltypedef = NULL;
 
   print_token(def->name);
@@ -3138,9 +3122,8 @@ process_symlinked_sptr(int sptr, int total_init_sz, int is_union,
   OPERAND *cur_op;
   OPERAND head;
   int pad, field_sz, sptr_sz, max_sz, update_union;
-  int cur_addr, prev_addr, base_addr;
+  int cur_addr, prev_addr;
   OPERAND *union_from = NULL, *union_to = NULL;
-  int total_field_sz;
 
   if (sptr > NOSYM)
     prev_addr = ADDRESSG(sptr);
@@ -3920,7 +3903,6 @@ visit_flattened_dtype(dtype_visitor visitor, void *context, DTYPE dtype,
 {
   int retval = 0;
   SPTR sptr;
-  unsigned dim, i, size;
 
   if (DTY(dtype) == TY_STRUCT || DTY(dtype) == TY_UNION) {
     /* TY_STRUCT sptr tag size align. */
@@ -4169,8 +4151,8 @@ get_ftn_cbind_lltype(SPTR sptr)
 {
   DTYPE dtype = DTYPEG(sptr);
   DTYPE sdtype;
-  int tag, numdim, gblsym, d, iface, gs;
   ISZ_T anum;
+  int tag, numdim, gblsym, d;
   LL_Type *llt = NULL;
   char *typed, *name;
   char tname[MXIDLN];

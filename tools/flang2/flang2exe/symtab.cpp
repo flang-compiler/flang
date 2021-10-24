@@ -61,7 +61,6 @@ sym_init(void)
   INT tmp[2];
   DTYPE default_int;
   DTYPE default_real;
-  DTYPE dtype;
   extern void chkstruct();
 
   /* allocate symbol table and name table space:  */

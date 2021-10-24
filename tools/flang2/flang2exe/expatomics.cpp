@@ -27,7 +27,6 @@
 #include "symfun.h"
 
 static int atomic_capture_created;
-static int atomic_capture_update_first;
 static int atomic_store_created;
 static int is_in_atomic;
 static int is_in_atomic_read;
@@ -624,18 +623,16 @@ create_atomic_capture_seq(int update_ili, int read_ili, int capture_first)
   int ld_opcode;
   ILI_OP st_opcode, arg_opcode;
   int store_pt, store_nme, arg, garg;
-  int store_symbol;
 #if defined(TARGET_X8664)
   int argreg = 0;
 #endif
   int update_operand;
   int load_pt1, load_pt2;
-  int op1, op2, opc;
+  int op1, op2;
   int update_op;
   ILI_OP return_op;
   int result;
   int result_arg;
-  int msize;
   int allow_capture_last = 1;
   int arg_dt = 0;
 
@@ -1302,12 +1299,10 @@ create_atomic_seq(int store_ili)
   int arg, garg;
   int function;
   int store_symbol;
-  int atomic_mod, op2, const_val, load_op, store_op, store_pt, load_pt,
-      store_nme;
+  int atomic_mod, store_pt, store_nme;
   int realilix, imagilix;
   ILI_OP intarg_opcode, floatarg_opcode, doublearg_opcode, longarg_opcode, scmplx_opcode;
   ILI_OP arg_opcode;
-  int is_add;
   int arg_dt = 0;
 
 #if defined(TARGET_X8664)
@@ -2337,10 +2332,8 @@ mkatomictemp(DTYPE dtype)
 static int
 ll_make_atomic_load(int size_ili, int lhs, int rhs, int mem_order)
 {
-  int result, altili;
+  int result;
   int func, arg;
-  int garg[4];
-  int args[4], arg_types[4] = {DT_UINT8, DT_CPTR, DT_CPTR, DT_INT};
 
   func = mkfunc("__atomic_load");
   SCP(func, SC_EXTERN);
@@ -2352,18 +2345,15 @@ ll_make_atomic_load(int size_ili, int lhs, int rhs, int mem_order)
   arg = ad2ili(IL_ARGKR, ikmove(size_ili), arg);
   result = ad2ili(IL_JSR, func, arg);
 
-  return result; 
+  return result;
 }
 
 
 static int
 ll_make_atomic_store(int size_ili, int lhs, int rhs, int mem_order)
 {
-  int result, altili;
+  int result;
   int func, arg;
-  int size, stc;
-  int garg[4];
-  int args[4], arg_types[4] = {DT_UINT8, DT_CPTR, DT_CPTR, DT_INT};
 
   func = mkfunc("__atomic_store");
   SCP(func, SC_EXTERN);
@@ -2379,14 +2369,11 @@ ll_make_atomic_store(int size_ili, int lhs, int rhs, int mem_order)
 }
 
 static int
-ll_make_atomic_compare_xchg(int size_ili, int lhs, int expected, 
+ll_make_atomic_compare_xchg(int size_ili, int lhs, int expected,
                             int desired, int success, int failure)
 {
-  int result, altili;
+  int result;
   int func, arg;
-  int size, stc;
-  int garg[6];
-  int args[6], arg_types[6] = {DT_UINT8, DT_CPTR, DT_CPTR, DT_CPTR, DT_INT, DT_INT};
 
   func = mkfunc("__atomic_compare_exchange");
   SCP(func, SC_EXTERN);
@@ -2540,7 +2527,7 @@ exp_mp_atomic_read(ILM *ilmp)
 static void
 _exp_mp_atomic_write(int stc, DTYPE dtype, int* opnd, int* nme)
 {
-  int rmw, result;
+  int result;
   ISZ_T size;
   int size_ili;
   OPCODES const * ops;
@@ -2588,15 +2575,12 @@ _exp_mp_atomic_write(int stc, DTYPE dtype, int* opnd, int* nme)
   return;
 }
 
-void 
+void
 exp_mp_atomic_write(ILM *ilmp)
 {
-  int rmw, result;
-  int size, stc;
-  int size_ili;
-  int opnd[MAX_ATOMIC_ARGS]; 
-  int nme[MAX_ATOMIC_ARGS]; 
-  SPTR tmp_sptr;
+  int stc;
+  int opnd[MAX_ATOMIC_ARGS];
+  int nme[MAX_ATOMIC_ARGS];
   DTYPE dtype;
 
   nme[LHS_IDX] = NME_OF(ILM_OPND(ilmp, 1));
@@ -2829,7 +2813,7 @@ _ilis_are_matched(int rhs, int lhs, int* res, int* load)
 static int
 load_op_match_lhs(int lhs, int rhs)
 {
-  int res, v, nxt, op1, op2, load;
+  int res, op1, op2, load;
   if (lhs == rhs)
     return 0;
 
@@ -2859,12 +2843,11 @@ load_op_match_lhs(int lhs, int rhs)
 static int
 get_complex_update_operand(int* opnd, ILM* ilmp, int* nme, DTYPE dtype)
 {
-  int lhs, rhs, ili, stc, load, op1, lop;
+  int lhs, rhs, ili, stc, load, lop;
   int expected_val;
   ILI_OP ld, st;
   MSZ msz;
   SPTR tmp_sptr;
-  OPCODES const* ops;
 
   lhs = opnd[LHS_IDX];
   rhs = opnd[RHS_IDX];
@@ -2903,10 +2886,10 @@ get_complex_update_operand(int* opnd, ILM* ilmp, int* nme, DTYPE dtype)
   return expected_val;
 }
 
-static void 
+static void
 _exp_mp_atomic_update(DTYPE dtype, int* opnd, int* nme)
 {
-  int rmw, result, stc;
+  int result, stc;
   int size_ili;
   SPTR label;
   int expected_val, desired_val, cmpxchg;
@@ -2987,24 +2970,23 @@ _exp_mp_atomic_update(DTYPE dtype, int* opnd, int* nme)
 }
 
 
-void 
+void
 exp_mp_atomic_update(ILM *ilmp)
 {
-  int rmw, result;
-  int size, stc, rhs;
-  int size_ili, label, op1;
-  int expected_val, desired_val;
-  int opnd[MAX_ATOMIC_ARGS]; 
-  int nme[MAX_ATOMIC_ARGS]; 
+  int result;
+  int stc, rhs;
+  int op1;
+  int expected_val;
+  int opnd[MAX_ATOMIC_ARGS];
+  int nme[MAX_ATOMIC_ARGS];
   DTYPE dtype;
-  ATOMIC_RMW_OP aop = (ATOMIC_RMW_OP) ILM_OPND(ilmp, 4); // ???
-  ILI_OP opc, ld, st;
-  SPTR expected_sptr, desired_sptr;
+  ILI_OP ld, st;
+  SPTR expected_sptr;
   MSZ msz;
   OPCODES const * ops;
 
-  opnd[LHS_IDX] = ILI_OF(ILM_OPND(ilmp, 1)); 
-  opnd[RHS_IDX] = ILI_OF(ILM_OPND(ilmp, 2)); 
+  opnd[LHS_IDX] = ILI_OF(ILM_OPND(ilmp, 1));
+  opnd[RHS_IDX] = ILI_OF(ILM_OPND(ilmp, 2));
   nme[LHS_IDX] = NME_OF(ILM_OPND(ilmp, 1));
   dtype = dt_nme(nme[LHS_IDX]);
   if (!dtype) {
@@ -3060,25 +3042,24 @@ exp_mp_atomic_update(ILM *ilmp)
 #define DT_VOID_NONE DT_NONE
 #endif
 
-void 
+void
 exp_mp_atomic_capture(ILM *ilmp)
 {
   int expected_val;
   SPTR expected_sptr;
-  int load, desired_val, cseload;
-  int opnd[MAX_ATOMIC_ARGS]; 
-  int nme[MAX_ATOMIC_ARGS]; 
-  int cnt, stc, result, rhs, ilm_opc, op1;
+  int load;
+  int opnd[MAX_ATOMIC_ARGS];
+  int nme[MAX_ATOMIC_ARGS];
+  int cnt, stc, result, rhs, op1;
   ILI_OP ld;
   ILI_OP st;
   MSZ msz;
-  const ILM *op_ilmp;
   const OPCODES* ops;
 
-  typedef enum CPT_IDX {
+  enum CPT_IDX {
     FIRST = 0,
     SECOND = 1,
-  } CPT_IDX;
+  };
 
   static struct cpt_struct {
     int cnt;

@@ -1376,9 +1376,7 @@ convert_cnst(int cnst, int newtyp)
   int sptr;
   INT num[4], result;
   INT num1[8];
-  INT num2[4];
   UINT unum[4];
-  int q0;
 
   oldtyp = A_DTYPEG(cnst);
   if (newtyp == oldtyp)
@@ -2073,7 +2071,7 @@ mk_mem_ptr_shape(int parent, int mem, DTYPE dtype)
 {
   int numdim, i;
   int lwb, upb, extnt, stride;
-  int newlwb, newupb, newextnt;
+  int newlwb, newupb;
   int sdsc;
   int subs[1];
   int lwbds[MAXRANK];
@@ -2876,8 +2874,6 @@ replace_memsym_of_ast(int ast, SPTR sptr)
 int
 procsym_of_ast(int ast)
 {
-  int a;
-
   while (1) {
     switch (A_TYPEG(ast)) {
     case A_ID:
@@ -3210,7 +3206,6 @@ contiguous_array_section(int subscr_ast)
 
   int asd;
   int ndims, dim;
-  int sptr;
   int ast;
 
   asd = A_ASDG(subscr_ast);
@@ -3395,7 +3390,7 @@ bounds_match(int lwdtype, int lwshape, int parent)
     adtype = A_LOPG(lwdtype);
     ashape = A_LOPG(lwshape);
     if (A_TYPEG(adtype) == A_ID && A_TYPEG(ashape) == A_MEM) {
-      int asddtype, asdshape, ssdtype, ssshape;
+      int asddtype, asdshape;
       if (A_PARENTG(ashape) != parent)
         return FALSE;
       if (A_SPTRG(adtype) != A_SPTRG(A_MEMG(ashape)))
@@ -3453,7 +3448,6 @@ bnds_remap_list(int subscr_ast)
 {
   int asd;
   int ndims, dim;
-  int sptr;
   int ast;
 
   if (A_TYPEG(subscr_ast) != A_SUBSCR) {
@@ -6040,7 +6034,7 @@ _dump_one_ast(int i, FILE *file)
 {
   int asd, j, k;
   char typeb[512];
-  int l, sptr;
+  int l;
 
   if (i <= 0 || i > astb.stg_avail)
     return;
@@ -7377,7 +7371,6 @@ void
 delete_stmt(int std)
 {
   int entry;
-  int prev, next;
   for (entry = gbl.entries; entry > NOSYM; entry = SYMLKG(entry)) {
     if (ENTSTDG(entry) == std) {
       /* change to A_CONTINUE instead */
@@ -7763,8 +7756,7 @@ negate_const(INT conval, DTYPE dtype)
 {
   SNGL result, realrs, imagrs;
   DBLE dresult, drealrs, dimagrs;
-  IEEE128 qresult, qrealrs, qimagrs;
-  static INT num[4], numz[4];
+  static INT num[4];
 
   switch (DTY(dtype)) {
   case TY_BINT:
@@ -7816,18 +7808,15 @@ negate_const(INT conval, DTYPE dtype)
 INT
 const_fold(int opr, INT conval1, INT conval2, DTYPE dtype)
 {
-  IEEE128 qtemp, qresult, qnum1, qnum2;
-  IEEE128 qreal1, qreal2, qrealrs, qimag1, qimag2, qimagrs;
-  IEEE128 qtemp1, qtemp2;
   DBLE dtemp, dresult, num1, num2;
   DBLE dreal1, dreal2, drealrs, dimag1, dimag2, dimagrs;
   DBLE dtemp1, dtemp2;
   SNGL temp, result;
   SNGL real1, real2, realrs, imag1, imag2, imagrs;
-  SNGL temp1, temp2;
+  SNGL temp1;
   UINT val1, val2;
   DBLINT64 inum1, inum2, ires;
-  int cvlen1, cvlen2, urs, q0;
+  int cvlen1, cvlen2, urs;
   char *p, *q;
 
   switch (DTY(dtype)) {
@@ -8313,14 +8302,12 @@ INT
 cngcon(INT oldval, int oldtyp, int newtyp)
 {
   int to, from;
-  char *cp, buf[20];
-  int newcvlen, oldcvlen, msk, blnk;
+  char *cp;
+  int newcvlen, oldcvlen, blnk;
   INT num[4], result;
   INT num1[8];
-  INT num2[4];
   INT swap;
   UINT unum[4];
-  int q0;
 
 #define MASKH32(sptr) (CONVAL1G(sptr) & 0xFFFFFFFF)
   if (is_empty_typedef(newtyp) && oldtyp == DT_INT4) {
@@ -8903,9 +8890,9 @@ static INT
 _fdiv(INT dividend, INT divisor)
 {
   INT quotient;
+#ifdef TM_FRCP
   INT temp;
 
-#ifdef TM_FRCP
   if (!flg.ieee) {
     xfrcp(divisor, &temp);
     xfmul(dividend, temp, &quotient);
@@ -8920,9 +8907,9 @@ _fdiv(INT dividend, INT divisor)
 static void
 _ddiv(INT *dividend, INT *divisor, INT *quotient)
 {
+#ifdef TM_DRCP
   INT temp[2];
 
-#ifdef TM_DRCP
   if (!flg.ieee) {
     xdrcp(divisor, temp);
     xdmul(dividend, temp, quotient);
