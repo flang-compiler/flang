@@ -31,7 +31,7 @@
 
 #include "dpm_out.h"
 
-#define COMPILER_OWNED_MODULE XBIT(58,0x100000)
+#define COMPILER_OWNED_MODULE XBIT(58, 0x100000)
 
 /* ------------------------------------------------------------------ */
 /* ----------------------- Export Utilities ------------------------- */
@@ -56,12 +56,12 @@
  */
 #define APPEND_AREA 19
 
-typedef struct itemx {/* generic item record */
+typedef struct itemx { /* generic item record */
   int val;
   struct itemx *next;
 } ITEMX;
 
-typedef struct xitemx {/* generic item record */
+typedef struct xitemx { /* generic item record */
   int val;
   struct xitemx *next;
   int exceptlist;
@@ -772,11 +772,11 @@ fixup_host_symbol_dtype(int sptr)
       CVLENP(sptr, clen);
     }
   } else if (DTY(dtype) == TY_ARRAY && ADJARRG(sptr)) {
-    /* similar to above condition if the bound is host symbol 
+    /* similar to above condition if the bound is host symbol
      * symbol will not be exported.
      */
     if (DTY(dtype + 2) > 0) {
-      ast_visit(1,1);
+      ast_visit(1, 1);
       mark_dtype_ast_idstr(dtype);
       ast_unvisit();
     }
@@ -1804,7 +1804,7 @@ queue_symbol(int sptr)
       if (PTR_TARGETG(sptr) > NOSYM) {
         queue_symbol(PTR_TARGETG(sptr));
       }
-      if (IS_PROC_DUMMYG(sptr) && SDSCG(sptr)){
+      if (IS_PROC_DUMMYG(sptr) && SDSCG(sptr)) {
         queue_symbol(SDSCG(sptr));
       }
     }
@@ -1816,15 +1816,15 @@ queue_symbol(int sptr)
     }
     if (GSAMEG(sptr))
       queue_symbol((int)GSAMEG(sptr));
-      dscptr = DPDSCG(sptr);
-      for (i = PARAMCTG(sptr); i > 0; i--) {
-        int arg;
-        arg = aux.dpdsc_base[dscptr];
-        if (arg) {
-          queue_symbol(arg);
-        }
-        dscptr++;
+    dscptr = DPDSCG(sptr);
+    for (i = PARAMCTG(sptr); i > 0; i--) {
+      int arg;
+      arg = aux.dpdsc_base[dscptr];
+      if (arg) {
+        queue_symbol(arg);
       }
+      dscptr++;
+    }
     if (CLASSG(sptr) && TBPLNKG(sptr)) {
       queue_dtype(TBPLNKG(sptr));
     }
@@ -1882,7 +1882,7 @@ queue_symbol(int sptr)
       queue_ast(KINDASTG(sptr));
     break;
 
-  /* ELSE, FALL THROUGH: */
+    /* ELSE, FALL THROUGH: */
 
   case ST_ARRAY:
   case ST_DESCRIPTOR:
@@ -2312,19 +2312,19 @@ export_symbol(int sptr)
       lzprintf(outlz, "C %d %d %s\n", sptr, STYPEG(sptr), SYMNAME(sptr));
       return;
     }
-    if (stype == ST_MODULE && sptr != sym_module && !for_inliner && 
-       /* No return when this module has a separate module procedure that
-        * implements a type bound procedure. We need to export modules 
-        * sptr next.
-        */
+    if (stype == ST_MODULE && sptr != sym_module && !for_inliner &&
+        /* No return when this module has a separate module procedure that
+         * implements a type bound procedure. We need to export modules
+         * sptr next.
+         */
         !HAS_TBP_BOUND_TO_SMPG(sptr) && ANCESTORG(sym_module) != sptr) {
       return;
     }
   }
 
-
   if ((STYPEG(sptr) == ST_ALIAS || STYPEG(sptr) == ST_PROC ||
-      STYPEG(sptr) == ST_ENTRY) && ISSUBMODULEG(sptr))
+       STYPEG(sptr) == ST_ENTRY) &&
+      ISSUBMODULEG(sptr))
     INMODULEP(sptr, TRUE);
 
   /* BYTE-ORDER INDEPENDENT */
@@ -2341,9 +2341,9 @@ export_symbol(int sptr)
 #undef PUTISZ_FIELD
 #define PUTFIELD(f) lzprintf(outlz, " %d", stb.stg_base[sptr].f)
 #define PUTISZ_FIELD(f) lzprintf(outlz, " %" ISZ_PF "d", stb.stg_base[sptr].f)
-#define ADDBIT(f)         \
-  if (stb.stg_base[sptr].f) \
-    flags |= bit;         \
+#define ADDBIT(f)                                                              \
+  if (stb.stg_base[sptr].f)                                                    \
+    flags |= bit;                                                              \
   bit <<= 1;
 
   flags = 0;
@@ -2736,9 +2736,9 @@ export_one_ast(int ast)
   lzprintf(outlz, "A %d %d", ast, A_TYPEG(ast));
   flags = 0;
   bit = 1;
-#define ADDBIT(fl)       \
-  if (astb.stg_base[ast].fl) \
-    flags |= bit;        \
+#define ADDBIT(fl)                                                             \
+  if (astb.stg_base[ast].fl)                                                   \
+    flags |= bit;                                                              \
   bit <<= 1;
   ADDBIT(f1);
   ADDBIT(f2);
@@ -2751,14 +2751,16 @@ export_one_ast(int ast)
 #undef ADDBIT
   lzprintf(outlz, " %x", flags);
   lzprintf(outlz, " %d", astb.stg_base[ast].shape);
-  lzprintf(outlz, " %d %d %d %d", astb.stg_base[ast].hshlk, astb.stg_base[ast].w3,
-           astb.stg_base[ast].w4, astb.stg_base[ast].w5);
+  lzprintf(outlz, " %d %d %d %d", astb.stg_base[ast].hshlk,
+           astb.stg_base[ast].w3, astb.stg_base[ast].w4, astb.stg_base[ast].w5);
   lzprintf(outlz, " %d %d %d %d", astb.stg_base[ast].w6, astb.stg_base[ast].w7,
            astb.stg_base[ast].w8, astb.stg_base[ast].w9);
-  lzprintf(outlz, " %d %d %d %d", astb.stg_base[ast].w10, astb.stg_base[ast].hw21,
-           astb.stg_base[ast].hw22, astb.stg_base[ast].w12);
-  lzprintf(outlz, " %d %d %d %d", astb.stg_base[ast].opt1, astb.stg_base[ast].opt2,
-           astb.stg_base[ast].repl, astb.stg_base[ast].visit);
+  lzprintf(outlz, " %d %d %d %d", astb.stg_base[ast].w10,
+           astb.stg_base[ast].hw21, astb.stg_base[ast].hw22,
+           astb.stg_base[ast].w12);
+  lzprintf(outlz, " %d %d %d %d", astb.stg_base[ast].opt1,
+           astb.stg_base[ast].opt2, astb.stg_base[ast].repl,
+           astb.stg_base[ast].visit);
   /* IVSN 30 */
   lzprintf(outlz, " %d", astb.stg_base[ast].w18);
   lzprintf(outlz, " %d", astb.stg_base[ast].w19);
@@ -2834,9 +2836,9 @@ export_one_std(int std)
   int bit, flags;
   flags = 0;
   bit = 1;
-#define ADDBIT(f)                      \
-  if (astb.std.stg_base[std].flags.bits.f) \
-    flags |= bit;                      \
+#define ADDBIT(f)                                                              \
+  if (astb.std.stg_base[std].flags.bits.f)                                     \
+    flags |= bit;                                                              \
   bit <<= 1;
   ADDBIT(ex);
   ADDBIT(st);
@@ -3104,4 +3106,3 @@ set_tag()
     STD_TAG(std) = max_tag;
   }
 } /* set_tag */
-

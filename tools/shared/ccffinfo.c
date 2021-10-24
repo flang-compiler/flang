@@ -57,13 +57,13 @@ FIHB ifihb = {(FIH *)0, 0, 0, 0, 0, 0, 0, 0}; /* bottom-up auto-inliner */
 
 #define CCFFAREA 24
 #define ICCFFAREA 27
-#define COPYSTRING(string) \
+#define COPYSTRING(string)                                                     \
   strcpy(GETITEMS(CCFFAREA, char, strlen(string) + 1), string)
-#define ICOPYSTRING(string) \
+#define ICOPYSTRING(string)                                                    \
   strcpy(GETITEMS(ICCFFAREA, char, strlen(string) + 1), string)
-#define COPYNSTRING(string, len) \
+#define COPYNSTRING(string, len)                                               \
   strncpy(GETITEMS(CCFFAREA, char, (len) + 1), string, len)
-#define ICOPYNSTRING(string, len) \
+#define ICOPYNSTRING(string, len)                                              \
   strncpy(GETITEMS(ICCFFAREA, char, (len) + 1), string, len)
 
 static char *formatbuffer = NULL;
@@ -296,7 +296,8 @@ xmlintentity(const char *entity, const char *shortentity, int value)
  * output <entity>value1 value2</entity>
  */
 static void
-xmlintentity2(const char *entity, const char *shortentity, int value1, int value2)
+xmlintentity2(const char *entity, const char *shortentity, int value1,
+              int value2)
 {
   if (!ccff_file)
     return;
@@ -887,7 +888,7 @@ sort_message_list(MESSAGE *msglist)
     return msglist;
   if (nmessages > messagelistsize) {
     messagelistsize = nmessages + 100;
-      messagelist = GETITEMS(CCFFAREA, MESSAGE *, messagelistsize);
+    messagelist = GETITEMS(CCFFAREA, MESSAGE *, messagelistsize);
   }
   nmessages = 0;
   for (mptr = msglist; mptr; mptr = mptr->next)
@@ -1057,7 +1058,7 @@ __fih_message(FILE *ofile, MESSAGE *mptr, bool dolist)
             char *nstrng;
             strng[strnglen] = '\0';
             strngsize *= 2;
-              nstrng = (char *)getitem(CCFFAREA, strngsize);
+            nstrng = (char *)getitem(CCFFAREA, strngsize);
             strcpy(nstrng, strng);
             strng = nstrng;
           }
@@ -2089,7 +2090,7 @@ fillformat(const char *format, int len)
     } else {
       formatbuffersize = len * 2;
     }
-      formatbuffer = GETITEMS(CCFFAREA, char, formatbuffersize + 1);
+    formatbuffer = GETITEMS(CCFFAREA, char, formatbuffersize + 1);
   }
   strncpy(formatbuffer, format, len);
   formatbuffer[len] = '\0';
@@ -2106,7 +2107,7 @@ newbuff(const char *oldstring, int len, int *pl)
   l = 0;
   if (oldstring)
     l = strlen(oldstring);
-    buff = GETITEMS(CCFFAREA, char, l + len + 1);
+  buff = GETITEMS(CCFFAREA, char, l + len + 1);
   if (oldstring)
     strcpy(buff, oldstring);
   *pl = l;
@@ -2211,9 +2212,9 @@ newprintfx(const char *oldstring, const char *format, int len)
  *	"func=%s", SYMNAME(foo), "size=%d", funcsize, NULL );
  */
 void *
-_ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *varname,
-           const char *funcname, void *xparent, const char *message,
-           va_list argptr)
+_ccff_info(int msgtype, const char *msgid, int fihx, int lineno,
+           const char *varname, const char *funcname, void *xparent,
+           const char *message, va_list argptr)
 {
   MESSAGE *mptr;
   ARGUMENT *aptr, *alast;
@@ -2246,7 +2247,7 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
 
   /* keep list of messages at this FIH index */
   ++globalorder;
-    mptr = GETITEM(CCFFAREA, MESSAGE);
+  mptr = GETITEM(CCFFAREA, MESSAGE);
   BZERO(mptr, MESSAGE, 1);
   mptr->msgtype = msgtype;
   mptr->msgid = msgid;
@@ -2256,11 +2257,11 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
   mptr->funcname = NULL;
   mptr->seq = 0;
   mptr->combine = 0;
-    if (varname && varname[0] != '\0')
-      mptr->varname = COPYSTRING(varname);
-    if (funcname && funcname[0] != '\0')
-      mptr->funcname = COPYSTRING(funcname);
-    mptr->message = COPYSTRING(message);
+  if (varname && varname[0] != '\0')
+    mptr->varname = COPYSTRING(varname);
+  if (funcname && funcname[0] != '\0')
+    mptr->funcname = COPYSTRING(funcname);
+  mptr->message = COPYSTRING(message);
   mptr->args = NULL;
   mptr->order = globalorder;
   prevmessage = mptr;
@@ -2289,7 +2290,7 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
       fprintf(gbl.dbgfil, ", \"%s\"", argformat);
 #endif
 #endif
-      aptr = GETITEM(CCFFAREA, ARGUMENT);
+    aptr = GETITEM(CCFFAREA, ARGUMENT);
     BZERO(aptr, ARGUMENT, 1);
     aptr->next = NULL;
     /* find the "=" */
@@ -2300,7 +2301,7 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
       return NULL;
     }
     ll = argend - argformat;
-      aptr->argstring = COPYNSTRING(argformat, ll);
+    aptr->argstring = COPYNSTRING(argformat, ll);
     aptr->argstring[ll] = '\0';
     aptr->argvalue = NULL;
     format = argend + 1;
@@ -2401,10 +2402,10 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
     }
   }
   if (xparent == NULL) {
-/* just prepend onto the list */
-      mptr->next = (MESSAGE *)FIH_CCFFINFO(fihx);
-      FIH_CCFFINFO(fihx) = (void *)mptr;
-      FIH_SETFLAG(fihx, FIH_CCFF);
+    /* just prepend onto the list */
+    mptr->next = (MESSAGE *)FIH_CCFFINFO(fihx);
+    FIH_CCFFINFO(fihx) = (void *)mptr;
+    FIH_SETFLAG(fihx, FIH_CCFF);
   } else {
     /* append to child list of the parent */
     MESSAGE *parent, *child;
@@ -2439,8 +2440,8 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
  * Save a message
  */
 void *
-ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *message,
-          ...)
+ccff_info(int msgtype, const char *msgid, int fihx, int lineno,
+          const char *message, ...)
 {
   va_list argptr;
   va_start(argptr, message);
@@ -2452,8 +2453,8 @@ ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *mess
  * Save a message that is more detail for a previous message
  */
 void *
-subccff_info(void *xparent, int msgtype, const char *msgid, int fihx, int lineno,
-             const char *message, ...)
+subccff_info(void *xparent, int msgtype, const char *msgid, int fihx,
+             int lineno, const char *message, ...)
 {
   va_list argptr;
   va_start(argptr, message);
@@ -2465,7 +2466,8 @@ subccff_info(void *xparent, int msgtype, const char *msgid, int fihx, int lineno
  * Save information for a variable symbol
  */
 void *
-ccff_var_info(int msgtype, const char *msgid, const char *varname, const char *message, ...)
+ccff_var_info(int msgtype, const char *msgid, const char *varname,
+              const char *message, ...)
 {
   va_list argptr;
   va_start(argptr, message);
@@ -2476,8 +2478,8 @@ ccff_var_info(int msgtype, const char *msgid, const char *varname, const char *m
  * Save information for a function symbol
  */
 void *
-ccff_func_info(int msgtype, const char *msgid, const char *funcname, const char *message,
-               ...)
+ccff_func_info(int msgtype, const char *msgid, const char *funcname,
+               const char *message, ...)
 {
   va_list argptr;
   va_start(argptr, message);
@@ -2536,7 +2538,7 @@ addfile(const char *filename, const char *funcname, int tag, int flags,
 #ifdef HOST_WIN
         || *cp == '\\'
 #endif
-        ) {
+    ) {
       slash = cp;
     }
   }
@@ -2556,7 +2558,7 @@ addfile(const char *filename, const char *funcname, int tag, int flags,
     strncpy(s, pfilename, l);
     s[l] = '\0'; /* strncpy does not terminate string */
     FIH_DIRNAME(f) = s;
-    l = slash - pfilename;    /* recompute, in case we incremented l */
+    l = slash - pfilename; /* recompute, in case we incremented l */
     l = len - l;
     /* len-l = 8, but we'll split off the slash,
      * leaving room for the string terminator */
@@ -2588,8 +2590,9 @@ addfile(const char *filename, const char *funcname, int tag, int flags,
 #ifndef FE90
 #if DEBUG
   if (DBGBIT(73, 4)) {
-    fprintf(gbl.dbgfil, "addfile(%d) filename=%s  funcname=%s  tag=%d  "
-                        "flags=0x%x  lineno=%d  srcline=%d  level=%d\n",
+    fprintf(gbl.dbgfil,
+            "addfile(%d) filename=%s  funcname=%s  tag=%d  "
+            "flags=0x%x  lineno=%d  srcline=%d  level=%d\n",
             f, filename, FIH_FUNCNAME(f), tag, flags, lineno, srcline, level);
   }
 #endif
@@ -2635,7 +2638,7 @@ addinlfile(const char *filename, const char *funcname, int tag, int flags,
 #ifdef HOST_WIN
         || *cp == '\\'
 #endif
-        ) {
+    ) {
       slash = cp;
     }
   }
@@ -2655,7 +2658,7 @@ addinlfile(const char *filename, const char *funcname, int tag, int flags,
     strncpy(s, pfilename, l);
     s[l] = '\0'; /* strncpy does not terminate string */
     FIH_DIRNAME(f) = s;
-    l = slash - pfilename;    /* recompute, in case we incremented l */
+    l = slash - pfilename; /* recompute, in case we incremented l */
     l = len - l;
     /* len-l = 8, but we'll split off the slash,
      * leaving room for the string terminator */
@@ -2681,8 +2684,9 @@ addinlfile(const char *filename, const char *funcname, int tag, int flags,
 #ifndef FE90
 #if DEBUG
   if (DBGBIT(73, 4)) {
-    fprintf(gbl.dbgfil, "addinlfile(%d) filename=%s  funcname=%s  tag=%d  "
-                        "flags=0x%x  lineno=%d  srcline=%d  level=%d\n",
+    fprintf(gbl.dbgfil,
+            "addinlfile(%d) filename=%s  funcname=%s  tag=%d  "
+            "flags=0x%x  lineno=%d  srcline=%d  level=%d\n",
             f, filename, FIH_FUNCNAME(f), tag, flags, lineno, srcline,
             FIH_LEVEL(f));
   }
@@ -2730,9 +2734,11 @@ setfile(int f, const char *funcname, int tag)
     pfuncname = getitem(8, strlen(funcname) + 1);
     strcpy(pfuncname, funcname);
     FIH_FUNCNAME(f) = pfuncname;
-/*	if( f == 1 ){
-            fihb.stg_avail = 2;
-        } */
+    /*
+    if (f == 1) {
+      fihb.stg_avail = 2;
+    }
+    */
   }
   if (firsttime) {
     FIH_FLAGS(f) = 0;
@@ -2908,20 +2914,20 @@ save_ccff_msg(int msgtype, const char *msgid, int fihx, int lineno,
 
   /* keep list of messages at this FIH index */
   ++globalorder;
-    mptr = GETITEM(CCFFAREA, MESSAGE);
+  mptr = GETITEM(CCFFAREA, MESSAGE);
   BZERO(mptr, MESSAGE, 1);
   mptr->msgtype = msgtype;
-    mptr->msgid = COPYSTRING(msgid);
+  mptr->msgid = COPYSTRING(msgid);
   mptr->fihx = fihx;
   mptr->lineno = lineno;
   mptr->varname = NULL;
   mptr->funcname = NULL;
   mptr->seq = 0;
   mptr->combine = 0;
-    if (varname && varname[0] != '\0')
-      mptr->varname = COPYSTRING(varname);
-    if (funcname && funcname[0] != '\0')
-      mptr->funcname = COPYSTRING(funcname);
+  if (varname && varname[0] != '\0')
+    mptr->varname = COPYSTRING(varname);
+  if (funcname && funcname[0] != '\0')
+    mptr->funcname = COPYSTRING(funcname);
   mptr->message = NULL;
   mptr->args = NULL;
   mptr->order = globalorder;
@@ -2940,11 +2946,11 @@ void
 save_ccff_arg(const char *argname, const char *argvalue)
 {
   ARGUMENT *aptr;
-    aptr = GETITEM(CCFFAREA, ARGUMENT);
+  aptr = GETITEM(CCFFAREA, ARGUMENT);
   BZERO(aptr, ARGUMENT, 1);
   aptr->next = NULL;
-    aptr->argstring = COPYSTRING(argname);
-    aptr->argvalue = COPYSTRING(argvalue);
+  aptr->argstring = COPYSTRING(argname);
+  aptr->argvalue = COPYSTRING(argvalue);
   if (prevargument) {
     prevargument->next = aptr;
   } else if (prevmessage && prevmessage->args == NULL) {
@@ -2960,7 +2966,7 @@ void
 save_ccff_text(const char *message)
 {
   if (prevmessage && prevmessage->message == NULL)
-      prevmessage->message = COPYSTRING(message);
+    prevmessage->message = COPYSTRING(message);
 } /* save_ccff_text */
 #endif
 
