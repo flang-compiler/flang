@@ -218,7 +218,7 @@ static struct {
   int dsize, davl;
   int estdx, dstdx;
   int dexpr, forall_list;
-} dep = {NULL, 0};
+} dep = {NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 /*
  * Given an AST tree (such as FORALL LHS), save the ID and member names on the

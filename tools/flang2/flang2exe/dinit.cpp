@@ -2306,7 +2306,7 @@ eval_int(CONST *arg, DTYPE dtype)
 static CONST *
 eval_null(CONST *arg, DTYPE dtype)
 {
-  CONST c = {0};
+  CONST c = {0, NULL, NULL, 0, SPTR_NULL, SPTR_NULL, DT_NONE, 0, {0}};
   CONST *p = clone_init_const(&c, true);
   p->id = AC_CONST;
   p->repeatc = 1;

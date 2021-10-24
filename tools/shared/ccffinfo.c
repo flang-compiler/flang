@@ -52,8 +52,8 @@ static bool anymessages;
 
 #define BUILD_VENDOR "flang-compiler"
 
-FIHB fihb = {(FIH *)0, 0, 0, 0, 0, 0, 0};
-FIHB ifihb = {(FIH *)0, 0, 0, 0, 0, 0, 0}; /* bottom-up auto-inliner */
+FIHB fihb = {(FIH *)0, 0, 0, 0, 0, 0, 0, 0};
+FIHB ifihb = {(FIH *)0, 0, 0, 0, 0, 0, 0, 0}; /* bottom-up auto-inliner */
 
 #define CCFFAREA 24
 #define ICCFFAREA 27

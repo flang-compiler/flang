@@ -51,7 +51,7 @@ static struct {
   int curlin;  /* Current line number */
   INT curpos;  /* Current file position.  Good after each output */
   char buf[ALEN + 4];
-} lanno = {0};
+} lanno;
 
 static FILE *fanno = NULL;
 static ANNO *amod = NULL;

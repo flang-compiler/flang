@@ -712,17 +712,21 @@ ll_make_sections_args(SPTR lbSym, SPTR ubSym, SPTR stSym, SPTR lastSym)
  * An outlined task is:      void (int32, void*); Return is ignored.
  */
 static const KMPC_ST_TYPE funcSig[3] = {
-    {NULL, DT_INT, false},
-    {NULL, DT_CPTR, false},
-    {NULL, DT_CPTR, false} /* Pass ptr directly */
+    {NULL, DT_INT,  false, 0},
+    {NULL, DT_CPTR, false, 0},
+    {NULL, DT_CPTR, false, 0} /* Pass ptr directly */
 };
 
 static const KMPC_ST_TYPE taskSig[2] = {
-    {NULL, DT_INT, true}, {NULL, DT_CPTR, false} /* Pass ptr directly */
+    {NULL, DT_INT,  true,  0},
+    {NULL, DT_CPTR, false, 0} /* Pass ptr directly */
 };
 
 static const KMPC_ST_TYPE taskdupSig[3] = {
-    {NULL, DT_CPTR, false}, {NULL, DT_CPTR, false}, {NULL, DT_INT, true}};
+    {NULL, DT_CPTR, false, 0},
+    {NULL, DT_CPTR, false, 0},
+    {NULL, DT_INT,  true,  0}
+};
 
 void
 setOutlinedPragma(int func_sptr, int saved)
