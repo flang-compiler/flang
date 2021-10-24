@@ -215,7 +215,6 @@ int128_unsigned_compare(const int128_t *x, const int128_t *y)
 int
 int128_signed_compare(const int128_t *x, const int128_t *y)
 {
-  int j;
   if (x->part[3] & MSB32) {
     if (!(y->part[3] & MSB32))
       return -1;

@@ -452,10 +452,7 @@ static void
 print_par_xref(void)
 {
   int i;
-  int s;
-  char *nm;
   char buf[200];
-  int cnt;
 
   for (i = rgn_base[0].next; i; i = rgn_base[i].next) {
     sprintf(buf, "Parallel region beginning at line number %d:",
@@ -475,7 +472,6 @@ par_xref(void)
   SPTR sptr;
   int index;
   int i;
-  int nsyms;
 
   if (!xrefcnt)
     return;

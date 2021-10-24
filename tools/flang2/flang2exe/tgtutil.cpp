@@ -191,7 +191,6 @@ mk_tgt_api_call(int tgt_api, int n_args, DTYPE *arg_dtypes, int *arg_ilis)
   SPTR fn_sptr;
   const char *nm;
   const ILI_OP ret_opc = (ILI_OP)TGT_RET_ILIOPC(tgt_api);
-  const DTYPE ret_dtype = TGT_RET_DTYPE(tgt_api);
 
   /* Create the prototype for the API call */
   nm = build_tgt_api_name(tgt_api);
@@ -555,7 +554,7 @@ ll_make_tgt_target_teams_parallel(SPTR outlined_func_sptr, int64_t device_id,
                                   SPTR stblk_sptr, int32_t num_teams,
                                   int32_t thread_limit, int32_t num_threads, int32_t mode)
 {
-  SPTR sptr, arg_base_sptr, arg_size_sptr, args_sptr, args_maptypes_sptr;
+  SPTR arg_base_sptr, arg_size_sptr, args_sptr, args_maptypes_sptr;
   char *name, *rname;
   OMPACCEL_TINFO *targetinfo = ompaccel_tinfo_get(outlined_func_sptr);
   int ili_hostptr, nargs = targetinfo->n_symbols;
@@ -939,14 +938,14 @@ ll_make_tgt_register_lib()
 int
 ll_make_tgt_register_lib2()
 {
-  SPTR tptr1, tptr2, tptr3, tptr4, tptr;
+  SPTR tptr1, tptr2, tptr3, tptr4;
   SPTR sptr, sptr2;
   int i, ilix, nme, offset, addr;
   DTYPE dtype_entry, dtype_devimage, dtype_bindesc, dtype_pofbindesc;
 
   init_tgt_register_syms();
 
-  for (tptr = gbl.consts; tptr > NOSYM; tptr = SYMLKG(tptr)) {
+  for (SPTR tptr = gbl.consts; tptr > NOSYM; tptr = SYMLKG(tptr)) {
     if (OMPACCRTG(tptr)) {
       tptr4 = tptr;
       tptr3 = SYMLKG(tptr4);
@@ -955,7 +954,7 @@ ll_make_tgt_register_lib2()
       break;
     }
   }
-  assert(!tptr || !tptr2 || !tptr3 || !tptr4,
+  assert(!tptr1 || !tptr2 || !tptr3 || !tptr4,
          "OpenMP Offload structures are not found.", 0, ERR_Fatal);
 
   dtype_entry =

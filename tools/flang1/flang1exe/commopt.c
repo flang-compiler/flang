@@ -91,22 +91,6 @@ static void opt_anti_barrier(void);
 static void opt_flow_barrier(void);
 static LOGICAL can_reach_no_barrier(int fg1, int fg2);
 static LOGICAL _can_reach(int fg1, int fg2);
-static void omem_barrier(void);
-
-#if DEBUG
-static int dodebug = 0;
-#define TR(str)               \
-  if (dodebug) {              \
-    fprintf(gbl.dbgfil, str); \
-    fflush(gbl.dbgfil);       \
-  }
-#define TR1(str)      \
-  if (DBGBIT(0, 512)) \
-  dump_stg_stat(str)
-#else
-#define TR(str)
-#define TR1(str)
-#endif
 
 INT *lpsort;
 FTB ftb;
@@ -336,9 +320,6 @@ optsummary(void)
 static void
 commopt(void)
 {
-  int i;
-  int forall;
-  int std;
   selection_sort();
   put_forall_fg();
 
@@ -357,23 +338,12 @@ commopt(void)
 static void
 fuse_forall(int nested)
 {
-  int i, j, k, l;
+  int i, j;
   int std, std1;
   int forall, forall1;
   int nd, nd1;
-  int rt, rt1;
-  int rt_std, rt1_std;
   int hd, hd1;
-  int type, type1;
   int ii, jj;
-  int expr, expr1;
-  int newexpr1, newrhs1;
-  int asn, asn1;
-  int rhs, rhs1;
-  int lhs, lhs1;
-  int nidx, nidx1;
-  int list, list1, listp;
-  int isptr;
   int fg, fg1;
   int number_of_try;
 
@@ -443,10 +413,6 @@ is_same_idx(int std, int std1)
   int nidx, nidx1;
   int isptr, isptr1;
   int i;
-  int nd;
-  int oldast, newast;
-  int newforall, newforall1;
-  int af, st, nc;
 
   forall = STD_AST(std);
   list = A_LISTG(forall);
@@ -489,16 +455,8 @@ same_forall_size(int lp1, int lp2, int nested)
   int list1, list2, listp;
   int forall1, forall2;
   int nidx1, nidx2;
-  int i, k;
-  int asd1, asd2;
-  int ndim1, ndim2;
-  int order2[7];
-  int no;
-  int lhs1, lhs2, newlhs2, l, l2;
-  int sptr1, sptr2;
-  int isptr1, isptr2;
-  int dim1, dim2;
-  int newast, oldast;
+  int i;
+  int lhs1, lhs2;
   LOGICAL same = FALSE;
 
   hd1 = LP_HEAD(lp1); /*the flow graph node which is the loop head*/
@@ -714,8 +672,6 @@ static struct {
 static LOGICAL
 Conflict(int list, int src, int sink, int after, int order, int forcomm)
 {
-  LOGICAL result = FALSE;
-
   conf.src = src;
   conf.sink = sink;
   conf.list = list;
@@ -734,8 +690,6 @@ Conflict_(int sink)
   LOGICAL l, r;
   int argt;
   int nargs;
-  int asd, asd_lhs;
-  int numdim;
   int i;
   int result;
   int src, sptr, sptr1;
@@ -847,10 +801,7 @@ _olap_conflict(int expr, int expr1)
   LOGICAL l, r;
   int argt;
   int nargs;
-  int asd, asd_lhs;
-  int numdim;
   int i;
-  int result;
 
   if (expr == 0)
     return FALSE;
@@ -970,30 +921,21 @@ static LOGICAL
 is_fusable(int lp, int lp1, int nested)
 {
 
-  int i, j, k, l;
+  int k;
   int std, std1;
   int forall, forall1;
   int nd, nd1;
-  int rt, rt1;
-  int rt_std, rt1_std;
   int hd, hd1;
-  int type, type1;
-  int ii, jj;
   int expr, expr1;
-  int newexpr1, newrhs1, newlhs1;
-  int newexpr, newrhs;
   int asn, asn1;
   int rhs, rhs1;
-  int rhssptr;
   int lhs, lhs_array, lhs1, lhs1_array;
   int lhs_sptr, lhs_sptr1;
-  int nidx, nidx1;
   int list, list1, listp;
   int isptr;
   int fg, fg1;
   LOGICAL fuseable;
   int fuselp;
-  int oldast, newast;
   int triple;
   int idx[7];
   int cnt;
@@ -1325,7 +1267,6 @@ is_contains_ast_between(int lp, int lp1, int a)
   int ast, std;
   int hd, fg;
   int hd1, fg1;
-  int type;
 
   hd = LP_HEAD(lp);
   fg = LP_FG(lp);
@@ -1814,16 +1755,12 @@ eliminate_alloc(int lp, int lp1, int rt_std, int rt1_std)
   int fg, fg1;
   int rt, rt1;
   int nd, nd1;
-  int i;
-  int sub, ndim, asd;
-  int sub1, ndim1, asd1;
-  int count;
+  int sub;
+  int sub1;
   int sptr;
   int sptr1;
   int hd, hd1;
   int freestd, freestd1;
-  int lp2, hd2;
-  int lp3, hd3;
 
   if (LP_PARENT(lp) != LP_PARENT(lp1))
     return;
@@ -1894,7 +1831,6 @@ LOGICAL
 is_same_array_shape(int sptr, int sptr1)
 {
   LOGICAL result;
-  int dist, align;
   ADSC *ad, *ad1;
   int ndim, ndim1;
   int lb, lb1;
@@ -1937,10 +1873,8 @@ eliminate_sect(int lp, int lp1, int rt_std, int rt1_std)
   int fg, fg1;
   int rt, rt1;
   int nd, nd1;
-  int i;
-  int sub, ndim, asd;
-  int sub1, ndim1, asd1;
-  int count;
+  int sub;
+  int sub1;
   int sptr;
   int sptr1;
   int hd, hd1;
@@ -2037,7 +1971,6 @@ eliminate_sect(int lp, int lp1, int rt_std, int rt1_std)
 static LOGICAL
 is_dominator_fg(int std, int std1)
 {
-  int std_lp, std_lp1;
   int hd, hd1;
 
   hd = STD_FG(std);
@@ -2087,10 +2020,8 @@ eliminate_copy(int lp, int lp1, int rt_std, int rt1_std)
   int fg, fg1;
   int rt, rt1;
   int nd, nd1, nd2;
-  int i;
-  int sub, ndim, asd;
-  int sub1, ndim1, asd1;
-  int count;
+  int sub;
+  int sub1;
   int sptr;
   int sptr1;
   int hd, hd1;
@@ -2205,7 +2136,7 @@ eliminate_gather(int lp, int lp1, int rt_std, int rt1_std)
   int std, std1;
   int fg, fg1;
   int rt, rt1;
-  int nd, nd1, nd3;
+  int nd, nd1;
   int i;
   int vsub, ndim, asd;
   int vsub1, ndim1, asd1;
@@ -2337,11 +2268,10 @@ eliminate_shift(int lp, int lp1, int rt_std, int rt1_std)
   int std, std1;
   int fg, fg1;
   int rt, rt1;
-  int nd, nd1, nd3;
+  int nd, nd1;
   int i;
   int ndim, asd;
   int ndim1, asd1;
-  int count;
   int src, src1, srcl;
   int hd, hd1;
   int shift, shift1;
@@ -2452,17 +2382,14 @@ eliminate_start(int lp, int lp1, int rt_std, int rt1_std)
   int fg, fg1;
   int rt, rt1;
   int nd, nd1;
-  int i;
-  int sub, ndim, asd;
-  int sub1, ndim1, asd1;
-  int count;
+  int sub;
+  int sub1;
   int sptr, sptr1;
   int ast, ast1;
   int hd, hd1;
   int start, start1;
   int cp, cp1;
-  int lhs, lhs1;
-  int rhs, rhs1;
+  int rhs;
   int comm, commstd;
   int comm1, commstd1;
   int asn, asn1;
@@ -2599,7 +2526,6 @@ eliminate_get_scalar(void)
 {
   int i, j;
   int src, src1;
-  int ast, ast1;
   int fg, fg1;
   int commstd, commstd1;
   int rt, rt1;
@@ -3482,11 +3408,11 @@ put_forall_pcalls(int fstd)
   int forall;
   int topstd;
   int i, j;
-  int mask, expr;
+  int mask;
   int nd, nd1, nd2;
   int nargs, argt, arg;
   int pstd, past, psptr;
-  int pstd1, past1, psptr1;
+  int pstd1, past1;
   int asn;
 
   forall = STD_AST(fstd);
@@ -3613,7 +3539,7 @@ forall_make_same_idx(int std)
 {
 
   int idx[7];
-  int list, list1, listp;
+  int list, listp;
   int forall;
   int nidx;
   int isptr, isptr1;

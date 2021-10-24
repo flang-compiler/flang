@@ -118,8 +118,6 @@ comm_analyze(void)
 {
   int std, stdnext;
   int ast;
-  int lhs, sptr;
-  int endmasterstd, endcriticalstd;
   int parallel_depth;
   int task_depth;
   int type;
@@ -268,8 +266,6 @@ void
 report_comm(int std, int cause)
 {
   int ln;
-  int sptr;
-  static char msg8[] = "no parallelism: ";
 
   if (!XBIT(0, 2))
     return;
@@ -370,12 +366,8 @@ sub_lbnd(int dtyp, int dim, int ast, int astmember)
 LOGICAL
 normalize_bounds(int sptr)
 {
-  int aln;
-  int sptr1;
-
   if (STYPEG(sptr) != ST_ARRAY)
     return FALSE;
-  sptr1 = sptr;
   return (XBIT(58, 0x22) && !POINTERG(sptr));
 }
 
@@ -621,15 +613,11 @@ int
 emit_get_scalar(int a, int std)
 {
   int lsptr, ld;
-  int astnew;
-  int list;
-  int i, nargs, argt;
   int asd;
   int ndim;
   int temp, tempast;
   int ast;
   int commstd;
-  int nd;
 
   if (STD_LOCAL(std))
     return a; /* don't process for DO-INDEPENDENT */
@@ -722,12 +710,8 @@ transform_forall(int std, int ast)
 {
   int asn;
   int src, dest;
-  int asd;
   int astnew;
-  int endforall;
   int test1, test2;
-  int nd;
-  int lhs;
 
   comminfo.std = std;
   comminfo.usedstd = std;
@@ -882,7 +866,6 @@ sequentialize(int std, int forall, LOGICAL after_transformer)
   int triplet;
   int expr;
   int lineno;
-  LOGICAL craft_partion;
 
   if (after_transformer)
     un_fuse(forall);
@@ -1385,17 +1368,12 @@ remove_section(int ast, int *pnewast, int *psectast, int *psptr, int *panydist,
 static void
 transform_ptr(int std, int ast)
 {
-  int ast1;
   int argt, nargs;
   int newargt;
   int src, dest, newsrc, sectast, src_sptr, anydist;
   int dest_sptr, nontrivial;
   int array_desc;
-  int func;
-  LOGICAL is_cyclic;
-  int align, section;
-  int ndim;
-  int i;
+  int section;
   int ptr_reshape_dest = 0;
   int dtype;
 
@@ -1536,7 +1514,7 @@ again:
     /* ptr reshape
      * generate additional args
      */
-    int shd, nd, asd, i, sub, val[4] = {0, 0, 0, 0}, tmp, ast, flag;
+    int shd, nd, asd, i, sub, val[4] = {0, 0, 0, 0}, tmp;
     int lbast, ubast, argcnt = 7;
 
     if (!nontrivial) {
@@ -1571,9 +1549,8 @@ insert_forall_comm(int ast)
   /* go through and add the communication & rewrite the AST */
   int std;
   int l, r, d, o;
-  int l1, l2, l3;
-  int a, a1;
-  int i, nargs, argt, j;
+  int a;
+  int i, nargs, argt;
   int arref;
   int header;
   int forall;
@@ -1581,12 +1558,11 @@ insert_forall_comm(int ast)
   int sptr;
   int asd, ndim;
   int subs[7];
-  int nd, nd1, nd2;
+  int nd, nd2;
   int src;
   int cnt;
   int commstd, commasn, comm;
   int lhs;
-  int newast;
 
   a = ast;
   if (!a)
@@ -1721,10 +1697,8 @@ static LOGICAL
 is_use_lhs(int a, LOGICAL sameidx, LOGICAL independent, int std)
 {
   int lhs;
-  int sptr, sptr_lhs;
   int list;
   int src;
-  int aa, nextaa, alhs, nextalhs;
 
   if (cs_table.is_used_lhs)
     return FALSE;
@@ -1771,8 +1745,7 @@ emit_copy_section(int a, int std)
   int asn;
   int tempast;
   int tempast0;
-  int i, j;
-  int src, dest, lop;
+  int dest, lop;
   int forall;
   int list;
   int lhs;
@@ -1929,15 +1902,13 @@ emit_permute_section(int a, int std)
   int asd;
   int ndim;
   int ast1;
-  int subs[7];
   int astnew;
   int tempast, tempast0;
   int argt, nargs;
-  int i, j;
+  int i;
   int src, dest;
   int forall;
   int list;
-  int arref;
   int lhs;
   LOGICAL use_lhs;
   int order2[7];
@@ -2116,14 +2087,10 @@ eliminate_extra_idx(int lhs, int a, int forall)
 static void
 permute_axis(int result, int array, int list, int permute[7])
 {
-
-  int order2[7];
-  int no;
   int subs[7];
   int newresult;
-  int astli, nidx;
   int asd, ndim;
-  int i, j;
+  int i;
   int per[7], per1[7];
   int nper1;
 
@@ -2354,7 +2321,7 @@ emit_sum_scatterx(int std)
   int ast1;
   int subs[7];
   int astnew;
-  int tempast, tempast0;
+  int tempast;
   int argt, nargs;
   int i, j;
   int forall;
@@ -2374,9 +2341,6 @@ emit_sum_scatterx(int std)
   int func;
   int permute[7];
   int npermute;
-  int ndim, asd;
-  int nv;
-  int newbase;
   char name[40];
   int function, operator;
   int sectflag;
@@ -2396,7 +2360,7 @@ emit_sum_scatterx(int std)
     return;
 
   if (!comminfo.scat.array_simple) {
-    int sptrtemp, newforall, newlist, asn, newstd, newarray;
+    int sptrtemp, newforall, asn, newstd, newarray;
     struct comminfo savecomminfo;
     sptrtemp = get_temp_forall(forall, base, std, std, 0, array);
     newarray = simple_reference_for_temp(sptrtemp, base, forall);
@@ -2613,35 +2577,27 @@ emit_scatterx_gatherx(int std, int result, int array, int mask, int allocstd,
   int ast1;
   int subs[7];
   int astnew;
-  int tempast;
-  int argt, nargs;
+  int argt;
   int i, j;
   int forall;
   int list;
   int vflag, pflag;
   int pdim, vdim;
   int nvec;
-  int secv;
   ADSC *ad;
   int glb, gub;
   int asn;
-  int result_sec, base_sec, array_sec, mask_sec;
-  int newresult;
   int func;
   int permute[7];
   int npermute;
-  int ndim, asd;
-  int newbase;
   int nd;
   int header;
   int vsub, nvsub, newvsub;
-  int vsub_sec, nvsub_sec;
   int commstd;
   int cp, xfer;
   int startstd;
   int ast;
   int v, sectvstd;
-  int sectvsub, sectnvsub;
   int vsubstd, nvsubstd, maskstd;
   int lhs;
   int mask_id;
@@ -2934,14 +2890,10 @@ emit_gatherx(int a, int std, LOGICAL opt)
   int sptr;
   int asd1;
   int ndim1;
-  int ast1;
-  int astnew;
   int tempast, tempast0;
-  int src, dest;
   int forall;
   int list;
   int lhs;
-  LOGICAL use_lhs;
   int mask;
   int nd, header;
   int allocast, allocstd;
@@ -3005,9 +2957,6 @@ opt_overlap(void)
   int subinfo1, ndim;
   int subinfo;
   int align;
-  int nargs, ast1, argt;
-  int first;
-  int nd, nd1;
   int sptr, sptr1;
 
   /* Now compute the total overlap-shift for each separate array symbol */
@@ -3197,8 +3146,7 @@ static int
 shape_comm_in_expr(int expr, int forall, int std, int nomask)
 {
   int l, r, d, o;
-  int l1, l2, l3;
-  int i, nargs, argt, j;
+  int i, nargs, argt;
   int lhs, sptr;
 
   if (expr == 0)
@@ -3367,7 +3315,6 @@ gen_shape_comm(int arg, int forall, int std, int nomask)
   int newstd;
   int sptr;
   int asn;
-  int newast;
   int tmpast;
   int lhs;
   int mask;
@@ -3543,7 +3490,7 @@ handle_pure_temp_too_large(int expr, int std)
 {
   int l, r, d, o;
   int l1, l2, l3;
-  int i, nargs, argt, j;
+  int i, nargs, argt;
   int tmp_sptr, tmp_ast;
   int forall, ast;
   int asd, ndim;
@@ -3669,7 +3616,6 @@ put_call_comm(int cstd, int fstd, int forall)
   int cstd1;
   int nd, nd1;
   int i;
-  int test;
   int nargs, argt;
 
   comminfo.usedstd = cstd;
@@ -3807,8 +3753,6 @@ normalize_forall_triplet(int std, int forall)
   int tmp_sptr;
   int newlist;
   int ast, dest;
-  int triplet_list1, triplet1;
-  int isptr;
 
   /* don't allow forall(i=1:n,j=istart(i):istop(i) */
   triplet_list = A_LISTG(forall);
@@ -3931,12 +3875,8 @@ static void
 forall_dependency_scalarize(int std, int *std1, int *std2)
 {
   int lhs, rhs;
-  int ast, ast1, ast2;
+  int ast;
   int asn;
-  int asd;
-  int subs[7];
-  int i;
-  int ndim;
   int sptr;
   int temp_ast;
   int newforall, newasn;
@@ -4062,9 +4002,7 @@ canonical_conversion(int ast)
   int nd, nd1;
   int ip, pstd, past;
   LITEMF *plist;
-  int glb, gub, st;
-  ADSC *ad;
-  int lhs, lhsd, sptr, dim;
+  int lhs, lhsd, sptr;
   int align;
 
 
@@ -4209,18 +4147,14 @@ scalar_communication(int ast, int std)
 {
   int l, r, d, o;
   int l1, l2, l3;
-  int a, a1;
-  int i, nargs, argt, j;
-  int arref;
+  int a;
+  int i, nargs, argt;
   int header;
   int forall;
   int rhs_is_dist;
-  int sptr;
   int asd, ndim;
   int subs[7];
-  int nd, nd1, nd2;
-  int src;
-  int cnt;
+  int nd;
 
   a = ast;
   if (!a)

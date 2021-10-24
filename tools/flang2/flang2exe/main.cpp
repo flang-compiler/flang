@@ -112,10 +112,6 @@ static int dodebug = 0;
 #define DEBUGQQ 0
 #endif
 
-static char *dbg_feature = "flang";
-
-static int ipa_import_mode = 0;
-
 #define DUMP(a)
 
 #define NO_FLEXLM
@@ -175,7 +171,6 @@ process_input(char *argv0, bool *need_cuda_constructor)
   bool have_data_constructor = false;
   bool is_constructor = false;
   bool is_omp_recompile = false;
-  omp_recompile:
   llvm_restart:
   if (gbl.maxsev > accsev)
     accsev = gbl.maxsev;
@@ -376,10 +371,8 @@ process_input(char *argv0, bool *need_cuda_constructor)
 int
 main(int argc, char *argv[])
 {
-  static unsigned int ckey, rkey;
   bool findex = false;
   bool need_constructor = false;
-  int accel_cnt, accel_vendor = 0;
   int ilm_units_seen = 0;
 
   get_rutime();
@@ -535,28 +528,15 @@ report_area(void)
 static void
 init(int argc, char *argv[])
 {
-  int argindex;
-  int next;
-  char *argstring;
-  int indice;
   char *sourcefile = NULL;
   const char *stboutfile = NULL;
   const char *listfile = NULL;
-  const char *cppfile = NULL;
   const char *tempfile = NULL;
   const char *asmfile = NULL;
-  int c;
-  int def_count = 0;  /* number of -def switches */
-  int idir_count = 0; /* number of -idir switches */
-  INT qval1;
-  INT qval2;
-  int val_follows;
   bool dbgflg;
   bool errflg;
   FILE *fd;
-  int exlib_flag = 0;
   const char *file_suffix;
-  char *idfname;
   time_t now;
 
   file_suffix = FTNFILE; /* default suffix for source files */
@@ -786,7 +766,6 @@ init(int argc, char *argv[])
             version.lang);
   }
 
-empty_cl:
   if (gbl.src_file == NULL) {
     gbl.src_file = "STDIN.f";
     sourcefile = strdup(gbl.src_file);

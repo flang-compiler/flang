@@ -367,8 +367,8 @@ INT
 cngcon(INT oldval, DTYPE oldtyp, DTYPE newtyp)
 {
   int to, from;
-  char *cp, buf[20];
-  int newcvlen, oldcvlen, msk, blnk;
+  char *cp;
+  int newcvlen, oldcvlen, blnk;
   INT num[4], result;
   INT num1[4];
   INT swap;

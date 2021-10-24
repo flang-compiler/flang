@@ -397,7 +397,6 @@ verify_endscopes(int bih, struct scope_stack *ss)
   int ilt, i;
   int ilix;
   int lab, blk;
-  bool closed_last_opened;
 
   for (ilt = BIH_ILTFIRST(bih); ilt; ilt = ILT_NEXT(ilt)) {
     ilix = ILT_ILIP(ilt);

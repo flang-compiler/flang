@@ -169,8 +169,10 @@ struct LL_DebugInfo {
 };
 
 static LL_MDRef lldbg_emit_modified_type(LL_DebugInfo *, DTYPE, SPTR, int);
+#ifdef FLANG_DEBUGINFO_UNUSED
 static LL_MDRef lldbg_create_module_flag_mdnode(LL_DebugInfo *db, int severity,
                                                 char *name, int value);
+#endif
 static LL_MDRef lldbg_create_outlined_parameters_node(LL_DebugInfo *db);
 static LL_MDRef lldbg_create_file_mdnode(LL_DebugInfo *db, char *filename,
                                          char *sourcedir, LL_MDRef context,
@@ -930,11 +932,9 @@ lldbg_create_aggregate_members_type(LL_DebugInfo *db, SPTR first, int findex,
   SPTR element, member;
   DTYPE elem_dtype;
   hash_data_t val;
-  int skip_elem_num = 0;
   bool is_desc_member = false;
   bool contains_allocatable = false;
   SPTR base_sptr = SPTR_NULL;
-  char* prefix = NULL;
 
   if (!ll_feature_debug_info_pre34(&db->module->ir))
     file_mdnode = get_filedesc_mdnode(db, findex);
@@ -1834,7 +1834,7 @@ lldbg_emit_parameter_list(LL_DebugInfo *db, DTYPE dtype, DTYPE ret_dtype,
 {
   LLMD_Builder mdb = llmd_init(db->module);
   LL_MDRef parameter_mdnode, retval_mdnode;
-  int params, param_dtype, num_args, param_sptr;
+  int num_args;
   DTYPE call_dtype = dtype;
   int dpdsc, paramct, i;
   SPTR fval;
@@ -2381,9 +2381,6 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
   is_def = DEFDG(sptr);
   is_def |= (STYPEG(sptr) == ST_ENTRY);
   if (INMODULEG(sptr) && ll_feature_create_dimodule(&db->module->ir)) {
-    char *modNm = SYMNAME(INMODULEG(sptr));
-    LL_MDRef fileMD = get_filedesc_mdnode(db, findex);
-    LL_MDRef unused = ll_get_md_null();
     context_mdnode = lldbg_emit_module_mdnode(db, INMODULEG(sptr));
   }
   scope = ll_feature_debug_info_pre34(&db->module->ir)
@@ -2665,7 +2662,7 @@ lldbg_emit_accel_cmblk_type(LL_DebugInfo *db, int cmblk, int findex)
   LL_MDRef cu_mdnode, file_mdnode, type_mdnode;
   LL_MDRef members_mdnode;
   ISZ_T sz;
-  DBLINT64 align, offset;
+  DBLINT64 align;
 
   cu_mdnode = lldbg_emit_compile_unit(db);
   file_mdnode = lldbg_emit_file(db, findex);
@@ -2847,12 +2844,10 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
   LL_MDRef elem_type_mdnode;
   LL_MDRef members_mdnode;
   LL_MDRef parameters_mdnode;
-  OPERAND *cur_op;
-  DBLINT64 align, offset, low, high;
+  DBLINT64 align, offset;
   ISZ_T sz, lb, ub, dim_ele;
   SPTR element;
   DTYPE elem_dtype;
-  int anum;
 
   dim_ele = 0;
   if (((DTY(dtype) == TY_ARRAY) && skip_first_dim) ||
@@ -3995,7 +3990,7 @@ LL_MDRef
 lldbg_emit_common_block_mdnode(LL_DebugInfo *db, SPTR sptr)
 {
   LL_MDRef scope_modnode, cmnblk_mdnode, cmnblk_gv_mdnode;
-  SPTR scope = SCOPEG(sptr), var;
+  SPTR scope = SCOPEG(sptr);
   const char *cmnblk_name = new_debug_name(SYMNAME(scope), SYMNAME(sptr), NULL);
   LL_MDNode *node;
   unsigned slot;

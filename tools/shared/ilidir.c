@@ -80,7 +80,6 @@ ili_lpprg_init(void)
 void
 open_pragma(int line)
 {
-  int i;
   LPPRG *lpprg;
   int match;
 

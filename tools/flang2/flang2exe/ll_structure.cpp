@@ -2516,19 +2516,17 @@ static LL_FnProto *_ll_proto_head;
 const char *
 ll_proto_key(SPTR func_sptr)
 {
-  const char *ifacenm;
-  const char *nm = NULL;
-
-/* This is disabled for now, we plan on enabling this soon and cleaning up the
- * macros below.
- */
+  /* This is disabled for now, we plan on enabling this soon and cleaning up the
+   * macros below.
+   */
 #if defined(TARGET_LLVM) && !defined(MATTD)
   return get_llvm_name(func_sptr);
 #endif /* TARGET_LLVM && !MATTD */
 
 #ifdef MATTD
-/* Fortran must check for interface names, C/C++ is straight forward) */
-  ifacenm = get_llvm_ifacenm(func_sptr);
+  /* Fortran must check for interface names, C/C++ is straight forward) */
+  const char *nm = NULL;
+  const char *ifacenm = get_llvm_ifacenm(func_sptr);
   if (find_ag(ifacenm))
     nm = ifacenm;
   else

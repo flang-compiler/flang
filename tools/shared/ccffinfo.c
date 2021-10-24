@@ -31,8 +31,6 @@ extern int auto_reinlinedepth; /* For bottom-up auto-inlining */
 #ifndef FE90
 #include "lz.h"
 #include "cgraph.h"
-static int fihlevel = 0;
-static int curr_ifihx = 0;
 extern bool in_auto_reinline;
 #endif
 
@@ -316,7 +314,7 @@ xmlintentity2(const char *entity, const char *shortentity, int value1, int value
 void
 ccff_open(const char *ccff_filename, const char *srcfile)
 {
-  char *cwd, ch;
+  char *cwd;
   int cwdlen;
   int i, slash;
   ccff_file = fopen(ccff_filename, "wb");
@@ -463,7 +461,6 @@ ccff_open_unit()
 void
 ccff_open_unit_deferred(void)
 {
-  char *abiname;
   formatbuffer = NULL;
   formatbuffersize = 0;
   if ((!ccff_file && flg.x[161] == 0 && flg.x[162] == 0))
@@ -526,10 +523,11 @@ static int messagelistsize;
 static int strngsize = 0;
 static char *strng = NULL;
 
+#if DEBUG
 /*
  * dump a message
  */
-static void
+void
 dumpmessage(MESSAGE *m)
 {
   FILE *dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
@@ -551,12 +549,13 @@ dumpmessage(MESSAGE *m)
 /*
  * dump list of messages
  */
-static void
+void
 dumpmsglist(MESSAGE *m)
 {
   for (; m; m = m->next)
     dumpmessage(m);
 } /* dumpmsglist */
+#endif
 
 void
 dumpmessagelist(int nmessages)
@@ -899,8 +898,6 @@ sort_message_list(MESSAGE *msglist)
   for (n = 1; n < nmessages; ++n) {
     /* look for duplicate messages, with the same arguments, on the same line */
     MESSAGE *mmptr;
-    int nn;
-
     mptr = messagelist[n];
     mmptr = messagelist[n - 1];
     if (_messagecmp(mptr, mmptr, 0) != 0) {
@@ -1029,7 +1026,7 @@ __fih_message(FILE *ofile, MESSAGE *mptr, bool dolist)
 {
   char *message;
   char *chp;
-  int strnglen, n;
+  int strnglen;
   ARGUMENT *aptr, *aptr3;
   MESSAGE *mptr2, *mptr3;
   message = mptr->message;
@@ -1486,7 +1483,7 @@ static void
 fih_messages(int fihx, FILE *ofile, int nest)
 {
 #ifndef FE90
-  int child, c;
+  int child;
   MESSAGE *mptr, *firstmptr, *nextmptr;
 
   if (ccff_file && fihx > 1) {
@@ -1603,7 +1600,7 @@ static void
 ifih_messages(int ifihx, FILE *ofile, int nest)
 {
 #ifndef FE90
-  int child, c;
+  int child;
   MESSAGE *mptr, *firstmptr;
 
   if (ccff_file && ifihx > 0) {
