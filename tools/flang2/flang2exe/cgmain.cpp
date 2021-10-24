@@ -1521,7 +1521,7 @@ restartConcur:
   if (ISNVVMCODEGEN) {
     /* for now, we generate two ll_function one for host one device. */
     /* it is kernel function in gpu module */
-    LL_Function *llfunc;
+    LL_Function *llfunc = nullptr;
     if (OMPACCFUNCKERNELG(func_sptr)) {
       llfunc = ll_create_device_function_from_type(current_module, func_type,
                                                    &(SNAME(func_sptr)[1]), 1, 0,
@@ -6178,7 +6178,7 @@ gen_binary_expr(int ilix, int itype)
     LL_Type *bit_type, *mask_type;
     OPERAND *bit_mask_of_ones;
     DTYPE vdt, ones_dtype;
-    SPTR vcon1_sptr;
+    SPTR vcon1_sptr = SPTR_NULL;
     vect_dtype = ili_get_vect_dtype(lhs_ili);
     num_elem = DTyVecLength(vect_dtype);
     switch (DTySeqTyElement(vect_dtype)) {
@@ -6939,7 +6939,7 @@ find_pointer_to_function(int ilix)
 static SPTR
 get_call_sptr(int ilix)
 {
-  SPTR sptr;
+  SPTR sptr = SPTR_NULL;
   int addr;
   SPTR addr_acon_ptr;
   ILI_OP opc = ILI_OPC(ilix);
@@ -9975,7 +9975,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         INT val[2];
         enum LL_BaseDataType bdt = expected_type->sub_types[0]->data_type;
         OPERAND *opm;
-        SPTR vcon1_sptr, constant;
+        SPTR vcon1_sptr = SPTR_NULL, constant;
         DTYPE vdt;
         switch (bdt) {
         case LL_FLOAT:
@@ -10199,9 +10199,9 @@ gen_vect_compare_operand(int mask_ili)
 {
   int num_elem;
   CC_RELATION incoming_cc_code;
-  int lhs_ili, rhs_ili, cmp_type;
+  int lhs_ili, rhs_ili, cmp_type = 0;
   LL_Type *int_type, *instr_type, *compare_ll_type;
-  LL_InstrName cmp_inst_name;
+  LL_InstrName cmp_inst_name = I_NONE;
   DTYPE vect_dtype, elem_dtype;
   OPERAND *operand, *op1;
   ILI_OP mask_opc = ILI_OPC(mask_ili);
@@ -10250,10 +10250,10 @@ gen_vect_compare_operand(int mask_ili)
 static char *
 vect_llvm_intrinsic_name(int ilix)
 {
-  int type, n, fsize;
+  int type, n, fsize = 0;
   DTYPE dtype;
   ILI_OP opc = ILI_OPC(ilix);
-  const char *basename;
+  const char *basename = NULL;
   char *retc;
   assert(IL_VECT(opc), "vect_llvm_intrinsic_name(): not vect ili", ilix,
          ERR_Fatal);
@@ -12795,7 +12795,7 @@ gen_constant(SPTR sptr, DTYPE tdtype, INT conval0, INT conval1, int flags)
     double d;
     INT tmp[2];
   } dtmp, dtmp2;
-  char *constant, *constant1, *constant2;
+  char *constant = NULL, *constant1, *constant2;
   const char *ctype = "";
   int size = 0;
 

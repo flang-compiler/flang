@@ -594,7 +594,7 @@ ll_convert_struct_dtype(LL_Module *module, DTYPE dtype)
 LL_Type *
 ll_convert_array_dtype(LL_Module *module, DTYPE dtype, int addrspace)
 {
-  int len;
+  int len = 0;
   LL_Type *type = NULL;
 
   if (DTY(dtype) == TY_ARRAY) {
@@ -2188,7 +2188,7 @@ should_preserve_param(const DTYPE dtype)
 OPERAND *
 make_param_op(SPTR sptr)
 {
-  OPERAND *oper;
+  OPERAND *oper = nullptr;
   DTYPE dtype = DTYPEG(sptr);
 
   switch (DTY(dtype)) {
@@ -4186,7 +4186,7 @@ get_ftn_cbind_lltype(SPTR sptr)
 {
   DTYPE dtype = DTYPEG(sptr);
   DTYPE sdtype;
-  ISZ_T anum;
+  ISZ_T anum = 0;
   int tag, numdim, gblsym, d;
   LL_Type *llt = NULL;
   const char *typed;

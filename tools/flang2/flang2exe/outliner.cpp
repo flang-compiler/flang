@@ -786,11 +786,10 @@ makeOutlinedFunc(int stblk_sptr, int scope_sptr, bool is_task, bool istaskdup, b
 
 SPTR
 ll_make_outlined_func_target_device(SPTR stblk_sptr, SPTR scope_sptr, ILM_OP opc) {
-  SPTR sptr;
-  if(!eliminate_outlining(opc)) {
+  SPTR sptr = SPTR_NULL;
+  if (!eliminate_outlining(opc)) {
     // Create a func sptr for omp target device
-    sptr =
-        ll_make_outlined_omptarget_func(stblk_sptr, scope_sptr, opc);
+    sptr = ll_make_outlined_omptarget_func(stblk_sptr, scope_sptr, opc);
     // Create ABI for the func sptr
     ll_load_outlined_args(scope_sptr, sptr, gbl.outlined);
   }
@@ -1360,7 +1359,7 @@ loadCharLen(SPTR lensym)
 static int
 toUplevelAddr(SPTR taskAllocSptr, SPTR uplevel, int offset)
 {
-  int ilix, nme, addr;
+  int ilix, nme = 0, addr;
   if (taskAllocSptr != SPTR_NULL) {
     ilix = ad_acon(taskAllocSptr, 0);
     nme = addnme(NT_VAR, taskAllocSptr, 0, 0);
@@ -1371,7 +1370,7 @@ toUplevelAddr(SPTR taskAllocSptr, SPTR uplevel, int offset)
   } else {
     if (TASKFNG(GBL_CURRFUNC) && DTYPEG(uplevel) == DT_ADDR) {
       ilix = ad_acon(uplevel, 0);
-      addr = ad2ili(IL_LDA, ilix, nme);
+      addr = ad2ili(IL_LDA, ilix, nme); // FIXME: initialize nme
     } else {
       addr = ad_acon(uplevel, offset);
     }

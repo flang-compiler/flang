@@ -245,7 +245,7 @@ static int
 _tgt_target_fill_size(SPTR sptr, int map_type)
 {
   DTYPE dtype = DTYPEG(sptr);
-  int ilix, rilix;
+  int ilix = 0, rilix;
   ADSC *ad;
   if(llis_pointer_kind(dtype)) {
     if (map_type & OMP_TGT_MAPTYPE_IMPLICIT) {
@@ -340,7 +340,7 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
   OMPACCEL_SYM midnum_sym;
   DTYPE param_dtype, load_dtype;
   SPTR param_sptr;
-  LOGICAL isPointer, isMidnum, showMinfo, isThis;
+  LOGICAL isPointer, isMidnum, showMinfo, isThis = FALSE;
   /* fill the arrays */
   /* Build the list: (size, sptr) pairs. */
 
@@ -939,7 +939,7 @@ ll_make_tgt_register_lib()
 int
 ll_make_tgt_register_lib2()
 {
-  SPTR tptr1, tptr2, tptr3, tptr4;
+  SPTR tptr1 = SPTR_NULL, tptr2 = SPTR_NULL, tptr3 = SPTR_NULL, tptr4 = SPTR_NULL;
   SPTR sptr, sptr2;
   int i, ilix, nme, offset, addr;
   DTYPE dtype_entry, dtype_devimage, dtype_bindesc, dtype_pofbindesc;

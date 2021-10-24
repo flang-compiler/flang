@@ -3674,14 +3674,15 @@ LL_MDRef
 lldbg_emit_param_variable(LL_DebugInfo *db, SPTR sptr, int findex, int parnum,
                           bool unnamed)
 {
-  LL_MDRef file_mdnode, type_mdnode, var_mdnode;
+  LL_MDRef file_mdnode, type_mdnode, var_mdnode = 0;
   char *symname;
   bool is_reference;
   DTYPE dtype;
   int flags;
 
   assert(db, "Debug info not enabled", 0, ERR_Fatal);
-  if (LL_MDREF_IS_NULL(db->cur_subprogram_mdnode)) 
+  // FIXME: Initialize var_mdnode.
+  if (LL_MDREF_IS_NULL(db->cur_subprogram_mdnode))
     return var_mdnode;
   if (ll_feature_debug_info_need_file_descriptions(&db->module->ir))
     file_mdnode = get_filedesc_mdnode(db, findex);
@@ -3838,9 +3839,9 @@ lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
                              IMPORT_TYPE entity_type)
 {
   LLMD_Builder mdb;
-  LL_MDRef entity_mdnode, scope_mdnode, file_mdnode, cur_mdnode;
+  LL_MDRef entity_mdnode, scope_mdnode = 0, file_mdnode, cur_mdnode;
   unsigned tag;
- 
+
   switch (entity_type) {
   case IMPORTED_DECLARATION: {
     const char *modvar_name;
@@ -3861,10 +3862,10 @@ lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
     break;
   }
   case IMPORTED_UNIT: /* TODO: not implemented yet */
-  default:
     return ll_get_md_null();
   }
   mdb = llmd_init(db->module);
+  // FIXME: Initialize scope_mdnode properly.
   scope_mdnode = (func_sptr == gbl.currsub) ? db->cur_subprogram_mdnode : scope_mdnode;
   if (!entity_mdnode || !scope_mdnode)
     return ll_get_md_null();

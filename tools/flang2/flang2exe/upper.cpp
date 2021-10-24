@@ -2006,7 +2006,7 @@ read_symbol(void)
   int addrtkn, adjustable, afterentry, altname, altreturn, aret, argument,
       assigned, assumedrank, assumedshape, assumedsize, autoarray, Cfunc,
       ccsym, clen, cmode, common, constant, count, currsub, decl;
-  SPTR descriptor;
+  SPTR descriptor = SPTR_NULL;
   int intentin, texture, device, dll, dllexportmod, enclfunc, end, endlab,
     format, func, gsame, gdesc, hccsym, hollerith, init, isdesc, linenum;
   SPTR link;
@@ -2023,12 +2023,12 @@ read_symbol(void)
       invobj, invobjinc, reref, libm, libc, tls, etls;
   int reflected, mirrored, create, copyin, resident, acclink, devicecopy,
       devicesd, devcopy;
-  int unlpoly, allocattr, f90pointer, final, finalized, kindparm;
-  int lenparm, isoctype;
+  int unlpoly = 0, allocattr, f90pointer, final, finalized, kindparm;
+  int lenparm, isoctype = 0;
   int inmodproc, cudamodule, datacnst, fwdref;
   int agoto, parref, parsyms, parsymsct, paruplevel, is_interface;
   int typedef_init;
-  int alldefaultinit;
+  int alldefaultinit = 0;
   int tpalloc, procdesc, has_opts;
   SPTR assocptr, ptrtarget;
   int prociface;

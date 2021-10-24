@@ -817,7 +817,7 @@ create_atomic_write_seq(int store_ili)
   ILI_OP arg_opcode;
   ILI_OP intarg_opcode, floatarg_opcode, doublearg_opcode, longarg_opcode;
 #if defined(TARGET_X8664)
-  int argreg;
+  int argreg = 0;
 #endif
   int arg_dt = 0;
 
@@ -864,6 +864,7 @@ create_atomic_write_seq(int store_ili)
     break;
   default:
     interr("Create: Unexpected atomic store opcode", ILI_OPC(store_ili), ERR_Severe);
+    arg_opcode = intarg_opcode;
     break;
   }
 
@@ -990,7 +991,7 @@ get_atomic_update_opcode(int current_ili)
   int ili = current_ili;
   int bin_op, op1, op2, store_pt, store_nme, load_pt1, load_pt2;
   int opc;
-  ILI_OP store_opcode, load_opcode;
+  ILI_OP store_opcode, load_opcode = IL_NONE;
 
   load_pt1 = 0;
   load_pt2 = 0;
@@ -1186,6 +1187,9 @@ get_atomic_update_opcode(int current_ili)
     AtomicOp.ldst_point = store_pt;
     AtomicOp.ldst_nme = store_nme;
     load_opcode = IL_LDSCMPLX;
+  } else {
+    assert(false, "get_atomic_update_opcode: unimplemented store op class",
+           store_opcode, ERR_Fatal);
   }
 
   op1 = ILI_OPND(bin_op, 1);
@@ -2492,6 +2496,7 @@ get_dtype_from_ilm(ILM *ilmp)
     break;
   default:
     interr("get_dtype_from_ilm: unexpected ILM opc", ILM_OPND(ilmp2, 1), ERR_Severe);
+    dtype = DT_NONE;
   }
   return dtype;
 }
