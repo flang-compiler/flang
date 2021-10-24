@@ -119,59 +119,59 @@ typedef struct {
 
 /* clang-format off */
 static const namelist IPAtypes[] = {
-    "pstride",  "p", 1,  "sstride",     "s",  2,   "Target", "T", 3,
-    "target",   "t", 4,  "allcallsafe", "a",  5,   "safe",   "f", 6,
-    "callsafe", "c", 7,  NULL,          NULL, -1,
+  { "pstride",  "p",  1 }, { "sstride",     "s",   2 }, { "Target", "T",  3 },
+  { "target",   "t",  4 }, { "allcallsafe", "a",   5 }, { "safe",   "f",  6 },
+  { "callsafe", "c",  7 }, { NULL,          NULL, -1 },
 };
 
 /* list of datatype keywords */
 static const namelist Datatypes[] = {
-    "Array",     "A",   TY_ARRAY,  "Complex8",   "C8", TY_CMPLX,
-    "Complex16", "C16", TY_DCMPLX, "Derived",    "D",  TY_STRUCT,
-    "Hollerith", "H",   TY_HOLL,   "Integer1",   "I1", TY_BINT,
-    "Integer2",  "I2",  TY_SINT,   "Integer4",   "I4", TY_INT,
-    "Integer8",  "I8",  TY_INT8,   "Logical1",   "L1", TY_BLOG,
-    "Logical2",  "L2",  TY_SLOG,   "Logical4",   "L4", TY_LOG,
-    "Logical8",  "L8",  TY_LOG8,   "Numeric",    "N",  TY_NUMERIC,
-    "Pointer",   "P",   TY_PTR,    "proc",       "p",  TY_PROC,
-    "Real2",     "R2",  TY_HALF,  
-    "Real4",     "R4",  TY_REAL,   "Real8",      "R8", TY_DBLE,
-    "Real16",    "R16", TY_QUAD,   "Struct",     "S",  TY_STRUCT,
-    "Word4",     "W4",  TY_WORD,   "Word8",      "W8", TY_DWORD,
-    "Union",     "U",   TY_UNION,  "any",        "a",  TY_ANY,
-    "character", "c",   TY_CHAR,   "kcharacter", "k",  TY_NCHAR,
-    "none",      "n",   TY_NONE,   NULL,         NULL, -1,
+  { "Array",     "A",   TY_ARRAY },  { "Complex8",   "C8", TY_CMPLX },
+  { "Complex16", "C16", TY_DCMPLX }, { "Derived",    "D",  TY_STRUCT },
+  { "Hollerith", "H",   TY_HOLL },   { "Integer1",   "I1", TY_BINT },
+  { "Integer2",  "I2",  TY_SINT },   { "Integer4",   "I4", TY_INT },
+  { "Integer8",  "I8",  TY_INT8 },   { "Logical1",   "L1", TY_BLOG },
+  { "Logical2",  "L2",  TY_SLOG },   { "Logical4",   "L4", TY_LOG },
+  { "Logical8",  "L8",  TY_LOG8 },   { "Numeric",    "N",  TY_NUMERIC },
+  { "Pointer",   "P",   TY_PTR },    { "proc",       "p",  TY_PROC },
+  { "Real2",     "R2",  TY_HALF },
+  { "Real4",     "R4",  TY_REAL },   { "Real8",      "R8", TY_DBLE },
+  { "Real16",    "R16", TY_QUAD },   { "Struct",     "S",  TY_STRUCT },
+  { "Word4",     "W4",  TY_WORD },   { "Word8",      "W8", TY_DWORD },
+  { "Union",     "U",   TY_UNION },  { "any",        "a",  TY_ANY },
+  { "character", "c",   TY_CHAR },   { "kcharacter", "k",  TY_NCHAR },
+  { "none",      "n",   TY_NONE },   { NULL,         NULL, -1 },
 };
 
 /* list of symbol type keywords */
 static const namelist Symboltypes[] = {
-    "Array",     "A", ST_ARRAY,   "Block",     "B",  ST_BLOCK,
-    "Common",    "C", ST_CMBLK,   "Derived",   "D",  ST_STRUCT,
-    "Entry",     "E", ST_ENTRY,   "Generic",   "G",  ST_GENERIC,
-    "Intrinsic", "I", ST_INTRIN,  "Known",     "K",  ST_PD,
-    "Label",     "L", ST_LABEL,   "Member",    "M",  ST_MEMBER,
-    "Namelist",  "N", ST_NML,     "Procedure", "P",  ST_PROC,
-    "Struct",    "S", ST_STRUCT,  "Tag",       "T",  ST_STAG,
-    "Union",     "U", ST_UNION,   "Variable",  "V",  ST_VAR,
-    "constant",  "c", ST_CONST,   "dpname",    "d",  ST_DPNAME,
-    "list",      "l",  ST_PLIST,
-    "module",    "m", -99,        "parameter", "p",  ST_PARAM,
-    "typedef",   "t", ST_TYPEDEF, NULL,        NULL, -1,
+  { "Array",     "A",  ST_ARRAY },   { "Block",     "B",  ST_BLOCK },
+  { "Common",    "C",  ST_CMBLK },   { "Derived",   "D",  ST_STRUCT },
+  { "Entry",     "E",  ST_ENTRY },   { "Generic",   "G",  ST_GENERIC },
+  { "Intrinsic", "I",  ST_INTRIN },  { "Known",     "K",  ST_PD },
+  { "Label",     "L",  ST_LABEL },   { "Member",    "M",  ST_MEMBER },
+  { "Namelist",  "N",  ST_NML },     { "Procedure", "P",  ST_PROC },
+  { "Struct",    "S",  ST_STRUCT },  { "Tag",       "T",  ST_STAG },
+  { "Union",     "U",  ST_UNION },   { "Variable",  "V",  ST_VAR },
+  { "constant",  "c",  ST_CONST },   { "dpname",    "d",  ST_DPNAME },
+  { "list",      "l",  ST_PLIST },
+  { "module",    "m",  -99 },        { "parameter", "p",  ST_PARAM },
+  { "typedef",   "t",  ST_TYPEDEF }, { NULL,        NULL, -1 },
 };
 /* list of symbol class keywords */
 static const namelist Symbolclasses[] = {
-    "Based",  "B",  SC_BASED,  "Common",   "C",    SC_CMBLK,
-    "Dummy",  "D",  SC_DUMMY,  "Extern",   "E",    SC_EXTERN,
-    "Local",  "L",  SC_LOCAL,  "Private",  "P",    SC_PRIVATE,
-    "Static", "S",  SC_STATIC, "none",     "n",    SC_NONE,
-    NULL,     NULL,  -1,
+  { "Based",  "B",  SC_BASED },  { "Common",  "C",  SC_CMBLK },
+  { "Dummy",  "D",  SC_DUMMY },  { "Extern",  "E",  SC_EXTERN },
+  { "Local",  "L",  SC_LOCAL },  { "Private", "P",  SC_PRIVATE },
+  { "Static", "S",  SC_STATIC }, { "none",    "n",  SC_NONE },
+  { NULL,     NULL, -1 },
 };
 
 /* list of subprogram type keywords */
 static const namelist Subprogramtypes[] = {
-    "Blockdata", "B", RU_BDATA,  "Function",   "F", RU_FUNC,
-    "Program",   "P", RU_PROG,   "Subroutine", "S", RU_SUBR,
-    NULL,        NULL, -1,
+  { "Blockdata", "B",  RU_BDATA }, { "Function",   "F",  RU_FUNC },
+  { "Program",   "P",  RU_PROG },  { "Subroutine", "S",  RU_SUBR },
+  { NULL,        NULL, -1 },
 };
 /* clang-format on */
 

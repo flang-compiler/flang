@@ -63,8 +63,8 @@ FLG flg = {
     false,      /* omptarget - don't allow OpenMP Offload directives */
     25,         /* errorlimit */
     false,      /* trans_inv */
-#ifdef TARGET_X86
-    0,                                     /* tpcount */
-    0,          0, 0, 0, 0, 0, 0, 0, 0, 0, /* tpvalue */
-#endif
+    0,                                      /* tpcount */
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* tpvalue */
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    "",         /* cmdline */
 };

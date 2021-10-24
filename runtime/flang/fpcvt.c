@@ -2199,7 +2199,10 @@ struct etypdat_tag etypdat = {
     /* eeul 5.7721566490153286060651209008240243104215933593992E-1 */
     {
         0xd1be, 0xc7a4, 0076660, 0063743, 0111704, 0x3ffe,
-    }};
+    },
+
+    /* inf_ok */
+    0};
 
 static void
 mtherr(const char *s, int c)

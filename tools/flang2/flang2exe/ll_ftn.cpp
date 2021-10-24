@@ -459,7 +459,7 @@ ll_process_routine_parameters(SPTR func_sptr)
           ++param_num;
         } else { /* Else, pass by value */
           LL_Type *type;
-          LL_ABI_ArgInfo arg = {LL_ARG_UNKNOWN};
+          LL_ABI_ArgInfo arg = {LL_ARG_UNKNOWN, 0, false, NULL, SPTR_NULL};
           if (is_iso_cptr(DTYPEG(param_sptr)))
             type = ref_dummy;
           else {

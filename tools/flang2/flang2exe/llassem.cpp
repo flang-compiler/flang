@@ -40,7 +40,7 @@
 #endif
 #include "symfun.h"
 
-fptr_local_t fptr_local = {0};
+fptr_local_t fptr_local;
 
 /* --- AGB local --- */
 static AGB_t agb_local;
