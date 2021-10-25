@@ -40,11 +40,15 @@ extern bool in_auto_reinline;
 
 int bu_auto_inline(void);
 
+#ifndef FE90
 static int anyunits = 0;
+#endif
 static int prevnest = -1;
 static int prevchildnest = -1;
+#ifndef FE90
 static int prevlineno = 0;
 static bool anymessages;
+#endif
 
 #define BUILD_VENDOR "flang-compiler"
 
@@ -599,6 +603,7 @@ _childsort(int l, int h)
   }
 } /* _childsort */
 
+#ifndef FE90
 /*
  *  * heap sort by line number
  *   */
@@ -632,6 +637,7 @@ _ichildsort(int l, int h)
     }
   }
 } /* _ichildsort */
+#endif
 
 /*
  * all children of fihx appear in FIH_CHILD/FIH_NEXT linked list.
@@ -674,6 +680,7 @@ fih_sort_children(int fihx)
   FIH_NEXT(childlist[nchildren - 1]) = 0;
 } /* fih_sort_children */
 
+#ifndef FE90
 /* all children of ifihx appear in IFIH_CHILD/IFIH_NEXT linked list.
  * sort them by line number */
 static void
@@ -712,6 +719,7 @@ ifih_sort_children(int ifihx)
   }
   IFIH_NEXT(childlist[nchildren - 1]) = 0;
 } /* ifih_sort_children */
+#endif
 
 /*
  * return TRUE if the string is numeric
@@ -956,6 +964,7 @@ fih_sort_messages(int fihx)
   }
 } /* fih_sort_messages */
 
+#ifndef FE90
 static void
 ifih_sort_messages(int ifihx)
 {
@@ -969,7 +978,9 @@ ifih_sort_messages(int ifihx)
     }
   }
 } /* ifih_sort_messages */
+#endif
 
+#ifndef FE90
 /*
  * Does the next message have the same message ID and the same
  * arguments as this one, except for arguments named '*list='
@@ -1016,6 +1027,7 @@ combine_message(MESSAGE *mptr1, MESSAGE *mptr2)
   mptr2->combine = 1;
   return true;
 } /* combine_message */
+#endif
 
 /*
  * print one message to the output file
@@ -1178,6 +1190,7 @@ fih_message(MESSAGE *mptr)
 #define INDENT 5
 #define CINDENT 2
 
+#ifndef FE90
 static void
 print_func(FILE *ofile)
 {
@@ -1187,7 +1200,9 @@ print_func(FILE *ofile)
     fprintf(ofile, "%s:\n", funcname);
   }
 } /* print_func */
+#endif
 
+#ifndef FE90
 /*
  * Format and print message to log file
  */
@@ -1332,6 +1347,7 @@ fih_message_ofile(FILE *ofile, int nest, int lineno, int childnest,
     }
   }
 } /* fih_message_ofile */
+#endif
 
 #ifdef FLANG_CCFFINFO_UNUSED
 /*
@@ -1734,6 +1750,7 @@ fih_rminc_children(int fihx)
   }
 }
 
+#ifndef FE90
 /* Remove child include files if there is no message. */
 
 static void
@@ -1763,6 +1780,7 @@ ifih_rminc_children(int ifihx)
     prev_ifihx = ifihx;
   }
 }
+#endif
 
 static bool
 save_any_messages(int fihx)
@@ -1922,6 +1940,7 @@ ccff_set_children()
   strng = (char *)getitem(CCFFAREA, strngsize);
 } /* ccff_set_children */
 
+#ifndef FE90
 /* set up childlist, messagelist, set IFIH_CHILD, IFIH_PARENT */
 static void
 ccff_set_children_deferred()
@@ -1959,6 +1978,7 @@ ccff_set_children_deferred()
   strngsize = 100;
   strng = (char *)getitem(ICCFFAREA, strngsize);
 } /* ccff_set_children_deferred */
+#endif
 
 /*
  * free up allocated space

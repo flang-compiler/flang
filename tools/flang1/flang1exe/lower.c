@@ -42,8 +42,6 @@ static int *outerflags = NULL;
 #define STB_LOWER() ((gbl.outfil == lowersym.lowerfile) && gbl.stbfil)
 #ifdef FLANG_LOWER_UNUSED
 static void lower_directives_llvm(void);
-
-static int docount, funccount;
 #endif
 
 #if DEBUG
@@ -107,8 +105,7 @@ lower_ndtypeg(int ast)
 void
 lower(int staticinit)
 {
-  int std, nextstd, sptr, a;
-  char ch;
+  int std, nextstd, a;
   int did_debug_label;
   FILE *save_lowerfile;
   int save_internal, save_docount, save_outersub, save_outerentries;
@@ -423,7 +420,6 @@ markid(int astx, int *unused)
       int numdim, i;
       numdim = ADD_NUMDIM(dtype);
       for (i = 0; i < numdim; ++i) {
-        int lwast, upast;
         if (ADD_LWBD(dtype, i) != 0)
           ast_traverse_more(ADD_LWBD(dtype, i), unused);
         if (ADD_UPBD(dtype, i) != 0)
@@ -632,7 +628,6 @@ lower_program(int rutype)
 static void
 lower_directives(void)
 {
-  int i, n;
   /*lowersym.lowerfile*/
   fprintf(lowersym.lowerfile, "DIRECTIVES version %d/%d\n", VersionMajor,
           VersionMinor);

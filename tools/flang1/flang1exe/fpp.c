@@ -386,7 +386,6 @@ fpp(void)
   int done;
   int i;
   INT mon;
-  FILE *fp;
   char **dirp;
   static char adate[] = "\377\"Mmm dd yyyy\"";
   static char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -712,7 +711,6 @@ fpp(void)
         }
         break;
       default:
-      unrec_directive:
         if (ifstack(truth))
           pperror(256, tokval, 3);
         break;
@@ -1094,7 +1092,6 @@ doincl(LOGICAL include_next)
   char fullname[MAX_FNAME_LEN];
   char *p;
   int type;
-  char **dirp;
   int i;
 
   /* parse file name */
@@ -1177,7 +1174,6 @@ found:
    * set (-MM/-MMD)
    */
   if ((XBIT(123, 2) || XBIT(123, 8)) && (type == 0 || !XBIT(123, 0x4000))) {
-    char *cp;
     if (incllist == 0) {
       inclsize = 20;
       NEW(incllist, INCLENTRY, inclsize);
@@ -2024,7 +2020,6 @@ gtok(char *tokval, int expflag)
 {
   PPSYM *sp;
   int toktyp;
-  int idx1, idx2;
 
 again:
   toktyp = nextok(tokval);
@@ -2046,7 +2041,6 @@ findtok(char *tokval, int truth)
   int state;
   PPSYM *sp;
   int toktyp;
-  int idx1, idx2;
 
   state = 1;
 

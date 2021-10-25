@@ -48,17 +48,10 @@
 /* static prototypes */
 
 static void reptime(void);
-static void add_debuglist(char *phasearg, char *dumparg);
 static void do_debug(const char *phase);
 static void cleanup(void);
 static void init(int argc, char *argv[]);
 static void datastructure_reinit(void);
-static void set_ipa_export_file(char *name);
-static void set_ipa_import_mode(void);
-static void set_ipa_import_offset(char *offset);
-static void set_debug(LOGICAL value);
-static void set_debug_symbol(LOGICAL value);
-static void set_debug_line(LOGICAL value);
 static void do_set_tp(const char *tp);
 static void fini(void);
 static void mkDwfInfoFilename(void);
@@ -249,7 +242,6 @@ main(int argc, char *argv[])
       dump_ast();
 #endif
     if (IPA_INHERIT_ENABLED && gbl.rutype != RU_BDATA) {
-      int func;
       ipa_startfunc(gbl.currsub);
       ipa_header1(gbl.currsub);
       ipa_header2(gbl.currsub);
@@ -523,7 +515,6 @@ main(int argc, char *argv[])
 static char *objectfile = NULL;
 static const char *outfile_name = NULL;
 LOGICAL fpp_ = FALSE;
-static LOGICAL no_specified;
 static int preproc = -1; /* not specified */
 
 /* ***************************************************************** */
@@ -618,15 +609,8 @@ init(int argc, char *argv[])
   const char *file_suffix;
   int copy_curr_file = 1;
   int i;
-  int def_count = 0;  /* number of -def switches */
-  int idir_count = 0; /* number of -idir switches */
-  INT qval1;
-  INT qval2;
-  int val_follows;
-  LOGICAL dbgflg = FALSE;
   LOGICAL errflg = FALSE;
   FILE *fd;
-  int exlib_flag = 0;
   static struct {
     const char *nm; /* name, 0 = end of list */
     int form;       /* 0 = fixed, 1 = form */
@@ -637,8 +621,6 @@ init(int argc, char *argv[])
           {".F95", 1, 1}, {".for", 0, 0}, {".fpp", 0, 1},
           {0, 0, 0},
   };
-  char *followval;
-  int followindex;
   time_t now;
 
   flg.freeform = -1;
@@ -1023,14 +1005,12 @@ init(int argc, char *argv[])
       flg.debug = 0;
     }
     if (stboutfile != NULL) {
-      char *tname;
       if ((gbl.stbfil = fopen(stboutfile, "w")) == NULL)
         errfatal(9);
     } else {
       gbl.stbfil = 0;
     }
   } else {
-    char *tname;
     /* process listing file */
     if (flg.code || flg.list || flg.xref) {
       if (listfile == NULL) {
@@ -1140,8 +1120,6 @@ init(int argc, char *argv[])
 }
 
 /* *************************************************************** */
-
-static char *uses_name;
 
 moddir_list *module_directory_list = NULL;
 
@@ -1515,10 +1493,3 @@ void fill_ipasym() {}
 void ipa() {}
 void ipa_set_vestigial_host() {}
 int IPA_isnoconflict(int sptr) { return 0; }
-
-static void set_ipa_export_file(char *name) {}
-static void set_ipa_import_mode() {}
-static void set_ipa_import_offset(char *offset) {}
-static void set_debug(LOGICAL value) {}
-static void set_debug_symbol(LOGICAL value) {}
-static void set_debug_line(LOGICAL value) {}

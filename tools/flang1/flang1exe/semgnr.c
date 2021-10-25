@@ -155,8 +155,6 @@ int
 generic_tbp_call(int gnr, SST *stktop, ITEM *list, ITEM *chevlist)
 {
   int sptr;
-  int dtype;
-  int mem;
 
 #if DEBUG
   if (DBGBIT(3, 256))
@@ -611,7 +609,6 @@ args_match(int ext, int count, int distance_sz, ITEM *list, LOGICAL elemental,
     int dum;
     int actual;
     int arg;
-    int distance_dx;
     sp = ARG_STK(i);
     if (sp) {
       (void)chkarg(sp, &dum);
@@ -649,7 +646,6 @@ tkr_match(int formal, SST *opnd, int actual, int elemental)
   int ddum, dact, elddum, eldact;
   int rank;
   int sptr;
-  LOGICAL match_found;
   int mng_match;
   LOGICAL formal_assumesz = FALSE;
 
@@ -1343,11 +1339,10 @@ check_defined_io2(char *proc, int silentmode, int chk_dtype)
 {
   int gnr, sptr, sptrgen;
   LOGICAL gnr_in_active_scope;
-  int gn_cnt;
   int gndsc, nmptr;
-  int func, paramct, dpdsc, iface, i;
+  int func, paramct, dpdsc, iface;
   int psptr, dtype, tag;
-  int mem, is_unformatted, func2;
+  int is_unformatted, func2;
   int seen_error, dtv_dtype;
   int extensible, found;
   int bind, dt_int;

@@ -1165,8 +1165,7 @@ static int
 resolveBind(tbpTask task, TBP *curr, char *impName)
 {
 
-  int sym, sym2, errCnt, paramct, dpdsc;
-  TBP *curr2;
+  int sym, sym2, errCnt;
 
   /* complete tbp binding name */
 
@@ -1186,7 +1185,6 @@ resolveBind(tbpTask task, TBP *curr, char *impName)
     /* This tbp binding name is used in a different context
      * (an unrelated derived type with a different pass argument)
      */
-    int enc;
     int old_sym = sym;
     sym = insert_sym(sym);
 
@@ -1643,7 +1641,7 @@ static int
 inheritTbps(int dtype, tbpTask task)
 {
 
-  TBP *curr, *prev, *newTbp, *curr2;
+  TBP *curr, *newTbp, *curr2;
   char *name, *nameCpy;
   int len, addit, sym, found, found_parent;
   SPTR tag;
@@ -1709,7 +1707,6 @@ inheritTbps(int dtype, tbpTask task)
           error(155, 3, gbl.lineno, buf, SYMNAME(tag));
 
         } else if (!found) {
-          int mem;
           int any_sym = findByNameStypeScope(curr->impName, ST_PROC, 0);
           int inscope_sym = findByNameStypeScope(curr->impName, ST_PROC, -1);
 
@@ -1870,7 +1867,7 @@ addToDtype(int dtype, tbpTask task)
 {
   TBP *curr, *newTbp, *curr2;
   char *nameCpy, *nameCpy2;
-  int len, addit;
+  int addit;
   static int tmp = 0;
 
   if (IS_ADD_TBP_TO_DTYPE_TASK(task)) {

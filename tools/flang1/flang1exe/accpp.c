@@ -711,7 +711,6 @@ accpp(void)
   int done;
   int i;
   INT mon;
-  FILE *fp;
   char tokval[TOKMAX];
   char **dirp;
   static char adate[] = "\"Mmm dd yyyy\"";

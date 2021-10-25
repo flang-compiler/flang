@@ -105,8 +105,6 @@ define_stfunc(int sptr, ITEM *argl, SST *estk)
   SFDSC *sfdsc;
   SST *stkptr;
   int ast;
-  int argt;
-  int i;
   static int last_stfunc; /* last ST_FUNC created */
   SFUSE *sfuse;
 
@@ -285,7 +283,6 @@ ref_stfunc(SST *stktop, ITEM *args)
   SFUSE *sfuse;
   ARGINFO *ai;
   int ast;
-  int i;
   int tmp;
   int new;
   int asn;
@@ -560,7 +557,7 @@ asn_sfuse(SFUSE *l_use)
 int
 mkarg(SST *stkptr, int *dtype)
 {
-  int sptr, cp, sp2, ast;
+  int sptr, sp2, ast;
   int dt;
 
 again:
@@ -1310,7 +1307,6 @@ ref_entry(int ent)
 {
   int fval;
   int dtype;
-  int sptr;
 
   fval = FVALG(ent);
   if (fval) {
@@ -1793,11 +1789,7 @@ LOGICAL
 evl_kwd_args(ITEM *list, int cnt, char *kwdarg)
 {
   SST *stkp;
-  int pos;
   int i, sptr;
-  char *kwd, *np;
-  int kwd_len;
-  char *actual_kwd; /* name of keyword used with the actual arg */
 
   if (get_kwd_args(list, cnt, kwdarg))
     return TRUE;
@@ -2207,7 +2199,6 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
     int arg;
     char buf[32];
     int sptr;
-    int doif;
 
     sprintf(buf, "%d", i + 1); /* prepare for error messages */
     if ((sp = ARG_STK(i))) {

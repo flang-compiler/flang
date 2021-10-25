@@ -32,16 +32,11 @@
 extern int rewrite_opfields;
 
 static void commopt(void);
-static void shmem_opt1(void);
-static void shmem_opt2(void);
-static void shmemopt1(void);
-static void shmemopt2(void);
 static void comm_optimize_init(void);
 static LOGICAL same_forall_bnds(int, int, int);
 static LOGICAL is_fusable(int, int, int);
 static LOGICAL smp_conflict(int, int);
 static LOGICAL is_in_block(int, int);
-static LOGICAL is_different_scalar_mask(int, int);
 static LOGICAL Conflict(int, int, int, LOGICAL, int, int);
 static LOGICAL is_branch_between(int, int);
 static LOGICAL is_contains_ast_between(int, int, int);
@@ -63,14 +58,18 @@ static LOGICAL Conflict_(int);
 static LOGICAL is_same_idx(int, int);
 static LOGICAL is_dominator_fg(int, int);
 static LOGICAL must_follow(int, int, int, int);
-static int find_lp(int);
+#if DEBUG
+int find_lp(int);
+#endif
 static void init_optsum(void);
 #if DEBUG
 static void optsummary(void);
 #endif
 static void alloc2ast(void);
 static void opt_allocate(void);
-static LOGICAL is_same_def(int, int);
+#if DEBUG
+LOGICAL is_same_def(int, int);
+#endif
 static LOGICAL is_safe_copy(int);
 static LOGICAL is_allocatable_assign(int ast);
 static int propagate_bound(LITEMF *defs_to_propagate, int bound);
@@ -82,15 +81,6 @@ static LOGICAL independent_commtype(int, int);
 static LOGICAL is_olap_conflict(int, int);
 static LOGICAL is_pcalls(int, int);
 static void forall_make_same_idx(int);
-static void eliminate_ownerproc(void);
-static void gather_ownerproc(int atyp, int lp);
-static void share_ownerproc(void);
-static void transform_ownerproc(void);
-static void barrier_opt(void);
-static void opt_anti_barrier(void);
-static void opt_flow_barrier(void);
-static LOGICAL can_reach_no_barrier(int fg1, int fg2);
-static LOGICAL _can_reach(int fg1, int fg2);
 
 INT *lpsort;
 FTB ftb;
@@ -1731,7 +1721,8 @@ is_same_array_alignment_for_schedule(int sptr, int sptr1)
   return TRUE;
 }
 
-static int
+#if DEBUG
+int
 find_lp(int std)
 {
   int i;
@@ -1747,6 +1738,7 @@ find_lp(int std)
   assert(0, "find_lp: loop not found", std, 3);
   return 0;
 }
+#endif
 
 static void
 eliminate_alloc(int lp, int lp1, int rt_std, int rt1_std)
@@ -3157,7 +3149,8 @@ is_safe_copy(int deflist)
   return TRUE;
 } /* is_safe_copy */
 
-static LOGICAL
+#if DEBUG
+LOGICAL
 is_same_def(int def, int def1)
 {
   int std, std1;
@@ -3198,6 +3191,7 @@ is_same_def(int def, int def1)
 
   return TRUE;
 }
+#endif
 
 #ifdef FLANG_COMMOPT_UNUSED
 /* This routine checks that def has only one definition and

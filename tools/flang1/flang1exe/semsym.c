@@ -645,7 +645,6 @@ declsym(int first, SYMTYPE stype, LOGICAL errflg)
 {
   SYMTYPE st;
   int sptr1, sptr, sptralias, oldsptr, level;
-  int sptr2, gnr;
   int symi;
 
   sptr = sym_in_scope(first, stb.ovclass[stype], &sptralias, &level, 0);
@@ -946,8 +945,7 @@ return2:
 int
 refsym(int first, OVCLASS oclass)
 {
-  int sptr, sl, scope, sptrloop;
-  int save_par, save_target, save_teams;
+  int sptr, sl;
 
   sptr = sym_in_scope(first, oclass, NULL, NULL, 1);
   if (sptr) {
@@ -1053,7 +1051,6 @@ refsym_inscope(int first, OVCLASS oclass)
       if (ENCLFUNCG(sptr) && STYPEG(ENCLFUNCG(sptr)) == ST_MODULE &&
           ENCLFUNCG(sptr) != gbl.currmod) {
         /* see if the scope level makes this host associated */
-        int sl;
         if (level < 0)
           goto return0;
         /* use associated symbol */
@@ -1102,7 +1099,7 @@ returnit:
 void
 enforce_denorm(void)
 {
-  int st, first, sptr, sl, scope, sptrloop;
+  int first, sptr;
 
   if (!sem.ieee_features || STYPEG(gbl.currsub) == ST_MODULE)
     return;
@@ -1441,7 +1438,7 @@ ref_based_object_sc(int sptr, SC_KIND sc)
     if (SAVEG(sptr) ||
         (in_save_scope(sptr) && !CCSYMG(sptr) && !HCCSYMG(sptr))) {
       ADSC *ad;
-      int i, numdim, s;
+      int i, numdim;
 
       SCP(sptr1, SC_STATIC);
       SAVEP(sptr1, 1);
@@ -1614,7 +1611,6 @@ decl_private_sym(int sptr)
   SYMTYPE stype;
   char *name;
   int new = 0;
-  int pvar;
   int rgn_level;
   /*
    * First, retrieve the first symbol in the hash list whose name is the same.

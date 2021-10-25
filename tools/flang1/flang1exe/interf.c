@@ -297,7 +297,6 @@ static char *import_sourcename = NULL;
 static int import_sourcename_len = 0;
 static LOGICAL ignore_private = FALSE;
 static int curr_import_findex = 0;
-static int top_import_findex = 0;
 
 static char *read_line(FILE *);
 static ISZ_T get_num(int);
@@ -1948,7 +1947,6 @@ import(lzhandle *fdlz, WantPrivates wantPrivates, int ivsn)
   int module_sym, scope_sym, rename_sym, offset, scope_stype;
   int hash;
   int first_ast;
-  int currrout = 0;
 
   save_dtype_ivsn = dtype_ivsn;
   dtype_ivsn = ivsn;
@@ -2274,7 +2272,6 @@ import(lzhandle *fdlz, WantPrivates wantPrivates, int ivsn)
       if (sem.interface == 0) {
         j = get_num(10); /* is it private */
         if (!ignore_private || wantPrivates == INCLUDE_PRIVATES || j == 0) {
-          ITEM *lastitemp;
           int ss, numss, ess;
           evp = sem.eqv_avail;
           ++sem.eqv_avail;
@@ -3354,7 +3351,7 @@ static char *
 getlstring(int area)
 {
   char *p;
-  int len, i;
+  int len;
   char *s;
   len = get_num(10);
   p = currp;
@@ -3378,9 +3375,6 @@ getlstring(int area)
 static int ipa_ast(int a);
 static int dindex(int dtype);
 static int get_symbolxref(int sptr);
-
-static int dsize;
-static int *dtindex;
 
 /** \brief Change symbol number, if necessary, and write record to data init
   * file
@@ -4102,7 +4096,6 @@ static int
 new_dtype(int old_dt)
 {
   DITEM *pd;
-  int j;
 
   pd = finddthash(old_dt);
   if (pd == NULL) {
@@ -4120,7 +4113,7 @@ static int
 new_installed_dtype(int old_dt)
 {
   DITEM *pd;
-  int j, dtype;
+  int dtype;
 
   pd = finddthash(old_dt);
   if (pd == NULL) {
@@ -4975,7 +4968,6 @@ new_asd(int offset)
 static int
 new_astli(int offset, int atype)
 {
-  int j;
   int astli;
   int ast;
   int sptr;
@@ -5018,7 +5010,6 @@ new_astli(int offset, int atype)
 static int
 new_shape(int offset)
 {
-  int i;
   SHDITEM *p_shd;
   int j;
   int cnt;

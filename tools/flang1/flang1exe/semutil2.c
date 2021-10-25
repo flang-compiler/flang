@@ -3189,7 +3189,7 @@ mk_ulbound_intrin(AC_INTRINSIC intrin, int ast)
   int argast = ARGT_ARG(argt, 0);
   int shape = A_SHAPEG(argast);
   int rank = SHD_NDIM(shape);
-  int dtyper, dtyper2;
+  int dtyper;
 
   for (i = 0; i < rank; i++) {
     if (A_TYPEG(argast) == A_ID) {
@@ -11438,7 +11438,6 @@ check_alloc_clauses(ITEM *list, ITEM *spec, int *srcast, int *mold_or_src)
 {
   ITEM *itemp;
   int stat = 0;
-  int pinned = 0;
   int errmsg = 0;
   int source = 0;
 
@@ -11481,7 +11480,7 @@ gen_alloc_dealloc(int stmtyp, int object, ITEM *spec)
 {
   int ast;
   ITEM *itemp;
-  int sptr, objectsptr, sptr1;
+  int sptr, objectsptr;
   DTYPE dtype;
   int stmt;
   int store_stat = 0;
@@ -13723,7 +13722,7 @@ mp_create_bscope(int reuse)
   int astid;
   int uplevel_sptr = 0;
   int scope_sptr = 0;
-  SPTR parent_sptr, parent_uplevel;
+  SPTR parent_sptr;
 
   if (reuse) {
     i = sem.scope_level;

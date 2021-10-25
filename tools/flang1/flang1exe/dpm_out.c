@@ -37,15 +37,15 @@
 #define NO_CHARPTR XBIT(58, 0x1)
 #define NO_DERIVEDPTR XBIT(58, 0x40000)
 
-static void handle_nonalloc_template(void);
 #ifdef FLANG_DPM_OUT_UNUSED
 static int exist_test(int, int);
-
 static void add_adjarr_bounds_extr_f77(int, int, int);
 #endif
 static bool allocate_one_auto(int);
 static void component_init_allocd_auto(int, int);
+#if defined(BND_ASSN_PRECEDES)
 static int bnd_assn_precedes(int, int, int);
+#endif
 static void add_auto_bounds(int, int);
 static void mk_allocate_scalar(int memberast, int sptr, int before);
 static void mk_deallocate_scalar(int memberast, int sptr, int after);
@@ -99,8 +99,6 @@ static int fill_argt_with_alnd(int sptr, int memberast, int argt, int alnd,
 static int getbits(int, int, int);
 static void prepare_for_astout(void);
 static void undouble_callee_args_f90(void);
-static void dynamic_template_from_module(int sptr);
-static void update_dist(int);
 static int get_scalar_in_expr(int expr, int std, LOGICAL astversion);
 static int emit_get_scalar_sub(int, int);
 
@@ -120,7 +118,6 @@ int find_cc_symbols(int);
 /* code insertion points at the beginning/end of a routine, block, or call */
 static int EntryStd = 0, ExitStd = 0;
 static int f77_local = 0;
-static int f77_local_call = 0;
 static int redistribute = 0;
 static int realign = 0;
 static int allocatable_freeing = 0;
@@ -292,7 +289,7 @@ trans_mkproc(int sptr)
 static int
 extent(int array, int descriptor, int dimension)
 {
-  int nargs, argt, extr, func, ast;
+  int nargs, argt, func, ast;
   int subs[1];
 
   if (DTYG(DTYPEG(array)) != TY_CHAR) {
@@ -316,8 +313,7 @@ extent(int array, int descriptor, int dimension)
 static void
 allocate_aligned(int sptr, int memberast, int basesptr)
 {
-  int dtype, mem, align;
-  int ast, ast1, astnew;
+  int dtype, mem;
   if (ALLOCG(sptr))
     return;
   dtype = DTYPEG(sptr);
@@ -367,7 +363,6 @@ allocate_for_aligned_array(void)
   int sptr;
   int align;
   int dtype;
-  int astnew, ast1;
   ADSC *ad;
   /* put barrier before any deallocate or copy_out if SMP */
   /* put out allocates for local arrays */
@@ -428,8 +423,6 @@ static int
 construct_flag(int sptr)
 {
   int flag;
-  int align;
-  int dist;
   flag = 0;
   if (ASUMSZG(sptr))
     flag |= __ASSUMED_SIZE;
@@ -462,20 +455,12 @@ construct_flag(int sptr)
 static int
 make_alnd(int sptr)
 {
-  int dist;
-  int align;
   int ndim;
   int i;
-  int s, o;
   ADSC *ad;
-  int isstar;
-  int collapse;
   int nd;
   int flag;
-  int glb, gub, gextnt;
-  int target;
-  int ndim1;
-  int single;
+  int glb, gub;
   if (is_bad_dtype(DTYPEG(sptr)))
     return 0;
   if ((IGNOREG(sptr) || HCCSYMG(sptr)) && DESCRG(sptr) == 0)
@@ -820,7 +805,6 @@ is_same_secd(int sptr, int sptr1)
   int arrdsc, arrdsc1;
   int secd, secd1;
   int ndim, ndim1;
-  int i;
 
   arrdsc = DESCRG(sptr);
   if (!arrdsc)
@@ -860,7 +844,6 @@ make_secd(int sptr)
   int nolap, polap;
   ADSC *ad;
   int secd;
-  int shdw;
 
   if (is_bad_dtype(DTYPEG(sptr)))
     return 0;
@@ -980,7 +963,7 @@ want_descriptor_anyway(int sptr)
 static void
 share_secd(void)
 {
-  int sptr, sptr1, d;
+  int sptr, sptr1;
   int arrdsc, arrdsc1;
   int secd, secd1;
   int descr;
@@ -1582,7 +1565,7 @@ static void
 prepare_for_astout(void)
 {
   int sptr;
-  int secd, arrdsc, sdsc, alnd;
+  int secd, arrdsc, sdsc;
 
   for (sptr = stb.firstusym; sptr < stb.stg_avail; sptr++) {
     if (DTY(DTYPEG(sptr)) != TY_ARRAY)
@@ -1620,7 +1603,6 @@ prepare_for_astout(void)
     }
   do_parref:
     if (flg.smp && PARREFG(sptr)) {
-      int encl = ENCLFUNCG(sptr);
       int sdsc = SDSCG(sptr);
       if (sdsc && !PARREFG(sdsc) && DESCUSEDG(sptr)) {
         set_parref_flag2(sptr, 0, 0);
@@ -1920,7 +1902,7 @@ emit_secd(int sptr, int memberast, LOGICAL free_flag, LOGICAL for_allocate)
   int arrdsc, stype, descr;
   int nargs, argt, astnew;
   int ndim;
-  int i, j;
+  int j;
   int collapse;
   int alnd;
   int func;
@@ -2261,7 +2243,7 @@ emit_alnd(int sptr, int memberast, LOGICAL free_flag, LOGICAL for_allocate,
 {
   int alnd;
   int arrdsc, stype;
-  int nargs, argt, astnew, i, cargs;
+  int nargs, argt, astnew, cargs;
   int ndim;
   int func, descr;
   int realign1, redistribute1;
@@ -2410,7 +2392,6 @@ fill_argt_with_alnd(int sptr, int memberast, int argt, int alnd, int j,
   int sptrTarg, tmpl_descr;
   int ndim;
   int flag;
-  int ast;
   int asd;
 
   ndim = TMPL_RANK(alnd);
@@ -2421,7 +2402,7 @@ fill_argt_with_alnd(int sptr, int memberast, int argt, int alnd, int j,
     memberast = 0;
 
   if (memberast) {
-    int s, a, b, dt, m;
+    int s, a, dt, m;
     if (STYPEG(sptr) == ST_MEMBER && memberast) {
       s = MIDNUMG(sptr);
       if (s) {
@@ -2784,9 +2765,7 @@ bounds_depends(int sptrA, int sptrB)
   int astB, astBnd;
   ADSC *adA, *adB;
   int ndimsA, dimA, ndimsB, dimB;
-  int aln;
-  int dst;
-  int sptrTmpl, sptrProc, sptrSD, fval;
+  int sptrSD, fval;
 
   if (DTY(DTYPEG(sptrA)) != TY_ARRAY)
     return FALSE;
@@ -2848,7 +2827,7 @@ bounds_depends(int sptrA, int sptrB)
 static LOGICAL
 arg_depends(int isptr, int jsptr)
 {
-  int aln, dst, jast, ndim, d, stride, offset, dast, dupb;
+  int aln, dst;
   if (bounds_depends(isptr, jsptr)) {
     return TRUE;
   }
@@ -3020,7 +2999,6 @@ emit_kopy_in(int arg, int this_entry, int actual)
   int dummy_sec;
   int nargs, argt;
   int astnew, ast;
-  int i;
   int p_sptr, o_sptr;
   int asn;
   int newarg, newdsc;
@@ -3968,7 +3946,6 @@ set_assumsz_bound(int arg, int entry)
   int i;
   int ast1, ast2;
   int std;
-  int argt, nargs;
   int newarg, newdsc;
   int astnew, present;
 
@@ -4012,18 +3989,6 @@ set_assumsz_bound(int arg, int entry)
   ENTSTDP(entry, std);
 }
 
-/*
- * return '1' if astx is a A_ID of a compiler-created temp
- */
-static int
-cc_tmp_var(int astx)
-{
-  if (A_TYPEG(astx) == A_ID &&
-      (CCSYMG(A_SPTRG(astx)) || HCCSYMG(A_SPTRG(astx))))
-    return 1;
-  return 0;
-} /* cc_tmp_var */
-
 static bool
 update_shape_info_expr(int arg, int ast)
 {
@@ -4065,8 +4030,8 @@ update_shape_info_expr(int arg, int ast)
 static void
 update_shape_info(int arg)
 {
-  int std, ast, dst, asd, aptr, sptr;
-  int i, j, nd, shd;
+  int std, ast, dst, aptr, sptr;
+  int i, nd, shd = 0;
 
   for (std = STD_NEXT(0); std; std = STD_NEXT(std)) {
     ast = STD_AST(std);
@@ -4098,15 +4063,13 @@ set_assumed_bounds(int arg, int entry, int actual)
   ADSC *ad;
   int dtype;
   int r;
-  int i, ndim;
-  int ast, ast1, ast2, ast_gbl;
+  int i;
+  int ast, ast1, ast2;
   int sav = 0;
   int tmp_lb, tmp_ub;
   int std;
-  int argt, nargs;
   int newarg, newdsc;
   int astnew, present, zbaseast, prevmpyer;
-  int asd;
 
   assert(is_array_type(arg), "set_assumed_bounds: arg not array", 0, 4);
   dtype = DTYPEG(arg);
@@ -4473,7 +4436,6 @@ declare_array_dummys(int this_entry)
   int arg, narg;
   int i;
   int oldarg;
-  int sptr;
 
   narg = PARAMCTG(this_entry);
   dscptr = DPDSCG(this_entry);
@@ -4596,15 +4558,10 @@ add_adjarr_bounds_extr_f77(int sym, int entry, int call_ast)
  * data structure, for example
  * interface, extrinsic(f77_local) sub(a,m); distribute a(cyclic(m))
  */
-
 static void
 update_with_actual(int arg)
 {
-  int align, offset, stride;
-  int dist, distast, distupd;
-  int i, ndim;
-  int proc;
-  int template;
+  int align;
 
   align = ALIGNG(arg);
   update_bounds_with_actual(arg);
@@ -4692,6 +4649,7 @@ set_actual(int entry, int call_ast, LOGICAL arrays)
 
 #undef BND_ASSN_PRECEDES
 
+#if defined(BND_ASSN_PRECEDES)
 static int
 bnd_assn_precedes(int lhs, int entryStd, int wh)
 {
@@ -4724,6 +4682,7 @@ bnd_assn_precedes(int lhs, int entryStd, int wh)
           wh);
   return fnd;
 }
+#endif
 
 static void
 add_auto_bounds(int sym, int entryStd)
@@ -4735,7 +4694,6 @@ add_auto_bounds(int sym, int entryStd)
   int bnd;
   int ast;
   int tmp;
-  int sptr;
   int zbaseast, mlpyrast;
 
   dtype = DTYPEG(sym);
@@ -5027,10 +4985,6 @@ emit_get_scalar_sub(int a, int std)
 static void
 add_adjarr_bounds(int sptr)
 {
-  int aln;
-  int dst;
-  int sptrTmpl, sptrProc;
-
   if (DTY(DTYPEG(sptr)) != TY_ARRAY)
     return;
 
@@ -5264,7 +5218,6 @@ static void
 fix_sdsc_sc(int sptr, int sdsc, int arrdsc)
 {
   if (SCG(sptr) == SC_BASED) {
-    int ptr;
     if (SCG(arrdsc) == SC_PRIVATE) {
       SCP(sdsc, SC_PRIVATE);
     }
@@ -5287,7 +5240,6 @@ get_num(void)
 {
   char *p;
   INT val;
-  static char buffer[64];
 
   while (*currp == ' ')
     ++currp;

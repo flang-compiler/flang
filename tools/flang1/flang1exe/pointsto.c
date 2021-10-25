@@ -461,9 +461,6 @@ static struct {
 #if defined(TARGET_WIN_X8664)
 static char *importname = "__imp_";
 static int importnamelen = 6;
-#else
-static char *importname = "";
-static int importnamelen = 0;
 #endif
 
 #if DEBUG
@@ -1701,16 +1698,6 @@ copy_list(int ptelistx)
 } /* copy_list */
 
 /*
- * combine (take the meet) of the 'old' list at T
- * with the new list at N.  return the result
- */
-static int
-combine_list(int T, int N)
-{
-  return T;
-} /* combine_list */
-
-/*
  * we're at a point where we know nothing, assume worst case
  */
 static void
@@ -2095,7 +2082,6 @@ addtpte(int lhspsdx, int ptex)
 static void
 inittpte(int lhspsdx, int ptex)
 {
-  int sl;
   _addtpte(lhspsdx, ptex, 0, 1);
 } /* inittpte */
 
@@ -2108,7 +2094,6 @@ inittpte(int lhspsdx, int ptex)
 static void
 replacepte(int lhspsdx, int ptex)
 {
-  int sl;
   free_list_slot(PSD_SLOT(lhspsdx));
   addtpte(lhspsdx, ptex);
 } /* replacepte */
@@ -2183,7 +2168,7 @@ replace_tptelist(int lhspsdx, int ptelistx)
 static void
 add_target_tptelist(int lhspsdx, int ptelistx)
 {
-  int ptex, sl, psdx;
+  int sl;
   add_tptelist(lhspsdx, ptelistx);
   sl = PSD_SLOT(lhspsdx);
   if (LHEAD(sl) == TPTE_UNK) {
@@ -2268,7 +2253,7 @@ effective_rhs(int psdx)
 static void
 interpret(int asx)
 {
-  int lhspsdx, l, rhsptelistx, sl, stride;
+  int lhspsdx, rhsptelistx, sl, stride;
 #if DEBUG
   if (DBGBIT(TRACEFLAG, TRACEBIT)) {
     putassign(asx);
@@ -2865,19 +2850,6 @@ check_pte(char *ch)
   }
 } /* check_pte */
 #endif
-
-/*
- * return TRUE if this node is critical, that is, has 0 or >1 predecessor,
- * or has a single predecessor that has >1 successor
- * also mark successor of entry BIH as critical,
- * and any block with XT as critical
- */
-static int
-critical(int v)
-{
-  int s;
-  return TRUE;
-} /* critical */
 
                    /*
                     * save the information as a list of aliases for each statement
@@ -3945,7 +3917,6 @@ pta_target(int ptrstdx, int ptrsptr, int *ptag, int *pid)
 {
   static int prev_func_count = 0, prevptrstdx = 0, prevptrsptr = 0, ptrsrc = 0,
              ptrpte = 0;
-  int sptr;
   if (fpsrc.stg_base == NULL)
     return 0;
   if (prevptrstdx == ptrstdx && prevptrsptr == ptrsptr &&
@@ -4034,7 +4005,7 @@ pta_target(int ptrstdx, int ptrsptr, int *ptag, int *pid)
 static void
 init_points_to_anal(void)
 {
-  int savex6, a;
+  int a;
   STG_ALLOC(gpte, 100);
   gpte.xstg_free = TTE_NULL;
   gpte.stg_avail = 2;
@@ -4227,10 +4198,10 @@ points_to_anal(void)
 void
 points_to(void)
 {
-  int r, v, rdfohigh, nextrdfohigh, rdfolow, nextrdfolow, newinfo;
+  int r, v, rdfohigh, nextrdfohigh, rdfolow, nextrdfolow;
   PSI_P succ;
   int sl, psdx, offset, iteration, asx;
-  int stdx, cstdx, change;
+  int stdx, change;
 
   /* initialize */
   init_points_to_prop();

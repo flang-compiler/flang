@@ -427,7 +427,6 @@ extractor(void)
 void
 extractor_end(void)
 {
-  int iStat;
   FILE *fd;
   char sTOCFile[MAX_FNAME_LEN];
   LE *ple;
@@ -482,8 +481,6 @@ static int nskip = 0;
 void
 inliner(void)
 {
-  int lpi;
-
   if (flg.x[115])
     nLevels = flg.x[115];
 
@@ -550,7 +547,6 @@ inline_ast(int std, int ast, int iLevels, int level)
   int asd, sptrEntry;
   int nsubs, sub;
   int sptrRet;
-  int shd;
   INT argt, argtNew;
   int arg, nargs;
   LOGICAL bChanged;
@@ -761,7 +757,7 @@ use_old_subprograms(int oldsymavl)
 static void
 erase_entry(int oldsymavl)
 {
-  int sptr, tptr;
+  int sptr;
   for (sptr = oldsymavl; sptr < stb.stg_avail; ++sptr) {
     switch (STYPEG(sptr)) {
     case ST_ENTRY:
@@ -1043,7 +1039,7 @@ copy_inargs(int sptrEntry, int astCall, int stdstart, int stdlast)
   int sptrCall, sptrDummy, sptrCopy, sptrBnd;
   int nargs, arg;
   int argtNew;
-  int astArg, astCopy, ast, astl, astu, asts, vastSubs[7], astBnd, astAlloc;
+  int astArg, astCopy, ast, astl, astu, asts, vastSubs[7], astAlloc;
   int shd;
   int dtyp;
   int ndims, dim;
@@ -1356,9 +1352,6 @@ static void
 allocate_adjarrs(int stdstart, int stdlast)
 {
   int sptr;
-  int ndims, dim;
-  int vastSubs[7], astArr, ast, astAlloc, astl, astu;
-  int std1 = STD_PREV(stdstart), std2 = stdlast;
 
   for (sptr = sptrHigh; sptr < stb.stg_avail; sptr++)
     if (STYPEG(sptr) == ST_ARRAY && SCG(sptr) == SC_LOCAL && ADJARRG(sptr))
@@ -1628,7 +1621,7 @@ replace_parms(int ast, void *extra_arg)
     bChanged |= astNew != astLop;
     ast1 = ast;
     if (astSS && ASD_NDIM(asdSS) != ndims) {
-      int nSubs[7], i, j;
+      int nSubs[7], j;
       bChanged = 1;
       j = 0;
       ndims = ASD_NDIM(asdSS);
@@ -1727,11 +1720,9 @@ rewrite_inlined_args(int astCall, int sptrEntry, int stdstart, int stdlast)
   int arg, argnum;
   int astArg, ast;
   int std;
-  int sptrDummy, sptrArg, sptr, dtype;
-  int shd;
+  int sptrDummy, sptr, dtype;
   int ndims, dim;
-  int vastSubs[7];
-  ADSC *adDummy, *adArg, *ad;
+  ADSC *ad;
 
   /* Initialize the argument replacement table. */
   parbase = NULL;
@@ -1897,7 +1888,6 @@ replace_arg(int astDummy, int astAct)
 {
   int sptrAct, sptrDummy;
   int rankAct, dimAct, dim, rankDummy;
-  int asdAct, asdDummy;
   int ast, astl, astu, asts, astSub, ast1;
   int vastSubs[7];
   int shd, shdDummy;
@@ -1918,7 +1908,6 @@ replace_arg(int astDummy, int astAct)
    */
   needsubscripts = 0;
   for (ast = astAct; ast;) {
-    int sptr;
     switch (A_TYPEG(ast)) {
     case A_ID:
       ast = 0;
@@ -2016,7 +2005,7 @@ assign_bounds(int sptrDummy, int astAct, int std)
 {
   int sptrAct;
   int dim, ndimsAct;
-  int astSub, ast;
+  int ast;
   ADSC *adDummy;
   int shd;
 
@@ -2089,8 +2078,7 @@ load_inline_file(char *sDir)
 {
   char sHintsFile[MAX_FNAME_LEN];
   char sLine[MAX_LINE_LEN];
-  int iStat, iVer;
-  char *sStat;
+  int iStat;
   FILE *fd;
 
   /* Open Hints file. */
@@ -2130,7 +2118,6 @@ load_TOC(char *sDir)
   char sFunc[MAX_FNAME_LEN];
   char sHost[MAX_FNAME_LEN];
   char sMod[MAX_FNAME_LEN];
-  char sSrcFile[MAX_FNAME_LEN];
   char sModFile[MAX_FNAME_LEN];
   int iVer;
   LE *ple;

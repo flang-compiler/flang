@@ -1650,7 +1650,6 @@ void rw_dinit_state(RW_ROUTINE, RW_FILE)
   FILE *readfile;
   FILE *writefile;
   int i;
-  int sptr;
   int seq_astb_df;
   int fileno = 1;
 

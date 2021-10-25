@@ -52,7 +52,6 @@ static LOGICAL const_prop(void);
 static LOGICAL self_use(int use);
 static LOGICAL can_prop_fg(int);
 static LOGICAL can_prop_def(int);
-static LOGICAL can_prop_use(int);
 
 static int def_bv_len;
 
@@ -186,7 +185,7 @@ _cr_nme(int ast, int *dummy)
   int asd;
   int s;
   int astli;
-  int sd, sda, n;
+  int sd, sda;
 
   switch (A_TYPEG(ast)) {
   case A_ID:
@@ -388,7 +387,6 @@ again:
       goto again;
     }
   }
-exit_flow:
   do_lv = TRUE; /* so flow_end() functions properly */
   do_unv = TRUE;
   local_again = FALSE;
@@ -458,7 +456,7 @@ prntstl(STL *p)
     fprintf(gbl.dbgfil, " ");
   fprintf(gbl.dbgfil, "stl addr %p  store %d\n", (void *)p, p->store);
   {
-    int ii, jj;
+    int ii;
     for (ii = p->store; ii; ii = STORE_NEXT(ii)) {
       for (i = 0; i < indent; i++)
         fprintf(gbl.dbgfil, " ");
@@ -477,7 +475,7 @@ prntstl(STL *p)
 static void
 localflow(void)
 {
-  int i, parent, store;
+  int i, parent;
   STL *p;
   int nxtfg;
 
@@ -658,8 +656,8 @@ static LOGICAL
 bld_ud(int ast, int *dummy)
 {
   int atype;
-  int sym, nme;
-  int i, j, asd;
+  int sym;
+  int i, j;
   int astli;
   int argt;
   int cnt;
@@ -936,7 +934,7 @@ bld_ud(int ast, int *dummy)
         sym = A_SPTRG(baseopnd);
         sd = SDSCG(sym);
         if (sd) {
-          int n, sda;
+          int sda;
           sda = mk_id(sd);
           df = bld_lhs(sda, ast, FALSE, 0);
           if (df)
@@ -947,7 +945,7 @@ bld_ud(int ast, int *dummy)
         sym = A_SPTRG(A_MEMG(baseopnd));
         sd = SDSCG(sym);
         if (sd) {
-          int n, sda;
+          int sda;
           sda = check_member(baseopnd, mk_id(sd));
           df = bld_lhs(sda, ast, FALSE, 0);
           if (df)
@@ -1099,12 +1097,8 @@ static int
 bld_use(int lval, LOGICAL isarg)
 {
   int ast;
-  int atype;
   int sym, nme;
   int i, asd;
-  int astli;
-  int argt;
-  int cnt;
   int precise;
   int s;
   int u;
@@ -1226,12 +1220,8 @@ static DEF *
 bld_lhs(int lhs, int rhs, LOGICAL isarg, int precise)
 {
   int ast;
-  int atype;
   int sym, nme;
   int i, asd;
-  int astli;
-  int argt;
-  int cnt;
   DEF *df;
   int mark_use; /* to mark beginning of uses found in a rhs */
   int s;
@@ -1496,8 +1486,6 @@ static int
 add_use(int nme, int ilix, int addr, int precise)
 {
   int usex, def;
-  DU *du;
-  UD *ud;
 
   usex = use_hash_lookup(false, true, addr, nme, cur_std);
 #if (DEBUG && DEBUG_USE_HASH)
@@ -1644,7 +1632,6 @@ add_def(int nme, int lhs, int addr, int rhs, int precise)
 static void
 chk_ptr_load(int nme)
 {
-  int sym;
   /*
    * for a loop (including region 0), nme represents a reference occuring
    * in a load.  Determine if this load is via a pointer. A load via a
@@ -2024,7 +2011,7 @@ live_var(void)
   Q_ITEM *f_q, *l_q, *q;
   BV *new_out, *bv;
   PSI_P p;
-  int i, v, def, bih;
+  int i, v;
 
   l_q = GET_Q_ITEM(f_q); /* a queue is empty when the first and */
   l_q->next = Q_NULL;    /* and last entries locate the same    */
@@ -2258,9 +2245,8 @@ static void
 uninit_var(void)
 {
   Q_ITEM *f_q, *l_q, *q, *h_q;
-  BV *new_out, *bv;
-  PSI_P succv, p, tp, pp;
-  int i, v, def, bih, ij, node_done;
+  PSI_P succv, tp;
+  int i, v;
 
   l_q = GET_Q_ITEM(f_q);
   l_q->next = Q_NULL;
@@ -2691,8 +2677,6 @@ du_ud(void)
   */
   int i, nme, def;
   BV *bv;
-  DU *du;
-  UD *ud;
 
   for (i = 1; i < opt.useb.stg_avail; i++)
     if (USE_EXPOSED(i)) {
@@ -2746,8 +2730,7 @@ const_prop(void)
   int df;
   int df_ilt;
   int nme;
-  DU *du, *end_du;
-  int fgx;
+  DU *du;
   Q_ITEM *q;
   int dvl;
 
@@ -2784,7 +2767,6 @@ const_prop(void)
   changes = FALSE;
   if (!XBIT(7, 0x100000)) {
     for (dvl = 0; dvl < aux.dvl_avl; dvl++) {
-      INT val[2];
       int use;
       int sym;
       int nocp;
@@ -2897,9 +2879,6 @@ copy_const(int use)
   int tmp;
   Q_ITEM *q;
   int fgx;
-  int ft_bih;
-  int lab;
-  int opc; /* ili opcode */
   int b;   /* bih temporary */
 
   use_std = USE_STD(use);
@@ -3003,10 +2982,7 @@ copy_const(int use)
 #endif
   if (new_tree != old_tree) {
     int newval; /* new stored value, if a store */
-    int oldval; /* old stored value */
     int df;     /* def entry, if a store */
-    int nme;
-    DU *du;
 
     A_OPT1P(new_tree, b);
     STD_AST(use_std) = new_tree;
@@ -3113,9 +3089,8 @@ can_prop_def(int def)
 void
 delete_stores(void)
 {
-  int def, iltz, sym, use, i;
+  int def, iltz, sym, i;
   DU *du;
-  int count; /* # uses in same block */
 
   if (XBIT(8, 0x2)) {
 #if DEBUG
@@ -3207,8 +3182,7 @@ use_before_def(void)
       int fg;
       PSI_P p;
       BV *bv;
-      int use_std;
-      int def, df;
+      int df;
       LOGICAL checked;
       LOGICAL covered;
       int self;
@@ -3438,7 +3412,7 @@ dump_global(LOGICAL inout)
     fprintf(gbl.dbgfil, "\n");
     {
       STL *p;
-      int ii, jj;
+      int ii;
       p = LP_STL(i);
       fprintf(gbl.dbgfil, "        stl %08lx  child %08lx  next %08lx\n",
               (long)(p), (long)(p->childlst), (long)(p->nextsibl));
@@ -3499,9 +3473,6 @@ add_new_uses(int loop, int where, int newilt, int expr)
 static void
 new_ud(int astx)
 {
-  int opc, i, noprs;
-  int nme;
-
 }
 
 /*
@@ -3516,8 +3487,6 @@ new_du_ud(void)
   PSI_P p;
   int i, nme, def;
   BV *bv;
-  DU *du;
-  UD *ud;
 
   bv = opt.def_setb.stg_base; /* scratch bit vector */
   bv_zero(bv, def_bv_len);    /* bv <-- 0 */

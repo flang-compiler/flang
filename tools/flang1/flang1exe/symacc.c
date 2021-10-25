@@ -32,7 +32,6 @@
 
 extern STB stb;
 extern GBL gbl;
-static char buff[132];
 
 void
 sym_init_first(void)
@@ -348,7 +347,9 @@ void
 add_fp_constants(void)
 {
   INT tmp[4];
+#ifdef LONG_DOUBLE_FLOAT128
   INT res[4];
+#endif
 
   tmp[0] = 0;
   atoxf("0.0", &tmp[1], 3);

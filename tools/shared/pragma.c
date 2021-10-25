@@ -517,13 +517,14 @@ do_sw(void)
 {
   int typ;
   int indx;
-  int i, j, k, m, err;
+  int i;
   char *p;
   int xindx;
   int xval;
   SPTR sptr;
   int backup_nowarn;
 #if defined(TARGET_X8664) && (!defined(FE90) || defined(PGF90))
+  int j, k, m, err;
   int tpvalue[TPNVERSION];
 #endif
 
