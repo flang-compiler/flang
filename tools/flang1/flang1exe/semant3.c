@@ -34,7 +34,6 @@
 
 static LOGICAL alloc_error = FALSE;
 static int alloc_source;
-static int alloc_currsub;
 static int orig_alloc_source;
 static int typed_alloc;
 static int do_label;
@@ -79,24 +78,21 @@ semant3(int rednum, SST *top)
   int begin, count;
   int opc;
   int lab;
-  SST *e1, *e2, sst;
+  SST *e1, sst;
   INT rhstop;
-  ITEM *itemp, *itemp1, *itemp2;
+  ITEM *itemp, *itemp1;
   INT conval;
   int doif;
   DOINFO *doinfo;
   char name[16];
   int dum;
   SWEL *swel;
-  INT val[2];
   int ast, ast1, ast2, ast3, lop;
   int astlab;
   int astli;
-  ACL *aclp;
   int std;
   char *np, *s;
-  int numdim, totalnumdim;
-  ADSC *ad;
+  int numdim;
   int (*p_cmp)(int, int);
   int arith_if_expr;
   int bef;
@@ -1057,14 +1053,14 @@ semant3(int rednum, SST *top)
       if (!NOPASSG(sptr1) && sem.tbp_arg) {
         itemp = pop_tbp_arg();
       } else {
-        int mem, dty, func, mem2, func2;
+        int mem, dty, func;
         dty = TBPLNKG(sptr);
         func = get_implementation(dty, sptr, 0, &mem);
         if (STYPEG(BINDG(mem)) == ST_OPERATOR ||
             STYPEG(BINDG(mem)) == ST_USERGENERIC) {
           if (generic_tbp_has_pass_and_nopass(dty, sptr)) {
             ITEM *itemp2;
-            int parent, sp;
+            int sp;
             e1 = (SST *)getitem(0, sizeof(SST));
             sp = sym_of_ast(ast);
             SST_SYMP(e1, sp);
@@ -1116,7 +1112,7 @@ semant3(int rednum, SST *top)
       imp = get_implementation(TBPLNKG(sptr), sptr, 0, &mem);
       if (!sem.tbp_arg && imp && !NOPASSG(mem)) {
         ITEM *itemp2;
-        int parent, sp;
+        int sp;
         e1 = (SST *)getitem(0, sizeof(SST));
         sp = sym_of_ast(ast);
         SST_SYMP(e1, sp);
@@ -1137,7 +1133,7 @@ semant3(int rednum, SST *top)
             STYPEG(BINDG(mem)) == ST_USERGENERIC) {
           if (generic_tbp_has_pass_and_nopass(dty, sptr)) {
             ITEM *itemp2;
-            int parent, sp, mem2;
+            int sp, mem2;
             int iface, paramct, arg_cnt;
 
             mem2 = get_generic_tbp_pass_or_nopass(dty, sptr, 1);
@@ -3912,14 +3908,13 @@ errorstop_shared:
         }
         if (alloc_source) {
           /* Allocated object receives the value of the source. */
-          int src, dest, dest_dtype, src_dtype, tag1, tag2, j;
+          int src, dest, dest_dtype, src_dtype, tag1, tag2;
           int sdsc_mem, src_sdsc_ast, dest_sdsc_ast, argt;
           FtnRtlEnum fidx;
 
           src_sdsc_ast = 0;
           ast = rewrite_ast_with_new_dtype(ast, dtype);
           alloc_source = orig_alloc_source;
-        do_src_again:
           switch (A_TYPEG(alloc_source)) { /* FS#19312 */
           case A_ID:
           case A_LABEL:
@@ -4073,7 +4068,7 @@ errorstop_shared:
                  * call RTE_poly_asn() or RTE_poly_asn_src_intrin()
                  */
 
-                int new_sym, dty2, sz, dest_ast;
+                int new_sym, dty2, dest_ast;
                 int flag_con = 2;
                 dty2 = dtype;
                 dest_ast = 0;
@@ -6113,7 +6108,6 @@ static int
 find_non_tbp(char *symname)
 {
   int hash, hptr, len;
-  int paramct, dpdsc, dtype2, arg;
   len = strlen(symname);
   HASH_ID(hash, symname, len);
   for (hptr = stb.hashtb[hash]; hptr; hptr = HASHLKG(hptr)) {
@@ -6234,7 +6228,6 @@ chk_and_rewrite_cmplxpart_assn(SST *lhs, SST *rhs)
   char *i_imagnm;
   char *i_cmplxnm;
   SST *fcn;
-  ITEM *arg;
   SST *i_cmplx_fcn;
 
   if ((ast = SST_ASTG(lhs)) && A_TYPEG(ast) == A_MEM &&
@@ -6354,7 +6347,6 @@ gen_derived_arr_init(int arr_dtype, int strt_std, int end_std)
 
   int asgn_ast;
   int dest_ast;
-  int mem_ast;
   int subscr_ast;
   int i;
   int std;
@@ -6490,11 +6482,10 @@ static int
 gen_sourced_allocation(int astdest, int astsrc)
 {
 
-  int dest_dtype, astdest2, src_dtype, std2, std3, std4;
-  int conform_std, conform_if_std;
+  int dest_dtype, astdest2, src_dtype, std2;
   int subs[MAXRANK];
-  int fsptr, argt, flag_con, dest_sdsc_ast, src_sdsc_ast;
-  int dtyper, func_ast, ast2;
+  int fsptr, argt;
+  int dtyper, func_ast;
   int ast, i, asttmp;
   int sptrsrc, sptrdest;
 
@@ -6653,7 +6644,6 @@ construct_association(int lhs_sptr, SST *rhs, int stmt_dtype, LOGICAL is_class)
   int lhs_dtype, lhs_element_dtype, lhs_ast;
   LOGICAL set_up_a_pointer;
   int rhs_sptr = 0;
-  struct association *assoc;
   LOGICAL is_array = FALSE;
   LOGICAL is_lhs_runtime_length_char;
   LOGICAL is_lhs_unl_poly;
@@ -6840,7 +6830,6 @@ construct_association(int lhs_sptr, SST *rhs, int stmt_dtype, LOGICAL is_class)
    */
   if (SDSCG(lhs_sptr) > NOSYM && stmt_dtype && !is_class &&
       DTY(lhs_element_dtype) != TY_DERIVED) {
-    int args = mk_argt(2);
     int type_code = dtype_to_arg(lhs_element_dtype);
     int assignment_ast = mk_assn_stmt(get_kind(SDSCG(lhs_sptr)),
                                       mk_cval1(type_code, DT_INT), DT_INT);
@@ -6886,7 +6875,7 @@ end_association(int sptr)
 static int
 get_sst_named_whole_variable(SST *rhs)
 {
-  int sptr = 0, ast;
+  int sptr = 0;
 
   switch (SST_IDG(rhs)) {
   case S_IDENT:

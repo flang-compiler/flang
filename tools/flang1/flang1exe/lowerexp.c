@@ -1772,7 +1772,6 @@ function_null_allowed(SPTR sptr)
   };
   int i;
   for (i = 0;; i += 1) {
-    char *rtnNm;
     FtnRtlEnum rtn = rtl_functions_null_allowed[i];
     if (rtn == RTE_no_rtn)
       return false;
@@ -1797,7 +1796,7 @@ lower_function(int ast)
   char *PUFUNC;
   char *UFUNC;
   int is_tbp, tbp_nopass_arg, tbp_nopass_sdsc, tbp_mem;
-  int tbp_bind, tbp_imp, tbp_inv;
+  int tbp_bind, tbp_inv;
   int unlpoly; /* CLASS(*) */
   int retdesc;
   int bindC_structret = 0;
@@ -2442,7 +2441,7 @@ intrin_name(char *name, int ast, int options)
 static int
 intrin_name_bsik(char *name, int ast)
 {
-  int dtype, ok, ilm;
+  int dtype, ilm;
   char *prefix;
   char intrname[50];
   dtype = A_NDTYPEG(ast);
@@ -2518,7 +2517,6 @@ intrinsic_null_allowed(int intr)
 static int
 intrinsic_arg_dtype(int intr, int ast, int args, int nargs)
 {
-  int dt, arg, i;
   switch (intr) {
   /* the first set of intrinsics do no type conversion;
    * they appear in the order they are listed in symini_ftn.n for the
@@ -5568,8 +5566,8 @@ lower_logical_expr(int ast)
 void
 lower_logical(int ast, iflabeltype *iflabp)
 {
-  int dtype, lop, rop, lilm, rilm, ilm = 0, ilm2;
-  int ss, ndim, i, sptr;
+  int dtype, lop, ilm = 0, ilm2;
+  int sptr;
   iflabeltype nlab;
 
   dtype = A_DTYPEG(ast);

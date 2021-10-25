@@ -128,7 +128,9 @@ ulzfini(lzhandle *lzh)
 char *
 ulz(lzhandle *lzh)
 {
+#ifndef USE_GETLINE
   int ch;
+#endif
   lzh->bufflen = 0;
 #ifdef USE_GETLINE
     int res = getline(&lzh->buff, &lzh->buffsize, lzh->file);
@@ -183,7 +185,6 @@ lzsave(lzhandle *lzh)
 void
 lzrestore(lzhandle *lzh)
 {
-  int l;
   fseek(lzh->file, lzh->savefile, SEEK_SET);
 #if !defined(HOST_WIN)
   if (lzh->inout) {

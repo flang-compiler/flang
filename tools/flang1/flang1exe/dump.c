@@ -716,7 +716,7 @@ dastli(int astli)
 void
 dast(int astx)
 {
-  int atype, dtype, shape, asdx, j, argcnt, args, astli;
+  int atype, dtype, asdx, j, argcnt, args, astli;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   if (astx < 0 || astx >= astb.stg_avail) {
     fprintf(dfile, "\nast %d out of range [0:%d)\n", astx, astb.stg_avail);
@@ -1375,7 +1375,7 @@ dumpasts()
 void
 dumpshape(int shd)
 {
-  int l, nd, ii;
+  int nd, ii;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   if (shd < 0 || shd >= astb.shd.stg_avail) {
     fprintf(dfile, "\nshd %d out of range [0:%d)\n", shd, astb.shd.stg_avail);
@@ -2432,7 +2432,7 @@ dstdpa()
 void
 dumpstdtrees()
 {
-  int stdx, std1, std2;
+  int stdx, std1;
   std1 = STD_NEXT(0);
   for (stdx = STD_NEXT(0); stdx != 0; stdx = STD_NEXT(stdx)) {
     dstdtree(stdx);
@@ -2660,7 +2660,6 @@ dalnd(int alnd)
 void
 dsecd(int secd)
 {
-  int i, any;
   if (secd == 0)
     return;
   if (dtb.base == NULL)

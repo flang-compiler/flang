@@ -272,7 +272,6 @@ findloop(int hlopt_bv)
         LP_XTNDRNG(lp) = 1;
       }
     }
-  scan_exit_end:;
     /*
      * scan through the other loops to determine if they are contained in
      * the loop lp.  This is determined by checking the loop field for
@@ -1375,7 +1374,7 @@ __dump_loop(FILE *ff, int lp)
 {
   static char star[] = {' ', '*'};
   static char zt[] = {' ', '0'};
-  int i, j, v;
+  int i;
   PSI_P p;
   Q_ITEM *q;
 
@@ -1452,9 +1451,7 @@ void
 dump_loops(void)
 {
   static char star[] = {' ', '*'};
-  static char zt[] = {' ', '0'};
   int i, j, v;
-  PSI_P p;
   fprintf(gbl.dbgfil, "\n\n*****  Loops (%d) for Function \"%s\"  *****\n",
           opt.nloops, getprint(BIH_LABEL(gbl.entbih)));
 

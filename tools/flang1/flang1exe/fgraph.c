@@ -556,7 +556,7 @@ static void
 set_std_fg(void)
 {
   int fg;
-  int fgx, stdx;
+  int stdx;
 
   for (fg = 1; fg <= opt.num_nodes; ++fg) {
     if (FG_DFN(fg) == -1)
@@ -789,7 +789,6 @@ partition_blocks(void)
        * flag of the block terminated by the goto/aif.
        */
       if (next_std) {
-        int s;
         switch (A_TYPEG(STD_AST(next_std))) {
         case A_ENDIF:
         case A_ENDWHERE:

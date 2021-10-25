@@ -143,11 +143,9 @@ LOGICAL
 is_lonely_idx(int expr, int isptr)
 {
   int i;
-  int asd;
-  int ndim, n;
+  int n;
   int find1;
   int find2;
-  int sptr;
   int argt;
 
   if (expr == 0)
@@ -661,7 +659,6 @@ replace_expr(int sub_expr, int isptr, int expr, int indirection)
 {
   int i;
   int asd;
-  int indx_pos;
   int ndim;
   int expr1;
   int expr2;

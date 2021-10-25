@@ -57,7 +57,6 @@ static DTIMPL *save_dtimplicit = NULL;
 static int dtimplicitstack = 0;
 
 static void cng_inttyp(int, int);
-static void cng_specific(int, int);
 static void generate_type_mismatch_errors(SPTR s1, SPTR s2);
 static void update_arrdsc(SPTR s, DEC_DEF_MAP *smap, int num_dummies);
 /* entry hack? */
@@ -73,7 +72,6 @@ sym_init(void)
 {
   int i;
   INT tmp[2], res[2];
-  int dtype;
   static char *npname = "hpf_np$";
   int sptr;
 
@@ -314,17 +312,6 @@ cng_inttyp(int ss, int dt)
   INTTYPP(ss, dt);
 }
 
-static void
-cng_specific(int os, int ns)
-{
-
-#if DEBUG
-  assert(STYPEG(os) == ST_INTRIN, "cng_specific not intr", os, 3);
-  assert(STYPEG(ns) == ST_INTRIN, "cng_specific not intr", ns, 3);
-#endif
-  dup_sym(os, &stb.stg_base[ns]);
-}
-
 /**
  * Set up initial implicit types.  All are real except for the letters i
  * thru n:
@@ -333,7 +320,6 @@ void
 init_implicit(void)
 {
   int i;
-  int default_real;
   int default_int;
 
   for (i = 0; i < 54; i++) {
@@ -687,7 +673,6 @@ INT
 get_int_cval(int con)
 {
   INT res;
-  DBLINT64 inum;
 
 #if DEBUG
   assert(STYPEG(con) == ST_CONST, "get_int_cval-not ST_CONST", con, 0);
@@ -1808,7 +1793,6 @@ getnewccsymf(int stype, const char *fmt, ...)
 {
   char buffer[MAXIDLEN + 1];
   va_list ap;
-  int sptr;
 
   va_start(ap, fmt);
   vsnprintf(buffer, sizeof buffer, fmt, ap);
@@ -2034,7 +2018,7 @@ insert_sym(int first)
 int
 insert_sym_first(int first)
 {
-  int sptr, i, j;
+  int sptr, i;
   INT hashval;
   char *np;
 
@@ -2187,7 +2171,6 @@ mkfunc(const char *nmptr)
 char *
 mk_coercion_func_name(int dtype)
 {
-  SPTR sptr;
   FtnRtlEnum rtlRtn;
 
   switch (DTY(dtype)) {
@@ -2671,7 +2654,7 @@ bool
 cmp_interfaces_strict(SPTR sym1, SPTR sym2, cmp_interface_flags flag)
 {
   int i, paramct, paramct2, dpdsc, dpdsc2, psptr, psptr2;
-  int iface1, iface2, chk_stype, j;
+  int iface1, iface2, j;
   bool relax1, relax2; 
 
   iface1 = iface2 = paramct = paramct2 = dpdsc = dpdsc2 = 0;
@@ -2900,7 +2883,7 @@ SPTR
 instantiate_interface(SPTR iface)
 {
   int dummies;
-  SPTR fval, hashlk_sptr, proc;
+  SPTR fval, proc;
   DEC_DEF_MAP *dec_def_map;
   proc = insert_dup_sym(iface);
   gbl.currsub = proc;
@@ -2934,7 +2917,7 @@ instantiate_interface(SPTR iface)
   if (dummies > 0 || fval > NOSYM) {
     int iface_dpdsc = DPDSCG(iface);
     int proc_dpdsc = aux.dpdsc_avl;
-    int j, newdsc;
+    int j;
 
     aux.dpdsc_avl += dummies;
     NEED(aux.dpdsc_avl, aux.dpdsc_base, int, aux.dpdsc_size,

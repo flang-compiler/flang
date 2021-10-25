@@ -1001,7 +1001,7 @@ fix_dtype(int sptr, DTYPE dtype)
       DTYPE dt = get_array_dtype(ndim, elemdt);
       int i;
       for (i = 0; i < ndim; ++i) {
-        int lw, up, ext;
+        int up, ext;
         ADD_MLPYR(dt, i) = 0;
         ADD_LWBD(dt, i) = ADD_LWBD(dtype, i);
         ADD_LWAST(dt, i) = ADD_LWAST(dtype, i);
@@ -1557,7 +1557,6 @@ same_parameterized_dt(DTYPE d1, DTYPE d2)
    * parameterized derived type
    */
   int base_type1, base_type2, mem1, mem2, val1, val2;
-  int mem_dtype1, mem_dtype2;
   int rslt;
 
   if (d1 == d2)
@@ -1875,8 +1874,6 @@ is_or_has_derived_allo(SPTR sptr)
 LOGICAL
 cmpat_dtype(DTYPE d1, DTYPE d2)
 {
-  int s1, s2;
-
   if (d1 == d2)
     return TRUE;
   if (DTY(d1) != DTY(d2)) {
@@ -2126,8 +2123,6 @@ same_dtype(DTYPE d1, DTYPE d2)
 LOGICAL
 cmpat_dtype_array_cast(DTYPE d1, DTYPE d2)
 {
-  int s1, s2;
-
   if (d1 == d2)
     return TRUE;
   if (DTY(d1) != DTY(d2)) {
@@ -2923,7 +2918,7 @@ pr_dent(DTYPE dt, FILE *f)
 }
 
 #if DEBUG
-static void
+void
 dumpdtype(DTYPE dtype)
 {
   dmp_dent(dtype);
@@ -3704,7 +3699,7 @@ has_tbp_or_final(DTYPE dtype)
 int
 chk_kind_parm_set_expr(int ast, DTYPE dtype)
 {
-  int sptr, rslt, newast1, newast2, i, val;
+  int sptr, newast1, newast2, i, val;
 
   switch (A_TYPEG(ast)) {
   case A_INTR:
@@ -3798,7 +3793,7 @@ get_kind_set_parm(int sptr, DTYPE dtype, int *val)
 static int
 get_len_set_parm(int sptr, DTYPE dtype, int *val)
 {
-  int rslt, tag, parent, mem;
+  int rslt, mem;
 
   if (DTY(dtype) != TY_DERIVED)
     return 0;

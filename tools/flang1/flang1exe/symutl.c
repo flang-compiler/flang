@@ -302,7 +302,6 @@ void
 trans_mkdescr(int sptr)
 {
   int descr;
-  int sec;
   char *p;
 
   if (DESCRG(sptr) != 0)
@@ -333,7 +332,6 @@ int
 sym_get_sec(char *basename, int is_dummy)
 {
   int sec, sec_ptr;
-  int i;
   ADSC *ad;
   int dtype;
   char *p;
@@ -406,12 +404,10 @@ int
 sym_get_arg_sec(int sptr)
 {
   int sec;
-  int i;
   ADSC *ad;
   int dtype;
   char *p;
   char *basename;
-  int descr;
   int sdsc;
 
   if (XBIT(57, 0x10000)) {
@@ -473,9 +469,7 @@ int
 sym_get_formal(int basevar)
 {
   int formal;
-  int i;
   int dtype;
-  char *p;
   char *basename;
 
   basename = SYMNAME(basevar);
@@ -542,7 +536,6 @@ mk_forall_sptr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
   int submap[MAXSUBS], arr_sptr, memberast;
   int i, ndims, lwbnd[MAXSUBS], upbnd[MAXSUBS];
   int sptr, sdtype;
-  int single[] = {0, 0, 0, 0, 0, 0, 0};
 
   assert(A_TYPEG(forall_ast) == A_FORALL, "mk_forall_sptr: ast not forall",
          forall_ast, 4);
@@ -800,9 +793,8 @@ get_forall_subscr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
 {
   int astli;
   int submap[MAXSUBS], arr_sptr, memberast;
-  int i, ndims, lwbnd[MAXSUBS], upbnd[MAXSUBS];
-  int sptr, sdtype;
-  int single[] = {0, 0, 0, 0, 0, 0, 0};
+  int ndims, lwbnd[MAXSUBS], upbnd[MAXSUBS];
+  int sptr;
 
   assert(A_TYPEG(forall_ast) == A_FORALL, "get_forall_subscr: ast not forall",
          forall_ast, 4);
@@ -1158,8 +1150,6 @@ get_temp_pure_replicated(int sptr, int alloc_stmt, int dealloc_stmt, int astmem)
 {
   int sptr1;
   int subscr[MAXSUBS];
-  int ptr;
-  int hashlk;
   int i, ndim;
   ADSC *ad, *ad1;
 
@@ -1311,7 +1301,6 @@ found_forall_var(int ast)
 {
   int argt, n, i;
   int asd;
-  int j;
 
   switch (A_TYPEG(ast)) {
   case A_BINOP:
@@ -1470,17 +1459,15 @@ chk_assign_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty, int lhs,
   int ast;
   int submap[MAXSUBS];
   int newsubs[MAXSUBS];
-  int i, n, j, n1, k;
-  int asd, asd1;
-  int astli;
+  int i, n, j;
+  int asd;
   int sptr, ssast;
-  ADSC *ad, *ad1;
+  ADSC *ad;
   int dtype;
   ADSC *tad;
-  int list;
   int lb, ub;
   int lb1, ub1, st1;
-  int vsubsptr[MAXSUBS], vsubmap[MAXSUBS];
+  int vsubsptr[MAXSUBS];
   int extent;
 
   /* find the array */
@@ -1634,7 +1621,6 @@ mk_shape_sptr(int shape, int *subscr, int elem_dty)
 {
   int i, n, size, notshort;
   int sptr;
-  int dtype;
   ADSC *tad;
   int ub;
 
@@ -1743,20 +1729,12 @@ handle_non_cnst_dim(int arr_ast, char *purpose, int *subscr, int elem_dty,
                     int dim, int lhs, int *retval, int ndim)
 {
   int arr_sptr;
-  int ast;
-  int submap[MAXSUBS];
   int newsubs[MAXSUBS];
-  int i, k;
-  int asd;
-  int astli;
+  int i;
   int sptr;
   int dtype;
-  int list;
   int desc;
   int lb, ub, ssast;
-  int tmpl;
-  int align, align1;
-  int lhs_sptr;
 
   /* find the array */
   arr_sptr = find_array(arr_ast, &ssast);
@@ -1803,13 +1781,10 @@ chk_reduc_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty, int dim,
   int newsubs[MAXSUBS];
   int i, n, j, k;
   int asd;
-  int astli;
   int sptr, ssast;
   ADSC *ad;
   int dtype;
   ADSC *tad;
-  int list;
-  int single[] = {0, 0, 0, 0, 0, 0, 0};
 
   /* find the array */
   arr_sptr = find_array(arr_ast, &ssast);
@@ -1936,14 +1911,11 @@ mk_spread_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty, int dim,
   int newsubs[MAXSUBS];
   int i, n, j;
   int asd;
-  int astli;
   int sptr, ssast;
   ADSC *ad = NULL;
   int dtype;
   ADSC *tad = NULL;
-  int list;
   int ttype = 0;
-  int single[] = {0, 0, 0, 0, 0, 0, 0};
 
   /* if it has a scalar spread(3, dim, ncopies) */
   if (A_TYPEG(arr_ast) != A_SUBSCR && A_SHAPEG(arr_ast) == 0) { /*scalar */
@@ -2154,14 +2126,11 @@ mk_matmul_sptr(int arg1, int arg2, char *purpose, int *subscr, int elem_dty,
   int newsubs[MAXSUBS];
   int rank1, rank2, rank;
   int i, n, j;
-  int flag;
   int asd;
-  int astli;
   int sptr, ssast1, ssast2;
   ADSC *ad1, *ad2;
   int dtype;
   ADSC *tad;
-  int list;
 
   arr_sptr1 = find_array(arg1, &ssast1);
   dtype = DTYPEG(arr_sptr1);
@@ -2369,12 +2338,10 @@ mk_transpose_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty,
   int newsubs[MAXSUBS];
   int i, n, j;
   int asd;
-  int astli;
   int sptr, ssast;
   ADSC *ad;
   int dtype;
   ADSC *tad;
-  int list;
 
   arr_sptr = find_array(arr_ast, &ssast);
   dtype = DTYPEG(arr_sptr);
@@ -2728,8 +2695,6 @@ mk_forall_sptr_copy_section(int forall_ast, int lhs, int rhs, int *subscr,
   LOGICAL found;
   int astli, astli1;
   int nidx, nidx1;
-  int align, axis;
-  int single[] = {0, 0, 0, 0, 0, 0, 0};
 
   /* find the array */
   assert(A_TYPEG(lhs) == A_SUBSCR,
@@ -2857,7 +2822,6 @@ mk_forall_sptr_gatherx(int forall_ast, int lhs, int rhs, int *subscr,
   LOGICAL found;
   int astli, astli1;
   int nidx, nidx1;
-  int single[] = {0, 0, 0, 0, 0, 0, 0};
 
   /* find the array */
   assert(A_TYPEG(lhs) == A_SUBSCR, "mk_forall_sptr_gatherx: ast not subscript",
@@ -2984,7 +2948,6 @@ mk_forall_sptr_pure(int forall_ast, int lhs, int rhs, int *subscr, int elem_dty)
   ADSC *ad;
   ADSC *tad;
   int list;
-  int single[] = {0, 0, 0, 0, 0, 0, 0};
 
   assert(A_TYPEG(lhs) == A_SUBSCR, "mk_forall_sptr_pure: ast not subscript",
          lhs, 4);
@@ -3364,7 +3327,6 @@ getbnd(char *basename, char *purpose, int n, int dtype)
 int
 trans_getbound(int sym, int type)
 {
-  int i;
   int sptr;
 
   switch (type) {
@@ -4005,7 +3967,7 @@ void
 add_auto_len(int sym, int Lbegin)
 {
   int dtype, cvlen;
-  int lhs, rhs, ast, std, astif, astthen, stdif;
+  int lhs, rhs, ast, std;
 
   dtype = DDTG(DTYPEG(sym));
   if (DTY(dtype) != TY_CHAR && DTY(dtype) != TY_NCHAR)

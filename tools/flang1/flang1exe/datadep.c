@@ -131,7 +131,7 @@
 #endif
 
 #if DEBUG
-static ISZ_T
+ISZ_T
 DBGcnst(int s)
 {
   ISZ_T yy;
@@ -182,7 +182,6 @@ static void build_loop_dd(int loop);
 static void dd_compute(void);
 void dd_edge(int src, int sink, DIRVEC vec);
 static void dd_succ(int loop);
-static void dd_exact();
 
 static void resolve_vv(void);
 static void resolve_pv(void);
@@ -754,7 +753,6 @@ static void
 resolve_pv(void)
 {
   int ptr, var;
-  int sym;
 
   /* use a combination of optimizer utilities & stolen optimizer code */
   if (NME_TYPE(ddinfo.basenm1) == NT_IND) {
@@ -819,9 +817,8 @@ resolve_vv(void)
   int nm1, nm2;
   DIRVEC dir;
   int buf1[MAXNMESIZ], buf2[MAXNMESIZ];
-  int i, end;
+  int i;
   int j;
-  DV *p, *q, *q1, *p1;
 
   /* check for both scalar */
   if (MR_SCALR(ddinfo.mr1) && MR_SCALR(ddinfo.mr2)) {
@@ -1157,7 +1154,6 @@ bound_add(int *ibound, LOGICAL upflag, int var)
   BOUND b1;
   BOUND b2;
   int j, k;
-  int d1, d2;
   int icon0 = ad_icon(0);
 
   /* express the bound in terms of the free variables */
@@ -1191,7 +1187,6 @@ static LOGICAL
 check_bounds(void)
 {
   int k;
-  int d1, d2;
   BOUND *p, *q;
 
   /* compare bounds from nfree down */
@@ -1289,9 +1284,8 @@ do_subscript(int nsubs)
   int i, j, k, k1, bnd, n1;
   int q, d1, d2, sgn, sc, ili;
   int d;
-  int t, t1;
-  int stride1, stride2;
-  DIRVEC vec, vec1, vec2;
+  int t;
+  DIRVEC vec, vec1;
   int icon0, icon1, iconneg1;
   int sub;
   int invar1, invar2;
@@ -2154,7 +2148,7 @@ mkSub(int astliTriples, int sub, int astmpyr, int ast)
 {
   int i;
   int astli;
-  int aststride, astbase, astid, astcnst;
+  int aststride, astbase;
   LOGICAL bLinear;
 
   switch (A_TYPEG(ast)) {
@@ -2290,7 +2284,7 @@ static int
 fill_subscripts(int astRef, int mr, int subStart, int ntriples,
                 int astliTriples)
 {
-  int n, asd, ndim, sub, i;
+  int n, asd, ndim, sub;
   switch (A_TYPEG(astRef)) {
   case A_ID:
     n = 0;
@@ -2351,7 +2345,7 @@ dd_array_conflict(int astliTriples, int astArrSrc, int astArrSink,
   int astli;
   int lp, lpOuter;
   int sub, nsubsSrc, nsubsSink, subStart, nsubs;
-  int astTriple, astSub;
+  int astTriple;
   int asdSrc, asdSink, aSrc, aSink, nSrc, nSink;
   int mrSink, mrSrc;
 
@@ -2781,7 +2775,7 @@ sum(ARITH_LIST lst)
 static ARITH_LIST
 distrib(int ili, int mpyr)
 {
-  int ili1, ili2, ilitmp;
+  int ili2, ilitmp;
   int opc, opc1;
   ARITH_LIST l1, l2, l;
 
@@ -2963,11 +2957,9 @@ ili_symbolic(int ili)
 {
   /* perform symbolic manipulation on ili to simplify its form */
   int opc;
-  int icon0 = ad_icon(0L), icon1 = ad_icon(1L);
+  int icon1 = ad_icon(1L);
   ARITH_LIST lst1, lst2;
   int ilires;
-  int i;
-  LOGICAL changed;
 
   if (use_visit && ILI_REPL(ili))
     return ILI_REPL(ili);
@@ -3291,8 +3283,9 @@ dump_two_bound(BOUND *p, BOUND *q, int k, LOGICAL btype)
   fprintf(gbl.dbgfil, "\n");
 }
 
+#if DEBUG
 /* Dump a list of arithmetic terms. */
-static void
+void
 dump_termlist(ARITH_LIST lst)
 {
   ARITH_LIST l;
@@ -3311,6 +3304,8 @@ dump_termlist(ARITH_LIST lst)
   prilitree(l->varfact);
   fprintf(gbl.dbgfil, "]");
 }
+#endif
+
 #endif
 
 #endif

@@ -1076,7 +1076,6 @@ get_stmt(void)
   int c, outp;
   LOGICAL endflg; /* this stmt is an END statement */
   char lbuff[8];  /* temporarily holds label name */
-  int in_linedir = 0;
   int lineno;
 
   endflg = FALSE;
@@ -1526,7 +1525,6 @@ get_fn(void)
    */
   char *p;
   int len;
-  int i;
 
   if (XBIT(120, 0x40000))
     return;
@@ -4010,7 +4008,6 @@ taskloop:
     break;
   }
 
-ret:
   currc = cp;
   return tkntyp;
 
@@ -4077,7 +4074,6 @@ classify_dec(void)
     break;
   }
 
-ret:
   currc = cp;
   return tkntyp;
 
@@ -4105,7 +4101,6 @@ classify_pragma(void)
               */
   int c, savec;
   char *ip;
-  int k;
 
   /* skip any leading white space */
 
@@ -4136,7 +4131,6 @@ classify_pragma(void)
     break;
   }
 
-ret:
   currc = cp;
   return tkntyp;
 
@@ -4164,7 +4158,6 @@ classify_pgi_pragma(void)
               * the length of a keyword. */
   int c, savec;
   char *ip;
-  int k;
 
   /* skip any leading white space */
   cp = currc;
@@ -4191,7 +4184,6 @@ classify_pgi_pragma(void)
     goto ill_dir;
   scn.stmtyp = tkntyp;
 
-ret:
   currc = cp;
   return tkntyp;
 
@@ -4215,7 +4207,6 @@ classify_pgi_dir(void)
               * the length of a keyword. */
   int c, savec;
   char *ip;
-  int k;
 
   /* skip any leading white space */
   cp = currc;
@@ -4244,7 +4235,6 @@ classify_pgi_dir(void)
     goto ill_dir;
   scn.stmtyp = tkntyp;
 
-ret:
   currc = cp;
   return tkntyp;
 
@@ -4272,7 +4262,6 @@ classify_kernel_pragma(void)
               * the length of a keyword. */
   int c, savec;
   char *ip;
-  int k;
 
   /* skip any leading white space */
   cp = currc;
@@ -4300,7 +4289,6 @@ classify_kernel_pragma(void)
     goto ill_dir;
   scn.stmtyp = tkntyp;
 
-ret:
   currc = cp;
   return tkntyp;
 
@@ -4325,7 +4313,6 @@ classify_ac_type(void)
 {
   char *cp, *ip;
   int c, idlen;
-  int colon = 0;
   int paren = 0;
 
   /* skip any leading white space */
@@ -5542,7 +5529,6 @@ get_keyword:
   case TK_NOPASS:
   case TK_EXTENDS:
   case TK_CONTIGUOUS:
-  id_attr_shared:
     if (exp_attr)
       scmode = SCM_ID_ATTR;
     break;
@@ -5878,7 +5864,6 @@ init_ktable(KTABLE *ktable)
 {
   int nkwds;
   KWORD *base;
-  char *kwd;
   int i;
   int ch;
 
@@ -6091,7 +6076,7 @@ get_kind_value(int knd)
 static int
 keyword(char *id, KTABLE *ktable, int *keylen, LOGICAL exact)
 {
-  int chi, low, high, p, kl, cond;
+  int chi, low, high, p, cond;
   KWORD *base;
 
   /* convert first character (a letter) of an identifier into a subscript */
@@ -6427,7 +6412,6 @@ get_number(int cplxno)
     goto state2;
   assert(isdig(c), "get_number: bad start", (int)c, 3);
 
-state1: /* digits  */
   do {
     c = *++cp;
   } while (isdig(c));
@@ -6971,7 +6955,7 @@ static void
 check_ccon(void)
 {
   char c, *save_currc, *nextc;
-  INT num[4], val[4], val1[4];
+  INT num[4], val[4];
   int tok1;
   int rdx, idx;
   INT swp;
@@ -7051,7 +7035,6 @@ check_ccon(void)
   rdx = 0;
   idx = 1;
   if (tok1 == TK_K_ICON || tkntyp == TK_K_ICON) {
-    int dtype;
     if (tok1 != TK_K_ICON) {
       /*  swap to put in form  k_icon, xxx */
       swp = num[0];
@@ -7646,7 +7629,6 @@ scan_options(void)
     if (savec != '=')
       continue;
 
-  skip_opt: /* find the beginning of an option */
     while (TRUE) {
       p++;
       if (*p == '/' || *p == '\0') {
@@ -7742,8 +7724,7 @@ static void
 ff_get_stmt(void)
 {
   char *p;
-  int c, outp;
-  int in_linedir = 0;
+  int c;
 
   card_count = 0;
   ff_state.cavail = &stmtb[0];
@@ -8396,7 +8377,6 @@ ff_prescan(void)
       while (TRUE) {
         c = *++inptr;
         if (c == '\n') {
-          char *q;
           if (ff_state.amper_ptr == NULL)
             goto exit_ff_prescan;
           last_char[card_count - 1] = ff_state.amper_ptr - stmtb - 1;
@@ -8537,7 +8517,6 @@ ff_get_noncomment(char *inptr)
     FLANG_FALLTHROUGH;
   case CT_INITIAL:
   case CT_CONTINUATION:
-  cont_shared:
     check_continuation(curr_line);
     put_astfil(curr_line, &printbuff[8], TRUE);
     if (card_count == 0) {
@@ -8562,9 +8541,7 @@ ff_get_label(char *inp)
 {
   int c;
   int cnt;       /* number of characters processed */
-  char lbuff[8]; /* temporarily holds label name */
   char *labp;
-  int outp;
 
   scn.currlab = 0;
   cnt = 0;
@@ -9016,7 +8993,6 @@ _read_token(INT *tknv)
 {
   int i;
   int fr_type;
-  char *pp;
   static int prev_lineno = 0;
   static int incl_level = 0;
   static int lineno = 0;
@@ -9220,7 +9196,6 @@ _rd_token(INT *tknv)
   char *p, *q;
   int kind;
   int dtype;
-  int col;
 
   _rd_tkline(&tkbuf, &tkbuf_sz);
 #if DEBUG
@@ -9435,7 +9410,6 @@ get_num(int radix)
 {
   char *p;
   INT val;
-  static char buffer[64];
 
   while (*tkp == ' ')
     tkp++;

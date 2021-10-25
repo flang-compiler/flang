@@ -6935,7 +6935,7 @@ dump_ast_tree(int i)
 void
 dump_ast(void)
 {
-  int i;
+  unsigned int i;
 
   fprintf(gbl.dbgfil, "AST Table\n");
   for (i = 1; i < astb.stg_avail; i++) {
