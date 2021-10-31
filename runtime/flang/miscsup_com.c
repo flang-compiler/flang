@@ -3345,7 +3345,7 @@ ENTFTN(TRAILZ, trailz)(void *i, __INT_T *size)
 __INT_T
 ENTFTN(POPCNT, popcnt)(void *i, __INT_T *size)
 {
-  unsigned ui, uj; /* unsigned representation of 'i' */
+  unsigned ui = 0, uj; /* unsigned representation of 'i' */
   __INT8_T ll;
 
   switch (*size) {
@@ -3396,7 +3396,7 @@ ENTFTN(POPCNT, popcnt)(void *i, __INT_T *size)
 __INT_T
 ENTFTN(POPPAR, poppar)(void *i, __INT_T *size)
 {
-  int ii;
+  int ii = 0;
   __INT8_T ll;
 
   switch (*size) {

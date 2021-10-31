@@ -1514,7 +1514,7 @@ I8(__fort_local_kallocate)(long nelem, dtype kind, size_t len, char *base,
 char *
 I8(__fort_dealloc)(char *area, __STAT_T *stat, void (*freefn)(void *))
 {
-  ALLO_HDR *p;
+  ALLO_HDR *p = NULL;
   char msg[80];
 
   ALLHDR();
@@ -1548,7 +1548,7 @@ static char *
 I8(__fort_dealloc03)(char *area, __STAT_T *stat, void (*freefn)(void *),
                      char *errmsg, int errlen)
 {
-  ALLO_HDR *p;
+  ALLO_HDR *p = NULL;
   char msg[80];
 
   ALLHDR();

@@ -156,7 +156,7 @@ static void I8(copy_xfer)(copy_parm *z,   /* parameter struct */
   proc *p;
   procdim *pd;
   int dfmt, lx, px, rx;
-  __INT_T i, m, pc, rg0, rp0;
+  __INT_T i, m, pc = 0, rg0, rp0;
   __INT_T rpc[MAXDIMS];
 
   /* Determine the maximum span of dimensions that can be
