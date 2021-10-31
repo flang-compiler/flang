@@ -1846,8 +1846,8 @@ fw_writenum(int code, char *item, int type)
     ty = __REAL8;
     w = REAL8_W;
     d = REAL8_D;
-    if (dval == 0 || (dval > 1e-100 && dval < 1e100)
-        || dval > -1e100 && dval < -1e-100) {
+    if (dval == 0 || (dval > 1e-100 && dval < 1e100) ||
+        (dval > -1e100 && dval < -1e-100)) {
       e = 2;
     } else {
       e = REAL8_E;
