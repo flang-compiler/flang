@@ -74,7 +74,7 @@ semant3(int rednum, SST *top)
   SPTR sptr, sptr1, sptr2;
   DTYPE dtype, dtype2;
   int shape, stype, symi;
-  int i, j, msg;
+  int i = 0, j, msg;
   int begin, count;
   int opc;
   int lab;

@@ -3250,13 +3250,13 @@ new_intrin_sym(int ast)
 static int
 lower_intrinsic(int ast)
 {
-  int intr, ilm, ilm1, ilm2, args, nargs, i, arg0, argdtype, dty, dtype,
+  int intr, ilm = 0, ilm1, ilm2, args, nargs, i, arg0, argdtype, dty, dtype,
       symfunc, input_ast;
   int shape, cnt, num, arg, arg1, arg2, fromdtype;
   int sptr;
   int pairwise = 0, argsdone = 0, save_disable_ptr_chk;
   const char *rtn_name;
-  FtnRtlEnum rtlRtn;
+  FtnRtlEnum rtlRtn = RTE_no_rtn;
   int retDtype;
   char *nm;
 

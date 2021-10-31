@@ -2158,7 +2158,7 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
     }
   } else {
     /* component procedure pointer with a passed-object dummy argument */
-    int pass_pos;
+    int pass_pos = 0;
     int pdum;
 
     pdum = PASSG(ext);

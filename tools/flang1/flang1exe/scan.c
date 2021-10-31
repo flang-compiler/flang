@@ -9494,7 +9494,7 @@ get_string(char *dest)
 static void
 realloc_stmtb(void)
 {
-  int which;
+  int which = 0;
   if (stmtb == stmtbefore)
     which = 1;
   max_card += 20;

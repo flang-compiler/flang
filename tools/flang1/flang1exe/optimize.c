@@ -941,7 +941,7 @@ void
 unconditional_branches(void)
 {
   int stdx, nextstdx;
-  int astx, nest, stdifx, stdstmtx, sptr, stdelsex, stdendx, astelsex, astendx;
+  int astx, nest = 0, stdifx, stdstmtx, sptr, stdelsex, stdendx, astelsex, astendx;
   int condx;
   int *ifnest;
   int ifnestsize;

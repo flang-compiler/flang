@@ -3141,7 +3141,7 @@ SPTR
 import_module(FILE *fd, char *file_name, SPTR modsym, WantPrivates wantPrivates,
               int scope_level)
 {
-  SPTR modulesym;
+  SPTR modulesym = SPTR_NULL;
   lzhandle *fdlz;
   int savescope = stb.curr_scope, ivsn;
   ADJmod = 0;
@@ -4173,7 +4173,7 @@ fill_ast(ASTITEM *pa)
   int lop, rop, left, right;
   int stride;
   int optype;
-  int dtype;
+  int dtype = 0;
   int count;
   int argt;
   int shape;
@@ -5398,7 +5398,7 @@ static void
 import_constant(SYMITEM *ps)
 {
   INT val[4];
-  int sptr;
+  int sptr = 0;
   int dtype;
 
   Trace(("import_constant(%d)", ps->sptr));

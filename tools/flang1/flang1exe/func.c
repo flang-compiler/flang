@@ -1789,7 +1789,7 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
   int dim, ndims, cdim;
   int shift;
   int newsym;
-  int temp_arr;
+  int temp_arr = 0;
   int newargt;
   int srcarray;
   int rank;
@@ -3181,7 +3181,7 @@ leave_arg(int ast, int i, int *parg, int lc)
       (A_OPTYPEG(ast) == I_EOSHIFT || A_OPTYPEG(ast) == I_CSHIFT) && (i == 0) &&
       (arg) && (A_TYPEG(arg) == A_INTR) &&
       (A_OPTYPEG(arg) == I_EOSHIFT || A_OPTYPEG(arg) == I_CSHIFT)) {
-    int astarglist, argarglist, astdim, argdim, save;
+    int astarglist, argarglist, astdim = 0, argdim = 0, save;
     astarglist = A_ARGSG(ast);
     argarglist = A_ARGSG(arg);
 
@@ -4300,7 +4300,7 @@ static int
 mk_result_sptr(int func_ast, int func_args, int *subscr, int elem_dty, int lhs,
                int *retval)
 {
-  int temp_sptr;
+  int temp_sptr = 0;
   int dim;
   int shape;
   int shape1;
@@ -4559,7 +4559,7 @@ transform_associated(int std, int ast)
   int ast1;
   int argt, nargs;
   int pv, arr;
-  int pv_sptr, arr_sptr;
+  int pv_sptr = 0, arr_sptr;
   int arr_desc, static_desc;
   int dtype;
   int func;
@@ -5016,7 +5016,7 @@ transform_c_f_pointer(int func_ast, int func_args)
   int rank;
   int fptr;
   int cptr, newcptrarg;
-  int pvar;
+  int pvar = 0;
   int shape;
   int desc;
   int fty;
@@ -5137,7 +5137,7 @@ transform_c_f_procpointer(int func_ast, int func_args)
   int stdnext, std;
   int newast;
   int fptr;
-  int pvar;
+  int pvar = 0;
   int dtype;
   int func;
   int nargs;
@@ -6648,7 +6648,7 @@ matmul(int func_ast, int func_args, int lhs)
   int ast;
   int nargs;
   const char *name;
-  FtnRtlEnum rtlRtn;
+  FtnRtlEnum rtlRtn = RTE_no_rtn;
   int subscr[MAXSUBS];
   int arg1, arg2;
   LOGICAL tmp_lhs_array;

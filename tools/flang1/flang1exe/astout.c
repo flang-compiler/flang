@@ -3388,7 +3388,7 @@ deferred_to_pointer(void)
 static void
 pr_arr_name(int arr)
 {
-  int lop, sptr, dtype;
+  int lop, sptr = 0, dtype;
   if (A_TYPEG(arr) == A_ID) {
     sptr = A_SPTRG(arr);
   } else if (A_TYPEG(arr) == A_MEM) {

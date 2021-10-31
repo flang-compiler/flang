@@ -627,9 +627,9 @@ addfield(int sharedflag, int flagflag)
   if (offs > 9)
     aftp++;
   offs = (offs - 1) * 4;
-  if (aftp[0] == 0)
+  if (aftp[0] == 0) {
     size = 4;
-  else if (aftp[0] != ':') {
+  } else if (aftp[0] != ':') {
     put_error(2, ": must follow word spec");
     size = 4;
   } else if (aftp[1] != 'h' && aftp[1] != 'b') {
@@ -654,6 +654,8 @@ addfield(int sharedflag, int flagflag)
       else
         size = (aftp[4] - aftp[2]) + 1;
     }
+  } else {
+    size = 0;
   }
 done:
   fields[fieldnum].size = size;

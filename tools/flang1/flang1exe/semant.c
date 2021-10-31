@@ -13398,7 +13398,7 @@ fixup_param_vars(SST *var, SST *init)
 static void
 save_typedef_init(int sptr, int dtype)
 {
-  ACL *ict;
+  ACL *ict = NULL;
 
   if (!stsk->ict_beg) {
     DCLDP(DTY(dtype + 3), TRUE); /* "complete" tag declaration */
@@ -14371,7 +14371,7 @@ static void
 _do_iface(int iface_state, int i)
 {
   SPTR sptr, orig, fval;
-  int dpdsc, paramct;
+  int dpdsc, paramct = 0;
   LOGICAL pass_notfound;
   SPTR passed_object; /* passed-object dummy argument */
   SPTR iface = iface_base[i].iface;

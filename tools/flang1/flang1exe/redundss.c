@@ -1275,7 +1275,7 @@ distribute(int factor, int sum, int l)
 static int
 MakeReplacement(int ast, int l)
 {
-  int optype, rast;
+  int optype, rast = 0;
   int lop, linv, lvar, rop, rinv, rvar, subscr[MAXSUBS], numdim, asd, s, any;
   switch (A_TYPEG(ast)) {
   case A_PAREN:

@@ -794,7 +794,7 @@ get_forall_subscr(int forall_ast, int subscr_ast, int *subscr, int elem_dty)
   int astli;
   int submap[MAXSUBS], arr_sptr, memberast;
   int ndims, lwbnd[MAXSUBS], upbnd[MAXSUBS];
-  int sptr;
+  int sptr = 0;
 
   assert(A_TYPEG(forall_ast) == A_FORALL, "get_forall_subscr: ast not forall",
          forall_ast, 4);
@@ -1250,7 +1250,7 @@ find_dummy(int entry, int pos)
 int
 find_array(int ast, int *returnast)
 {
-  int sptr;
+  int sptr = 0;
 
   if (A_TYPEG(ast) == A_SUBSCR) {
     int lop;
