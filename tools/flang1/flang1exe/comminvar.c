@@ -24,6 +24,7 @@
 #include "commopt.h"
 #include "ccffinfo.h"
 #include "fdirect.h"
+#include "ilidir.h" /* for open_pragma, close_pragma */
 
 /* Compiler switches:
     -x 49 0x20000:	Inhibit invariant communication hoisting

@@ -37,6 +37,7 @@
 #include "commopt.h"
 #include "scan.h"
 #include "hlvect.h"
+#include "ilidir.h" /* for ili_lpprg_init */
 
 #define IPA_ENABLED                  0
 #define IPA_NO_ASM                   0

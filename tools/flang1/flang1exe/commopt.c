@@ -28,6 +28,7 @@
 #include "nme.h"
 #include "rte.h"
 #include "hlvect.h"
+#include "symutl.h" /* for is_impure */
 
 extern int rewrite_opfields;
 

@@ -29,6 +29,7 @@
 #include "fdirect.h"
 #include "rte.h"
 #include "rtlRtns.h"
+#include "ilidir.h" /* for open_pragma, close_pragma */
 
 struct cs_table {
   LOGICAL is_used_lhs;

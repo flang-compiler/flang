@@ -26,6 +26,7 @@
 #include "rte.h"
 #include "fdirect.h"
 #include "rtlRtns.h"
+#include "ilidir.h" /* for open_pragma, close_pragma */
 
 #ifdef FLANG_COMMGEN_UNUSED
 static void generate_forall(int);

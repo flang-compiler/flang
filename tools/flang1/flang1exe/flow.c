@@ -29,6 +29,7 @@
 #include "fdirect.h"
 #include "extern.h"
 #include "rtlRtns.h"
+#include "ilidir.h" /* for open_pragma, close_pragma */
 
 /* static variables  */
 

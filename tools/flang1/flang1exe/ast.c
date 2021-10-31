@@ -32,6 +32,7 @@
 #include "rte.h"
 #include "extern.h"
 #include "rtlRtns.h"
+#include "semant.h" /* for get_temp */
 
 #define BYTE_NUMBER16 16
 static int reduce_iadd(int, INT);

@@ -30,6 +30,7 @@
 #include "semant.h"
 #include "llmputil.h"
 #include "rtlRtns.h"
+#include "rte.h" /* for get_all_descriptors, get_static_descriptor */
 #include <stdarg.h>
 
 
