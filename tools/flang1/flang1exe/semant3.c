@@ -5816,7 +5816,7 @@ check_doconcurrent_ast(int ast, int *doif)
       finalize_name = mkRteRtnNm(RTE_finalize);
     }
     if (strcmp(name, finalize_name) == 0 ||
-        dev_finalize_name && strcmp(name, dev_finalize_name) == 0) {
+        (dev_finalize_name && strcmp(name, dev_finalize_name) == 0)) {
       sptr = memsym_of_ast(ARGT_ARG(A_ARGSG(ast), 0));
       name = SYMNAME(sptr);
       if (DI_CONC_KIND(*doif) == DC_MASK)
