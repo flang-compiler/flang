@@ -13,6 +13,7 @@
 
 #include "stdioInterf.h"
 #include "fioMacros.h"
+#include "mpalloc.h" /* for __cstr_free */
 
 extern char *__fstr2cstr();
 

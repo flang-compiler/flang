@@ -33,6 +33,7 @@
 #include "comm.h"
 #include "fdirect.h"
 #include "rtlRtns.h"
+#include "ilidir.h" /* for open_pragma, close_pragma */
 
 static void convert_statements(void);
 static void convert_simple(void);

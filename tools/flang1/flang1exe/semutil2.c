@@ -29,6 +29,7 @@
 #include "state.h"
 #include "ccffinfo.h"
 #include "rtlRtns.h"
+#include "llmputil.h" /* for llmp_create_uplevel, llmp_uplevel_set_parent */
 
 /*
  * before the END for the subprogram is generated, check how/where

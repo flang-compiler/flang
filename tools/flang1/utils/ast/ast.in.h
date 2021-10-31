@@ -342,6 +342,7 @@ int mk_init (int, DTYPE);
 int mk_cnst (int);
 int mk_cval (INT, DTYPE);
 int mk_isz_cval (ISZ_T, DTYPE);
+int mk_fake_iostat (void);
 int mk_cval1 (INT, DTYPE);
 void mk_alias (int, int);
 int mk_label (int);

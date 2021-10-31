@@ -30,6 +30,7 @@
 #include "interf.h"
 #include "fdirect.h"
 #include "fih.h"
+#include "ccffinfo.h" /* for setfile */
 
 #include "atomic_common.h"
 

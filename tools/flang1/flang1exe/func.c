@@ -32,6 +32,7 @@
 #include "x86.h"
 #endif
 #include "rtlRtns.h"
+#include "ilidir.h" /* for open_pragma, close_pragma */
 
 static LOGICAL matmul_use_lhs(int, int, int);
 static int triplet_extent(int);

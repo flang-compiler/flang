@@ -181,6 +181,13 @@ void loc_of(int nme);
  */
 void loc_of_vol(int nme);
 
+#ifdef PTRSTOREP
+/**
+   \brief ...
+ */
+void ptrstore_of(int nme);
+#endif
+
 /**
    \brief ...
  */

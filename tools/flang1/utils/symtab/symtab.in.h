@@ -390,6 +390,7 @@ int getccssym_sc(const char *, int, int, int);
 int getcctmp(int, int, int, int);
 int getcctmp_sc(int, int, int, int, int);
 int insert_sym(int);
+int insert_sym_first(int);
 int getlab(void);
 void pop_sym(int);
 SPTR mkfunc(const char *);
@@ -421,6 +422,7 @@ void save_uname(int, INT);
 int add_symitem(int, int);
 void change_predefineds(int, LOGICAL);
 SPTR find_explicit_interface(SPTR s);
+SPTR instantiate_interface(SPTR iface);
 void convert_2dollar_signs_to_hyphen(char *name);
 
 char *getsname(int);	/* defined in assem.c */

@@ -24,6 +24,7 @@
 #include "soc.h"
 #include "fdirect.h"
 #include "extern.h"
+#include "ilidir.h" /* for open_pragma, close_pragma */
 
 #if DEBUG
 #define TRACE0(s)    \
