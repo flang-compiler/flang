@@ -934,7 +934,7 @@ __INT_T
 ENTF90IO(LDW_END, ldw_end)()
 {
   int ioproc, len;
-  int i, s = 0;
+  int s = 0;
 
   ioproc = GET_DIST_IOPROC;
   if (LOCAL_MODE || GET_DIST_LCPU == ioproc) {
@@ -958,7 +958,7 @@ ENTF90IO(LDW_END, ldw_end)()
 __INT_T
 ENTCRF90IO(LDW_END, ldw_end)()
 {
-  int i, s = 0;
+  int s = 0;
   s = _f90io_ldw_end();
 
   save_samefcb();

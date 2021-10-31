@@ -379,7 +379,6 @@ __fortio_error(int errval)
 {
   FIO_FCB *fdesc;
   const char *eoln, *txt;
-  int one = 1;
   int retval;
 
   assert(errval > 0);
@@ -490,7 +489,6 @@ __fortio_eoferr(int errval)
 {
   FIO_FCB *fdesc;
   const char *eoln, *txt;
-  int one = 1;
 
   assert(errval > FIO_ERROR_OFFSET);
 
@@ -540,7 +538,6 @@ __fortio_eorerr(int errval)
 {
   FIO_FCB *fdesc;
   const char *eoln, *txt;
-  int one = 1;
 
   assert(errval > FIO_ERROR_OFFSET);
 

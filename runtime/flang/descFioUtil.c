@@ -19,12 +19,8 @@ void I8(__fortio_loop)(fio_parm *z, /* parameter struct */
 {
   DECL_HDR_PTRS(ac);
   DECL_DIM_PTRS(acd);
-  __INT_T *gb, *tempGB = 0; /* for traversing the gen_block when applicable*/
-  int direction, pshape;
-  __INT_T tExtent;
 
-  int blkno, i, k, pcoord;
-  __INT_T m, n, tl, tu;
+  __INT_T n;
 
   ac = z->ac;
   SET_DIM_PTRS(acd, ac, dim - 1);

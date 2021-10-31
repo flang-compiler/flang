@@ -288,14 +288,12 @@ int ENTF90(POLY_CONFORM_TYPES, poly_conform_types)(char *ab, F90_Desc *ad,
                                                    F90_Desc *bd, __INT_T flag)
 {
   /* Possible return values. Do not change the integer values */
-  typedef enum {
+  enum {
     NOT_BIG_ENOUGH = -1, /* not conformable, not big enough */
     BIG_ENOUGH = 0,      /* not conformable but big enough */
     CONFORMABLE = 1      /* conformable */
-  } CONFORM_TYPES;
+  };
 
-  OBJECT_DESC *src = (OBJECT_DESC *)bd;
-  OBJECT_DESC *dest = (OBJECT_DESC *)ad;
   TYPE_DESC *src_td, *dest_td;
   int src_sz, dest_sz;
   int src_is_array = 0, dest_is_array = 0;
@@ -701,9 +699,8 @@ process_final_procedures(char *area, F90_Desc *sd)
   if (src_td->layout) {
     LAYOUT_DESC *ld = src_td->layout;
     F90_Desc *fd;
-    char *ptr1[1] = {0};
     char *ptr2[1] = {0};
-    char *cb, *db;
+    char *cb;
     __LOG_T g1;
     for (; ld->tag != 0; ld++) {
       if ((ld->tag != 'T' && ld->tag != 'D' && ld->tag != 'P' &&
@@ -793,9 +790,8 @@ void ENTF90(DEALLOC_POLY_MBR03A,
 
     LAYOUT_DESC *ld = src_td->layout;
     F90_Desc *fd;
-    char *ptr1[1] = {0};
     char *ptr2[1] = {0};
-    char *cb, *db;
+    char *cb;
     __LOG_T g1;
 
     for (; ld->tag != 0; ld++) {
@@ -862,7 +858,6 @@ void ENTF90(DEALLOC_POLY03A, dealloc_poly03a)(F90_Desc *sd, __STAT_T *stat,
 
     LAYOUT_DESC *ld = src_td->layout;
     F90_Desc *fd;
-    char *ptr1[1] = {0};
     char *ptr2[1] = {0};
     char *cb;
     __LOG_T g1;
@@ -922,7 +917,7 @@ sourced_alloc_and_assign(char *ab, char *bb, TYPE_DESC *td)
   char *cb, *db;
   __INT_T one = 1;
   __INT_T zero = 0;
-  __INT_T len, i;
+  __INT_T len;
   __INT_T kind = __NONE;
   char *errmsg = "sourced_alloc_and_assign: malloc error";
 
@@ -1126,7 +1121,6 @@ void ENTF90(POLY_ASN, poly_asn)(char *ab, F90_Desc *ad, char *bb, F90_Desc *bd,
    */
 
   OBJECT_DESC *src = (OBJECT_DESC *)bd;
-  OBJECT_DESC *dest = (OBJECT_DESC *)ad;
   TYPE_DESC *src_td, *dest_td;
   int src_sz, dest_sz, sz;
   int dest_is_array, src_is_array, i;
@@ -1325,7 +1319,7 @@ void I8(__fort_dump_type)(TYPE_DESC *d)
   fprintf(__io_stderr(), "Size: %d\n", d->obj.size);
   fprintf(__io_stderr(), "Type Descriptor:\n\t'%s'\n", d->name);
   if (d->obj.level > 0) {
-    __INT_T offset, level;
+    __INT_T level;
     fprintf(__io_stderr(), "(Child Type)\n");
     fprintf(__io_stderr(), "Parent Descriptor%s\n",
             (d->obj.level == 1) ? ":" : "s:");
@@ -1696,10 +1690,9 @@ ENTF90(SAME_INTRIN_TYPE_AS, same_intrin_type_as)
 (void *ab, OBJECT_DESC *ad, void *bb, __INT_T intrin_type, __INT_T flag, ...)
 
 {
-  TYPE_DESC *atd;
   TYPE_DESC *btd;
   OBJECT_DESC *t1, *t2;
-  __LOG_T g1, g2;
+  __LOG_T g1;
   va_list va;
 
   if (!ad)
@@ -1742,10 +1735,9 @@ ENTF90(KSAME_INTRIN_TYPE_AS, ksame_intrin_type_as)
 (void *ab, OBJECT_DESC *ad, void *bb, __INT_T intrin_type, __INT_T flag, ...)
 
 {
-  TYPE_DESC *atd;
   TYPE_DESC *btd;
   OBJECT_DESC *t1, *t2;
-  __LOG_T g1, g2;
+  __LOG_T g1;
   va_list va;
 
   if (!ad)
@@ -1833,7 +1825,6 @@ static int has_intrin_type(F90_Desc *dd)
 {
   int i;
   OBJECT_DESC *td = (OBJECT_DESC *)dd; 
-  int is_intrin_type = 0;
 
   if (td->type == NULL)
     return 0;
@@ -1850,7 +1841,6 @@ static int has_intrin_type(F90_Desc *dd)
 void ENTF90(INIT_UNL_POLY_DESC, init_unl_poly_desc)(F90_Desc *dd, F90_Desc *sd,
                                                     __INT_T kind)
 {
-  OBJECT_DESC *od = (OBJECT_DESC *)sd;
     if (sd && F90_TAG_G(sd) == __DESC) {
       __fort_bcopy((char *)dd, (char *)sd, SIZE_OF_RANK_n_ARRAY_DESC(F90_RANK_G(sd)));
       SET_F90_DIST_DESC_PTR(dd, F90_RANK_G(dd));

@@ -249,7 +249,6 @@ void I8(__fort_store_int_element)(void *b, F90_Desc *d, int i, int val)
 void I8(__fort_fetch_int_vector)(void *b, F90_Desc *d, int *vec, int veclen)
 {
   double tmp[2];
-  dtype kind;
   __INT_T i;
 
   if (F90_RANK_G(d) != 1)

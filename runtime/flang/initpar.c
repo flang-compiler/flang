@@ -363,10 +363,7 @@ static char *dumarg = NULL;
 static void
 __fort_initarg()
 {
-  char *p, *q;
-  int i;
   char **v;
-  int c;
 
   if (arg != (char **)0) {
     return;
@@ -837,12 +834,6 @@ __fort_pull_them_in()
 
 /* -------------------------------------------------------------------- */
 
-#pragma global opt = 1
-static void
-f90_compiled_arg()
-{
-}
-
 /*
  * this routine is called from .init.  it does limited initialization
  * for f90 routines called from a non-f90 main routine.  argc and
@@ -854,9 +845,6 @@ void
 __attribute__((constructor))
 f90_compiled()
 {
-#ifndef TARGET_LINUX_ARM
-  static void (*p)(void) = f90_compiled_arg;
-#endif
   if (!inited.consts) {
     __fort_tcpus = 1;
     __fort_np2 = 1;

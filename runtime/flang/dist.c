@@ -20,8 +20,6 @@ void *ENTFTN(COMM_START, comm_start)(sked **skp, void *rb, F90_Desc *rd,
 sked *ENTFTN(COMM_COPY, comm_copy)(void *rb, void *sb, F90_Desc *rs,
                                    F90_Desc *ss);
 
-static __INT_T dummyGenBlock = 0;
-
 __INT_T *I8(__fort_new_gen_block)(F90_Desc *d, int dim)
 {
   return &f90DummyGenBlock;
@@ -282,8 +280,6 @@ ENTFTN(OWNER, owner)
 void I8(__fort_describe_replication)(F90_Desc *d, repl_t *r)
 {
   DECL_DIM_PTRS(dd);
-  DECL_HDR_PTRS(t);
-  DECL_DIM_PTRS(td);
   proc *p;
   procdim *pd;
   __INT_T grpi, dx, m, ncopies, ndim, ngrp, plow, px;
@@ -356,7 +352,7 @@ ENTFTN(ISLOCAL_IDX, islocal_idx)
 (F90_Desc *d, __INT_T *dimb, __INT_T *idxb)
 {
   DECL_DIM_PTRS(dd);
-  __INT_T dfmt, dim, idx, pcoord, tidx;
+  __INT_T dim, idx;
 
   dim = *dimb;
   idx = *idxb;
@@ -376,7 +372,7 @@ ENTFTN(ISLOCAL_IDX, islocal_idx)
 int I8(__fort_islocal)(F90_Desc *d, __INT_T *idxv)
 {
   DECL_DIM_PTRS(dd);
-  __INT_T dfmt, dx, pcoord, tidx;
+  __INT_T dfmt, dx;
 
   if (F90_FLAGS_G(d) & __OFF_TEMPLATE)
     return 0;
@@ -394,8 +390,7 @@ ENTFTN(ISLOCAL, islocal)
 (F90_Desc *d, ...)
 {
   va_list va;
-  DECL_DIM_PTRS(dd);
-  __INT_T dx, idxv[MAXDIMS], pcoord, tidx;
+  __INT_T dx, idxv[MAXDIMS];
 
 #if defined(DEBUG)
   if (d == NULL || F90_TAG_G(d) != __DESC)
@@ -417,7 +412,7 @@ void I8(__fort_localize)(F90_Desc *d, __INT_T *idxv, int *cpu, __INT_T *off)
   DECL_DIM_PTRS(dd);
   proc *p;
   procdim *pd;
-  __INT_T dfmt, dx, lab, lidx, lof, offset, owner, pcoord, px, repl, tidx;
+  __INT_T dfmt, dx, lab, lidx, offset, owner, pcoord, px, repl;
 
   owner = DIST_PBASE_G(d);
   offset = 0;
@@ -503,7 +498,7 @@ void ENTFTN(LOCALIZE_DIM, localize_dim)(F90_Desc *d, __INT_T *dimp,
                                         __INT_T *lindexp)
 {
   DECL_DIM_PTRS(dd);
-  __INT_T dim, idx, lab, lidx, lof, pcoord, tidx;
+  __INT_T dim, idx, lab, lidx, pcoord;
 
   dim = *dimp;
   idx = *idxp;
@@ -602,7 +597,7 @@ I8(__fort_local_offset)(F90_Desc *d, __INT_T *idxv)
 void *I8(__fort_local_address)(void *base, F90_Desc *d, __INT_T *idxv)
 {
   DECL_DIM_PTRS(dd);
-  __INT_T dfmt, dx, idx, lidx, lof, offset, pcoord, tidx;
+  __INT_T dfmt, dx, idx, lidx, offset;
 
   if (F90_FLAGS_G(d) & __OFF_TEMPLATE)
     return NULL;
@@ -656,7 +651,7 @@ ENTFTN(LOCALIZE_INDEX, localize_index)
 (F90_Desc *d, __INT_T *dimb, __INT_T *idxb)
 {
   DECL_DIM_PTRS(dd);
-  int dim, idx, lidx, lof;
+  int dim, idx, lidx;
 
   dim = *dimb;
   idx = *idxb;
@@ -685,8 +680,7 @@ static int I8(cyclic_setup)(F90_Desc *d, __INT_T dim, __INT_T l, __INT_T u,
                             __INT_T *plof, __INT_T *plos)
 {
   DECL_DIM_PTRS(dd);
-  __INT_T abstr, ck, cl, cn, cs, cs0, cu, lof, los, los0, m, n, q, r, tl, tu,
-      ts, ts0, x;
+  __INT_T cl, cn, cs, cu, lof, los, n, ts;
 
   SET_DIM_PTRS(dd, d, dim - 1);
 
@@ -1079,7 +1073,7 @@ void ENTFTN(PROCESSORS, processors)(proc *p, __INT_T *rankp, ...)
 {
   va_list va;
   procdim *pd;
-  __INT_T i, rank, shape[MAXDIMS];
+  __INT_T i, rank;
 
   rank = *rankp;
 #if defined(DEBUG)
@@ -1253,7 +1247,10 @@ void I8(__fort_use_allocation)(F90_Desc *d, __INT_T dim, __INT_T no, __INT_T po,
 {
   DECL_DIM_PTRS(ad);
   DECL_DIM_PTRS(dd);
-  __INT_T aextent, dextent, k, lof;
+  __INT_T k;
+#if defined(DEBUG)
+  __INT_T aextent, dextent;
+#endif
 
 #if defined(DEBUG)
   if (d == NULL || F90_TAG_G(d) != __DESC)
@@ -1487,7 +1484,6 @@ void I8(__fort_set_section)(F90_Desc *d, __INT_T ddim, F90_Desc *a,
 
 void I8(__fort_finish_section)(F90_Desc *d)
 {
-  DECL_DIM_PTRS(dd);
   __INT_T gsize, i;
   __INT_T rank = F90_RANK_G(d);
 
@@ -1613,7 +1609,7 @@ void ENTFTN(SECT, sect)(F90_Desc *d, F90_Desc *a,
   if (flags & (1 << (ax - 1))) {                                               \
     DECL_DIM_PTRS(__dd);                                                       \
     DECL_DIM_PTRS(__ad);                                                       \
-    __INT_T __extent, __myoffset, u, l, s;                                     \
+    __INT_T __extent, u, l, s;                                                 \
     dx++;                                                                      \
     SET_DIM_PTRS(__ad, a, ax - 1);                                             \
     SET_DIM_PTRS(__dd, d, dx - 1);                                             \
@@ -2428,7 +2424,7 @@ F90_Desc *I8(__fort_inherit_template)(F90_Desc *d, __INT_T rank,
                                       F90_Desc *target)
 {
   DECL_HDR_PTRS(t);
-  __INT_T dz, dzr, tz;
+  __INT_T dz, dzr;
 
 #if defined(DEBUG)
   if (rank < 0 || rank > MAXDIMS)

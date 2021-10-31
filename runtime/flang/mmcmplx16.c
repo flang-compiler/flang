@@ -51,11 +51,6 @@ void ENTF90(MMUL_CMPLX16,
   // Local variables
 
   int colsa, rowsa, rowsb, colsb;
-  int ar, ac;
-  int ndx, ndxsav, colchunk, colchunks, rowchunk, rowchunks;
-  int colsb_chunks, colsb_end, colsb_strt;
-  int bufr, bufc, loc, lor;
-  int small_size = SMALL_ROWSA * SMALL_ROWSB * SMALL_COLSB;
   int tindex = 0;
   DOUBLE_COMPLEX_TYPE buffera[SMALL_ROWSA * SMALL_ROWSB];
   DOUBLE_COMPLEX_TYPE bufferb[SMALL_COLSB * SMALL_ROWSB];
@@ -67,7 +62,7 @@ void ENTF90(MMUL_CMPLX16,
   /*
    * Small matrix multiply variables
    */
-  int i, ia, ja, j, k, bk;
+  int i, ja, j, k;
   int astrt, bstrt, cstrt, andx, bndx, cndx, indx, indx_strt;
   /*
    * We will structure this code a bit different from the real code

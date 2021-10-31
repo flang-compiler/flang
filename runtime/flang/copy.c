@@ -155,7 +155,7 @@ static void I8(copy_xfer)(copy_parm *z,   /* parameter struct */
   DECL_DIM_PTRS(rcd);
   proc *p;
   procdim *pd;
-  int dfmt, lx, n, px, rx;
+  int dfmt, lx, px, rx;
   __INT_T i, m, pc, rg0, rp0;
   __INT_T rpc[MAXDIMS];
 
@@ -304,7 +304,7 @@ static void I8(copy_loop)(copy_parm *z,   /* parameter struct */
   DECL_DIM_PTRS(lcd);
   DECL_DIM_PTRS(rcd);
   int lx, rx;
-  __INT_T cl, cn, cs, clof, clos, i, ll, ln, lu, n, off, rl, rn, rtl, rtu, ru;
+  __INT_T cl, cn, cs, clof, clos, i, ll, ln, lu, n, off, rl, rn, ru;
 
   lc = ly->sect;
   lx = ly->axis_map[dim - 1] - 1;

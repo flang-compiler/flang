@@ -699,7 +699,7 @@ ENTF90IO(LDRA, ldra)
  DCLEN64(item))
 {
   int typ;
-  int cnt, cpu, i, ioproc, str;
+  int cnt, ioproc, str;
   __CLEN_T len;
   char *adr;
   int s = 0;
@@ -745,7 +745,7 @@ ENTF90IO(LDR_AA, ldr_aa)
  DCLEN64(item))
 {
   int typ;
-  int cnt, cpu, i, ioproc, str;
+  int cnt, ioproc, str;
   __CLEN_T len;
   char *adr;
   int s = 0;
@@ -789,7 +789,7 @@ ENTF90IO(LDR64_AA, ldr64_aa)
 {
   int typ;
   long cnt;
-  int cpu, i, ioproc, str;
+  int ioproc, str;
   __CLEN_T len;
   char *adr;
   int s = 0;
@@ -833,7 +833,7 @@ ENTCRF90IO(LDRA, ldra)
  DCLEN64(item))
 {
   int typ;
-  int cnt, cpu, i, str;
+  int cnt, str;
   __CLEN_T len;
   char *adr;
 

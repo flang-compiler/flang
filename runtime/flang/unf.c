@@ -438,7 +438,6 @@ __f90io_unf_read(int type,    /* Type of data */
                  char *item,  /* where to xfer data */
                  __CLEN_T item_length)
 {
-  int i;         /* loop index */
   size_t nbytes; /* number of bytes to read from current record */
   size_t resid;  /* number of bytes to read from following records */
   int offset;    /* offset into item */
@@ -1425,7 +1424,6 @@ __f90io_usw_read(int type,   /* Type of data */
                  char *item, /* where to xfer data */
                  __CLEN_T item_length)
 {
-  long i;        /* loop index */
   size_t nbytes; /* number of bytes to read from current record */
   size_t resid;  /* number of bytes to read from following records */
   int offset;    /* offset into item */

@@ -339,7 +339,7 @@ ENTF90IO(FMTW_INITA, fmtw_inita)
  DCHAR(advance)   /* 'YES', 'NO', or 'NULL' */
  DCLEN64(advance))
 {
-  G *g, *tmp_gbl;
+  G *g;
   char *advadr;
   __CLEN_T advlen;
   int s = 0;
@@ -2765,7 +2765,7 @@ ENTF90IO(FMTW_END, fmtw_end)()
 {
   G *g = gbl;
   int ioproc;
-  int i, len, s = 0;
+  int len, s = 0;
 
   ioproc = GET_DIST_IOPROC;
   if ((GET_DIST_LCPU == ioproc) || LOCAL_MODE) {
@@ -2867,11 +2867,8 @@ ENTF90IO(DTS_FMTW,dts_fmtw)(char** cptr, void** iptr, INT * len, F90_Desc* sd, i
 {
   INT code, k, first;
   G *g = gbl;
-  int s = 0;
   int i, errflag;
-  __INT_T lbnd = 1;
   __INT_T ubnd = 0;
-  __INT_T gsize, lbase;
   __INT8_T **tptr8 = (__INT8_T **)iptr;
   INT **tptr4 = (INT **)iptr;
 

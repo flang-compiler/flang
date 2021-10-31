@@ -255,7 +255,7 @@ static void I8(eoshift_loop)(char *rb,          /* result base */
   DECL_DIM_PTRS(ssd);
   __INT_T aflags, albase, apbase, arepli, ascoff;
   __INT_T rflags, rlbase, rpbase, rrepli, rscoff;
-  __INT_T ai, array_dim, bstr, l, ri, sstr;
+  __INT_T ai, array_dim, bstr, ri, sstr;
 
   /* shift rank = array rank - 1*/
 
@@ -519,7 +519,7 @@ void ENTFTN(EOSHIFTSA, eoshiftsa)(char *rb,     /* result base */
 {
   DECL_HDR_VARS(ac);
   DECL_HDR_VARS(rc);
-  __INT_T dim, i, shift;
+  __INT_T dim, shift;
 
   shift = *sb;
   dim = *db;

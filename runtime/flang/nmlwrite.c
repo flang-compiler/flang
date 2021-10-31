@@ -64,9 +64,6 @@ typedef struct {
 
 static G static_gbl[GBL_SIZE];
 static G *gbl = &static_gbl[0];
-static G *gbl_head = &static_gbl[0];
-static int gbl_avl = 0;
-static int gbl_size = GBL_SIZE;
 
 static int emit_eol(void);
 static int write_nml_val(NML_DESC **, NML_DESC *, char *);
@@ -79,7 +76,6 @@ static int I8(eval_dtio_sb)(NML_DESC **, NML_DESC *, char *, int);
 static int dtio_write_scalar(NML_DESC **, NML_DESC *, char *, int);
 
 static SB sb;
-static TRI tri;
 
 /* ---------------------------------------------------------------- */
 
@@ -310,7 +306,9 @@ ENTCRF90IO(NMLW_INTERN_INIT, nmlw_intern_init)(
 static int
 emit_eol(void)
 {
+#if defined(WINNT)
   int ret_err;
+#endif
 
   if (!internal_file) {
 #if defined(WINNT)
@@ -339,7 +337,7 @@ emit_eol(void)
 static void
 I8(fillup_sb)(int v, NML_DESC *descp, char *loc_addr)
 {
-  int i, k;
+  int i;
   F90_Desc *sd = get_descriptor(descp);
   DECL_DIM_PTRS(acd);
 
@@ -364,7 +362,7 @@ write_nml_val(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr)
   int num_consts;
   __POINT_T *desc_dims, new_ndims;
   __POINT_T actual_ndims;
-  int i, j, k;
+  int j, k;
   char *p;
   int len;
   int ret_err;
@@ -552,8 +550,7 @@ write_char(int ch)
 static int
 I8(eval_sb)(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr, int d)
 {
-  int j, err, k;
-  __BIGINT_T offset, baseoffset;
+  int err, k;
   char *new_addr;
   NML_DESC *next_descp;
   __POINT_T *desc_dims;
@@ -626,8 +623,7 @@ I8(eval_sb)(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr, int d)
 static int
 I8(eval_dtio_sb)(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr, int d)
 {
-  int j, err, k;
-  __BIGINT_T offset, baseoffset;
+  int err, k;
   char *new_addr;
   NML_DESC *next_descp;
   __POINT_T *desc_dims;
@@ -937,7 +933,6 @@ dtio_write_scalar(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr,
   int k, num_consts, ret_err, j;
   const char *iotype = "NAMELIST";
   char *start_addr;
-  char *mem_addr;
   __POINT_T *desc_dims, new_ndims;
   __POINT_T actual_ndims;
 
