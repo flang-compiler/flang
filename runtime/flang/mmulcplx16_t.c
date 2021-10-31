@@ -170,8 +170,8 @@ void ENTF90(MATMUL_CPLX16,
   /* transpose s1 */
   {
     __INT_T dest_offset;
-    __INT_T s1_d1_base, s1_d1_offset, s1_m_delta, s1_d2_base, s1_n_delta,
-        s2_d1_base, s2_n_delta, s2_d2_base, s2_k_delta, d_d1_base, d_m_delta,
+    __INT_T s1_d1_base, s1_d1_offset, s1_m_delta, s1_n_delta,
+        s2_n_delta, s2_d2_base, s2_k_delta, d_d1_base, d_m_delta,
         d_d2_base, d_k_delta;
     __INT_T k;
     __INT_T l;

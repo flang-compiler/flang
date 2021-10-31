@@ -183,7 +183,7 @@ void ENTFTN(DIST_ALIGNMENT,
   DECL_DIM_PTRS(ad);
   proc *p;
   procdim *pd;
-  __INT_T aextent, i, idm, ncp, px, rank, textent, vector[MAXDIMS];
+  __INT_T i, idm, ncp, px, rank, vector[MAXDIMS];
 
   rank = (F90_TAG_G(alignee) == __DESC) ? F90_RANK_G(alignee) : 0;
 
@@ -871,7 +871,7 @@ void ENTFTN(GLOBAL_SIZE, global_size)(void *size_b, void *array_b, void *dim_b,
 {
   DECL_HDR_PTRS(g);
   DECL_DIM_PTRS(gd);
-  __INT_T i, dim, rank, size;
+  __INT_T dim, rank, size;
 
   if (F90_TAG_G(array_s) == __DESC) {
     g = DIST_ACTUAL_ARG_G(array_s);
@@ -1002,10 +1002,9 @@ void ENTFTN(LOCAL_TO_GLOBAL,
   DECL_HDR_PTRS(gs);
   DECL_DIM_PTRS(gsd);
   DECL_DIM_PTRS(asd);
-  __INT_T i, j, local, gof, procno, *procs;
-  __INT_T index[MAXDIMS], pcoord[MAXDIMS];
-  __INT_T lb, ub, lof;
-  __INT_T lboffset, adjindex, cyclenum, cyclepos, gstride;
+  __INT_T i;
+  __INT_T index[MAXDIMS];
+  __INT_T lboffset, adjindex, cyclenum, cyclepos;
 
   if (F90_TAG_G(array_s) != __DESC)
     __fort_abort("LOCAL_TO_GLOBAL: argument must be array");
@@ -1165,9 +1164,8 @@ void ENTFTN(GLOBAL_TO_LOCAL,
   DECL_DIM_PTRS(asd); /* local array dimensions */
   DECL_HDR_PTRS(gs);  /* global section */
   DECL_DIM_PTRS(gsd); /* global section dimensions */
-  proc *p;
   repl_t repl; /* replication descriptor */
-  __INT_T i, j, local, lof, n, procno;
+  __INT_T i, j, local, lof, procno;
   __INT_T *procs;
   __INT_T gindex[MAXDIMS], lindex[MAXDIMS], pcoord[MAXDIMS];
 

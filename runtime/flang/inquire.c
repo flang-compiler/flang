@@ -502,8 +502,6 @@ int ENTF90IO(INQUIREA, inquirea)(
   char *schr = 0, *schrp;
   __CLEN_T schr_len = 0;
 
-  int n;
-
   file_ptr = (ISPRESENTC(file) ? CADR(file) : NULL);
   name_ptr = (ISPRESENTC(name) ? CADR(name) : NULL);
   acc_ptr = (ISPRESENTC(acc) ? CADR(acc) : NULL);
@@ -860,8 +858,6 @@ int ENTF90IO(INQUIRE2003A, inquire2003a)(
   int sint[SINTN], *sintp;
   char *schr = 0, *schrp;
   __CLEN_T schr_len = 0;
-
-  int n;
 
   file_ptr = (ISPRESENTC(file) ? CADR(file) : NULL);
   name_ptr = (ISPRESENTC(name) ? CADR(name) : NULL);
@@ -1678,8 +1674,6 @@ ENTF90IO(INQUIRE03A, inquire03a) (
   char *schr = 0, *schrp;
   __CLEN_T schr_len = 0;
 
-  int n;
-
   file_ptr = (ISPRESENTC(file) ? CADR(file) : NULL);
   name_ptr = (ISPRESENTC(name) ? CADR(name) : NULL);
   acc_ptr = (ISPRESENTC(acc) ? CADR(acc) : NULL);
@@ -2187,8 +2181,6 @@ ENTF90IO(INQUIRE03_2A, inquire03_2a)
   __INT8_T sint[SINTN], *sintp;
   char *schr = 0, *schrp;
   __CLEN_T schr_len = 0;
-
-  int n;
 
   file_ptr = (ISPRESENTC(file) ? CADR(file) : NULL);
   name_ptr = (ISPRESENTC(name) ? CADR(name) : NULL);

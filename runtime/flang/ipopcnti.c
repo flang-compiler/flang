@@ -11,11 +11,12 @@ int32_t
 __mth_i_ipopcnti(uint32_t u32, int size)
 {
   uint32_t r32 = u32;
-
+#if !defined(TARGET_X8664) && !defined(TARGET_LINUX_POWER)
   static const uint32_t u5s = 0x55555555;
   static const uint32_t u3s = 0x33333333;
   static const uint32_t u7s = 0x07070707;
   static const uint32_t u1s = 0x01010101;
+#endif
 
   r32 = u32;
   if (size == 2) {
@@ -35,7 +36,6 @@ __mth_i_ipopcnti(uint32_t u32, int size)
        : "r"(r32)
        );
 #else
-
   r32 = (r32 & u5s) + (r32 >> 1 & u5s);
   r32 = (r32 & u3s) + (r32 >> 2 & u3s);
   r32 = (r32 & u7s) + (r32 >> 4 & u7s);

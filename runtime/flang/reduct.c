@@ -341,7 +341,6 @@ void I8(__fort_reduce_section)(void *vec1, dtype typ1, int len1, void *vec2,
                               int dim, F90_Desc *a)
 {
   DECL_DIM_PTRS(ad);
-  proc *p;
   char *tmp1, *tmp2; /* temporary buffer pointers */
   double buf1[4], buf2[4];
   __INT_T bit, cpu, i, it, mask, n, offgrid, pr, np, pc, pl, pe[MAXDIMS],
@@ -472,7 +471,6 @@ void I8(__fort_replicate_result)(void *vec1, dtype typ1, int len1, void *vec2,
 {
   DECL_HDR_PTRS(t);
   DECL_DIM_PTRS(td);
-  proc *ap;
   __INT_T fromcpu, fromidx, i, mask, me, np, offgrid, p0, pc, pr, pe[MAXDIMS],
       ps[MAXDIMS];
 

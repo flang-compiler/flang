@@ -790,7 +790,6 @@ static void l_ ## NAME(RTYP *r, __INT_T n, RTYP *v, __INT_T vs, \
       __INT4_T *loc, __INT_T li, __INT_T ls, __INT_T len, __LOG_T back)        \
   {                                                                            \
     __INT4_T i, j, ahop, t_loc = 0;                                            \
-    RTYP *val = v;                                                             \
     __LOG##N##_T mask_log;                                                     \
     if (!back && *loc != 0)                                                    \
       return;                                                                  \
@@ -895,7 +894,6 @@ static void l_ ## NAME(RTYP *r, __INT_T n, RTYP *v, __INT_T vs, \
       __INT8_T *loc, __INT_T li, __INT_T ls, __INT_T len, __LOG_T back)        \
   {                                                                            \
     __INT_T i, j, ahop, t_loc = 0;                                             \
-    RTYP *val = v;                                                             \
     __LOG##N##_T mask_log;                                                     \
     if (!back && *loc != 0)                                                    \
       return;                                                                  \

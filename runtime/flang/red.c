@@ -152,8 +152,7 @@ void I8(__fort_red_scalar)(red_parm *z, char *rb, char *ab, char *mb,
                           red_enum op)
 {
   DECL_DIM_PTRS(asd);
-  __INT_T ao, i, len, m, p, q;
-  int loop;
+  __INT_T ao, i, m, p, q;
 
   z->rb = rb;
   z->rs = rs;
@@ -215,8 +214,7 @@ void I8(__fort_red_scalarlk)(red_parm *z, char *rb, char *ab, char *mb,
                             __INT_T *xb, red_enum op)
 {
   DECL_DIM_PTRS(asd);
-  __INT_T ao, i, len, m, p, q;
-  int loop;
+  __INT_T ao, i, m, p, q;
 
   z->rb = rb;
   z->rs = rs;
@@ -440,8 +438,7 @@ void I8(__fort_kred_scalarlk)(red_parm *z, char *rb, char *ab, char *mb,
                              __INT8_T *xb, red_enum op)
 {
   DECL_DIM_PTRS(asd);
-  __INT_T ao, i, len, m, p, q;
-  int loop;
+  __INT_T ao, i, m, p, q;
 
   z->rb = rb;
   z->rs = rs;
@@ -667,7 +664,7 @@ void I8(__fort_red_array)(red_parm *z, char *rb0, char *ab, char *mb, char *db,
   DECL_HDR_VARS(rs1);
   char *rb = 0, *xb, *zb;
   __INT_T flags, kind, len, rank, _1 = 1;
-  int i, n, rc, rl;
+  int i, rc, rl;
   __INT_T ao, ro;
 
   z->dim = I8(__fort_fetch_int)(db, ds);
@@ -859,7 +856,7 @@ void I8(__fort_red_arraylk)(red_parm *z, char *rb0, char *ab, char *mb, char *db
   DECL_HDR_VARS(rs1);
   char *rb = 0, *xb, *zb;
   __INT_T flags, kind, len, rank, _1 = 1;
-  int i, n, rc, rl;
+  int i, rc, rl;
   __INT_T ao, ro;
 
   z->dim = I8(__fort_fetch_int)(db, ds);
@@ -1050,7 +1047,7 @@ void I8(__fort_kred_arraylk)(red_parm *z, char *rb0, char *ab, char *mb,
   DECL_HDR_VARS(rs1);
   char *rb = 0, *xb, *zb;
   __INT_T flags, kind, len, rank, _1 = 1;
-  int i, n, rc, rl;
+  int i, rc, rl;
   __INT_T ao, ro;
 
   z->dim = I8(__fort_fetch_int)(db, ds);
@@ -1246,7 +1243,6 @@ void ENTFTN(REDUCE_DESCRIPTOR,
                                F90_Desc *ad,   /* array descriptor */
                                __INT_T *dimb)  /* dimension */
 {
-  DECL_DIM_PTRS(rdd);
   DECL_DIM_PTRS(add);
   DECL_HDR_PTRS(td);
   dtype kind;
