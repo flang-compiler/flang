@@ -3961,7 +3961,7 @@ construct_intrinsic_acl(int ast, DTYPE dtype, int parent_acltype)
 static int
 get_ast_op(int op)
 {
-  int ast_op;
+  int ast_op = 0;
 
   switch (op) {
   case AC_NEG:
@@ -4031,7 +4031,7 @@ get_ast_op(int op)
 static int
 get_ac_op(int ast)
 {
-  int ac_op;
+  int ac_op = 0;
 
   switch (A_OPTYPEG(ast)) {
   case OP_NEG:
@@ -4141,7 +4141,7 @@ eval_do_idx(int ast)
 ACL *
 construct_acl_from_ast(int ast, DTYPE dtype, int parent_acltype)
 {
-  ACL *aclp, *subscr_aclp;
+  ACL *aclp = NULL, *subscr_aclp;
   ACL *u, *l, *s;
   ACL *prev;
   int lParent_acltype;

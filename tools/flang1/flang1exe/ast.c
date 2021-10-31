@@ -611,7 +611,7 @@ mk_fake_iostat()
 int
 mk_cval1(INT v, DTYPE dtype)
 {
-  int cnst;
+  int cnst = 0;
   static INT val[2];
   int ast;
 
@@ -7153,9 +7153,8 @@ static int _huge(DTYPE);
 
 int
 ast_intr(int i_intr, DTYPE dtype, int cnt, ...)
-
 {
-  int ast;
+  int ast = 0;
   int sptr, sptre;
   va_list vargs;
   int opnd;

@@ -2919,7 +2919,7 @@ conv_deallocate(int std)
 {
   int dealloc_ast, idast;
   int ast;
-  int sptr;
+  int sptr = 0;
   int argt;
   int secd;
   int arrdsc;
@@ -3008,7 +3008,7 @@ static int
 conv_allocate(int std)
 {
   int alloc_ast, idast;
-  int sptr;
+  int sptr = 0;
   int subsc, memast;
   int i;
   int asd;
@@ -3802,7 +3802,7 @@ static int
 get_temp_forall2(int forall_ast, int subscr_ast, int alloc_stmt,
                  int dealloc_stmt, int dty, int ast_dty)
 {
-  int sptr, astd, dstd, asd;
+  int sptr = 0, astd, dstd, asd = 0;
   int subscr[MAXSUBS];
   int par, ndim, lp, std, fg, fg2, lp2;
   int save_sc;
@@ -4682,7 +4682,6 @@ report_collapse(int lp)
 }
 
 #if DEBUG
-
 #ifdef FLANG_OUTCONV_UNUSED
 /* Dump the COLLAPSE table. */
 static void

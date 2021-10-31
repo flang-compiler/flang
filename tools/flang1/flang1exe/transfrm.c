@@ -1500,7 +1500,7 @@ normalize_forall_array(int forall_ast, int arr_ast, int inlist)
   int ast;
   int asd;
   int subs[MAXSUBS];
-  int numdim;
+  int numdim = 0;
   int lwb, stride;
   LOGICAL flag;
 

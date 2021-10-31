@@ -7252,7 +7252,7 @@ do_reduction(void)
     for (reduc_symp = reducp->list; reduc_symp; reduc_symp = reduc_symp->next) {
       int dtype, ast;
       INT val[2];
-      INT conval;
+      INT conval = 0;
       SST cnst;
       SST lhs;
       char *nm;

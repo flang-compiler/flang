@@ -1371,7 +1371,7 @@ transform_ptr(int std, int ast)
   int argt, nargs;
   int newargt;
   int src, dest, newsrc, sectast, src_sptr, anydist;
-  int dest_sptr, nontrivial;
+  int dest_sptr = 0, nontrivial;
   int array_desc;
   int section;
   int ptr_reshape_dest = 0;
@@ -2592,7 +2592,7 @@ emit_scatterx_gatherx(int std, int result, int array, int mask, int allocstd,
   int npermute;
   int nd;
   int header;
-  int vsub, nvsub, newvsub;
+  int vsub = 0, nvsub, newvsub;
   int commstd;
   int cp, xfer;
   int startstd;

@@ -3993,7 +3993,7 @@ static bool
 update_shape_info_expr(int arg, int ast)
 {
   int i;
-  int aptr, sptr, shd, nd;
+  int aptr, sptr, shd = 0, nd;
 
   switch (A_TYPEG(ast)) {
   case A_SUBSCR:
@@ -4617,7 +4617,6 @@ find_actual(int ast, int entry, int call_ast)
 /* This routine is to set actual with dummy
  * which later will be used for ast_rwrite
  */
-
 static void
 set_actual(int entry, int call_ast, LOGICAL arrays)
 {

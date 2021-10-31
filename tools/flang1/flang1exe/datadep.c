@@ -3044,8 +3044,8 @@ ad1ili(int opc, int ast1)
 static int
 ad2ili(int opc, int ast1, int ast2)
 {
-  int optype;
-  int dtype;
+  int optype = 0;
+  int dtype = 0;
   int astx;
 
   switch (opc) {

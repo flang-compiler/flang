@@ -716,7 +716,7 @@ enque(INT *iptr)
 INT
 enter(INT *buff, INT *len)
 {
-  INT ret_val;
+  INT ret_val = -1;
   INT i, j, k, iptr, icomp;
 
   /* temporarily enter string at end of string storage: */

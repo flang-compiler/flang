@@ -131,7 +131,7 @@ readln()
 static int
 scan()
 {
-  int token;
+  int token = -1;
   char c;
 
   while (1) {

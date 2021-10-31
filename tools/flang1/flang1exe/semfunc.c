@@ -5613,7 +5613,7 @@ ref_pd(SST *stktop, ITEM *list)
   const char *name;
   int func_ast;
   ACL *shape_acl;
-  int sptr, fsptr, baseptr;
+  int sptr = 0, fsptr, baseptr;
   LOGICAL is_whole, is_constant;
   int asumsz;
   int assumshp;
@@ -5622,7 +5622,7 @@ ref_pd(SST *stktop, ITEM *list)
   int nelems, eltype;
   const char *sname = NULL;
   char verstr[140]; /*140, get_version_str returns max 128 char + pf90 prefix */
-  FtnRtlEnum rtlRtn;
+  FtnRtlEnum rtlRtn = 0;
   SPTR pdsym = SST_SYMG(stktop);
   int pdtype = PDNUMG(pdsym);
 
@@ -11081,7 +11081,7 @@ static int
 getMergeSym(int dt, int ikind)
 {
   int sym;
-  FtnRtlEnum rtlRtn;
+  FtnRtlEnum rtlRtn = 0;
   int localDt = dt;
 
   switch (DTY(dt)) {

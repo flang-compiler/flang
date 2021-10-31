@@ -1084,7 +1084,7 @@ semantio(int rednum, SST *top)
             udt = DTYPEG(sptr);
           }
           if (DTYG(udt) == TY_DERIVED) {
-            int iotype_ast, vlist_ast;
+            int iotype_ast = 0, vlist_ast = 0;
             int fsptr, argcnt, has_io, asn, tast;
             const char *iotype;
             ITEM *arglist;
@@ -1293,7 +1293,7 @@ semantio(int rednum, SST *top)
         if (DTY(dtype) == TY_DERIVED &&
             (dtype_has_defined_io(dtype) & functype[is_read][fmttyp])) {
           const char *iotype;
-          int tast, iotype_ast, vlist_ast, argcnt, asn, fsptr;
+          int tast, iotype_ast = 0, vlist_ast = 0, argcnt, asn, fsptr;
           int shape, forall, triplet_list, n, lb, ub, st, newast;
           int index_var, triplet, dovar, list, sym, triple;
           ITEM *arglist;
@@ -5394,7 +5394,7 @@ add_iolptrs(int dtype, SST *in_stkptr, int *mndscp)
   IOL *iolptr;
   IOL *startlist;
   IOL *endlist;
-  int ast;
+  int ast = 0;
   int sptr1, sptrm;
   int j, numdim;
   int derived_dtype, dtypem;

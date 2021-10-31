@@ -1222,7 +1222,7 @@ bld_lhs(int lhs, int rhs, LOGICAL isarg, int precise)
   int ast;
   int sym, nme;
   int i, asd;
-  DEF *df;
+  DEF *df = NULL;
   int mark_use; /* to mark beginning of uses found in a rhs */
   int s;
 

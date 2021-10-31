@@ -2118,7 +2118,7 @@ nme_of_ast(int ast)
 static LOGICAL
 is_ptrast_arg(int ptrast, int ast)
 {
-  int i, nargs, argt, ele, sptr, astx;
+  int i, nargs, argt, ele = 0, sptr, astx;
   int iface, entry, dscptr, fval, paramcnt;
   int inface_arg = 0;
 

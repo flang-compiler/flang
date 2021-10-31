@@ -5667,7 +5667,7 @@ lower_sptr(int sptr, int pointerval)
 static int
 lower_base_address(int ast, int pointerval)
 {
-  int base, lbase, sptr, ilm, lilm, rilm, lop, save_disable_ptr_chk;
+  int base = 0, lbase, sptr, ilm, lilm, rilm, lop, save_disable_ptr_chk;
   switch (A_TYPEG(ast)) {
   case A_ID:
     base = lower_sptr(A_SPTRG(ast), pointerval);
@@ -6494,7 +6494,7 @@ lower_data_stmts(void)
         if (in_defined_io == 7)
           in_defined_io = 0;        /* done defined io */
       } else if (dinitval == -98) { /* start defined io */
-        int sptr;
+        int sptr = 0;
         if (DT_PTR == DT_INT8) {
           int v[4], sptr;
           v[2] = v[3] = 0;
