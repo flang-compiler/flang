@@ -551,7 +551,7 @@ static int
 I8(eval_sb)(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr, int d)
 {
   int err, k;
-  char *new_addr;
+  char *new_addr = NULL;
   NML_DESC *next_descp;
   __POINT_T *desc_dims;
   __POINT_T actual_ndims;
@@ -624,7 +624,7 @@ static int
 I8(eval_dtio_sb)(NML_DESC **NextDescp, NML_DESC *descp, char *loc_addr, int d)
 {
   int err, k;
-  char *new_addr;
+  char *new_addr = NULL;
   NML_DESC *next_descp;
   __POINT_T *desc_dims;
   __POINT_T actual_ndims;

@@ -533,10 +533,10 @@ sked *I8(__fort_gathscat)(gathscat_parm *z)
   DECL_HDR_PTRS(rd);
   DECL_HDR_PTRS(xd);
   DECL_F90_DIM_PTR(mdd);
-  DECL_DIST_DIM_PTR(mdd);
+  DECL_DIST_DIM_PTR(mdd) = NULL;
   DECL_DIM_PTRS(udd);
   DECL_F90_DIM_PTR(xdd);
-  DECL_DIST_DIM_PTR(xdd);
+  DECL_DIST_DIM_PTR(xdd) = NULL;
   xstuff *x;
 
   int *countbuf, *countr, *counts, *goff, *head, *loff, *next, *offr, *offs,

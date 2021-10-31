@@ -412,7 +412,7 @@ void I8(__fort_localize)(F90_Desc *d, __INT_T *idxv, int *cpu, __INT_T *off)
   DECL_DIM_PTRS(dd);
   proc *p;
   procdim *pd;
-  __INT_T dfmt, dx, lab, lidx, offset, owner, pcoord, px, repl;
+  __INT_T dfmt, dx, lab, lidx, offset, owner, pcoord = 0, px, repl;
 
   owner = DIST_PBASE_G(d);
   offset = 0;
@@ -498,7 +498,7 @@ void ENTFTN(LOCALIZE_DIM, localize_dim)(F90_Desc *d, __INT_T *dimp,
                                         __INT_T *lindexp)
 {
   DECL_DIM_PTRS(dd);
-  __INT_T dim, idx, lab, lidx, pcoord;
+  __INT_T dim, idx, lab = 0, lidx, pcoord = 0;
 
   dim = *dimp;
   idx = *idxp;
@@ -680,7 +680,7 @@ static int I8(cyclic_setup)(F90_Desc *d, __INT_T dim, __INT_T l, __INT_T u,
                             __INT_T *plof, __INT_T *plos)
 {
   DECL_DIM_PTRS(dd);
-  __INT_T cl, cn, cs, cu, lof, los, n, ts;
+  __INT_T cl = 0, cn = 0, cs, cu, lof = 0, los = 0, n, ts;
 
   SET_DIM_PTRS(dd, d, dim - 1);
 
@@ -2335,7 +2335,7 @@ void ENTFTN(SECT3v, sect3v)(F90_Desc *d, F90_Desc *a,
   DECL_DIM_PTRS(ad);
   DECL_DIM_PTRS(dd);
   __INT_T ax, dx, rank;
-  __INT_T gsize;
+  __INT_T gsize = 0;
   __INT_T wrk_rank;
 
 #if defined(DEBUG)
@@ -2847,7 +2847,7 @@ void ENTFTN(KUBOUNDAZ, kuboundaz)(__INT8_T *arr, F90_Desc *pd)
 __INT_T
 ENTFTN(SIZE, size)(__INT_T *dim, F90_Desc *pd)
 {
-  __INT_T size;
+  __INT_T size = 0;
 
   if (F90_TAG_G(pd) != __DESC) {
     return 1;
@@ -2870,7 +2870,7 @@ ENTFTN(KSIZE, ksize)(__INT_T *dim, F90_Desc *pd)
    * -i8 variant of __size
    */
 
-  __INT_T size;
+  __INT_T size = 0;
 
   if (F90_TAG_G(pd) != __DESC)
     __fort_abort("SIZE: arg not associated with array");

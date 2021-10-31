@@ -87,7 +87,7 @@ ENTFTN(REALIGN, realign)(F90_Desc *ad, __INT_T *p_rank, __INT_T *p_flags,
   DECL_DIM_PTRS(ddd);
   DECL_DIM_PTRS(tdd);
   proc *ap, *tp;
-  __INT_T flags, collapse, m, single;
+  __INT_T flags, collapse, m, single = 0;
   __INT_T taxis[MAXDIMS], tstride[MAXDIMS], toffset[MAXDIMS];
   __INT_T coordinate[MAXDIMS];
   __INT_T ak, i, realign, rank, tk, tm, px, tx;

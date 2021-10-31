@@ -134,7 +134,7 @@ static int gbl_size = GBL_SIZE;
 static int
 adjust_fpos(FIO_FCB *cur_file, long offset, int whence)
 {
-  int retval;
+  int retval = 0;
 
   if (cur_file->asy_rw) {
     Fio_asy_fseek(cur_file->asyptr, offset, whence);
