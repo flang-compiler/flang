@@ -237,7 +237,7 @@ chk_scalartyp(SST *stkptr, int dtype, LOGICAL warnflg)
    logical).
  */
 INT
-chk_scalar_inttyp(SST *stkptr, int dtype, char *msg)
+chk_scalar_inttyp(SST *stkptr, int dtype, const char *msg)
 {
   int oldtyp;
 
@@ -254,7 +254,7 @@ chk_scalar_inttyp(SST *stkptr, int dtype, char *msg)
 /** \brief Restrict the expression to be suitable for an array extent.
  */
 INT
-chk_arr_extent(SST *stkptr, char *msg)
+chk_arr_extent(SST *stkptr, const char *msg)
 {
   if (flg.standard)
     return chk_scalar_inttyp(stkptr, astb.bnd.dtype, msg);
@@ -3078,7 +3078,7 @@ ch_substring(SST *stktop, SST *lb_sp, SST *ub_sp)
     }
     cvlen = ub_ast - lb_ast + 1;
     if (cvlen < 1) {
-      char *str = "";
+      const char *str = "";
       cnst_sptr = getstring(str, strlen(str));
       if (DTY(dtype) == TY_NCHAR) {
         dtype = get_type(2, TY_NCHAR, mk_cval(strlen(str), DT_INT4));
@@ -4536,7 +4536,7 @@ is_protected(int sptr)
 }
 
 void
-err_protected(int sptr, char *context)
+err_protected(int sptr, const char *context)
 {
   char bf[128];
   sprintf(bf, "%s %s -",
@@ -5509,7 +5509,7 @@ mod_type(int dtype, int ty, int kind, int len, int propagated, int sptr)
 
 /** \brief Return the printable representation of a semantic stack entry
  */
-char *
+const char *
 prtsst(SST *stkptr)
 {
   static char symbuf[132];
@@ -5830,8 +5830,8 @@ static struct {
   int tmp_var;
 } coll_st;
 
-static int get_collapse_temp(int, char *);
-static int collapse_expr(int, int, char *);
+static int get_collapse_temp(int, const char *);
+static int collapse_expr(int, int, const char *);
 static void collapse_index(DOINFO *);
 
 /** \brief Begin processing loop collapse.
@@ -6087,7 +6087,7 @@ collapse_add(DOINFO *doinfo)
 }
 
 static int
-get_collapse_temp(int dtype, char *pfx)
+get_collapse_temp(int dtype, const char *pfx)
 {
   int sptr;
   sptr = getccssym_sc(pfx, coll_st.itemp, ST_VAR, sem.sc);
@@ -6096,7 +6096,7 @@ get_collapse_temp(int dtype, char *pfx)
 }
 
 static int
-collapse_expr(int ast, int dtype, char *pfx)
+collapse_expr(int ast, int dtype, const char *pfx)
 {
   int sptr, dest_ast;
   if (A_ALIASG(ast))

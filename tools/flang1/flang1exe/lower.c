@@ -604,7 +604,7 @@ lower_end_contains(void)
 static void
 lower_program(int rutype)
 {
-  char *s;
+  const char *s;
   switch (rutype) {
   case RU_SUBR:
     s = "Subroutine";

@@ -42,7 +42,7 @@ set_symutl_sc(int sc)
 }
 
 int
-get_next_sym(char *basename, char *purpose)
+get_next_sym(const char *basename, const char *purpose)
 {
   int sptr;
   char *p;
@@ -58,7 +58,7 @@ get_next_sym(char *basename, char *purpose)
 }
 
 int
-get_next_sym_dt(char *basename, char *purpose, int encldtype)
+get_next_sym_dt(const char *basename, const char *purpose, int encldtype)
 {
   int sptr;
   char *p;
@@ -121,7 +121,7 @@ get_symtype(SYMTYPE stype, SPTR first)
 }
 
 int
-sym_get_scalar(char *basename, char *purpose, int dtype)
+sym_get_scalar(const char *basename, const char *purpose, int dtype)
 {
   int sptr;
 
@@ -200,7 +200,7 @@ sym_get_offset(int base)
            filled in later.
  */
 int
-sym_get_array(char *basename, char *purpose, int dtype, int ndim)
+sym_get_array(const char *basename, const char *purpose, int dtype, int ndim)
 {
   int sptr;
   ADSC *ad;
@@ -225,7 +225,7 @@ sym_get_array(char *basename, char *purpose, int dtype, int ndim)
 
 /** \brief Create a function ST item given a name */
 int
-sym_mkfunc(char *nmptr, int dtype)
+sym_mkfunc(const char *nmptr, int dtype)
 {
   register int sptr;
 
@@ -247,7 +247,7 @@ sym_mkfunc(char *nmptr, int dtype)
 
 /** \brief Create a function ST item given a name; set its NODESC flag */
 int
-sym_mkfunc_nodesc(char *nmptr, int dtype)
+sym_mkfunc_nodesc(const char *nmptr, int dtype)
 {
   register int sptr;
 
@@ -265,7 +265,7 @@ sym_mkfunc_nodesc(char *nmptr, int dtype)
     array sections.
  */
 int
-sym_mkfunc_nodesc_expst(char *nmptr, int dtype)
+sym_mkfunc_nodesc_expst(const char *nmptr, int dtype)
 {
   register int sptr;
 
@@ -277,7 +277,7 @@ sym_mkfunc_nodesc_expst(char *nmptr, int dtype)
 /** \brief Create a function ST item given a name; set its NODESC and NOCOMM
  * flag */
 int
-sym_mkfunc_nodesc_nocomm(char *nmptr, int dtype)
+sym_mkfunc_nodesc_nocomm(const char *nmptr, int dtype)
 {
   register int sptr;
 
@@ -329,7 +329,7 @@ trans_mkdescr(int sptr)
 
 /** \brief Create a section descriptor */
 int
-sym_get_sec(char *basename, int is_dummy)
+sym_get_sec(const char *basename, int is_dummy)
 {
   int sec, sec_ptr;
   ADSC *ad;
@@ -1222,7 +1222,7 @@ chk_temp_bnds(int lhs, int arr_sptr, int *subscr, int ndim)
  * that that symbol will be assigned the array
  */
 int
-mk_assign_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty,
+mk_assign_sptr(int arr_ast, const char *purpose, int *subscr, int elem_dty,
                int *retval)
 {
   return chk_assign_sptr(arr_ast, purpose, subscr, elem_dty, 0, retval);
@@ -1452,8 +1452,8 @@ fixup_srcalloc_bounds(int *subscr, int *newsubscr, int ndim)
  */
 
 int
-chk_assign_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty, int lhs,
-                int *retval)
+chk_assign_sptr(int arr_ast, const char *purpose, int *subscr, int elem_dty,
+                int lhs, int *retval)
 {
   int arr_sptr;
   int ast;
@@ -1725,7 +1725,7 @@ check_small_allocatable(int sptr)
  */
 
 static int
-handle_non_cnst_dim(int arr_ast, char *purpose, int *subscr, int elem_dty,
+handle_non_cnst_dim(int arr_ast, const char *purpose, int *subscr, int elem_dty,
                     int dim, int lhs, int *retval, int ndim)
 {
   int arr_sptr;
@@ -1772,8 +1772,8 @@ handle_non_cnst_dim(int arr_ast, char *purpose, int *subscr, int elem_dty,
  * that reduces the array.  One dimension is squeezed out.
  */
 int
-chk_reduc_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty, int dim,
-               int lhs, int *retval)
+chk_reduc_sptr(int arr_ast, const char *purpose, int *subscr, int elem_dty,
+               int dim, int lhs, int *retval)
 {
   int arr_sptr;
   int ast;
@@ -1902,8 +1902,8 @@ mk_temp_based(int sptr)
  * that adds a dimension to the array.  One dimension is added.
  */
 int
-mk_spread_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty, int dim,
-               int ncopies, int lhs, int *retval)
+mk_spread_sptr(int arr_ast, const char *purpose, int *subscr, int elem_dty,
+               int dim, int ncopies, int lhs, int *retval)
 {
   int arr_sptr;
   int ast, shape;
@@ -2115,8 +2115,8 @@ mk_spread_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty, int dim,
  * Make sptr for matmul
  */
 int
-mk_matmul_sptr(int arg1, int arg2, char *purpose, int *subscr, int elem_dty,
-               int *retval)
+mk_matmul_sptr(int arg1, int arg2, const char *purpose, int *subscr,
+               int elem_dty, int *retval)
 {
   int arr_sptr1, arr_sptr2;
   int ast;
@@ -2329,7 +2329,7 @@ mk_matmul_sptr(int arg1, int arg2, char *purpose, int *subscr, int elem_dty,
  * Make sptr for transpose
  */
 int
-mk_transpose_sptr(int arr_ast, char *purpose, int *subscr, int elem_dty,
+mk_transpose_sptr(int arr_ast, const char *purpose, int *subscr, int elem_dty,
                   int *retval)
 {
   int arr_sptr;
@@ -3293,7 +3293,7 @@ init_bnd(void)
 }
 
 int
-getbnd(char *basename, char *purpose, int n, int dtype)
+getbnd(const char *basename, const char *purpose, int n, int dtype)
 {
   int sptr;
 

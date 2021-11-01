@@ -89,9 +89,9 @@ static void gen_bnd_assn(int);
 static void gen_allocate(int, int);
 static void gen_deallocate(int, int, int, int);
 static void gen_nullify(int, int, int);
-static void put_mem_string(int, char *);
-static void put_string(char *);
-static void put_fstring(char *);
+static void put_mem_string(int, const char *);
+static void put_string(const char *);
+static void put_fstring(const char *);
 static void put_char(char);
 static void put_const(int);
 static void put_int(INT);
@@ -101,13 +101,13 @@ static void put_logical(LOGICAL, int);
 static void put_float(INT);
 static void put_double(int);
 static void char_to_text(int);
-static void put_u_to_l(char *);
-static void put_l_to_u(char *);
+static void put_u_to_l(const char *);
+static void put_l_to_u(const char *);
 static void check_len(int);
 static char *label_name(int);
 static void print_header(int);
 static void pghpf_entry(int);
-static void put_call(int ast, int call, char *name, int check_ptrarg);
+static void put_call(int ast, int call, const char *name, int check_ptrarg);
 
 void
 astout_init(void)
@@ -359,7 +359,7 @@ acc_dtype(int ast)
 static void
 print_ast(int ast)
 {
-  char *o;
+  const char *o;
   int atype;
   int i, asd;
   int astli;
@@ -3016,7 +3016,7 @@ print_ast(int ast)
 }
 
 static void
-put_call(int ast, int call, char *name, int check_ptrarg)
+put_call(int ast, int call, const char *name, int check_ptrarg)
 {
   int dpdsc, paramct, iface;
   int sptr, cnt, argt, arg, i, param, sdparam, sdi;
@@ -3496,7 +3496,7 @@ static int
 find_member_base(int dtype)
 {
   int basesptr, dty, mem;
-  char *rtnNm = mkRteRtnNm(RTE_member_base);
+  const char *rtnNm = mkRteRtnNm(RTE_member_base);
   basesptr = lookupsymbol(rtnNm);
   if (basesptr == 0 || STYPEG(basesptr) != ST_CMBLK) {
     return NOSYM;
@@ -3798,7 +3798,7 @@ gen_nullify(int ast, int sym, int passptr)
 }
 
 static void
-put_string(char *str)
+put_string(const char *str)
 {
   int len;
 
@@ -3809,7 +3809,7 @@ put_string(char *str)
 }
 
 static void
-put_mem_string(int ast, char *str)
+put_mem_string(int ast, const char *str)
 {
   if (A_TYPEG(ast) == A_MEM) {
     print_ast(A_PARENTG(ast));
@@ -3819,7 +3819,7 @@ put_mem_string(int ast, char *str)
 }
 
 static void
-put_fstring(char *str)
+put_fstring(const char *str)
 {
   int len;
 
@@ -4265,7 +4265,7 @@ char_to_text(int ch)
  * convert upper to lower if necessary.
  */
 static void
-put_u_to_l(char *name)
+put_u_to_l(const char *name)
 {
   char ch;
 
@@ -4287,7 +4287,7 @@ put_u_to_l(char *name)
  * TBD - convert lower to upper if necessary.
  */
 static void
-put_l_to_u(char *name)
+put_l_to_u(const char *name)
 {
   put_string(name);
 }

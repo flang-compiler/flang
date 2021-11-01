@@ -115,11 +115,11 @@ static int plower_pdo(int, int);
           must be last, at least, anything following the m is ignored.
 */
 int
-plower(char *fmt, ...)
+plower(const char *fmt, ...)
 {
   static int pcount = -1;
   static int opcount = 0;
-  char *f;
+  const char *f;
   va_list argptr;
 
   if (lower_ilm_file == NULL)
@@ -361,7 +361,7 @@ plower(char *fmt, ...)
 } /* plower */
 
 int
-plower_arg(char *fmt, int arg, int dtype, int unlpoly)
+plower_arg(const char *fmt, int arg, int dtype, int unlpoly)
 {
   int ilm;
   if (!unlpoly)

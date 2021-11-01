@@ -82,7 +82,7 @@ int import_inline(FILE *, char *);
 int import_interproc(FILE *, char *, char *, char *);
 int import_static(FILE *, char *);
 SPTR import_module(FILE *, char *, SPTR, WantPrivates, int);
-void import_host(FILE *, char *, int, int, int, int, int, int, int);
+void import_host(FILE *, const char *, int, int, int, int, int, int, int);
 void import_module_end(void);
 int imported_directly(char *name, int except);
 void init_use_tree(void);

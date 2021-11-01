@@ -32,7 +32,7 @@
 static LOGICAL lower_check_ast(int ast, int *unused);
 
 void
-ast_error(char *s, int ast)
+ast_error(const char *s, int ast)
 {
   lerror("%s [ast=%d,asttype=%d,datatype=%d]", s, ast, A_TYPEG(ast),
          A_REPLG(ast));
@@ -1286,7 +1286,7 @@ lower_conv(int ast, int dtype)
 } /* lower_conv */
 
 char *
-ltyped(char *opname, int dtype)
+ltyped(const char *opname, int dtype)
 {
   static char OP[100];
   switch (DTYG(dtype)) {
@@ -1341,7 +1341,7 @@ ltyped(char *opname, int dtype)
 } /* typed */
 
 static char *
-styped(char *opname, int dtype)
+styped(const char *opname, int dtype)
 {
   static char OP[100];
   switch (DTYG(dtype)) {
@@ -1389,7 +1389,7 @@ styped(char *opname, int dtype)
 /* generate the ILM for a simple arithmetic binary operator.
  * the prefix for the operator name depends on the expression type */
 static int
-lower_bin_arith(int ast, char *opname, int ldtype, int rdtype)
+lower_bin_arith(int ast, const char *opname, int ldtype, int rdtype)
 {
   int dtype, ilm, lilm, rilm;
   dtype = A_NDTYPEG(ast);
@@ -1435,7 +1435,7 @@ lower_bin_arith(int ast, char *opname, int ldtype, int rdtype)
 /* generate the ILM for a simple arithmetic unary operator.
  * the prefix for the operator name depends on the expression type */
 static int
-lower_un_arith(int ast, char *opname, int ldtype)
+lower_un_arith(int ast, const char *opname, int ldtype)
 {
   int dtype, ilm, lilm;
   dtype = A_NDTYPEG(ast);
@@ -1479,7 +1479,7 @@ lower_un_arith(int ast, char *opname, int ldtype)
 /* generate the ILM for a simple comparison operator.
  * the prefix for the operator name depends on the expression type */
 static int
-lower_bin_comparison(int ast, char *op)
+lower_bin_comparison(int ast, const char *op)
 {
   int dtype, ilm, lilm, rilm, base;
   char opname[15];
@@ -1578,7 +1578,7 @@ lower_bin_comparison(int ast, char *op)
 static int
 add_lnop(int ilm, int ast, int dtype)
 {
-  char *opc;
+  const char *opc;
   switch (A_TYPEG(ast)) {
   case A_BINOP:
     switch (A_OPTYPEG(ast)) {
@@ -1616,7 +1616,7 @@ add_lnop(int ilm, int ast, int dtype)
 /* generate the ILM for a simple logical binary operator.
  * the suffix for the operator name depends on the expression type */
 static int
-lower_bin_logical(int ast, char *op)
+lower_bin_logical(int ast, const char *op)
 {
   int dtype, ilm, lilm, rilm;
   char opname[15];
@@ -1668,7 +1668,7 @@ lower_bin_logical(int ast, char *op)
 /* generate the ILM for a simple logical unary operator.
  * the suffix for the operator name depends on the expression type */
 static int
-lower_un_logical(int ast, char *op)
+lower_un_logical(int ast, const char *op)
 {
   int dtype, ilm, lilm;
   char opname[15];
@@ -1792,9 +1792,9 @@ lower_function(int ast)
   int paramcount, params, save_disable_ptr_chk;
   static int functmpcount;
   int is_procsym = 0;
-  char *UCALL;
-  char *PUFUNC;
-  char *UFUNC;
+  const char *UCALL;
+  const char *PUFUNC;
+  const char *UFUNC;
   int is_tbp, tbp_nopass_arg, tbp_nopass_sdsc, tbp_mem;
   int tbp_bind, tbp_inv;
   int unlpoly; /* CLASS(*) */
@@ -2328,7 +2328,7 @@ need_intr_argbf(int nargs)
 }
 
 static int
-intrin_name(char *name, int ast, int options)
+intrin_name(const char *name, int ast, int options)
 {
 #define allowI 0x0100000
 #define prefixI 0x0200000
@@ -2351,8 +2351,8 @@ intrin_name(char *name, int ast, int options)
 #define allownchar 0x2000000
 
   int dtype, ok, ilm;
-  char *prefix;
-  char *suffix;
+  const char *prefix;
+  const char *suffix;
   char intrname[50];
   dtype = A_NDTYPEG(ast);
   prefix = "";
@@ -2439,10 +2439,10 @@ intrin_name(char *name, int ast, int options)
 } /* intrin_name */
 
 static int
-intrin_name_bsik(char *name, int ast)
+intrin_name_bsik(const char *name, int ast)
 {
   int dtype, ilm;
-  char *prefix;
+  const char *prefix;
   char intrname[50];
   dtype = A_NDTYPEG(ast);
   prefix = "";
@@ -2983,7 +2983,7 @@ intrinsic_arg_dtype(int intr, int ast, int args, int nargs)
 } /* intrinsic_arg_dtype */
 
 static int
-f90_function(char *name, int dtype, int args, int nargs)
+f90_function(const char *name, int dtype, int args, int nargs)
 {
   int i, symfunc, ilm;
   need_intr_argbf(nargs);
@@ -2996,7 +2996,7 @@ f90_function(char *name, int dtype, int args, int nargs)
 } /* f90_function */
 
 static int
-f90_value_function(char *name, int dtype, int args, int nargs)
+f90_value_function(const char *name, int dtype, int args, int nargs)
 {
   int i, symfunc, ilm;
   need_intr_argbf(nargs);
@@ -3012,7 +3012,7 @@ f90_value_function(char *name, int dtype, int args, int nargs)
 
 /* 2nd argument must be int */
 static int
-f90_value_function_I2(char *name, int dtype, int args, int nargs)
+f90_value_function_I2(const char *name, int dtype, int args, int nargs)
 {
   int i, symfunc, ilm;
   need_intr_argbf(nargs);
@@ -3055,7 +3055,7 @@ lower_intrinsic(int ast)
   int shape, cnt, num, arg, arg1, arg2, fromdtype;
   int sptr;
   int pairwise = 0, argsdone = 0, save_disable_ptr_chk;
-  char *rtn_name;
+  const char *rtn_name;
   FtnRtlEnum rtlRtn;
   int retDtype;
   char *nm;

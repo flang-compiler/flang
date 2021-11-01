@@ -218,7 +218,7 @@ void ipa_import_highpoint(void);   /* interf.c */
 void ipa_import(void);             /*interf.c */
 void ipa_set_vestigial_host(void); /* interf.c */
 void import_module_print(void);    /* interf.c */
-void import_host_subprogram(FILE *fd, char *file_name, int oldsymavl,
+void import_host_subprogram(FILE *fd, const char *file_name, int oldsymavl,
                             int oldastavl, int olddtyavl, int modbase,
                             int moddiff);              /* interf.c */
 void import_fini(void);                                /* interf.c */

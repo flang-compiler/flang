@@ -7137,7 +7137,7 @@ _huge(DTYPE dtype)
 {
   INT val[4];
   int tmp, ast, sptr;
-  char *sname;
+  const char *sname;
 
   switch (DTYG(dtype)) {
   case TY_BINT:

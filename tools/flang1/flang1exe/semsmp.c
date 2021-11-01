@@ -32,7 +32,7 @@
 /* contents of this file:  */
 
 static void add_clause(int, LOGICAL);
-static bool clause_errchk(BIGINT64, char *);
+static bool clause_errchk(BIGINT64, const char *);
 static void accel_pragmagen(int, int, int);
 
 static int sched_type(char *);
@@ -63,21 +63,21 @@ static void add_ptr_assignment(int, SST *);
 static void assign_cval(int, int, int);
 static int enter_dir(int, LOGICAL, LOGICAL, BITMASK64);
 static int leave_dir(int, LOGICAL, LOGICAL);
-static char *name_of_dir(int);
+static const char *name_of_dir(int);
 static int find_reduc_intrinsic(int);
-static int get_csect_sym(char *);
+static int get_csect_sym(const char *);
 static int get_csect_pfxlen(void);
 static void check_barrier(void);
 static void check_crit(char *);
 static int check_cancel(int);
-static void check_targetdata(int, char *);
+static void check_targetdata(int, const char *);
 static void check_valid_data_sharing(int);
 #ifdef FLANG_SEMSMP_UNUSED
 static LOGICAL check_map_data_sharing(int);
 #endif
 static void cray_pointer_check(ITEM *, int);
 static void other_firstlast_check(ITEM *, int);
-static void non_private_check(int, char *);
+static void non_private_check(int, const char *);
 static void private_check();
 static void deallocate_no_scope_sptr();
 static int get_stblk_uplevel_sptr();
@@ -287,7 +287,7 @@ static struct cl_tag { /* clause table */
   BIGINT64 val;
   void *first;
   void *last;
-  char *name;
+  const char *name;
   BIGINT64 stmt; /* stmts which may use the clause */
 } cl[CL_MAXV] = {
     {0, 0, NULL, NULL, "DEFAULT",
@@ -575,8 +575,8 @@ semsmp(int rednum, SST *top)
   BIGINT64 bttype;
   BITMASK64 dimask, dinestmask;
   LOGICAL dignorenested;
-  char *dirname;
-  char *nmptr;
+  const char *dirname;
+  const char *nmptr;
   REDUC *reducp;
   REDUC_SYM *reduc_symp;
   REDUC_SYM *reduc_symp_last;
@@ -5792,7 +5792,7 @@ add_clause(int clause, LOGICAL one_only)
 }
 
 static bool
-clause_errchk(BIGINT64 bt, char *dirname)
+clause_errchk(BIGINT64 bt, const char *dirname)
 {
   int i;
   bool any = false;
@@ -9111,7 +9111,7 @@ leave_dir(int typ,               /* end of which structured directive */
   return 0;
 }
 
-static char *
+static const char *
 name_of_dir(int typ)
 {
   switch (typ) {
@@ -9223,7 +9223,7 @@ find_reduc_intrinsic(int ident)
 }
 
 static int
-get_csect_sym(char *nm)
+get_csect_sym(const char *nm)
 {
 #undef CSECT_PFX
 #define CSECT_PFX "__cs_"
@@ -9349,7 +9349,7 @@ check_crit(char *nm)
 }
 
 static void
-check_targetdata(int type, char *nm)
+check_targetdata(int type, const char *nm)
 {
   int i;
   if (type == OMP_TARGET) {
@@ -9560,7 +9560,7 @@ add_non_private(int sptr)
 }
 
 static void
-non_private_check(int sptr, char *cl)
+non_private_check(int sptr, const char *cl)
 {
   int i;
   for (i = 0; i < sem.non_private_avail; i++) {

@@ -12,7 +12,7 @@
 
 extern int ty_to_lib[];
 
-char *target_name(DTYPE dtype);
+const char *target_name(DTYPE dtype);
 int target_kind(DTYPE dtype);
 ISZ_T size_of(DTYPE dtype);
 int string_length(DTYPE dtype);
@@ -83,7 +83,7 @@ DTYPE is_iso_cptr(DTYPE d_dtype);
 LOGICAL is_iso_c_ptr(DTYPE d_dtype);
 LOGICAL is_iso_c_funptr(DTYPE d_dtype);
 LOGICAL is_cuf_c_devptr(DTYPE d_dtype);
-DTYPE get_iso_ptrtype(char *name);
+DTYPE get_iso_ptrtype(const char *name);
 DTYPE get_iso_c_ptr(void);
 LOGICAL is_array_dtype(DTYPE dtype);
 DTYPE array_element_dtype(DTYPE dtype);

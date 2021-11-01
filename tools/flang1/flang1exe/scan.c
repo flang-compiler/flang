@@ -41,7 +41,7 @@ static int read_card(void);
 static void write_card(void);
 static int check_pgi_pragma(char *);
 static int check_pragma(char *);
-static int ic_strncmp(char *, char *);
+static int ic_strncmp(const char *, const char *);
 static LOGICAL is_lineblank(char *);
 static void crunch(void);
 static int classify_smp(void);
@@ -53,8 +53,8 @@ static int classify_pgi_dir(void);
 static int classify_kernel_pragma(void);
 static void alpha(void);
 static int get_id_name(char *, int);
-static LOGICAL is_keyword(char *, int, char *);
-static int cmp(char *, char *, int *);
+static LOGICAL is_keyword(char *, int, const char *);
+static int cmp(const char *, const char *, int *);
 static int is_ident(char *);
 static int is_digit_string(char *);
 static int get_kind_id(char *);
@@ -75,7 +75,7 @@ static void ff_check_stmtb(void);
 static void check_continuation(int);
 static LOGICAL is_next_char(char *, int);
 static int double_type(char *, int *);
-void add_headerfile(char *, int, int);
+void add_headerfile(const char *, int, int);
 
 /*  external declarations  */
 
@@ -181,7 +181,7 @@ typedef struct { /* include-stack contents: */
   FILE *fd;
   int lineno;
   int findex;
-  char *fname;
+  const char *fname;
   LOGICAL list_now;
   int card_type;          /* type of "look-ahead" card, CT_NONE if NA */
   int sentinel;           /* sentinel of 'card_type'.  Value is one of
@@ -200,7 +200,7 @@ static int hdr_stacksz; /* current size of include stack */
 typedef struct { /* include-stack contents: */
   int lineno;
   int findex;
-  char *fname;
+  const char *fname;
 } HDRSTACK;
 
 static HDRSTACK *hdr_stack = NULL;
@@ -1227,7 +1227,7 @@ get_stmt(void)
     case CT_EOF:
       /* pop include  */
       if (incl_level > 0) {
-        char *save_filenm;
+        const char *save_filenm;
 
         incl_level--;
         if (incl_stack[incl_level].is_freeform) {
@@ -1381,7 +1381,7 @@ get_stmt(void)
 }
 
 void
-add_headerfile(char *fname_buff, int cl, int includedir)
+add_headerfile(const char *fname_buff, int cl, int includedir)
 {
   if (!XBIT(120, 0x4000000)) {
     if (hdr_level == 0) {
@@ -1445,7 +1445,7 @@ line_directive(void)
   char *p;
   char *to;
   int cl;
-  char *tmp_ptr;
+  const char *tmp_ptr;
 
   /*
    * The syntax of a line directive is:
@@ -1611,7 +1611,7 @@ read_card(void)
   char *p; /* pointer into cardb */
   LOGICAL tab_seen;
   int ct_init;
-  char *tmp_ptr;
+  const char *tmp_ptr;
 
   assert(!gbl.eof_flag, "read_card:err", gbl.eof_flag, 4);
   sentinel = SL_NONE;
@@ -2035,7 +2035,7 @@ check_pragma(char *beg)
  * null-terminated.  length of str is at least the length of pattern.
  */
 static int
-ic_strncmp(char *str, char *pattern)
+ic_strncmp(const char *str, const char *pattern)
 {
   int n;
   int ch;
@@ -5916,7 +5916,7 @@ get_id_name(char *id, int idlen)
  * exact match.
  */
 static LOGICAL
-is_keyword(char *id, int idlen, char *kwd)
+is_keyword(char *id, int idlen, const char *kwd)
 {
   int len;
 
@@ -6114,10 +6114,10 @@ keyword(char *id, KTABLE *ktable, int *keylen, LOGICAL exact)
  *  When 0 is returned, keylen is set to length of keyword.
  */
 static int
-cmp(char *id, char *kw, int *keylen)
+cmp(const char *id, const char *kw, int *keylen)
 {
   char c;
-  char *first = kw;
+  const char *first = kw;
 
   do {
     if ((c = *(id++)) != *kw) {
@@ -6190,7 +6190,7 @@ get_cstring(char *p, int *len)
 }
 
 static void fmt_putchar(int);
-static void fmt_putstr(char *);
+static void fmt_putstr(const char *);
 static void char_to_text(int);
 
 static struct {
@@ -6329,7 +6329,7 @@ fmt_putchar(int ch)
 }
 
 static void
-fmt_putstr(char *str)
+fmt_putstr(const char *str)
 {
   int ch;
 
@@ -7412,7 +7412,7 @@ not_found:
 
 static int options_seen = FALSE; /* TRUE if OPTIONS seen in prev. subpg. */
 struct c {
-  char *cmd;
+  const char *cmd;
   INT caselabel;
 };
 static int getindex(struct c *, int, char *);
@@ -7753,7 +7753,7 @@ ff_get_stmt(void)
     case CT_EOF:
       /* pop include  */
       if (incl_level > 0) {
-        char *save_filenm;
+        const char *save_filenm;
 
         incl_level--;
         if (!incl_stack[incl_level].is_freeform) {
@@ -9160,7 +9160,7 @@ _rd_tkline(char **tkbuf, int *tkbuf_sz)
     while (isblank(*p)) /* skip blank characters */
       ++p;
     if (!isdig(*p)) {
-      char *tmp_ptr;
+      const char *tmp_ptr;
       tmp_ptr = gbl.curr_file;
       if (hdr_level)
         gbl.curr_file = hdr_stack[hdr_level - 1].fname;

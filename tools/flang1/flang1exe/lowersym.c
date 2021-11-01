@@ -1565,7 +1565,7 @@ create_static_base(int blockname)
 } /* create_static_base */
 
 static void
-putvline(char *n, ISZ_T v)
+putvline(const char *n, ISZ_T v)
 {
 #if DEBUG
   if (DBGBIT(47, 31) || XBIT(50, 0x10)) {
@@ -1576,7 +1576,7 @@ putvline(char *n, ISZ_T v)
 } /* putvline */
 
 static void
-putbit(char *bitname, int bit)
+putbit(const char *bitname, int bit)
 {
 #if DEBUG
   if (DBGBIT(47, 31) || XBIT(50, 0x10)) {
@@ -1587,7 +1587,7 @@ putbit(char *bitname, int bit)
 } /* putbit */
 
 static void
-putsym(char *valname, int sym)
+putsym(const char *valname, int sym)
 {
   if (valname) {
 #if DEBUG
@@ -1608,7 +1608,7 @@ putsym(char *valname, int sym)
 } /* putsym */
 
 static void
-putval(char *valname, ISZ_T val)
+putval(const char *valname, ISZ_T val)
 {
 #if DEBUG
   if (DBGBIT(47, 31) || XBIT(50, 0x10)) {
@@ -1619,7 +1619,7 @@ putval(char *valname, ISZ_T val)
 } /* putval */
 
 static void
-putival(char *valname, int val)
+putival(const char *valname, int val)
 {
 #if DEBUG
   if (DBGBIT(47, 31) || XBIT(50, 0x10)) {
@@ -1630,7 +1630,7 @@ putival(char *valname, int val)
 } /* putival */
 
 static void
-putlval(char *valname, long val)
+putlval(const char *valname, long val)
 {
 #if DEBUG
   if (DBGBIT(47, 31) || XBIT(50, 0x10)) {
@@ -1659,7 +1659,7 @@ puthex(int hex)
 } /* puthex */
 
 static void
-putstring(char *s)
+putstring(const char *s)
 {
 #if DEBUG
   if (DBGBIT(47, 31) || XBIT(50, 0x10)) {
@@ -1670,7 +1670,7 @@ putstring(char *s)
 } /* putstring */
 
 static void
-putwhich(char *s, char *ss)
+putwhich(const char *s, const char *ss)
 {
 #if DEBUG
   if (DBGBIT(47, 31) || XBIT(50, 0x10)) {
@@ -1686,7 +1686,7 @@ void
 lower_fileinfo(void)
 {
   int fihx;
-  char *dirname, *filename, *funcname, *fullname;
+  const char *dirname, *filename, *funcname, *fullname;
 
   fihx = curr_findex;
 
@@ -3278,7 +3278,7 @@ lower_linearized(void)
  * note that putsname always inserts a new name into the name table
  */
 static int
-find_nmptr(char *symname, int len)
+find_nmptr(const char *symname, int len)
 {
   int hash, hptr;
   HASH_ID(hash, symname, len);
@@ -3291,7 +3291,7 @@ find_nmptr(char *symname, int len)
 } /* find_nmptr */
 
 static int
-lower_newsymbol(char *name, int stype, int dtype, int sclass)
+lower_newsymbol(const char *name, int stype, int dtype, int sclass)
 {
   int sptr, hashid;
   int namelen = strlen(name);
@@ -3319,7 +3319,7 @@ lower_newsymbol(char *name, int stype, int dtype, int sclass)
 } /* lower_newsymbol */
 
 int
-lower_newfunc(char *name, int stype, int dtype, int sclass)
+lower_newfunc(const char *name, int stype, int dtype, int sclass)
 {
   int namelen, sptr;
   namelen = strlen(name);
@@ -3330,7 +3330,7 @@ lower_newfunc(char *name, int stype, int dtype, int sclass)
 } /* lower_newfunc */
 
 int
-lower_makefunc(char *name, int dtype, LOGICAL isDscSafe)
+lower_makefunc(const char *name, int dtype, LOGICAL isDscSafe)
 {
   int symfunc;
   symfunc = lower_newfunc(name, ST_PROC, dtype, SC_EXTERN);
@@ -3350,7 +3350,7 @@ lower_clear_visit_fields(void)
   }
 } /* lower_clear_visit_fields */
 
-static int lower_cmptrvar(char *, int, int, int *);
+static int lower_cmptrvar(const char *, int, int, int *);
 #ifdef FLANG_LOWERSYM_UNUSED
 static int get_cmptrvar(char *, int, int, int *);
 #endif
@@ -3451,7 +3451,7 @@ lower_add_pghpf_commons(void)
 } /* lower_add_pghpf_commons */
 
 static int
-lower_cmptrvar(char *name, int stype, int dtype, int *bsym)
+lower_cmptrvar(const char *name, int stype, int dtype, int *bsym)
 {
   char bname[16];
   int len;
@@ -3522,7 +3522,7 @@ get_cmptrvar(char *name, int stype, int dtype, int *bsym)
 #error "Need to edit lowersym.c to add new TY_... data types"
 #endif
 
-static char *
+static const char *
 putstype(int stype, int sptr)
 {
 /* TRY TO KEEP THESE UNIQUE IN THE FIRST CHARACTER! */
@@ -3606,7 +3606,7 @@ putstype(int stype, int sptr)
   }
 } /* putstype */
 
-static char *
+static const char *
 putsclass(int sclass, int sptr)
 {
 #if SC_MAX != 7
@@ -3647,7 +3647,7 @@ lower_symbol(int sptr)
   int conval, stype;
   int dll;
   int cudaemu, routx = 0;
-  char *name;
+  const char *name;
   char tempname[15];
   int retdesc;
 
@@ -5417,7 +5417,7 @@ static void
 lower_fileinfo_llvm()
 {
   int fihx;
-  char *dirname, *filename, *funcname, *fullname;
+  const char *dirname, *filename, *funcname, *fullname;
 
   if (!STB_LOWER())
     return;

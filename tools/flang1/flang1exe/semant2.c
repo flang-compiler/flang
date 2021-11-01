@@ -2772,7 +2772,7 @@ rewrite_cmplxpart_rval(SST *e)
 {
   int ast;
   ITEM *list;
-  char *intrnm;
+  const char *intrnm;
   SST *arg;
   int sptr;
   int part; /* 1==> real, 2==>imag */

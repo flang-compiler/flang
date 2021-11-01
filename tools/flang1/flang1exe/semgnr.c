@@ -68,8 +68,8 @@ static int resolved_to_self = 0;
  * to the intrinsic and the assignment operators.
  */
 static struct optabstruct {
-  int opr;    /* if non-zero, locates the ST_OPERATOR symbol */
-  char *name; /* name of the corresponding ST_OPERATOR symbol */
+  int opr;          /* if non-zero, locates the ST_OPERATOR symbol */
+  const char *name; /* name of the corresponding ST_OPERATOR symbol */
 } optab[] = {
     {0, ""},       /* OP_NEG	0 */
     {0, "+"},      /* OP_ADD	1 */
@@ -1320,7 +1320,7 @@ void rw_gnr_state(RW_ROUTINE, RW_FILE)
 } /* rw_gnr_state */
 
 static void
-defined_io_error(char *proc, int is_unformatted, char *msg, int func)
+defined_io_error(const char *proc, int is_unformatted, const char *msg, int func)
 {
 
   char *buf;
@@ -1335,7 +1335,7 @@ defined_io_error(char *proc, int is_unformatted, char *msg, int func)
 }
 
 static void
-check_defined_io2(char *proc, int silentmode, int chk_dtype)
+check_defined_io2(const char *proc, int silentmode, int chk_dtype)
 {
   int gnr, sptr, sptrgen;
   LOGICAL gnr_in_active_scope;

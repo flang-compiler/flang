@@ -330,7 +330,7 @@ void
 accpp(void); /* FIXME this is defined in accpp.c, needs to be in a header */
 
 static int skipbl(char *tokval, int flag);
-static void pr_line(char *name, int line);
+static void pr_line(const char *name, int line);
 static void doline(void);
 static void dopragma(void);
 static void doident(void);
@@ -345,10 +345,10 @@ static void domodule(void);
 static void doundef(void);
 static int subst(PPSYM *sp);
 static void ifpush(void);
-static INT strstore(char *name);
-static PPSYM *lookup(char *name, int insflg);
+static INT strstore(const char *name);
+static PPSYM *lookup(const char *name, int insflg);
 static void delete (char *name);
-static void ptok(char *tok);
+static void ptok(const char *tok);
 static INT doparse(void);
 static INT parse(int rbp);
 static int gettoken(void);
@@ -362,7 +362,7 @@ static void pbstr(char *s);
 static void mac_push(PPSYM *sp, char *lptr);
 static void popstack(void);
 static void macro_recur_check(PPSYM *sp);
-static void stash_paths(char *dirs);
+static void stash_paths(const char *dirs);
 
 static int
 skipbl(char *tokval, int flag)
@@ -388,8 +388,8 @@ fpp(void)
   INT mon;
   char **dirp;
   static char adate[] = "\377\"Mmm dd yyyy\"";
-  static char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+  static const char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
   static char atime[] = "\377\"hh:mm:ss\"";
   static char a99[] = "\37799";
 
@@ -756,7 +756,7 @@ fpp(void)
 }
 
 static void
-pr_line(char *name, int line)
+pr_line(const char *name, int line)
 {
   if (!XBIT(123, 0x100)) {
     /* if compilation doesn't stop after preprocessing (the conditions
@@ -862,7 +862,7 @@ static int
 dlookup(char *name)
 {
   static struct {
-    char *name;
+    const char *name;
     int val;
   } directives[] = {{"define", D_DEFINE},
                     {"elif", D_ELIF},
@@ -1411,7 +1411,7 @@ ifpush(void)
 }
 
 static INT
-strstore(char *name)
+strstore(const char *name)
 {
   int i;
   int j;
@@ -1435,7 +1435,7 @@ strstore(char *name)
 }
 
 static PPSYM *
-lookup(char *name, int insflg)
+lookup(const char *name, int insflg)
 {
   int i;
   char *cp;
@@ -1537,7 +1537,7 @@ found:
 }
 
 static void
-ptok(char *tok)
+ptok(const char *tok)
 {
   FILE *fp;
   static int state = 1;
@@ -2592,9 +2592,9 @@ macro_recur_check(PPSYM *sp)
 }
 
 static void
-stash_paths(char *dirs)
+stash_paths(const char *dirs)
 {
-  char *path;
+  const char *path;
   int n;
 
   if (dirs == NULL)

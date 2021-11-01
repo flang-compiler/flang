@@ -26,11 +26,11 @@ static LOGICAL get_kind_set_parm(int, DTYPE, int *);
 static int get_len_set_parm(int, DTYPE, int *);
 static DTYPE get_iso_derivedtype(DTYPE);
 static DTYPE get_cuf_derivedtype(DTYPE);
-static int ic_strcmp(char *str, char *pattern);
+static int ic_strcmp(const char *str, const char *pattern);
 
 static int size_sym = 0;
 
-char *
+const char *
 target_name(DTYPE dtype)
 {
   TY_KIND ty = get_ty_kind(dtype);
@@ -2260,7 +2260,7 @@ rightparens(int ast, int astright)
 static void
 getop(int op, char *string)
 {
-  char *s;
+  const char *s;
   switch (op) {
   case OP_CMP:
     s = ".cmp.";
@@ -4019,7 +4019,7 @@ get_cuf_derivedtype(DTYPE d_dtype)
 }
 
 DTYPE
-get_iso_ptrtype(char *name)
+get_iso_ptrtype(const char *name)
 {
   int s, sptr;
   int mod;
@@ -4057,9 +4057,9 @@ get_iso_c_ptr(void)
            \a pattern is all lower case.
  */
 static int
-ic_strcmp(char *str, char *pattern)
+ic_strcmp(const char *str, const char *pattern)
 {
-  char *p1, *p2;
+  const char *p1, *p2;
   int ch;
 
   p1 = str;
