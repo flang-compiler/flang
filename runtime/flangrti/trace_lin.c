@@ -25,8 +25,8 @@
 /* codes and strings for signals */
 
 struct cods {
-  int code;  /* signal code */
-  char *str; /* string */
+  int code;        /* signal code */
+  const char *str; /* string */
 };
 
 #define CODNULL ((struct cods *)0)
@@ -67,7 +67,7 @@ static struct cods codbus[] = {{BUS_ADRALN, "invalid address alignment"},
 struct sigs {
   int sig;          /* signal value */
   struct cods *cod; /* address of optional code info */
-  char *str;        /* message string */
+  const char *str;  /* message string */
 };
 
 static struct sigs sigs[] = {
@@ -208,7 +208,7 @@ __abort_trace(int skip)
 static void
 __abort_sig_hand(int sig, siginfo_t *in, FLANGRTI_UCONTEXT_T *u)
 {
-  char *p;
+  const char *p;
   char b[128];
   int n, m;
   struct sigaction new;
