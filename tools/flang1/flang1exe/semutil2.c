@@ -999,14 +999,14 @@ static void _dinit_acl(ACL *, LOGICAL);
 
 static int acl_array_num = 0;
 
-static char *_iexpr_op[] = {
+static const char *_iexpr_op[] = {
     "?0?",       "ADD",      "SUB",       "MUL",  "DIV",    "EXP",  "NEG",
     "INTR_CALL", "ARRAYREF", "MEMBR_SEL", "CONV", "CAT",    "EXPK", "LEQV",
     "LNEQV",     "LOR",      "LAND",      "EQ",   "GE",     "GT",   "LE",
     "LT",        "NE",       "LNOT",      "EXPX", "TRIPLE",
 };
 
-static char *
+static const char *
 iexpr_op(int op)
 {
   if (op <= sizeof(_iexpr_op) / sizeof(char *))
@@ -1126,7 +1126,7 @@ _printacl(int in_array, ACL *aclp, FILE *f)
 }
 
 void
-printacl(char *s, ACL *aclp, FILE *f)
+printacl(const char *s, ACL *aclp, FILE *f)
 {
   if (f == NULL)
     f = stderr;
@@ -1262,7 +1262,7 @@ _dumpacl(int nest, ACL *aclp, FILE *f)
 }
 
 void
-dumpacl(char *s, ACL *aclp, FILE *f)
+dumpacl(const char *s, ACL *aclp, FILE *f)
 {
   if (f == NULL)
     f = stderr;
@@ -7767,9 +7767,9 @@ need_alloc_ch_temp(DTYPE dtype)
            \a pattern is all lower case.
  */
 int
-sem_strcmp(char *str, char *pattern)
+sem_strcmp(const char *str, const char *pattern)
 {
-  char *p1, *p2;
+  const char *p1, *p2;
   int ch;
 
   p1 = str;
@@ -7793,7 +7793,8 @@ sem_strcmp(char *str, char *pattern)
 LOGICAL
 sem_eq_str(int con, const char *pattern)
 {
-  char *p1, *p2;
+  char *p1;
+  const char *p2;
   int len;
   int c1, c2;
 
@@ -8032,7 +8033,7 @@ _nchar_cmp(int l, int r)
            if so, issue an error message.
 */
 LOGICAL
-not_in_forall(char *stmttype)
+not_in_forall(const char *stmttype)
 {
   if (sem.doif_depth > 0 && DI_ID(sem.doif_depth) == DI_FORALL) {
     error(441, 3, gbl.lineno, stmttype, CNULL);
@@ -8045,7 +8046,7 @@ not_in_forall(char *stmttype)
           Otherwise issue an error message and return FALSE.
  */
 LOGICAL
-cuda_enabled(char *at_or_near)
+cuda_enabled(const char *at_or_near)
 {
   error(34, 3, gbl.lineno, at_or_near, CNULL);
   return FALSE;
@@ -9635,7 +9636,8 @@ static ACL *
 eval_trim(ACL *arg, DTYPE dtype)
 {
   ACL *rslt;
-  char *p, *cp, *str;
+  char *p, *cp;
+  const char *str;
   int i, cvlen, newlen;
 
   rslt = eval_init_expr(arg);
@@ -12869,7 +12871,7 @@ void
 dummy_program()
 {
   if (sem.scope_level == 0) {
-    char *tname;
+    const char *tname;
     int sptr;
     /* get a symbol to be the outer scope */
     tname = "MAIN";
@@ -13833,7 +13835,7 @@ exit_lexical_block(int gen_debug)
   }
 }
 
-static char *di_name[] = { // order by DI_KIND enum in semant.h
+static const char *di_name[] = { // order by DI_KIND enum in semant.h
     "block IF",
     "IFELSE",
     "DO",
@@ -13898,7 +13900,7 @@ static char *di_name[] = { // order by DI_KIND enum in semant.h
 };
 
 void
-sem_err104(int df, int lineno, char *str)
+sem_err104(int df, int lineno, const char *str)
 {
   if (df) {
     int id;

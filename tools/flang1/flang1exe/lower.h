@@ -168,7 +168,7 @@ int lower_getintcon(int val);
 int lower_getiszcon(ISZ_T val);
 int lower_getrealcon(int val);
 int lower_getlogcon(int val);
-int lower_newfunc(char *name, int stype, int dtype, int sclass);
+int lower_newfunc(const char *name, int stype, int dtype, int sclass);
 void lower_add_pghpf_commons(void);
 void lower_symbols(void);
 void lower_clear_visit_fields(void);
@@ -178,7 +178,7 @@ void lower_fill_member_parent(void);
 void lower_sym_header(void);
 void lower_fileinfo(void);
 void lower_mark_entries(void);
-int lower_makefunc(char *name, int dtype, LOGICAL isDscSafe);
+int lower_makefunc(const char *name, int dtype, LOGICAL isDscSafe);
 int lower_lab(void);
 void lower_check_generics(void);
 
@@ -214,13 +214,13 @@ struct lower_syms {
     int max;   /* Predefined sym for ISZ_T MAX */
     int dtype; /* Type used for extents and subscripts. */
     /* ilms for subscript operations (e.g., "ILD" or "KLD"): */
-    char *load;
-    char *store;
-    char *con;
-    char *add;
-    char *sub;
-    char *mul;
-    char *div;
+    const char *load;
+    const char *store;
+    const char *con;
+    const char *add;
+    const char *sub;
+    const char *mul;
+    const char *div;
   } bnd;
   struct {
     int dtype;
@@ -278,8 +278,8 @@ extern int lower_disable_subscr_chk;
 #define STKDDO 8
 
 void lower_ilm_header(void);
-int plower(char *fmt, ...);
-int plower_arg(char *, int, int, int);
+int plower(const char *fmt, ...);
+int plower_arg(const char *, int, int, int);
 void lower_start_stmt(int lineno, int label, LOGICAL exec, int std);
 void lower_end_stmt(int std);
 void lower_stmt(int std, int ast, int lineno, int label);
@@ -319,8 +319,8 @@ int lower_null(void);
 int lower_null_arg(void);
 int lower_nullc_arg(void);
 void lower_logical(int, iflabeltype *);
-char *ltyped(char *opname, int dtype);
-void ast_error(char *s, int ast);
+char *ltyped(const char *opname, int dtype);
+void ast_error(const char *s, int ast);
 void lower_clear_opt(int ast, int *unused);
 int lower_parenthesize_expression(int ast);
 int lower_typestore(int dtype, int lilm, int rilm);

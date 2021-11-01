@@ -180,7 +180,7 @@ export_public_module(int module, int exceptlist)
 } /* export_public_module */
 
 static lzhandle *
-export_header(FILE *fd, char *export_name, int compress)
+export_header(FILE *fd, const char *export_name, int compress)
 {
   lzhandle *lz;
 

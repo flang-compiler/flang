@@ -91,7 +91,8 @@ semant3(int rednum, SST *top)
   int astlab;
   int astli;
   int std;
-  char *np, *s;
+  char *np;
+  const char *s;
   int numdim;
   int (*p_cmp)(int, int);
   int arith_if_expr;
@@ -5727,9 +5728,10 @@ check_doconcurrent_ast(int ast, int *doif)
 {
   SPTR sptr = SPTR_NULL;
   int argt, astli, i, symi;
-  char *name, *s;
-  static char *finalize_name = NULL, *dev_finalize_name = NULL;
-  static char *ieee_name[] = {
+  char *name;
+  const char *s;
+  static const char *finalize_name = NULL, *dev_finalize_name = NULL;
+  static const char *ieee_name[] = {
     "ieee_exceptions",
     "ieee_get_flag",
     "ieee_get_halting_mode",
@@ -6151,7 +6153,7 @@ pop_tbp_arg(void)
 }
 
 void
-err307(char *msg, int diname, int namedc)
+err307(const char *msg, int diname, int namedc)
 {
   char *nm;
   if (diname)
@@ -6162,7 +6164,7 @@ err307(char *msg, int diname, int namedc)
 }
 
 static SST *
-gen_fcn_sst(char *nm, int dtype)
+gen_fcn_sst(const char *nm, int dtype)
 {
   int sptr;
   SST *fcn_sst;
@@ -6181,7 +6183,7 @@ gen_fcn_sst(char *nm, int dtype)
 }
 
 static SST *
-rewrite_cmplxpart_rhs(char *i_cmplxnm, SST *realpart, SST *imagpart, int dtype)
+rewrite_cmplxpart_rhs(const char *i_cmplxnm, SST *realpart, SST *imagpart, int dtype)
 {
   SST *i_cmplx_fcn;
   ITEM *i_cmplx_arg;
@@ -6200,7 +6202,7 @@ rewrite_cmplxpart_rhs(char *i_cmplxnm, SST *realpart, SST *imagpart, int dtype)
 }
 
 static SST *
-gen_cmplxpart_intr(char *i_partnm, SST *part, int dtype)
+gen_cmplxpart_intr(const char *i_partnm, SST *part, int dtype)
 {
   SST *fcn;
   ITEM *arg;
@@ -6224,9 +6226,9 @@ chk_and_rewrite_cmplxpart_assn(SST *lhs, SST *rhs)
   int sptr;
   int part; /* 1==> real, 2==>imag */
   int dtype;
-  char *i_realnm;
-  char *i_imagnm;
-  char *i_cmplxnm;
+  const char *i_realnm;
+  const char *i_imagnm;
+  const char *i_cmplxnm;
   SST *fcn;
   SST *i_cmplx_fcn;
 

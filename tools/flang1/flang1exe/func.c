@@ -1289,8 +1289,8 @@ extract_shape_from_args(int func_ast)
   return shape;
 }
 
-static int alloc_char_temp(int, char *, int, int, int);
-static int get_charintrin_temp(int, char *);
+static int alloc_char_temp(int, const char *, int, int, int);
+static int get_charintrin_temp(int, const char *);
 
 static struct {
   int continue_std, func_std;
@@ -1802,7 +1802,7 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
   int is_back_true;
   int vector;
   FtnRtlEnum rtlRtn;
-  char *root;
+  const char *root;
   int i;
   int subscr[MAXSUBS];
   int sptr;
@@ -3001,7 +3001,7 @@ take_out_user_def_func(int func_ast)
  * added before 'std'; the temp's deallocate statement is added after 'std'.
  */
 static int
-alloc_char_temp(int basetype, char *basename, int len, int std,
+alloc_char_temp(int basetype, const char *basename, int len, int std,
                 int use_basetype)
 {
   int dtype;
@@ -3059,7 +3059,7 @@ alloc_char_temp(int basetype, char *basename, int len, int std,
 }
 
 static int
-get_charintrin_temp(int arg, char *nm)
+get_charintrin_temp(int arg, const char *nm)
 {
   int adt;
   int dtype;
@@ -6647,7 +6647,7 @@ matmul(int func_ast, int func_args, int lhs)
   int retval;
   int ast;
   int nargs;
-  char *name;
+  const char *name;
   FtnRtlEnum rtlRtn;
   int subscr[MAXSUBS];
   int arg1, arg2;

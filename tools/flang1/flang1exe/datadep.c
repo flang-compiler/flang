@@ -3183,7 +3183,7 @@ dirv_print(DIRVEC dir)
 void
 dump_dd(DDEDGE *p)
 {
-  static char *types[] = {"flow", "anti", "outp", "????"};
+  static const char *types[] = {"flow", "anti", "outp", "????"};
 
   for (; p != 0; p = DD_NEXT(p)) {
     fprintf(gbl.dbgfil, "     %4d %4s %-32s\n", DD_SINK(p), types[DD_TYPE(p)],

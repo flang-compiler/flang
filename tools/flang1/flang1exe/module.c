@@ -96,7 +96,7 @@ static void fix_module_common(void);
 static void export_public_used_modules(int scopelevel);
 static void add_to_common(int cmidx, int mem, int atstart);
 static void export_all(void);
-static void make_rte_descriptor(int obj, char *suffix);
+static void make_rte_descriptor(int obj, const char *suffix);
 static SPTR get_submod_sym(SPTR ancestor_module, SPTR submodule);
 static void dbg_dump(const char *, int);
 /* ------------------------------------------------------------------ */
@@ -2046,7 +2046,7 @@ mod_fini(void)
  * dynamic, pointer, etc.) which is denoted by 'suffix'.
  */
 static void
-make_rte_descriptor(int obj, char *suffix)
+make_rte_descriptor(int obj, const char *suffix)
 {
   int acc, idx, islong, initd, dev, con, cpyin, link;
   int s;

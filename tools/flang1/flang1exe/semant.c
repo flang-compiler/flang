@@ -57,7 +57,7 @@ static void get_param_alias_const(SST *, int, int);
 static void set_string_type_from_init(int, ACL *);
 static void fixup_param_vars(SST *, SST *);
 static void save_typedef_init(int, int);
-static void symatterr(int, int, char *);
+static void symatterr(int, int, const char *);
 static void fixup_function_return_type(int, int);
 static void get_retval_KIND_value();
 static void get_retval_LEN_value();
@@ -233,7 +233,7 @@ static struct {
 } entity_attr;
 
 static struct {
-  char *name;
+  const char *name;
   int no; /* bit vector of attributes which do not coexist */
 } et[ET_MAX] = {
     {"access",
@@ -394,7 +394,7 @@ static struct dec_attr_t dec_attr;
 static struct dec_attr_t bind_attr;
 
 static struct {
-  char *name;
+  const char *name;
   int no; /* bit vector of attributes which do not coexist */
           /* unlike the et[...].no values, it's easier to explicitly
            * specify those which do not coexist as opposed to the
@@ -911,7 +911,7 @@ semant1(int rednum, SST *top)
       if (stt == TK_NAMED_CONSTRUCT)
         stt = get_named_stmtyp();
       if (stt != TK_DO) {
-        char *p;
+        const char *p;
         switch (DI_ID(sem.doif_depth)) {
         case DI_ACCDO:
           sem.doif_depth--; /* remove from stack */
@@ -10001,7 +10001,7 @@ semant1(int rednum, SST *top)
     SST_IDP(LHS, 1);
     SST_LSYMP(LHS, sptr);
     if (scn.stmtyp == TK_INTERFACE) {
-      char *anm;
+      const char *anm;
       anm = NULL;
       if (strcmp(SYMNAME(sptr), "x") == 0)
         anm = ".x.";
@@ -13528,7 +13528,7 @@ init_allocatable_typedef_components(SPTR td_sptr)
 }
 
 static void
-symatterr(int sev, int sptr, char *att)
+symatterr(int sev, int sptr, const char *att)
 {
   char buf[100];
   snprintf(buf, sizeof buf, "Attribute '%s' cannot be applied to symbol", att);

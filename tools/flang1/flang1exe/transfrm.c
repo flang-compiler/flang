@@ -1787,7 +1787,7 @@ collapse_assignment(int asn, int std)
   int one;
   int is_zero;
   int use_numelm;
-  char *nm;
+  const char *nm;
   FtnRtlEnum rtlRtn;
   int rhs_isptr, lhs_isptr;
 

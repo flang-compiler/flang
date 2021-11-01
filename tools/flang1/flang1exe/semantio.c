@@ -218,7 +218,7 @@ static struct pt_tag { /* parameter table for I/O statements */
                    *                   variable.
                    */
   int tmp_in_use; /* 1==>a tmp is being used in the current call (see above) */
-  char *name;
+  const char *name;
   int stmt; /* I/O stmts which may use parameter/keyword */
 } pt[PT_MAXV + 1] = {
     {0, 0, 0, 0, "UNIT",
@@ -444,7 +444,7 @@ static void rw_array(int, int, int, FtnRtlEnum);
 static void get_derived_iolptrs(SST *, int, SST *);
 static void gen_derived_io(int, FtnRtlEnum, int);
 static void gen_lastval(DOINFO *);
-static int misc_io_checks(char *);
+static int misc_io_checks(const char *);
 static void iomsg_check(void);
 static void newunit_check(void);
 static void put_vlist(SST *);
@@ -1086,7 +1086,7 @@ semantio(int rednum, SST *top)
           if (DTYG(udt) == TY_DERIVED) {
             int iotype_ast, vlist_ast;
             int fsptr, argcnt, has_io, asn, tast;
-            char *iotype;
+            const char *iotype;
             ITEM *arglist;
 
             dtype = udt;
@@ -1292,7 +1292,7 @@ semantio(int rednum, SST *top)
         int bytfunc;
         if (DTY(dtype) == TY_DERIVED &&
             (dtype_has_defined_io(dtype) & functype[is_read][fmttyp])) {
-          char *iotype;
+          const char *iotype;
           int tast, iotype_ast, vlist_ast, argcnt, asn, fsptr;
           int shape, forall, triplet_list, n, lb, ub, st, newast;
           int index_var, triplet, dovar, list, sym, triple;
@@ -4877,7 +4877,7 @@ kwd_errchk(int bt)
 static void
 _put(INT n, int dtype)
 {
-  static char *desc[] = {
+  static const char *desc[] = {
       " ",        "END",     "LP",      "RP",      "K",       "STR",
       "T",        "TL",      "TR",      "X",       "S",       "SP",
       "SS",       "BN",      "BZ",      "SLASH",   "COLON",   "Q",
@@ -4915,10 +4915,10 @@ cntl_name(int p)
   return buf;
 }
 
-char *
+const char *
 ed_name(int ed)
 {
-  static char *desc[] = {
+  static const char *desc[] = {
       " ",  "END", "(",  ")",  "P",  "STR", "T", "TL", "TR", "X", "S",
       "SP", "SS",  "BN", "BZ", "/",  ":",   "Q", "$",  "A",  "L", "I",
       "F",  "E",   "E",  "EN", "ES", "G",   "D", "O",  "Z",  "A", "L",
@@ -5738,7 +5738,7 @@ gen_lastval(DOINFO *doinfo)
  * except bufferin/bufferout
  */
 static int
-misc_io_checks(char *iostmt)
+misc_io_checks(const char *iostmt)
 {
   (void)not_in_forall(iostmt);
   /*    if (PTV(PT_IOMSG)) {

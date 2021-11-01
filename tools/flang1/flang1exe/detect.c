@@ -262,7 +262,7 @@ dumpsubinfo(int subinfo, int ndim)
   for (i = 0; i < ndim; ++i) {
     int s, idx, base, stride, sub, dstt, ldim, sptr;
     int commt, commv, cnst, diff, dupl, nop, pop;
-    char *class;
+    const char *class;
     s = subinfo + i;
     idx = SUBI_IDX(s);
     base = SUBI_BASE(s);
@@ -382,7 +382,7 @@ void
 dumparref(int arref)
 {
   int ndim, subinfo, sptr, ast, i;
-  char *class;
+  const char *class;
   FILE *outfile;
   if (gbl.dbgfil == NULL) {
     outfile = stderr;

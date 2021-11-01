@@ -736,7 +736,7 @@ puttargets(void)
 } /* puttargets */
 
 static void
-putnodetarget(char *ch, int v, int sl)
+putnodetarget(const char *ch, int v, int sl)
 {
   int psdx;
   psdx = SLOT(sl);
@@ -754,7 +754,7 @@ putnodetarget(char *ch, int v, int sl)
 } /* puttarget */
 
 static void
-putnodetargets(char *ch, int v)
+putnodetargets(const char *ch, int v)
 {
   int sl;
 
@@ -2762,7 +2762,7 @@ check_this_assignment(int asx, int v)
  * see that all TPTE entries are on a list somewhere
  */
 static void
-check_pte(char *ch)
+check_pte(const char *ch)
 {
   int v, sl, ptex, bad, asx, stdx;
   for (ptex = 1; ptex < gpte.stg_avail; ++ptex)

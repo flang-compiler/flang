@@ -116,7 +116,7 @@ static void assign_bounds(int sptrDummy, int astAct, int std);
 static int get_subscr(int ast, unsigned int dim);
 static void load_TOC(char *sDir);
 static void store_funcname(char *sFunc);
-static LE *find_libentry(char *sMod, char *sHost, char *sFunc);
+static LE *find_libentry(const char *sMod, const char *sHost, char *sFunc);
 static LOGICAL tkr_match_arg(int dtypDummy, int dtypAct);
 static LOGICAL aliased_args(int sptrEntry, int astCall);
 static LOGICAL make_arg_copy(int sptrEntry, int astCall, unsigned int arg);
@@ -362,7 +362,8 @@ void
 extractor(void)
 {
   FILE *fd;
-  char *sCurrFunc, *sCurrHost, *sCurrMod;
+  char *sCurrFunc;
+  const char *sCurrHost, *sCurrMod;
   int iFile, nFile;
   LE *ple;
   int iStat;
@@ -805,8 +806,8 @@ inline_func(int std, int ast, int iLevels, int level, int *psptrEntry)
 {
   int sptrCall, sptrEntry;
   int sptrMod, sptrHost;
-  char *sFunc, *sMod, *sHost;
-  char *currMod;
+  char *sFunc;
+  const char *sMod, *sHost, *currMod;
   FI *pfi;
   LE *ple;
   char sExtFile[MAX_FNAME_LEN];
@@ -2185,7 +2186,7 @@ store_funcname(char *sFunc)
  * unit name sFunc. Return NULL if none found.
  */
 static LE *
-find_libentry(char *sMod, char *sHost, char *sFunc)
+find_libentry(const char *sMod, const char *sHost, char *sFunc)
 {
   LE *ple;
 

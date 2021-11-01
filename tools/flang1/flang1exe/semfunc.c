@@ -5571,7 +5571,7 @@ ref_pd(SST *stktop, ITEM *list)
                 */
   int func_type;
   int arrtmp_ast;
-  char *name;
+  const char *name;
   int func_ast;
   ACL *shape_acl;
   int sptr, fsptr, baseptr;
@@ -5581,7 +5581,7 @@ ref_pd(SST *stktop, ITEM *list)
   int adjarr;
   int pvar;
   int nelems, eltype;
-  char *sname = NULL;
+  const char *sname = NULL;
   char verstr[140]; /*140, get_version_str returns max 128 char + pf90 prefix */
   FtnRtlEnum rtlRtn;
   SPTR pdsym = SST_SYMG(stktop);
@@ -12111,7 +12111,8 @@ _len_trim(int string)
 static int
 _repeat(int string, int ncopies)
 {
-  char *p, *cp, *str;
+  char *p, *cp;
+  const char *str;
   int i, j, cvlen, newlen, result;
   int dtyper, dtype;
   INT val[2];
@@ -12182,7 +12183,8 @@ _scan(int string, int set, int back)
 static int
 _trim(int string)
 {
-  char *p, *cp, *str;
+  char *p, *cp;
+  const char *str;
   int i, cvlen, newlen, result;
   int dtyper, dtype;
   INT val[2];
