@@ -76,7 +76,7 @@ cmake $CMAKE_OPTIONS \
       -DCMAKE_Fortran_COMPILER_ID=Flang \
       -DFLANG_INCLUDE_DOCS=ON \
       -DFLANG_LLVM_EXTENSIONS=ON \
-      -DWITH_WERROR=OFF \
+      -DWITH_WERROR=ON \
       ..
 make -j$NPROC
 if [ $USE_SUDO == "1" ]; then
