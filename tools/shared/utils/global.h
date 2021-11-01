@@ -50,7 +50,7 @@ typedef struct {
   FILE *asmfil;    /* file pointer for output assembly file */
   FILE *stbfil;    /* file pointer for symbols and datatype for llvm compiler */
   int eof_flag;
-  char *ompaccfilename;	/** pointer to the device file name for openmp gpu offload */
+  const char *ompaccfilename;	/** pointer to the device file name for openmp gpu offload */
   FILE *ompaccfile;	/** file pointer for device code */
   SPTR ompoutlinedfunc;
   SPTR currsub;    /* symtab ptr to current subprogram */

@@ -5169,10 +5169,10 @@ exp_strx(int opc, STRDESC *str1, STRDESC *str2)
 {
   int sym;
   int ili1;
-  char *str_index_nm;
-  char *nstr_index_nm;
-  char *strcmp_nm;
-  char *nstrcmp_nm;
+  const char *str_index_nm;
+  const char *nstr_index_nm;
+  const char *strcmp_nm;
+  const char *nstrcmp_nm;
   const char *ftn_str_kindex_nm;
 
   if (CHARLEN_64BIT) {
@@ -5232,8 +5232,8 @@ exp_strcpy(STRDESC *str1, STRDESC *str2)
   int n;
   int ili1;
   static ainfo_t ainfo;
-  char *str_copy_nm;
-  char *nstr_copy_nm;
+  const char *str_copy_nm;
+  const char *nstr_copy_nm;
   if (CHARLEN_64BIT) {
     str_copy_nm = mkRteRtnNm(RTE_str_copy_klen);
     nstr_copy_nm = mkRteRtnNm(RTE_nstr_copy_klen);
@@ -5592,7 +5592,7 @@ allochartmp(int lenili)
   int sptr1;
   int ili;
   ainfo_t ainfo;
-  char *str_malloc_nm;
+  const char *str_malloc_nm;
   if (CHARLEN_64BIT) {
     str_malloc_nm = mkRteRtnNm(RTE_str_malloc_klen);
   } else {

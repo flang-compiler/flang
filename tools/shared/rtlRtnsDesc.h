@@ -19,7 +19,7 @@ typedef struct {
   const char *baseNm;
   char fullNm[64];
   bool I8Descr;
-  char largeRetValPrefix[4];
+  const char largeRetValPrefix[4];
 } FtnRteRtn;
 
 #endif /* FE_RTLRTNSDESC_H_ */
