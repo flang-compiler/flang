@@ -23,8 +23,8 @@
 /* list of options */
 
 struct opts {
-  char *opt; /* option string */
-  int val;   /* value */
+  const char *opt; /* option string */
+  int val;         /* value */
 };
 
 static struct opts opts[] = {{"debug", T_DEBUG | T_SIGNAL},

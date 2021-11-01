@@ -16,7 +16,7 @@
 extern unsigned long strlen(const char *);
 /* FIXME: #include <stdlib.h> , may have to keep externs for Windows */
 extern void *malloc(unsigned long);
-extern char *getenv(char *);
+extern char *getenv(const char *);
 
 static int rand;
 
@@ -28,7 +28,7 @@ static char chars[] = {
 /* add a string to the temp name */
 
 static char *
-add(char *p, char *q, int n)
+add(char *p, const char *q, int n)
 {
   while ((*q != '\0') && (n-- != 0)) {
     *p++ = *q++;
@@ -68,7 +68,7 @@ gentmp(char *dir, char *pfx)
   extern long time(void *);
   char *buf;
   char *p, *q;
-  char *tmp;
+  const char *tmp;
   int n;
 
   tmp = getenv("TMPDIR");
