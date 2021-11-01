@@ -1384,7 +1384,7 @@ usersym_of(int nme)
 static void
 prsym(int sym, FILE *ff)
 {
-  char *p;
+  const char *p;
   p = getprint((int)sym);
   fprintf(ff, "%s", p);
   if (strncmp("..inline", p, 8) == 0)

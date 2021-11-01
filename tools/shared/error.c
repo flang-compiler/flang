@@ -228,7 +228,7 @@ error(error_code_t ecode, enum error_severity sev, int eline, const char *op1,
 
 void
 errlabel(error_code_t ecode, enum error_severity sev, int eline, char *nm,
-         char *op2)
+         const char *op2)
 {
   nm += 2; /* skip past .L */
   while (*nm == '0')
