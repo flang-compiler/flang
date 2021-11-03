@@ -44,7 +44,7 @@ _f90io_rewind(__INT_T *unit, __INT_T *bitv, __INT_T *iostat)
 
     if (f->nonadvance) {
       f->nonadvance = FALSE;
-#if defined(WINNT)
+#if defined(_WIN64)
       if (__io_binary_mode(f->fp))
         __io_fputc('\r', f->fp);
 #endif

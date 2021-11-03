@@ -12,7 +12,7 @@
 #include <time.h>
 #include "ent3f.h"
 
-#ifdef _WIN64
+#if defined(_WIN64)
 #include "wintimes.h"
 #endif
 

@@ -13,7 +13,7 @@
 /* how do we do this for WINNT */
 #include "ent3f.h"
 
-#ifndef _WIN64
+#if !defined(_WIN64)
 #define _LIBC_LIMITS_H_
 #include <unistd.h>
 #include <sys/times.h>
@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #include <limits.h>
 
-#ifdef _WIN64
+#if defined(_WIN64)
 #include "wintimes.h"
 #endif
 

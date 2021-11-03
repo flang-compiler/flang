@@ -279,7 +279,7 @@ ENTFTN(KINDEXX, kindexx_cr_nm)
 
 #endif
 
-#if defined(WINNT)
+#if defined(_WIN64)
 
 /* functions here follow the msfortran/mscall conventions */
 

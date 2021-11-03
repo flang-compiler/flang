@@ -19,7 +19,7 @@ void ENT3F(FSYNC, fsync)(int *lu)
 
   f = __getfile3f(*lu);
   if (f)
-    #ifndef _WIN64
+    #if !defined(_WIN64)
         fsync(__io_getfd(f));
     #else
         fflush(f);

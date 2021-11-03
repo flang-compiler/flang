@@ -15,7 +15,7 @@
 
 #include <time.h>
 #include <string.h>
-#ifndef _WIN64
+#if !defined(_WIN64)
 #include <sys/time.h>
 #include <unistd.h>
 #else

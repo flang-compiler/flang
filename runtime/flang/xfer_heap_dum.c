@@ -16,7 +16,7 @@ extern char *sbrk(int);
 char *
 __fort_sbrk(int len)
 {
-#ifndef _WIN64
+#if !defined(_WIN64)
   return (sbrk(len));
 #endif
 }

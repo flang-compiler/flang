@@ -42,7 +42,7 @@ typedef unsigned short WCHAR;
 
 #define VOID void
 
-#ifdef WIN64
+#if defined(_WIN64)
 WIN_MSVCRT_IMP char *WIN_CDECL getenv(const char *);
 WIN_MSVCRT_IMP long WIN_CDECL strtol(const char *, char **, int);
 WIN_MSVCRT_IMP char *WIN_CDECL strerror(int);
@@ -367,11 +367,7 @@ extern int __fortio_check_format(void);
 extern int __fortio_eor_crlf(void);
 extern VOID __fortio_fmtinit(void);
 extern VOID __fortio_fmtend(void);
-#if defined(WINNT)
-#define EOR_CRLF 1
-#else
 #define EOR_CRLF __fortio_eor_crlf()
-#endif
 extern int __fortio_no_minus_zero(void);
 int __fortio_new_fp_formatter(void);
 

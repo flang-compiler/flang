@@ -15,7 +15,7 @@
 
 /* Not implemented for WINNT */
 
-#ifndef _WIN64
+#if !defined(_WIN64)
 #include <unistd.h>
 #include <sys/times.h>
 #endif
@@ -24,7 +24,7 @@
 #include <limits.h>
 
 
-#ifdef _WIN64
+#if defined(_WIN64)
    #include "wintimes.h"
    #define CLK_TCK 10000000.0
 #else

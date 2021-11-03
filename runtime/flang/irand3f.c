@@ -12,7 +12,7 @@
 #include "ent3f.h"
 
 extern int rand();
-#ifdef WIN64
+#if defined(_WIN64)
 int ENT3F(IRAND1, irand1)() { return rand(); }
 int ENT3F(IRAND2, irand2)(int *flag)
 {

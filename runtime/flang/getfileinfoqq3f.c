@@ -8,7 +8,7 @@
 /* clang-format off */
 
 /*	getfileinfoqq3f.c - Implements DFLIB getfileinfoqq subprogram.  */
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64)
 #include <windows.h>
 #endif
 #include <string.h>
@@ -18,7 +18,7 @@
 #include "ent3f.h"
 #include "utils3f.h"
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64)
 extern void __GetTimeToSecondsSince1970(ULARGE_INTEGER *fileTime,
                                         unsigned int *out);
 extern int __GETFILEINFOQQ(DCHAR(ffiles), char *buffer,

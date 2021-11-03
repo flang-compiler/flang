@@ -18,7 +18,7 @@
 #include "ent3f.h"
 #include "utils3f.h"
 
-#ifdef _WIN64
+#if defined(_WIN64)
 #define chmod _chmod
 #endif
 

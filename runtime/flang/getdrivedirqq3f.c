@@ -16,7 +16,7 @@
 #include "utils3f.h"
 #include "mpalloc.h"
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64)
 #define GETCWDM _getcwd /* getcwd deprecated in Windows in VC 2005 */
 #else
 #define GETCWDM getcwd

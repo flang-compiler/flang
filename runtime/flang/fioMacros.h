@@ -208,7 +208,7 @@ void __fort_set_second(double d);
 #define __DIST_ENTRY_AWAIT(reqn)
 #define __DIST_ENTRY_AWAIT_DONE(reqn)
 
-#ifdef WINNT
+#if defined(_WIN64)
 /* prototypes for HPF */
 
 /* The PG compilers cannot yet create dlls that share data. For
@@ -541,7 +541,7 @@ extern __INT_T CORMEM[];
 #define NPLIMIT 0
 #endif /* NPLIMIT */
 
-#if defined(TARGET_WIN) || defined(WIN64) || defined(WIN32)
+#if defined(_WIN64)
 void __CORMEM_SCAN(void);
 #else
 #define __CORMEM_SCAN()                                                        \

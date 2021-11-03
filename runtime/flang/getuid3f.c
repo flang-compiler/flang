@@ -9,11 +9,11 @@
 
 /*	getuid3f.c - Implements LIB3F getuid subprogram.  */
 
-#ifndef WINNT
+#if !defined(_WIN64)
 
 #include "ent3f.h"
 #include <unistd.h>
 
 int ENT3F(GETUID, getuid)() { return getuid(); }
 
-#endif /* !WINNT */
+#endif /* !_WIN64 */

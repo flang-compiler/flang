@@ -9,7 +9,7 @@
  * \brief Fill in statistics structure (Linux version)
  */
 
-#ifndef _WIN64
+#if !defined(_WIN64)
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
@@ -37,7 +37,7 @@ __fort_setarg(void)
 // TODO: Implement functions for WIN32
 static void nodename(char *s)
 {
-#ifndef _WIN64
+#if !defined(_WIN64)
   struct utsname u0;
 
   uname(&u0);
@@ -47,7 +47,7 @@ static void nodename(char *s)
 
 void __fort_gettb(struct tb *t)
 {
-#ifndef _WIN64
+#if !defined(_WIN64)
   struct timeval tv0;
   struct timezone tz0;
   struct rusage rs0, rc0;
@@ -103,7 +103,7 @@ static double first = 0.0;
 double
 __fort_second()
 {
-#ifndef _WIN64
+#if !defined(_WIN64)
   struct timeval v;
   struct timezone t;
   double d;

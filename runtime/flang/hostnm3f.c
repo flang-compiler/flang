@@ -9,7 +9,7 @@
 
 /*	hostnm3f.c - Implements LIB3F hostnm subprogram.  */
 
-#ifndef WINNT
+#if !defined(_WIN64)
 
 #include <unistd.h>
 /* must include ent3f.h AFTER io3f.h */
@@ -42,4 +42,4 @@ int ENT3F(HOSTNM, hostnm)(DCHAR(nm) DCLEN(nm))
   return i;
 }
 
-#endif /* !WINNT */
+#endif /* !_WIN64 */

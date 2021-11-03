@@ -9,7 +9,7 @@
 #include "fioMacros.h"
 #include <string.h>
 #include <memory.h>
-#ifndef _WIN64
+#if !defined(_WIN64)
 #include <sys/time.h>
 #endif
 

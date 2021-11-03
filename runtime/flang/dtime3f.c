@@ -14,14 +14,14 @@
 #include "ent3f.h"
 
 #define _LIBC_LIMITS_H_
-#ifndef _WIN64
+#if !defined(_WIN64)
 #include <unistd.h>
 #include <sys/times.h>
 #endif
 #include <sys/types.h>
 #include <limits.h>
 
-#ifdef _WIN64
+#if defined(_WIN64)
   #include "wintimes.h"
   #define CLK_TCK 10000000.0
 #else

@@ -9,7 +9,7 @@
 
 /*	times3f.c - Implements LIB3F times subprogram.  */
 
-#ifndef WINNT
+#if !defined(_WIN64)
 
 #include <sys/times.h>
 #include "io3f.h"
@@ -27,4 +27,4 @@ int ENT3F(TIMES, times)(int *buff)
   return i;
 }
 
-#endif /* !WINNT */
+#endif /* !_WIN64 */

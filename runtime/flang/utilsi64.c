@@ -26,7 +26,7 @@ void shf64(DBLINT64, int, DBLINT64);
 void ushf64(DBLUINT64, int, DBLUINT64);
 
 /* has native support for 8-byte integers*/
-#if !defined(WIN64)
+#if !defined(_WIN64)
 typedef long I8_T;
 typedef unsigned long UI8_T;
 #else

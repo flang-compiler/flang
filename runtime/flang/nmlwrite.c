@@ -306,12 +306,12 @@ ENTCRF90IO(NMLW_INTERN_INIT, nmlw_intern_init)(
 static int
 emit_eol(void)
 {
-#if defined(WINNT)
+#if defined(_WIN64)
   int ret_err;
 #endif
 
   if (!internal_file) {
-#if defined(WINNT)
+#if defined(_WIN64)
     if (__io_binary_mode(f->fp)) {
       ret_err = write_char('\r');
       if (ret_err)

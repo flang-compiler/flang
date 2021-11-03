@@ -17,7 +17,7 @@
 
 int ENT3F(STAT, stat)(DCHAR(nm), int *statb DCLEN(nm))
 {
-#ifdef _WIN64
+#if defined(_WIN64)
   struct _stat32 b;
   char *p;
   int i;
@@ -60,7 +60,7 @@ int ENT3F(STAT, stat)(DCHAR(nm), int *statb DCLEN(nm))
   statb[8] = b.st_atime;
   statb[9] = b.st_mtime;
   statb[10] = b.st_ctime;
-#if !defined(WINNT)
+#if !defined(_WIN64)
   statb[11] = b.st_blksize;
   statb[12] = b.st_blocks;
 #else

@@ -16,7 +16,7 @@
 
 WIN_API __INT_T LINENO[];
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN64)
 #define write _write
 #endif
 
@@ -44,7 +44,7 @@ static int __fort_trac_mflag;
 static int __fort_prof_mflag;
 int __fort_entry_mflag;
 
-#ifdef WINNT
+#if defined(_WIN64)
 /* pg access for dlls */
 char *
 __get_fort_lineno_addr(void)

@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include "ent3f.h"
 
-#ifdef WINNT
+#if defined(_WIN64)
 
 int ENT3F(IRANDM, irandm)(int *flag)
 {

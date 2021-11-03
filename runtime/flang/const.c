@@ -129,14 +129,6 @@ __INT_T ENTCOMN(TYPE, type)[] = {
     17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
     32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43};
 
-#if defined(WINNT) && !defined(WIN64) && !defined(WIN32)
-char *
-__get_fort_type_addr(void)
-{
-  return (char *)ENTCOMN(TYPE, type);
-}
-#endif
-
 /* universal constants */
 
 long long int __fort_one[4] = {~0, ~0, ~0, ~0};
@@ -434,7 +426,7 @@ __get_size_of(int* idx)
   return __fort_size_of[*idx];
 }
 
-#ifdef WINNT
+#if defined(_WIN64)
 
 /* pg access routines for data shared between windows dlls */
 
@@ -669,7 +661,7 @@ __get_fort_zed(void)
   return __fort_zed;
 }
 
-#endif /* WINNT */
+#endif /* _WIN64 */
 
 void
 __fort_init_consts()
@@ -777,7 +769,7 @@ __fort_init_consts()
 /*
  * Always emit the comms for non-windows systems.
  */
-#ifdef WINNT
+#if defined(_WIN64)
 /*
  * Emit the comms for win if pg.dll is not used -- PGDLL is defined
  * if we need to revert to pg.dll.
