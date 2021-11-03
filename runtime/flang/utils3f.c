@@ -6,7 +6,7 @@
  */
 
 /*	  */
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64)
 #include <windows.h>
 #endif
 #include "io3f.h"
@@ -109,7 +109,7 @@ FILE *__getfile3f(int unit)
   }
 }
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64)
 void
 __GetTimeToSecondsSince1970(ULARGE_INTEGER *fileTime, unsigned int *out)
 {

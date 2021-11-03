@@ -10,7 +10,7 @@
 /*	access3f.c - Implements LIB3F access subroutine.  */
 
 /* must include ent3f.h AFTER io3f.h */
-#ifndef _WIN64
+#if !defined(_WIN64)
 #include <unistd.h>
 #endif
 

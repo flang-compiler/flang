@@ -10,7 +10,7 @@
  * a common system buffer pool and that the buffers are kept consistent.
  * It also works for some other systems such as the Paragon.
  */
-#ifndef _WIN64
+#if !defined(_WIN64)
 #include <fcntl.h>
 
 #include <sys/types.h>

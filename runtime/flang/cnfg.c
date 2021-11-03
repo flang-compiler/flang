@@ -73,7 +73,7 @@ __fortio_scratch_name(char *filename, int unit)
 {
   char *nm;
 
-#if defined(WINNT)
+#if defined(_WIN64)
   if (getenv("TMP") == 0)
     nm = __io_tempnam("C:\\", "FTN");
   else
@@ -81,13 +81,13 @@ __fortio_scratch_name(char *filename, int unit)
   strcpy(filename, nm);
   if (nm)
     free(nm);
-#else /*WINNT*/
+#else /*_WIN64*/
 
   nm = __io_tempnam((char *)0, "FTN");
   strcpy(filename, nm);
   if (nm)
     free(nm);
 
-#endif /*WINNT*/
+#endif /*_WIN64*/
 
 }

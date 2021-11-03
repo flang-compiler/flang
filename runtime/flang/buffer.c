@@ -12,7 +12,7 @@
 #include "stdioInterf.h"
 #include "fioMacros.h"
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN64)
 #define write _write
 #define creat _creat
 #define close _close

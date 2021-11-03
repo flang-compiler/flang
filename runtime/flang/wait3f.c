@@ -9,7 +9,7 @@
 
 /*	wait3f.c - Implements LIB3F wait subprogram.  */
 
-#ifndef WINNT
+#if !defined(_WIN64)
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -26,4 +26,4 @@ int ENT3F(WAIT, wait)(int *st)
   return wait(wst);
 }
 
-#endif /* !WINNT */
+#endif /* !_WIN64 */

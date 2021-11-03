@@ -16,11 +16,11 @@
 #define __fio_close(f, s) __fortio_close(f, s)
 #define __fio_find_unit(u) __fortio_find_unit(u)
 #define fio_fileno(f) __fort_getfd(f)
-#ifndef WINNT
+#if !defined(_WIN64)
 #define pgi_fio fioFcbTbl
 #endif
 
-#if defined(WINNT)
+#if defined(_WIN64)
 #define __PC_DOS 1
 #else
 #define __PC_DOS 0

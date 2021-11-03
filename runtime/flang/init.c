@@ -18,7 +18,7 @@ static int tid = 0;
 
 const char *__fort_transnam = "rpm1";
 
-#ifdef WINNT
+#if defined(_WIN64)
 
 /* pg access routines for data shared between windows dlls */
 

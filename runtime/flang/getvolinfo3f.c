@@ -18,17 +18,10 @@
 typedef char *LPSTR;
 typedef int DWORD;
 
-#if defined(WIN64) || defined(WIN32)
-#if defined(WIN64)
+#if defined(_WIN64)
 typedef long long LDWORD;
 extern int GetVolumeInformationA();
 #define ENTNAM(ss) _##ss
-
-#else
-typedef long LDWORD;
-extern int __stdcall GetVolumeInformationA();
-#define ENTNAM(ss) ss
-#endif
 
 typedef LDWORD *LPDWORD;
 
@@ -51,9 +44,7 @@ extern int ENTNAM(pgdfw_GetVolumeInformation)(
   fill(FileSystemNameBuffer, strlen(FileSystemNameBuffer), FileSystemNameSize);
   return s;
 }
-#endif
 
-#if defined(WIN64) || defined(WIN32)
 static void
 fill(LPSTR p, int ln, int sz)
 {

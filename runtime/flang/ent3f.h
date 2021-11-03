@@ -17,27 +17,13 @@
 #undef CADR
 #undef CLEN
 
-/* macros for entries */
-#if defined(WINNT) && !defined(WIN64) && !defined(UXOBJS)
-
-#pragma global - x 121 0x20000
-#define ENT3F(UC, LC) __attribute__((stdcall)) UC
-#define ENT3FSU(UC, LC) __attribute__((stdcall)) UC##_
-/* macros to declare character arguments */
-#define DCHAR(ARG) char *ARG##_adr, int ARG##_len
-#define DCLEN(ARG)
-
-#else
-
 #define ENT3F(UC, LC) LC##_
 #define ENT3FSU(UC, LC) LC##__
 /* macros to declare character arguments */
 #define DCHAR(ARG) char *ARG##_adr
 #define DCLEN(ARG) , int ARG##_len
 
-#endif
-
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN64)
 #define j0 _j0
 #define j1 _j1
 #define jn _jn

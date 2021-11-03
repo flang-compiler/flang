@@ -8,7 +8,7 @@
 /* clang-format off */
 
 /*	delfilesqq3f.c - Implements DFLIB delfilesqq subprogram.  */
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64)
 #include <windows.h>
 #endif
 #include <string.h>
@@ -18,7 +18,7 @@
 #include "ent3f.h"
 #include "utils3f.h"
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64)
 int ENT3F(DELFILESQQ, delfilesqq)(DCHAR(ffiles) DCLEN(ffiles))
 {
   char *files;

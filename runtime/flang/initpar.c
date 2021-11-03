@@ -15,7 +15,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <memory.h>
-#ifndef _WIN64
+#if !defined(_WIN64)
 #include <sys/time.h>
 #endif
 
@@ -69,7 +69,7 @@ static struct {
 WIN_API __INT_T ENTCOMN(NP, np)[];
 WIN_API __INT_T ENTCOMN(ME, me)[];
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN64)
 #define write _write
 #endif
 
@@ -89,8 +89,7 @@ __fort_ncpus()
   return __fort_tcpus;
 }
 
-#if defined(WINNT)
-#if !defined(WIN64) && !defined(WIN32)
+#if defined(_WIN64)
 __INT_T *CORMEM;
 
 /* special argument pointer access routines */
@@ -152,7 +151,6 @@ __get_fort_np_addr(void)
 {
   return (char *)ENTCOMN(NP, np);
 }
-#endif /* !WIN64 || !WIN32 */
 
 /* access routines for data shared between windows dlls */
 
@@ -300,7 +298,7 @@ __set_fort_tids_elem(int idx, int val)
   __fort_tids[idx] = val;
 }
 
-#endif /* WINNT */
+#endif /* _WIN64 */
 
 int
 __fort_getioproc()
@@ -848,4 +846,3 @@ f90_compiled()
     inited.atexit = 1;
   }
 }
-

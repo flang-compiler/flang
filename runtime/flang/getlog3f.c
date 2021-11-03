@@ -9,7 +9,7 @@
 
 /*	getlog3f.c - Implements LIB3F getlog subprogram.  */
 
-#ifndef WINNT
+#if !defined(_WIN64)
 
 #include "ent3f.h"
 #include "utils3f.h"
@@ -24,4 +24,4 @@ void ENT3F(GETLOG, getlog)(DCHAR(nm) DCLEN(nm))
   __fcp_cstr(CADR(nm), CLEN(nm), p);
 }
 
-#endif /* !WINNT */
+#endif /* !_WIN64 */

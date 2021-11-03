@@ -6,7 +6,7 @@
  */
 
 #include <sys/types.h>
-#ifndef _WIN64
+#if !defined(_WIN64)
 #include <sys/param.h>
 #include <sys/utsname.h>
 #endif
@@ -18,7 +18,7 @@
 #define MAXPATHLEN 1024
 #endif
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN64)
 #define getcwd _getcwd
 #endif
 
@@ -86,7 +86,7 @@ void __fort_getdir(char *curdir)
 
 void __fort_gethostname(char *host)
 {
-#ifndef _WIN64
+#if !defined(_WIN64)
   struct utsname un;
 #endif
   const char *p;
@@ -94,7 +94,7 @@ void __fort_gethostname(char *host)
 
   p = __fort_getopt("-curhost");
   if (p == NULL) {
-#ifndef _WIN64
+#if !defined(_WIN64)
     s = uname(&un); /* get hostname */
     if (s == -1) {
       __fort_abortp("uname");

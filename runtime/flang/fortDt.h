@@ -272,7 +272,7 @@ typedef __CPLX16_T __BIGCPLX_T;
 
 /* pointer-sized integer */
 
-#if   defined(WIN64)
+#if   defined(_WIN64)
 
 typedef long long __POINT_T;
 

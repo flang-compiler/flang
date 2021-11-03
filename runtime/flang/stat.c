@@ -13,7 +13,7 @@
 #include <string.h>
 #include <memory.h>
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN64)
 #define write _write
 #endif
 

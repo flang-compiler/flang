@@ -9,7 +9,7 @@
 
 /*	link3f.c - Implements LIB3F link subprogram.  */
 
-#ifndef WINNT
+#if !defined(_WIN64)
 
 /* must include ent3f.h AFTER io3f.h */
 #include "io3f.h"
@@ -33,4 +33,4 @@ int ENT3F(LINK, link)(DCHAR(n1), DCHAR(n2) DCLEN(n1) DCLEN(n2))
   return i;
 }
 
-#endif /* !WINNT */
+#endif /* !_WIN64 */

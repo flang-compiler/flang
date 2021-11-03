@@ -16,7 +16,7 @@
 #include "ent3f.h"
 #include "utils3f.h"
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64)
 
 int ENT3F(FULLPATHQQ, fullpathqq)(DCHAR(fname),
                                   DCHAR(fpath) DCLEN(fname) DCLEN(fpath))

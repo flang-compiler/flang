@@ -8,7 +8,7 @@
 /* clang-format off */
 
 /*	packtimeqq3f.c - Implements DFLIB packtimeqq subprogram.  */
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64)
 #include <windows.h>
 #endif
 #include <string.h>
@@ -17,7 +17,7 @@
 #include "io3f.h"
 #include "ent3f.h"
 
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64)
 extern void __GetTimeToSecondsSince1970(ULARGE_INTEGER *fileTime,
                                         unsigned int *out);
 

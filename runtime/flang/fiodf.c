@@ -13,7 +13,7 @@
 
 FIO_TBL fioFcbTbls = {0};
 
-#ifdef WINNT
+#if defined(_WIN64)
 FIO_FCB *
 __get_hpfio_fcbs(void)
 {

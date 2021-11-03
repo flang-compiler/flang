@@ -9,7 +9,7 @@
  * \brief Utility functions for fortran i.o.
  */
 
-#ifdef _WIN64
+#if defined(_WIN64)
 #include <io.h>
 #include <fcntl.h>
 #include <math.h>
@@ -599,7 +599,7 @@ __fortio_trunc(FIO_FCB *p, seekoffx_t length)
   return 0;
 }
 
-#ifdef _WIN64
+#if defined(_WIN64)
 void
 sincos(double x, double *sine, double *cosine) {
     *sine = sin(x);

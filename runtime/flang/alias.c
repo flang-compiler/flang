@@ -5,7 +5,7 @@
  *
  */
 
-#ifdef _WIN64
+#if defined(_WIN64)
 #include "omp.h"
 
 extern void omp_set_num_threads_(int num_threads)

@@ -13,7 +13,7 @@
 #include "ent3f.h"
 
 /* drand48, srand48 are not currently available on win64 */
-#if defined(WIN64) || defined(WIN32)
+#if defined(_WIN64)
 
 double ENT3F(DRANDM, drandm)(int *flag)
 {
