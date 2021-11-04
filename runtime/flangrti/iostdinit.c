@@ -6,7 +6,7 @@
  */
 
 #include <stdio.h>
-#if !defined(WINNT) && !defined(ST100)
+#if !defined(_WIN64) && !defined(ST100)
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
@@ -15,7 +15,7 @@
 
 /* get environ */
 
-#if defined(WIN64)
+#if defined(_WIN64)
 char * * * __cdecl __p__environ(void);
 /*
  * enclose _fileno within parens to ensure calling the function rather than
@@ -24,7 +24,7 @@ char * * * __cdecl __p__environ(void);
 #define fileno(x) (_fileno)(x)
 #endif
 
-#if   defined(WINNT)
+#if   defined(_WIN64)
 #include <stdlib.h>
 extern char **environ;
 #elif defined(TARGET_OSX)
@@ -83,7 +83,7 @@ __io_stderr(void)
 
 /* convert macros to routines */
 
-#if defined(TARGET_WIN) || defined(WIN32)
+#if defined(TARGET_WIN) || defined(_WIN64)
 #include <stdio.h>
 int
 __io_fgetc(FILE *p)
@@ -169,12 +169,8 @@ __io_isatty(int fd)
 int
 __io_binary_mode(void *fp)
 {
-#if defined(WINNT)
+#if defined(_WIN64)
 #include <fcntl.h>
-
-#if defined(WIN64) || defined(WIN32)
-#define O_BINARY _O_BINARY
-#endif
 
   int mode;
 
@@ -196,12 +192,8 @@ __io_binary_mode(void *fp)
 int
 __io_setmode_binary(void *fp)
 {
-#if defined(WINNT)
+#if defined(_WIN64)
 #include <fcntl.h>
-
-#if defined(WIN64) || defined(WIN32)
-#define O_BINARY _O_BINARY
-#endif
 
   int mode;
 
@@ -214,7 +206,7 @@ __io_setmode_binary(void *fp)
 int
 __io_ispipe(void *f)
 {
-#if !defined(WINNT) && !defined(ST100)
+#if !defined(_WIN64) && !defined(ST100)
   struct stat st;
 
   fstat(fileno((FILE *)f), &st);
@@ -254,7 +246,7 @@ __io_fwrite(char *ptr, size_t size, size_t nitems, FILE *stream)
 #endif
 }
 
-#if defined(WINNT) || defined(WIN64) || defined(WIN32)
+#if defined(_WIN64)
 
 #if   defined(PGI_CRTDLL)
 extern long *_imp___timezone_dll; /* for crtdll.dll */
@@ -263,7 +255,7 @@ extern long *_imp___timezone_dll; /* for crtdll.dll */
 #define timezone _timezone /* cygnus, timezone is usually a function */
 #endif
 
-#elif !defined(DEC) && !defined(IBM) && !defined(ST100_V1_2) &&                !defined(OSX86) /* !defined(WINNT) */
+#elif !defined(DEC) && !defined(IBM) && !defined(ST100_V1_2) &&                !defined(OSX86) /* !defined(_WIN64) */
 extern time_t timezone; /* for the rest */
 #endif
 
@@ -272,14 +264,14 @@ __io_timezone(void *tm)
 {
 #if defined(SUN4) || defined(PPC) || defined(OSX86)
   return ((struct tm *)tm)->tm_gmtoff;
-#elif defined(WINNT) || defined(WIN64) || defined(WIN32)
+#elif defined(_WIN64)
   return (0);
 #else
   return -(timezone - (((struct tm *)tm)->tm_isdst ? 3600 : 0));
 #endif
 }
 
-#if  (defined(WIN32) || defined(WIN64))
+#if defined(_WIN64)
 /* wrappers for stderr, stdin, stdout : include
   pgc/port/pgi_iobuf.h after stdio.h 
  */

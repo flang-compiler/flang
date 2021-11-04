@@ -5,7 +5,7 @@
  *
  */
 
-#if !defined(WINNT) && !defined(USETEMPNAM) /* { */
+#if !defined(_WIN64) && !defined(USETEMPNAM) /* { */
 #include <errno.h>
 #include <stdio.h>
 
@@ -146,7 +146,7 @@ extern char *tempnam(char *, char *);
 char *
 __io_tempnam(char *dir, char *pfx)
 {
-#if defined(WIN32) || defined(WIN64)
+#if defined(_WIN64)
   return (_tempnam(dir, pfx));
 #else
   return (tempnam(dir, pfx));
