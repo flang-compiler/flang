@@ -451,7 +451,7 @@ quad_complex_t pgmath_cmplxl(float128_t r, float128_t i)
  * to the different entry points for the various architectures.
  */
 
-#if defined(WIN64)
+#if defined(_WIN64)
 /*
  * Windows.
  */
@@ -503,7 +503,7 @@ quad_complex_t pgmath_cmplxl(float128_t r, float128_t i)
 #define BESSEL_Y0 y0
 #define BESSEL_Y1 y1
 #define BESSEL_YN yn
-#endif		/* #if defined (WIN64) */
+#endif		/* #if defined (_WIN64) */
 
 /*  declarations for math functions */
 

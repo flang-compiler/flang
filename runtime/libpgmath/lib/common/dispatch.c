@@ -329,7 +329,7 @@ __mth_rt_vi_ptrs_t __mth_rt_vi_ptrs_stat;
 uint64_t __mth_rt_stats[frp_size][func_size][sv_size];
 static  __mth_rt_vi_ptrs_t __mth_rt_vi_ptrs_new;
 
-#if !defined(WIN64) && !defined(DISPATCH_IS_STATIC)
+#if !defined(_WIN64) && !defined(DISPATCH_IS_STATIC)
 #define CONSTRUCTOR __attribute__((constructor(101)))
 #define DESTRUCTOR __attribute__((destructor))
 #else
