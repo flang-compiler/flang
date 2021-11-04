@@ -678,7 +678,7 @@ ENT(ASM_CONCAT(__rvs_exp_,TARGET_VEX_OR_FMA)):
 
 	RZ_PUSH
 
-#if defined(WIN64) || defined(TARGET_INTERIX_X8664)
+#if defined(_WIN64) || defined(TARGET_INTERIX_X8664)
 	vmovdqu	%ymm6, RZ_OFF(104)(%rsp)
 	movq	%rsi, RZ_OFF(64)(%rsp)
 	movq	%rdi, RZ_OFF(72)(%rsp)
@@ -912,7 +912,7 @@ ENT(ASM_CONCAT(__rvs_exp_,TARGET_VEX_OR_FMA)):
 
 LBL(.L_vsp_final_check):
 
-#if defined(WIN64) || defined(TARGET_INTERIX_X8664)
+#if defined(_WIN64) || defined(TARGET_INTERIX_X8664)
 	vmovdqu	RZ_OFF(104)(%rsp), %ymm6
 	movq	RZ_OFF(64)(%rsp), %rsi
 	movq	RZ_OFF(72)(%rsp), %rdi
@@ -986,7 +986,7 @@ ENT(ASM_CONCAT3(__rvs_exp_,TARGET_VEX_OR_FMA,_256)):
 	movq	%r14, 232(%rsp)
 	movq	%r15, 240(%rsp)
 
-#if defined(WIN64) || defined(TARGET_INTERIX_X8664)
+#if defined(_WIN64) || defined(TARGET_INTERIX_X8664)
         vmovdqu %ymm6, 128(%rsp)
         movq    %rsi, 200(%rsp)
         movq    %rdi, 208(%rsp)
@@ -1207,7 +1207,7 @@ ENT(ASM_CONCAT3(__rvs_exp_,TARGET_VEX_OR_FMA,_256)):
 
 LBL(.L_vsp_final_check_256):
 
-#if defined(WIN64) || defined(TARGET_INTERIX_X8664)
+#if defined(_WIN64) || defined(TARGET_INTERIX_X8664)
         vmovdqu 128(%rsp), %ymm6
         movq    200(%rsp), %rsi
         movq    208(%rsp), %rdi

@@ -348,7 +348,7 @@ static inline __attribute__((always_inline)) double_complex_t  pgmath_cmplx(doub
  * to the different entry points for the various architectures.
  */
 
-#if defined(WIN64)
+#if defined(_WIN64)
 /*
  * Windows.
  */
@@ -400,7 +400,7 @@ static inline __attribute__((always_inline)) double_complex_t  pgmath_cmplx(doub
 #define BESSEL_Y0 y0
 #define BESSEL_Y1 y1
 #define BESSEL_YN yn
-#endif		/* #if defined (WIN64) */
+#endif		/* #if defined (_WIN64) */
 
 /*  declarations for math functions */
 
