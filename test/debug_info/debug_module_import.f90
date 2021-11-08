@@ -24,12 +24,12 @@ print *, var1
 print *, var2
 end program hello
 
-! CHECK: ![[DBG_MOD1:[0-9]+]] = !DIModule({{.*}}, name: "first"
-! CHECK: ![[DBG_DIC:[0-9]+]] = distinct !DICompileUnit({{.*}}, imports: ![[DBG_IMPORTS:[0-9]+]], nameTableKind: None
-! CHECK: ![[DBG_MOD2:[0-9]+]] = !DIModule({{.*}}, name: "second"
-! CHECK: ![[DBG_IMPORTS]] = !{![[DBG_IE1:[0-9]+]], ![[DBG_IE2:[0-9]+]], ![[DBG_IE3:[0-9]+]]}
-! CHECK: ![[DBG_IE1]] = !DIImportedEntity(tag: DW_TAG_imported_module, scope: ![[DBG_SP1:[0-9]+]], entity: ![[DBG_MOD1]],
-! CHECK: ![[DBG_SP1]] = distinct !DISubprogram(name: "init", scope: ![[DBG_MOD2]]
-! CHECK: ![[DBG_IE2]] = !DIImportedEntity(tag: DW_TAG_imported_module, scope: ![[DBG_SP2:[0-9]+]], entity: ![[DBG_MOD1]],
-! CHECK: ![[DBG_SP2]] = distinct !DISubprogram(name: "hello", scope: ![[DBG_DIC]]
-! CHECK: ![[DBG_IE3]] = !DIImportedEntity(tag: DW_TAG_imported_module, scope: ![[DBG_SP2]], entity: ![[DBG_MOD2]],
+! CHECK-DAG: ![[DBG_MOD1:[0-9]+]] = !DIModule({{.*}}, name: "first"
+! CHECK-DAG: ![[DBG_DIC:[0-9]+]] = distinct !DICompileUnit({{.*}}, imports: ![[DBG_IMPORTS:[0-9]+]], nameTableKind: None
+! CHECK-DAG: ![[DBG_MOD2:[0-9]+]] = !DIModule({{.*}}, name: "second"
+! CHECK-DAG: ![[DBG_IMPORTS]] = !{![[DBG_IE1:[0-9]+]], ![[DBG_IE2:[0-9]+]], ![[DBG_IE3:[0-9]+]]}
+! CHECK-DAG: ![[DBG_IE1]] = !DIImportedEntity(tag: DW_TAG_imported_module, scope: ![[DBG_SP1:[0-9]+]], entity: ![[DBG_MOD1]],
+! CHECK-DAG: ![[DBG_SP1]] = distinct !DISubprogram(name: "init", scope: ![[DBG_MOD2]]
+! CHECK-DAG: ![[DBG_IE2]] = !DIImportedEntity(tag: DW_TAG_imported_module, scope: ![[DBG_SP2:[0-9]+]], entity: ![[DBG_MOD1]],
+! CHECK-DAG: ![[DBG_SP2]] = distinct !DISubprogram(name: "hello", scope: ![[DBG_DIC]]
+! CHECK-DAG: ![[DBG_IE3]] = !DIImportedEntity(tag: DW_TAG_imported_module, scope: ![[DBG_SP2]], entity: ![[DBG_MOD2]],

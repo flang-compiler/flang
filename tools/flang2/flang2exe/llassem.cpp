@@ -1148,7 +1148,7 @@ assemble_end(void)
   /* write out common block which is not initialized */
   align_value = CACHE_ALIGN + 1;
   for (gblsym = ag_cmblks; gblsym; gblsym = AG_SYMLK(gblsym)) {
-    if (AG_DSIZE(gblsym))
+    if (AG_DSIZE(gblsym) && (!AG_CMBLKINITDATA(gblsym)))
       continue;
     if (AG_SC(gblsym) == SC_EXTERN) {
       fprintf(ASMFIL, "@%s = linkonce global %s undef\n", AG_NAME(gblsym),
@@ -1168,11 +1168,16 @@ assemble_end(void)
       get_typedef_ag(gname, tname);
       tdefsym = find_ag(gname);
       typed = AG_TYPENAME(tdefsym);
-      fprintf(ASMFIL, "%%struct%s = type < { %s } > \n", name, typed);
-      fprintf(ASMFIL, "@%s = %s global %%struct%s ", name,
-              AG_ISMOD(gblsym) ? "external" : "common", name);
-      fprintf(ASMFIL, "%s, align %d",
-              AG_ISMOD(gblsym) ? "" : " zeroinitializer", align_value);
+      if (AG_CMBLKINITDATA(gblsym)) {
+        fputs (AG_CMBLKINITDATA(gblsym), ASMFIL);
+        free (AG_CMBLKINITDATA(gblsym));
+      } else {
+        fprintf(ASMFIL, "%%struct%s = type < { %s } > \n", name, typed);
+        fprintf(ASMFIL, "@%s = %s global %%struct%s ", name,
+                AG_ISMOD(gblsym) ? "external" : "common", name);
+        fprintf(ASMFIL, "%s, align %d",
+                AG_ISMOD(gblsym) ? "" : " zeroinitializer", align_value);
+      }
       for (llObjtodbgFirst(listp, &i); !llObjtodbgAtEnd(&i);
            llObjtodbgNext(&i)) {
         print_dbg_line(llObjtodbgGet(&i));
@@ -1707,6 +1712,19 @@ write_comm(void)
 
     align_value = CACHE_ALIGN + 1;
 
+    /*
+      Create a tmp file and capture the initialization data.
+      Emitting the cmn blk var defn now will miss out the dbg info
+      generated for other references of this variable.
+    */
+    FILE *tmp = gbl.asmfil;
+    FILE *fd;
+    if ((fd = tmpfile()) == NULL)
+      errinfo(F_0005_Unable_to_open_temporary_file);
+    else
+      gbl.asmfil = fd;
+
+
     fprintf(ASMFIL, "%%struct%s = type < { %s } > \n", name, type_only);
     fprintf(ASMFIL, "@%s = global %%struct%s", name, name);
     fprintf(ASMFIL, " < { ");
@@ -1720,13 +1738,23 @@ write_comm(void)
     for (cmem = CMEMFG(sptr); cmem > NOSYM; cmem = SYMLKG(cmem)) {
       if (MIDNUMG(cmem)) /* some member does not have midnum/no name */
         process_sptr(cmem);
-      if (flg.debug) {
-        LL_MDRef mdref = ll_get_global_debug(cpu_llvm_module, cmem);
-        if (!LL_MDREF_IS_NULL(mdref))
-          print_dbg_line(mdref);
-      }
     }
-    fprintf(ASMFIL, "\n");
+
+    /* Copy the initialization from the file fd to
+       the member "cmblk_init_data". This will be emitted to
+       "ll" file at func "assemble_end".
+    */
+    if (fd) {
+      gbl.asmfil = tmp;
+      fputc('\0', fd);
+      fseek(fd, 0, SEEK_END); /* length of file */
+      int file_ln = ftell(fd);
+      fseek(fd, 0, SEEK_SET); /* go to the begining of file to read */
+      AG_CMBLKINITDATA(cmsym) = (char *)malloc(file_ln);
+      fread(AG_CMBLKINITDATA(cmsym), sizeof(char), file_ln, fd);
+      fclose(fd);
+    }
+
 
     free(typed);
     free(type_only);
