@@ -62,6 +62,9 @@ void write_metadata_defs(LL_DebugInfo *db);
  */
 char *lldbg_alloc(INT size);
 
+/// \brief Return debuginfo routine index
+int lldbg_get_di_routine_idx(const LL_DebugInfo *db);
+
 /// \brief Encode an argument to lldbg_emit_expression_mdnode()
 int lldbg_encode_expression_arg(LL_DW_OP_t op, int value);
 

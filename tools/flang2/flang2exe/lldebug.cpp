@@ -233,6 +233,12 @@ lldbg_alloc(INT size)
   return p;
 }
 
+int
+lldbg_get_di_routine_idx(const LL_DebugInfo *db)
+{
+  return db->routine_idx;
+}
+
 static ISZ_T
 lldbg_get_sizeof(int element)
 {
@@ -509,7 +515,8 @@ lldbg_create_subprogram_mdnode(
           ll_get_md_node(db->module, LL_PlainMDNode, &lv_list_mdnode, 1));
     else
       llmd_add_md(mdb, lv_list_mdnode);
-  }
+  } else if (ll_feature_debug_info_ver13(&db->module->ir))
+    llmd_add_md(mdb, lv_list_mdnode);
   llmd_add_i32(mdb, scope);
 
   /* Request a distinct mdnode so that it can be updated with a function pointer

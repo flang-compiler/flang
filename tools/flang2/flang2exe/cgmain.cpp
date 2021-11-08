@@ -2028,6 +2028,12 @@ restartConcur:
       ((flg.inliner && !XBIT(14, 0x10000)) || flg.autoinline)) {
       GBL_CURRFUNC = SPTR_NULL;
   }
+
+  if (LL_DebugInfo *di = current_module->debug_info) {
+    if (lldbg_get_di_routine_idx(di) > 0)
+      lldbg_emit_lv_list(di);
+  }
+
   gcTempMap();
   CG_cpu_compile = false;
 } /* schedule */
