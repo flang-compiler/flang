@@ -183,7 +183,6 @@ static struct {
   unsigned _float_jmp : 1;
   unsigned _fcmp_negate : 1;
   unsigned _last_stmt_is_branch : 1;
-  unsigned _rw_no_dep_check : 1;
   unsigned _rw_acc_grp_check : 1;
 } CGMain;
 
@@ -195,7 +194,6 @@ static struct {
 #define float_jmp (CGMain._float_jmp)
 #define fcmp_negate (CGMain._fcmp_negate)
 #define last_stmt_is_branch (CGMain._last_stmt_is_branch)
-#define rw_nodepcheck (CGMain._rw_no_dep_check)
 #define rw_access_group (CGMain._rw_acc_grp_check)
 
 static int funcId;
@@ -776,21 +774,6 @@ cons_loop_id_md()
 }
 
 INLINE static void
-mark_rw_nodepchk(int bih)
-{
-  rw_nodepcheck = 1;
-  if (!BIH_NODEPCHK2(bih))
-    clear_cached_loop_id_md();
-}
-
-INLINE static void
-clear_rw_nodepchk(void)
-{
-  rw_nodepcheck = 0;
-  clear_cached_loop_id_md();
-}
-
-INLINE static void
 mark_rw_access_grp(int bih)
 {
   rw_access_group = 1;
@@ -1305,31 +1288,13 @@ finish_routine(void)
 }
 
 /**
-   \brief Return current loop id and mark it as vectorizable.
+   \brief Return current loop ID and mark it as vectorizable.
 
-   No dependency checking currently means to mark a loop id metadata with
+   "NODEPCHK" and "VECTOR ALWAYS" currently both mean to mark a loop ID with
    !"llvm.loop.vectorize.enable", and to mark memory instructions with
-   !llvm.group access referring to the loop id. This function
-   returns the current loop id metadata via cons_loop_id_md() and marks the loop
-   as vectorizable.
- */
-static LL_MDRef
-cons_no_depchk_metadata(void)
-{
-  LL_MDRef loop_id_md = cons_loop_id_md();
-  // Condition ensures only one copy of vectorize in the loop metadata.
-  if (!cached_loop_id_md_has_vectorize) {
-    cached_loop_id_md_has_vectorize = true;
-    LL_MDRef vectorize = cons_vectorize_metadata();
-    LL_MDRef paraccess = cons_loop_parallel_accesses_metadata();
-    ll_extend_md_node(cpu_llvm_module, loop_id_md, vectorize);
-    ll_extend_md_node(cpu_llvm_module, loop_id_md, paraccess);
-  }
-  return loop_id_md;
-}
-
-/**
-   \brief Construct exactly one cached instance of !{!"llvm.loop.unroll.enable"}.
+   !llvm.access.group referring to the cached access group. This function
+   returns the current loop ID metadata via cons_loop_id_md() and marks the
+   loop as vectorizable.
  */
 static LL_MDRef
 cons_vec_always_metadata(void)
@@ -1345,8 +1310,11 @@ cons_vec_always_metadata(void)
   return loop_id_md;
 }
 
+/**
+   \brief Construct exactly one cached instance of !{!"llvm.loop.unroll.enable"}.
+ */
 static LL_MDRef
-cons_unroll_metadata(void) //Calls the metadata for unroll
+cons_unroll_metadata(void)
 {
   LL_MDRef lvcomp[1];
   if (LL_MDREF_IS_NULL(cached_unroll_enable_metadata)) {
@@ -1701,10 +1669,8 @@ restartConcur:
     if ((!XBIT(69, 0x100000)) && BIH_NODEPCHK(bih) &&
         (!ignore_simd_block(bih)) || XBIT(191, 0x4)) {
       fix_nodepchk_flag(bih);
-      clear_rw_nodepchk();
       mark_rw_access_grp(bih);
     } else {
-      clear_rw_nodepchk();
       clear_rw_access_grp();
     }
     if (flg.x[9] > 0)
@@ -1789,10 +1755,10 @@ restartConcur:
           if (LL_MDREF_IS_NULL(loop_md))
             loop_md = cons_loop_id_md();
 
-          // cons_no_depchk_metadata is different from the others because it
+          // cons_vec_always_metadata is different from the others because it
           // arranges that llvm.loop.vectorize is only added to the loop
           // metadata once.
-          (void)cons_no_depchk_metadata();
+          (void)cons_vec_always_metadata();
         }
         if ((check_for_loop_directive(ILT_LINENO(ilt), 191, 0x4))) {
           LL_MDRef loop_md = cons_vec_always_metadata();
@@ -3305,8 +3271,6 @@ write_instructions(LL_Module *module)
 
         assert(p->next == NULL, "write_instructions(), bad next ptr", 0,
                ERR_Fatal);
-        write_llaccgroup_metadata(module, instrs, LDST_HAS_METADATA,
-                                  instrs->misc_metadata);
         write_llaccgroup_metadata(module, instrs, LDST_HAS_ACCESSGRP_METADATA,
                                   cached_access_group_metadata);
         write_tbaa_metadata(module, instrs->ilix, instrs->operands,
@@ -3328,8 +3292,6 @@ write_instructions(LL_Module *module)
         write_operand(p, "", 0);
 
         write_memory_order_and_alignment(instrs);
-        write_llaccgroup_metadata(module, instrs, LDST_HAS_METADATA,
-                                  instrs->misc_metadata);
         write_llaccgroup_metadata(module, instrs, LDST_HAS_ACCESSGRP_METADATA,
                                   cached_access_group_metadata);
         write_tbaa_metadata(module, instrs->ilix, instrs->operands->next,
@@ -3543,10 +3505,6 @@ mk_store_instr(OPERAND *val, OPERAND *addr)
   INSTR_LIST *insn;
   val->next = addr;
   insn = gen_instr(I_STORE, NULL, NULL, val);
-  if (rw_nodepcheck) {
-    insn->flags |= LDST_HAS_METADATA;
-    insn->misc_metadata = cons_no_depchk_metadata();
-  }
   if (rw_access_group) {
     insn->flags |= LDST_HAS_ACCESSGRP_METADATA;
     insn->misc_metadata = cons_vec_always_metadata();
@@ -3795,10 +3753,6 @@ ad_csed_instr(LL_InstrName instr_name, int ilix, LL_Type *ll_type,
   }
   operand = make_tmp_op(ll_type, make_tmps());
   instr = gen_instr(instr_name, operand->tmps, ll_type, operands);
-  if ((instr_name == I_LOAD) && rw_nodepcheck) {
-    flags |= LDST_HAS_METADATA;
-    instr->misc_metadata = cons_no_depchk_metadata();
-  }
   if ((instr_name == I_LOAD) && rw_access_group) {
     flags |= LDST_HAS_ACCESSGRP_METADATA;
     instr->misc_metadata = cons_vec_always_metadata();
@@ -6857,10 +6811,6 @@ make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
          "make_load(): types don't match", 0, ERR_Fatal);
   new_tmps = make_tmps();
   Curr_Instr = gen_instr(I_LOAD, new_tmps, rslt_type, load_op);
-  if (rw_nodepcheck) {
-    flags |= LDST_HAS_METADATA;
-    Curr_Instr->misc_metadata = cons_no_depchk_metadata();
-  }
   if (rw_access_group) {
     flags |= LDST_HAS_ACCESSGRP_METADATA;
     Curr_Instr->misc_metadata = cons_vec_always_metadata();

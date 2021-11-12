@@ -283,7 +283,6 @@ typedef enum LL_InstrListFlags {
   NOSIGNEDWRAP            = (1 << 11),
   NOUNSIGNEDWRAP          = (1 << 12),
   FUNC_RETURN_IS_FUNC_PTR = (1 << 13),
-  LDST_HAS_METADATA       = (1 << 13), /**< I_LOAD, I_STORE only */
   LDST_HAS_ACCESSGRP_METADATA = (1 << 14), /**< I_LOAD, I_STORE only, for llvm.loop.parallel_accesses */
 
   /* Information for atomic operations.
