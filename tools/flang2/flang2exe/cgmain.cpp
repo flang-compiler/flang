@@ -13366,6 +13366,11 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
     /* Apply alwaysinline attribute if the pragma "forceinline" is given */
     print_token(" alwaysinline");
   }
+  if (flg.target_features) {
+    print_token(" \"target-features\"=\"");
+    print_token(flg.target_features);
+    print_token("\"");
+  }
 
   if (func_sptr > NOSYM) {
 /* print_function_signature() can be called with func_sptr=0 */

@@ -31,6 +31,7 @@ FLG flg = {
     NULL,       /* idir == empty list */
     NULL,       /* linker_directives == empty list */
     NULL,       /* llvm_target_triple == empty ptr */
+    NULL,       /* target_features == empty ptr */
     false,      /* dlines = -nodlines */
     72,         /* extend_source = -noextend_source */
     true,       /* i4 = -i4 */

@@ -175,6 +175,7 @@ typedef struct {
   char **idir;
   char **linker_directives;
   const char *llvm_target_triple;
+  const char *target_features; // TODO - not const char?
   bool dlines;
   int extend_source;
   bool i4;
