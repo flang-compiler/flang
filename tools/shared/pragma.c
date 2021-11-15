@@ -1184,27 +1184,21 @@ do_sw(void)
   case SW_VECTORIZE_WIDTH:
    {
       assn( DIR_OFFSET( currdir, x[161]), 0 );
-      if( gtok() != T_LP)
-      {
+      if( gtok() != T_LP){
         return true;
       }
-      while( true )
-      {
+      while( true ){
         typ = gtok();
-        if( typ == T_INT )
-        {
-          bset( DIR_OFFSET( currdir,x [27]), 0x1 );
-          assn( DIR_OFFSET( currdir, x[161]), (int)itok );
+        if(typ==T_INT){
+          bset(DIR_OFFSET( currdir,x [27]),0x1);
+          assn(DIR_OFFSET( currdir, x[161]),(int)itok );
+          break;}
+        else if (strcmp(ctok,"fixed")==0){
+          bset(DIR_OFFSET(currdir,x [27]), 0x2 );
           break;
         }
-        else if ( strcmp( ctok, "fixed" ) == 0 )
-        {
-          bset( DIR_OFFSET( currdir, x [27]), 0x2 );
-          break;
-        }
-        else if (strcmp(ctok, "scalable") == 0 )
-        {
-          bset( DIR_OFFSET( currdir, x [27]), 0x4 );
+        else if (strcmp(ctok, "scalable") == 0 ){
+          bset(DIR_OFFSET(currdir, x [27]),0x4);
           break;
         }
       }

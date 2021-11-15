@@ -212,7 +212,6 @@ static LL_MDRef cached_vectorize_disable_metadata = ll_get_md_null();
 static LL_MDRef cached_unroll_enable_metadata = ll_get_md_null();
 static LL_MDRef cached_unroll_disable_metadata = ll_get_md_null();
 static LL_MDRef cached_access_group_metadata;
-static LL_MDRef cached_vectorize_width_enable_metadata;
 static bool CG_cpu_compile = false;
 
 static struct ret_tag {
@@ -1352,7 +1351,6 @@ cons_unroll_count_metadata(int unroll_factor)
 static LL_MDRef
 cons_vectorize_enable_metadata( int scalable )
 {
-  LL_MDRef width;
   LL_MDRef vectorize = cons_vectorize_metadata();
   LL_MDRef vectorize_scalable = cons_vectorize_scalable_metadata( scalable );
 
@@ -1716,15 +1714,12 @@ restartConcur:
       clear_rw_access_grp();
     }
 
-    if( flg.x[27] > 0 )
-    {
-      BIH_VECTORIZE_WIDTH_ENABLED( bih ) = true;
-      BIH_VECTORIZE_WIDTH_SCALABLE( bih ) = ( XBIT( 27, 0x4 ) > 0 );
+    if(flg.x[27] >0){
+      BIH_VECTORIZE_WIDTH_ENABLED(bih) = true;
+      BIH_VECTORIZE_WIDTH_SCALABLE(bih ) = (XBIT(27, 0x4)>0);
 
-      if( XBIT( 27, 0x1 ) )
-      {
-      
-        BIH_VECTORIZE_WIDTH_FACTOR( bih ) = true;
+      if(XBIT(27, 0x1)){     
+        BIH_VECTORIZE_WIDTH_FACTOR(bih) = true;
         vectorize_width_factor = flg.x[161];
       }
     }
@@ -1825,8 +1820,7 @@ restartConcur:
           }
         }
 
-        if( BIH_VECTORIZE_WIDTH_FACTOR( bih ) )
-        {
+        if(BIH_VECTORIZE_WIDTH_FACTOR(bih)){
           LL_MDRef loop_md = cons_vectorize_width_metadata( vectorize_width_factor );
           INSTR_LIST *i = find_last_executable( llvm_info.last_instr );
           if ( i ) {
@@ -1834,8 +1828,7 @@ restartConcur:
             i->misc_metadata = loop_md;
           }
         }
-        else if( BIH_VECTORIZE_WIDTH_ENABLED( bih ) )
-        {
+        else if(BIH_VECTORIZE_WIDTH_ENABLED(bih)){
           LL_MDRef loop_md = cons_vectorize_enable_metadata( BIH_VECTORIZE_WIDTH_SCALABLE( bih ) );
           INSTR_LIST *i = find_last_executable( llvm_info.last_instr );
           if ( i ) {
