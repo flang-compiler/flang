@@ -410,6 +410,7 @@ p_pragma(char *pg, int pline)
 #define SW_LIBM 70
 #define SW_SIMD 71
 #define SW_FORCEINLINE 73
+#define SW_VECTORIZE_WIDTH 74
 
 struct c {
   const char *cmd;
@@ -497,6 +498,7 @@ static struct c table[] = {
     {"transform", SW_TRANSFORM, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
     {"unroll", SW_UNROLL, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
     {"vector", SW_VECTOR, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
+    {"vectorize_width", SW_VECTORIZE_WIDTH, true, S_LOOP, S_LOOP|S_ROUTINE|S_GLOBAL},
     {"vintr", SW_VINTR, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
     {"x", SW_X, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
     {"y", SW_Y, true, S_LOOP, S_LOOP | S_ROUTINE | S_GLOBAL},
@@ -1179,6 +1181,35 @@ do_sw(void)
     } else
       return true;
     break;
+  case SW_VECTORIZE_WIDTH:
+   {
+      assn( DIR_OFFSET( currdir, x[161]), 0 );
+      if( gtok() != T_LP)
+      {
+        return true;
+      }
+      while( true )
+      {
+        typ = gtok();
+        if( typ == T_INT )
+        {
+          bset( DIR_OFFSET( currdir,x [27]), 0x1 );
+          assn( DIR_OFFSET( currdir, x[161]), (int)itok );
+          break;
+        }
+        else if ( strcmp( ctok, "fixed" ) == 0 )
+        {
+          bset( DIR_OFFSET( currdir, x [27]), 0x2 );
+          break;
+        }
+        else if (strcmp(ctok, "scalable") == 0 )
+        {
+          bset( DIR_OFFSET( currdir, x [27]), 0x4 );
+          break;
+        }
+      }
+   }
+   break;
   case SW_UNROLL:
     /* unroll       -x 11 0x1   -y 11 0x402
      * unroll = n   -x 11 0x2   -y 11 0x401 -x 9 n

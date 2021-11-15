@@ -1025,7 +1025,13 @@ used in cgutil.c for n10
 used in cgutil.c for n10
 
 .XF "27:"
-reserved
+vectorize_width identifier
+.XB "0x01:"
+vectorize_width with number
+.XB "0x02:"
+vectorize_width fixed
+.XB "0x04:"
+vectorize_width scalable
 
 .XF "28:"
 Optimizer - modify behavior
@@ -4186,6 +4192,10 @@ The value is:
 Above this threashold, global locations are not tracked in the code generation phase global data flow.
 .XF "160:"
 Used in intense.c for computing intensity
+.XF "161:"
+Provides a parameter
+.i n
+for vectorize_width
 .XB 0x01:
 Display load/store information per loop
 .XB 0x02:
