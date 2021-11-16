@@ -212,6 +212,7 @@ static LL_MDRef cached_vectorize_disable_metadata = ll_get_md_null();
 static LL_MDRef cached_unroll_enable_metadata = ll_get_md_null();
 static LL_MDRef cached_unroll_disable_metadata = ll_get_md_null();
 static LL_MDRef cached_access_group_metadata;
+
 static bool CG_cpu_compile = false;
 
 static struct ret_tag {
