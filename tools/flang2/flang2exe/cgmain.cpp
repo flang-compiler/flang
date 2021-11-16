@@ -985,7 +985,7 @@ cons_nounroll_metadata(void)
 }
 
 /**
-   \brief Construct exactly one cached instance of !{!"llvm.loop.vectorize.enable", 1}.
+   \brief Construct exactly one cached instance of !{!"llvm.loop.vectorize.scalable.enable", 1}.
  */
 INLINE static LL_MDRef
 cons_vectorize_scalable_metadata( int arg )
