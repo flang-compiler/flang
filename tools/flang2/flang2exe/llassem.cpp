@@ -1172,8 +1172,13 @@ assemble_end(void)
         AG_CMBLKINITDATA(gblsym) = NULL;
       } else {
         fprintf(ASMFIL, "%%struct%s = type < { %s } > \n", name, typed);
-        fprintf(ASMFIL, "@%s = %s global %%struct%s ", name,
-                AG_ISMOD(gblsym) ? "external" : "common", name);
+        if (strstr(cpu_llvm_module->target_triple, "windows-msvc") != NULL) {
+          fprintf(ASMFIL, "@%s = %s global %%struct%s ", name,
+                  AG_ISMOD(gblsym) ? "external dllimport" : "common", name);
+        } else {
+          fprintf(ASMFIL, "@%s = %s global %%struct%s ", name,
+                  AG_ISMOD(gblsym) ? "external" : "common", name);
+        }
         fprintf(ASMFIL, "%s, align %d",
                 AG_ISMOD(gblsym) ? "" : " zeroinitializer", align_value);
       }
