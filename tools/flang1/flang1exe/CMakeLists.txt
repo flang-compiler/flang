@@ -111,9 +111,11 @@ set(INCLUDE_DIRS
   ${TOOLS_SHARED_DIR}
   )
 
-set(COMPILE_OPTS
-  -std=c11
-  )
+if(NOT MSVC)
+  set(COMPILE_OPTS
+    -std=c11
+    )
+endif()
 
 add_flang_executable(flang1
   ${SOURCES} ${SHARED_SOURCES}
