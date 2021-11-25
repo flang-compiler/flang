@@ -255,7 +255,7 @@ extern long *_imp___timezone_dll; /* for crtdll.dll */
 #define timezone _timezone /* cygnus, timezone is usually a function */
 #endif
 
-#elif !defined(DEC) && !defined(IBM) && !defined(ST100_V1_2) &&                !defined(OSX86) /* !defined(_WIN64) */
+#elif !defined(DEC) && !defined(IBM) && !defined(ST100_V1_2) && !defined(OSX86) /* !defined(_WIN64) */
 extern time_t timezone; /* for the rest */
 #endif
 
