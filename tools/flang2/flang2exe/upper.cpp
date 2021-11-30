@@ -1967,7 +1967,7 @@ gethexchar(FILE *file)
   return val;
 } /* gethexchar */
 
-#if defined(TARGET_WIN_X86) && defined(PGFTN)
+#if defined(TARGET_WIN) && defined(PGFTN)
 /*
  * convert to upper case
  */
