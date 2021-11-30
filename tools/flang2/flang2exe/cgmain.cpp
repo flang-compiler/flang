@@ -13466,6 +13466,7 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
 {
   unsigned i;
   bool need_comma = false;
+  char *mod;
 
   /* Fortran treats functions with unknown prototypes as varargs,
    * we cannot decorate them with fastcc.
@@ -13567,6 +13568,13 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
     print_token(" \"target-features\"=\"");
     print_token(flg.target_features);
     print_token("\"");
+    int ret = extract_arch_feat(flg.target_features, mod);
+    if(ret) {
+      ret = is_vscale_feat(mod);
+      if(ret) {
+        add_vscale();
+      }
+    }
   }
 
   if (func_sptr > NOSYM) {
@@ -13597,6 +13605,78 @@ INLINE void static add_property_struct(char *func_name, int nreductions,
   print_token("__exec_mode = weak constant i8 0\n");
 }
 #endif
+
+void 
+add_vscale() 
+{
+  char token[60];
+  sprintf(token, "%d,%d", flg.min, flg.max);
+  print_token(" \"vscale-range\"=\"");
+  print_token(token);
+  print_token("\"");
+}
+
+bool
+is_vscale_feat(char *mod)
+{
+  bool result = false;
+  int len = sizeof(*CPU_VSCALE)-1;
+
+  if(mod == NULL) {
+    return result;
+  }
+  
+  for(int i=0; i < len; ++i) {
+    if(strcmp(mod, CPU_VSCALE[i]) == 0) {
+      /* TODO: check if there is other argument for sve scale range to use */
+      result = true;
+      /* if NOT SVE ARG */
+      flg.min = 1;
+      flg.max = 16;
+      /* else */
+      //flg.min = argument1;
+      //flg.max = argument2;
+      break;
+    }
+  }
+
+  return result;
+}
+
+bool
+extract_arch_feat(const char *arch_feat, char *&mod)
+{
+  char str1[30] = "";
+  int len, i, j;
+  bool result = false;
+
+  //return if the target feature is empty
+  if(arch_feat == NULL)
+    return result;
+  len = strlen(arch_feat);
+  for(i=0; i<len; ++i) {
+    if(arch_feat[i] == ',') {
+      i++;
+      result = true;
+      break;
+    }
+  }
+  //if it reaches the end of the string without finding ,
+  //return because token cannot be found
+  if(i==len) {
+    result = false;
+    return result;
+  }
+
+  //here is the feature that will be extracted
+  for(j=0; i<len; ++j, ++i) {
+      str1[j] = arch_feat[i];
+  }
+  mod = (char*) calloc(j+1,sizeof(char));
+  strncpy(mod, str1, j);
+
+  return result;
+}
 
 /**
    \brief write out the header of the function definition

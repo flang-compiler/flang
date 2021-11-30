@@ -18,6 +18,16 @@
 #define FFAST_MATH_IS_PRESENT() XBIT(216, 1)
 #define QTMP_SIZE 4 /* tmp[] of union qtmp has 4 elements and 128 bits  */
 
+static const char *const CPU_VSCALE[]={
+  "+sve2-bitperm",
+  "+sve2-sha3",
+  "+sve2-aes",
+  "+sve2-sm4",
+  "+sve",
+  "+sve2",
+  "+sve+nosve+sve"
+};
+
 /**
    \brief ...
  */
@@ -289,6 +299,26 @@ void insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
 void insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode, SPTR sptr,
                            LL_Type *type);
 
+/**
+   \brief Extract the information coming from mArch into its features
+          Return true if finds the token , in the feature, if not
+          returns false 
+   \param arch_feat Input. architecture feature to be evaluated
+   \param mod     Output. value of features
+ */
+bool extract_arch_feat(const char *arch_feat, char *&mod);
+
+/**
+   \brief Check if the given command argument is valid for vscale
+          Output, return true if is valid vscale feature.
+   \param mod     Input. Type of model from the march
+ */
+bool is_vscale_feat(char *mod);
+
+/**
+   \brief Add the token for vscale_range(min, max) to the IR
+ */
+void add_vscale();
 
 int get_parnum(SPTR sptr);
 #endif
