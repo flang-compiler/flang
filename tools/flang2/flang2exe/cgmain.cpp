@@ -13992,17 +13992,29 @@ add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr)
   scope = SCOPEG(sptr);
   for (var = CMEMFG(sptr); var > NOSYM; var = SYMLKG(var)) {
     if ((!SNAME(var)) || strcmp(SNAME(var), SYMNAME(var))) {
+      if (gbl.rutype != RU_BDATA && NEEDMODG(scope) &&
+          lookup_modvar_alias(var)) {
+        has_alias = true;
+        break;
+      }
+    }
+  }
+  for (var = CMEMFG(sptr); var > NOSYM; var = SYMLKG(var)) {
+    if ((!SNAME(var)) || strcmp(SNAME(var), SYMNAME(var))) {
       if (CCSYMG(sptr)) {
         debug_name = new_debug_name(SYMNAME(scope), SYMNAME(var), NULL);
       } else {
         debug_name = new_debug_name(SYMNAME(scope), SYMNAME(sptr),
                                     SYMNAME(var));
       }
-      if (gbl.rutype != RU_BDATA && 
-          NEEDMODG(scope) && lookup_modvar_alias(var)) {
+      if (gbl.rutype != RU_BDATA && NEEDMODG(scope) &&
+          (lookup_modvar_alias(var) ||
+           (has_alias && !RESTRICTEDG(sptr)))) {
         /* This is a DECLARATION to be imported to a subroutine
-         * later in lldbg_emit_subprogram(). */
-        has_alias = true;
+         * later in lldbg_emit_subprogram().
+         * Case 1: Aliased members of restricted / non-restricted modules.
+         * Case 2: All members of non-restricted module if it has atlease one
+         *         aliased member. */
         lldbg_add_pending_import_entity(db, var, IMPORTED_DECLARATION);
       }
       if (hashset_lookup(sptr_added, debug_name))

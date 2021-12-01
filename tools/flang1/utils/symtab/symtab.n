@@ -1297,8 +1297,8 @@ Flags2
 If set, common block is a compiler-created module common block
 .FL THREAD
 If set, common block is \f(CWTHREADPRIVATE\fP (overloaded with L3F)
-.FL RESERVED_f62 f62
-reserved
+.FL RESTRICTED f62
+Set for restricted use of module.
 .FL STDCALL f63
 Set if this common block has DVF's
 .cw STDCALL
