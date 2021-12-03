@@ -186,15 +186,17 @@ static LL_MDRef lldbg_fwd_local_variable(LL_DebugInfo *db, int sptr, int findex,
                                          int emit_dummy_as_local);
 static void lldbg_emit_imported_entity(LL_DebugInfo *db, SPTR entity_sptr,
                                        SPTR func_sptr, IMPORT_TYPE entity_type);
-static LL_MDRef lldbg_create_subrange_mdnode(LL_DebugInfo *db, LL_MDRef lb,
-                                             LL_MDRef ub, LL_MDRef st);
+static LL_MDRef lldbg_create_subrange_mdnode(LL_DebugInfo *db, LL_MDRef count,
+                                             LL_MDRef lb, LL_MDRef ub,
+                                             LL_MDRef st);
 static LL_MDRef lldbg_create_generic_subrange_mdnode(LL_DebugInfo *db,
                                                      LL_MDRef lb, LL_MDRef ub,
                                                      LL_MDRef st);
 static LL_MDRef lldbg_create_subrange_via_sdsc(LL_DebugInfo *db, int findex,
                                                SPTR sptr, int rank);
 static void lldbg_get_bounds_for_sdsc(LL_DebugInfo *db, int findex, SPTR sptr,
-                                      int rank, LL_MDRef *lbnd_expr_mdnode,
+                                      int rank, LL_MDRef *count_expr_mdnode,
+                                      LL_MDRef *lbnd_expr_mdnode,
                                       LL_MDRef *ubnd_expr_mdnode,
                                       LL_MDRef *stride_expr_mdnode);
 
@@ -1312,7 +1314,8 @@ lldbg_create_ftn_subrange_via_sdsc(LL_DebugInfo *db, int findex, SPTR sptr,
 }
 
 static void
-lldbg_get_bounds_for_sdsc(LL_DebugInfo *db, int findex, SPTR sptr, int rank,
+lldbg_get_bounds_for_sdsc(LL_DebugInfo *db, int findex, SPTR sptr,
+                          int rank, LL_MDRef *count_expr_mdnode,
                           LL_MDRef *lbnd_expr_mdnode,
                           LL_MDRef *ubnd_expr_mdnode,
                           LL_MDRef *stride_expr_mdnode)
@@ -1342,6 +1345,8 @@ lldbg_get_bounds_for_sdsc(LL_DebugInfo *db, int findex, SPTR sptr, int rank,
   const int F90_Desc_byte_len = DESC_HDR_INT_LEN * (DESC_HDR_BYTE_LEN - DESC_HDR_TAG);
   const int F90_DescDim_size = 8 * DESC_DIM_LEN;    /* sizeof(F90_DescDim)*/
   const int F90_Desc_dim_offset = 8 * DESC_HDR_LEN; /* offsetof(F90_Desc, dim)*/
+  const int count_offset_wrt_lbound =
+      8 * (DESC_DIM_EXTENT - DESC_DIM_LOWER); /* offsetof(F90_DescDim, extent)*/
   const int ubound_offset_wrt_lbound =
       8 * (DESC_DIM_UPPER - DESC_DIM_LOWER); /* offsetof(F90_DescDim, ubound)*/
   const int lstride_offset_wrt_lbound =
@@ -1351,9 +1356,11 @@ lldbg_get_bounds_for_sdsc(LL_DebugInfo *db, int findex, SPTR sptr, int rank,
   const int target_size_offset = descr_offset_wrt_array + F90_Desc_byte_len;
   const int lower_offset =
       descr_offset_wrt_array + F90_Desc_dim_offset + (rank * F90_DescDim_size);
+  const int count_offset = lower_offset + count_offset_wrt_lbound;
   const int upper_offset = lower_offset + ubound_offset_wrt_lbound;
   const int stride_offset = lower_offset + lstride_offset_wrt_lbound;
 
+  const unsigned v0 = lldbg_encode_expression_arg(LL_DW_OP_int, count_offset);
   const unsigned v1 = lldbg_encode_expression_arg(LL_DW_OP_int, lower_offset);
   const unsigned v2 = lldbg_encode_expression_arg(LL_DW_OP_int, upper_offset);
   const unsigned v3 = lldbg_encode_expression_arg(LL_DW_OP_int, stride_offset);
@@ -1366,6 +1373,9 @@ lldbg_get_bounds_for_sdsc(LL_DebugInfo *db, int findex, SPTR sptr, int rank,
   const unsigned pushobj =
       lldbg_encode_expression_arg(LL_DW_OP_push_object_address, 0);
 
+  if (count_expr_mdnode)
+    *count_expr_mdnode =
+        lldbg_emit_expression_mdnode(db, 4, pushobj, add, v0, deref);
   if (lbnd_expr_mdnode)
     *lbnd_expr_mdnode =
       lldbg_emit_expression_mdnode(db, 4, pushobj, add, v1, deref);
@@ -1386,11 +1396,11 @@ lldbg_create_subrange_via_sdsc(LL_DebugInfo *db, int findex, SPTR sptr,
                                int rank)
 {
   LL_MDRef lbnd_expr_mdnode, ubnd_expr_mdnode, stride_expr_mdnode;
-  lldbg_get_bounds_for_sdsc(db, findex, sptr, rank, &lbnd_expr_mdnode,
+  lldbg_get_bounds_for_sdsc(db, findex, sptr, rank, NULL, &lbnd_expr_mdnode,
                             &ubnd_expr_mdnode, &stride_expr_mdnode);
 
-  return lldbg_create_subrange_mdnode(db, lbnd_expr_mdnode, ubnd_expr_mdnode,
-                                      stride_expr_mdnode);
+  return lldbg_create_subrange_mdnode(db, ll_get_md_null(), lbnd_expr_mdnode,
+                                      ubnd_expr_mdnode, stride_expr_mdnode);
 }
 
 static void
@@ -1476,13 +1486,18 @@ lldbg_create_subrange_mdnode_pre11(LL_DebugInfo *db, ISZ_T lb, ISZ_T ub)
 }
 
 static LL_MDRef
-lldbg_create_subrange_mdnode(LL_DebugInfo *db, LL_MDRef lb, LL_MDRef ub,
-                             LL_MDRef st)
+lldbg_create_subrange_mdnode(LL_DebugInfo *db, LL_MDRef count,
+                                             LL_MDRef lb, LL_MDRef ub,
+                                             LL_MDRef st)
 {
   LLMD_Builder mdb = llmd_init(db->module);
 
   llmd_set_class(mdb, LL_DISubRange);
   llmd_add_i32(mdb, make_dwtag(db, DW_TAG_subrange_type));
+  if (count != ll_get_md_null())
+    llmd_add_md(mdb, count);
+  else
+    llmd_add_null(mdb);
   llmd_add_md(mdb, lb);
   if (ub != ll_get_md_null())
     llmd_add_md(mdb, ub);
@@ -3355,14 +3370,18 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
                 } else if ((SCG(sptr) == SC_DUMMY) && data_sptr &&
                            db->cur_subprogram_mdnode) {
                   // assumed shape array
-                  LL_MDRef s_bnd;
+                  LL_MDRef count, s_bnd;
                   init_subrange_bound(db, &lbv, lower_bnd, 1, findex);
                   init_subrange_bound(db, &ubv, upper_bnd, 0, findex);
-                  lldbg_get_bounds_for_sdsc(db, findex, data_sptr, i, NULL,
-                                            NULL, &s_bnd);
+                  lldbg_get_bounds_for_sdsc(db, findex, data_sptr, i, &count,
+                                            NULL, NULL, &s_bnd);
 
-                  subscript_mdnode =
-                      lldbg_create_subrange_mdnode(db, lbv, ubv, s_bnd);
+                  if (ll_feature_debug_info_ver11(&db->module->ir))
+                    subscript_mdnode = lldbg_create_subrange_mdnode(
+                        db, count, lbv, ll_get_md_null(), s_bnd);
+                  else
+                    subscript_mdnode = lldbg_create_subrange_mdnode(
+                        db, ll_get_md_null(), lbv, ubv, s_bnd);
                 } else {
                   // explicit shape array, assumed size array
                   init_subrange_bound(db, &lbv, lower_bnd, 1, findex);
@@ -3371,7 +3390,7 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
                     init_subrange_bound(db, &ubv, upper_bnd, 0, findex);
 
                   subscript_mdnode =
-                      lldbg_create_subrange_mdnode(db, lbv, ubv, st);
+                      lldbg_create_subrange_mdnode(db, ll_get_md_null(), lbv, ubv, st);
                 }
                 llmd_add_md(mdb, subscript_mdnode);
               } else if (ll_feature_has_diextensions(&db->module->ir)) {
@@ -3468,8 +3487,8 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
         ub = DTyVecLength(dtype) - 1;
         if (ll_feature_debug_info_ver90(&db->module->ir))
           subscript_mdnode = lldbg_create_subrange_mdnode(
-              db, ll_get_md_i64(db->module, lb), ll_get_md_i64(db->module, ub),
-              ll_get_md_null());
+              db, ll_get_md_null(), ll_get_md_i64(db->module, lb),
+              ll_get_md_i64(db->module, ub), ll_get_md_null());
         else
           subscript_mdnode =
               lldbg_create_subrange_mdnode_pre11(db, lb, DTyVecLength(dtype));

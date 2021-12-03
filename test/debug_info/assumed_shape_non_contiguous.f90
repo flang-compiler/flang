@@ -8,8 +8,8 @@
 !CHECK-SAME: type: [[TYPE:![0-9]+]])
 !CHECK: [[TYPE]] = !DICompositeType(tag: DW_TAG_array_type, baseType: {{![0-9]+}}, size: 32, align: 32, elements: [[ELEM:![0-9]+]], dataLocation: [[ARRAYDL]])
 !CHECK: [[ELEM]] = !{[[ELEM1:![0-9]+]], [[ELEM2:![0-9]+]]}
-!CHECK: [[ELEM1]] = !DISubrange(lowerBound: 1, upperBound: {{![0-9]+}}, stride: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 112, DW_OP_deref, DW_OP_push_object_address, DW_OP_plus_uconst, 24, DW_OP_deref, DW_OP_mul))
-!CHECK: [[ELEM2]] = !DISubrange(lowerBound: 1, upperBound: {{![0-9]+}}, stride: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 160, DW_OP_deref, DW_OP_push_object_address, DW_OP_plus_uconst, 24, DW_OP_deref, DW_OP_mul))
+!CHECK: [[ELEM1]] = !DISubrange(count: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 88, DW_OP_deref), lowerBound: 1, stride: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 112, DW_OP_deref, DW_OP_push_object_address, DW_OP_plus_uconst, 24, DW_OP_deref, DW_OP_mul))
+!CHECK: [[ELEM2]] = !DISubrange(count: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 136, DW_OP_deref), lowerBound: 1, stride: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 160, DW_OP_deref, DW_OP_push_object_address, DW_OP_plus_uconst, 24, DW_OP_deref, DW_OP_mul))
 
 subroutine show (message, array)
   character (len=*) :: message
