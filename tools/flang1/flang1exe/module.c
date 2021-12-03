@@ -67,6 +67,7 @@ typedef struct {
   LOGICAL submodule;    /* use of module by submodule */
   RENAME *rename;
   char *fullname; /* full path name of the module file */
+  unsigned int scope; /* scope of the module */
 } USED;
 
 struct {
@@ -371,7 +372,11 @@ apply_use_stmts(void)
   save_lineno = gbl.lineno;
 
   if (!gbl.currmod && gbl.internal <= 1) {
-    init_use_tree();
+    for (m_id = FIRST_USER_MODULE; m_id < usedb.avl; m_id++) {
+      if (usedb.base[m_id].scope > sem.scope_level) {
+        remove_from_use_tree(SYMNAME(usedb.base[m_id].module));
+      }
+    }
   }
   if (usedb.base[ISO_C_MOD].module) {
     if (usedb.base[ISO_C_MOD].module == ancestor_mod)
@@ -913,6 +918,7 @@ open_module(SPTR use)
   usedb.base[module_id].submodule = FALSE;
   usedb.base[module_id].rename = NULL;
   usedb.base[module_id].fullname = fullname;
+  usedb.base[module_id].scope = sem.scope_level;
 
   if (module_id == ISO_C_MOD) {
     int i;

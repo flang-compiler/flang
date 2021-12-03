@@ -515,6 +515,21 @@ init_use_tree(void)
   use_tree = use_tree_end = 0;
 }
 
+void remove_from_use_tree(char *module)
+{
+  USES_LIST *prev = use_tree;
+  for (USES_LIST *n = use_tree; n; n = n->next) {
+    if (strcmp(n->use_module->modulename, module) == 0) {
+      if (n == use_tree) {
+        use_tree = use_tree->next;
+      } else {
+        prev->next = n->next;
+      }
+    }
+    prev = n;
+  }
+}
+
 static TOBE_IMPORTED_LIST *
 already_to_be_used(char *modulename, int public, int except)
 {
