@@ -184,6 +184,7 @@ typedef struct {
   char **linker_directives;
   const char *llvm_target_triple;
   const char *target_features; // TODO - not const char?
+  const char *msve_vector_bits;
   int min; /* minimum value for vscale_range(<min>[, <max>]) */
   int max; /* maximum value for vscale_range(<min>[, <max>]) */
   bool dlines;

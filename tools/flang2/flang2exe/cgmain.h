@@ -17,7 +17,10 @@
 
 #define FFAST_MATH_IS_PRESENT() XBIT(216, 1)
 #define QTMP_SIZE 4 /* tmp[] of union qtmp has 4 elements and 128 bits  */
+#define VSCALE_MIN 1 /* default minimum value for vscale_range() */
+#define VSCALE_MAX 16 /* deftaul maximum value for vscale_range() */
 
+/* list of valid mArch for enable sve with vscale_range */
 static const char *const CPU_VSCALE[]={
   "+sve2-bitperm",
   "+sve2-sha3",

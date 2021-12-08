@@ -1,4 +1,6 @@
 !** Test checking attributes are set correctly
+! REQUIRES: aarch64-registered-target
+
 ! RUN: %flang -S -emit-llvm -target aarch64-linux-gnu -march=armv8-a %s -o - | FileCheck %s -check-prefix=ATTRS1
 ! RUN: %flang -S -emit-llvm -target aarch64-linux-gnu -march=armv8-a+sve %s -o - | FileCheck %s -check-prefix=ATTRS2
       program tz

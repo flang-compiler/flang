@@ -13611,9 +13611,9 @@ add_vscale()
 {
   char token[60];
   sprintf(token, "%d,%d", flg.min, flg.max);
-  print_token(" \"vscale-range\"=\"");
+  print_token(" vscale_range(");
   print_token(token);
-  print_token("\"");
+  print_token(")");
 }
 
 bool
@@ -13626,16 +13626,25 @@ is_vscale_feat(char *mod)
     return result;
   }
   
+  /* Search for a valid sve feature that is supported */
   for(int i=0; i < len; ++i) {
     if(strcmp(mod, CPU_VSCALE[i]) == 0) {
-      /* TODO: check if there is other argument for sve scale range to use */
       result = true;
-      /* if NOT SVE ARG */
-      flg.min = 1;
-      flg.max = 16;
-      /* else */
-      //flg.min = argument1;
-      //flg.max = argument2;
+      if(flg.msve_vector_bits) {
+        if(strcmp(flg.msve_vector_bits, "scalable") == 0) {
+          flg.min = VSCALE_MIN;
+          flg.max = VSCALE_MAX;  
+        }
+        else {
+          int val = atoi(flg.msve_vector_bits);
+          flg.min = val / 128;
+          flg.max = val / 128;
+        }
+      }
+      else {
+        flg.min = VSCALE_MIN;
+        flg.max = VSCALE_MAX;
+      }
       break;
     }
   }
