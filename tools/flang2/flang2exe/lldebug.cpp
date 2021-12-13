@@ -2511,6 +2511,7 @@ void
 lldbg_emit_line(LL_DebugInfo *db, int lineno)
 {
   static int last_line = 0;
+  static LL_MDRef last_subprogram_mdnode = 0U;
   int idx = 0;
   int startline, endline;
   int i, j;
@@ -2523,7 +2524,9 @@ lldbg_emit_line(LL_DebugInfo *db, int lineno)
     db->cur_line_mdnode = ll_get_md_null();
     return;
   }
-  if (last_line != lineno) {
+  if ((last_line != lineno) ||
+      ((!LL_MDREF_IS_NULL(db->cur_subprogram_mdnode)) &&
+       (db->cur_subprogram_mdnode != last_subprogram_mdnode))) {
     j = db->blk_idx - 1;
     while (j >= 0) {
       if (db->blk_tab[j].keep) {
@@ -2567,6 +2570,7 @@ lldbg_emit_line(LL_DebugInfo *db, int lineno)
       db->cur_subprogram_line_mdnode = db->cur_line_mdnode;
 
     last_line = lineno;
+    last_subprogram_mdnode = db->cur_subprogram_mdnode;
   }
 }
 
