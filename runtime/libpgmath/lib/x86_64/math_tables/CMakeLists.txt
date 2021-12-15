@@ -56,7 +56,7 @@ add_custom_command(OUTPUT ${TARGET_NAME}.i PRE_BUILD
 
 add_custom_command(OUTPUT ${TARGET_NAME}.check PRE_BUILD
   COMMAND "${SH_PROGRAM}" "${LIBPGMATH_TOOLS_DIR}/tmp-mth-check.sh" ${TARGET_NAME}.i
-  COMMAND touch ${TARGET_NAME}.check
+  COMMAND "${CMAKE_COMMAND}" -E touch ${TARGET_NAME}.check
   DEPENDS "${TARGET_NAME}.i")
 
 add_custom_command(OUTPUT ${TARGET_NAME}.h PRE_BUILD
