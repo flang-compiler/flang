@@ -933,7 +933,7 @@ gnr_math(const char *root, int widthc, int typec, const char *oldname, int maske
  * oldname -  old 'mth' name (only if scalar)
  */
 #if defined(TARGET_OSX) || defined(TARGET_WIN)
-  return oldname;
+  sprintf(bf, "%s", oldname);
 #else
   if (widthc == 's' || widthc == 'v')
     sprintf(bf, "__g%c%c_%s", widthc, typec, root);
@@ -942,8 +942,8 @@ gnr_math(const char *root, int widthc, int typec, const char *oldname, int maske
     mk = !masked ? "" : "_mask";
     sprintf(bf, "__g%c%c_%s%d%s", 'v', typec, root, widthc, mk);
   }
-  return bf;
 #endif
+  return bf;
 }
 
 static char *
