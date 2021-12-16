@@ -12,7 +12,14 @@ add_executable(upperl
 # FIXME: Preprocessing and sorting should be part of add_custom_command below.
 get_property(cdefs DIRECTORY PROPERTY COMPILE_DEFINITIONS)
 list(TRANSFORM cdefs PREPEND "-D")
-execute_process(COMMAND "${CMAKE_C_COMPILER}" -E -P -x c ${cdefs} ${UTILS_UPPER_DIR}/upperilm.in
+
+if (NOT MSVC OR "${CMAKE_C_COMPILER_FRONTEND_VARIANT}" STREQUAL "GNU")
+  set(COMPILER_ARGUMENTS -E -P -x c)
+else()
+  set(COMPILER_ARGUMENTS /E /TC)
+endif()
+
+execute_process(COMMAND "${CMAKE_C_COMPILER}" ${COMPILER_ARGUMENTS} ${cdefs} ${UTILS_UPPER_DIR}/upperilm.in
   WORKING_DIRECTORY ${UTILS_UPPER_BIN_DIR}
   RESULT_VARIABLE cpp_result
   OUTPUT_VARIABLE cpp_output
@@ -20,6 +27,8 @@ execute_process(COMMAND "${CMAKE_C_COMPILER}" -E -P -x c ${cdefs} ${UTILS_UPPER_
 if(cpp_result EQUAL 0)
   string(REPLACE "\n" ";" UPPERILM_H_CONTENTS ${cpp_output})
   list(SORT UPPERILM_H_CONTENTS)
+  # Skip all lines which starts with '#'
+  list(FILTER UPPERILM_H_CONTENTS EXCLUDE REGEX "^#")
   list(JOIN UPPERILM_H_CONTENTS "\n" UPPERILM_H_CONTENTS_SORTED)
   file(WRITE ${UTILS_UPPER_BIN_DIR}/upperilm.sort "${UPPERILM_H_CONTENTS_SORTED}")
 else()
