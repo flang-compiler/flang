@@ -1488,7 +1488,7 @@ static const MDTemplate Tmpl_DIEnumerator[] = {
   { "value",                    SignedField, FlgMandatory }
 };
 
-static const MDTemplate Tmpl_DIImportedEntity[] = {
+static const MDTemplate Tmpl_DIImportedEntity_pre11[] = {
   { "DIImportedEntity", TF, 6 },
   { "tag",                      DWTagField,    0 },
   { "entity",                   NodeField,     0 },
@@ -1496,6 +1496,17 @@ static const MDTemplate Tmpl_DIImportedEntity[] = {
   { "file",                     NodeField,     0 },
   { "line",                     UnsignedField, 0 },
   { "name",                     StringField,   0 }
+};
+
+static const MDTemplate Tmpl_DIImportedEntity[] = {
+  { "DIImportedEntity", TF, 7 },
+  { "tag",                      DWTagField,    0 },
+  { "entity",                   NodeField,     0 },
+  { "scope",                    NodeField,     0 },
+  { "file",                     NodeField,     0 },
+  { "line",                     UnsignedField, 0 },
+  { "name",                     StringField,   0 },
+  { "elements",                 NodeField,     0 }
 };
 
 static const MDTemplate Tmpl_DICommonBlock[] = {
@@ -2212,7 +2223,12 @@ static void
 emitDIImportedEntity(FILE *out, LLVMModuleRef mod, const LL_MDNode *mdnode,
                      unsigned mdi)
 {
-  emitTmpl(out, mod, mdnode, mdi, Tmpl_DIImportedEntity);
+  if (ll_feature_debug_info_ver11(&mod->ir)) {
+    emitTmpl(out, mod, mdnode, mdi, Tmpl_DIImportedEntity);
+    return;
+  }
+
+  emitTmpl(out, mod, mdnode, mdi, Tmpl_DIImportedEntity_pre11);
 }
 
 static void

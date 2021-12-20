@@ -14364,6 +14364,12 @@ add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr)
       }
     }
   }
+  if (gbl.rutype != RU_BDATA && NEEDMODG(scope) &&
+      !RESTRICTEDG(sptr)) {
+    /* This is a MODULE to be imported to a subroutine
+     * later in lldbg_emit_subprogram(). */
+    lldbg_add_pending_import_entity(db, scope, IMPORTED_MODULE);
+  }
   for (var = CMEMFG(sptr); var > NOSYM; var = SYMLKG(var)) {
     if ((!SNAME(var)) || strcmp(SNAME(var), SYMNAME(var))) {
       if (CCSYMG(sptr)) {
@@ -14380,7 +14386,12 @@ add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr)
          * Case 1: Aliased members of restricted / non-restricted modules.
          * Case 2: All members of non-restricted module if it has atlease one
          *         aliased member. */
-        lldbg_add_pending_import_entity(db, var, IMPORTED_DECLARATION);
+        if (!ll_feature_debug_info_ver11(&cpu_llvm_module->ir) ||
+            (RESTRICTEDG(sptr) && lookup_modvar_alias(var))) {
+          lldbg_add_pending_import_entity(db, var, IMPORTED_DECLARATION);
+        } else if (!RESTRICTEDG(sptr) && lookup_modvar_alias(var))
+          lldbg_add_pending_import_entity_to_child(db, var,
+                                                   IMPORTED_DECLARATION);
       }
       if (hashset_lookup(sptr_added, debug_name))
         continue;
@@ -14390,11 +14401,6 @@ add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr)
       addDebugForGlobalVar(var, variable_offset_in_aggregate(var, 0));
       SNAME(var) = save_ptr;
     }
-  }
-  if (gbl.rutype != RU_BDATA && NEEDMODG(scope) && !has_alias) {
-    /* This is a MODULE to be imported to a subroutine
-     * later in lldbg_emit_subprogram(). */
-    lldbg_add_pending_import_entity(db, scope, IMPORTED_MODULE);
   }
 }
 
