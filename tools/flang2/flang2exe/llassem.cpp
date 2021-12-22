@@ -1717,7 +1717,7 @@ write_comm(void)
       Emitting the cmn blk var defn now will miss out the dbg info
       generated for other references of this variable.
     */
-    FILE *tmp = gbl.asmfil;
+    FILE *llvm_ir_bkup = gbl.asmfil;
     FILE *fd;
     if ((fd = tmpfile()) == NULL)
       errinfo(F_0005_Unable_to_open_temporary_file);
@@ -1745,13 +1745,13 @@ write_comm(void)
        "ll" file at func "assemble_end".
     */
     if (fd) {
-      gbl.asmfil = tmp;
+      gbl.asmfil = llvm_ir_bkup;
       fputc('\0', fd);
       fseek(fd, 0, SEEK_END); /* length of file */
-      int file_ln = ftell(fd);
+      long file_len = ftell(fd);
       fseek(fd, 0, SEEK_SET); /* go to the begining of file to read */
-      AG_CMBLKINITDATA(cmsym) = (char *)malloc(file_ln);
-      fread(AG_CMBLKINITDATA(cmsym), sizeof(char), file_ln, fd);
+      AG_CMBLKINITDATA(cmsym) = (char *)malloc(file_len);
+      fread(AG_CMBLKINITDATA(cmsym), sizeof(char), file_len, fd);
       fclose(fd);
     }
 
