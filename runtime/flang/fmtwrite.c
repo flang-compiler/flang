@@ -1727,7 +1727,7 @@ static bool call_format_double(int *result, int width, int format_char,
       if (elide_trailing_spaces) {
         width = 0;
         pos = emit;
-        while(*pos != ' ' && *pos != '\0') {
+        while (*pos != ' ' && *pos != '\0') {
           ++pos;
           ++width;
         }
@@ -1750,13 +1750,114 @@ static bool call_format_double(int *result, int width, int format_char,
   return TRUE;
 }
 
-/* ------------------------------------------------------------------- */
+#ifdef TARGET_SUPPORTS_QUADFP
+#define FORMAT_G0 1
+#define FORMAT_G0_D 2
+#define BUFFER_SIZE 256
+static bool call_format_quad(int *result, int width, int format_char,
+                             int fraction_digits, int exponent_digits,
+                             int ESN_mode, int scale_factor,
+                             bool explicit_plus, bool comma_radix,
+                             bool elide_leading_spaces,
+                             bool elide_trailing_spaces, int rounding_mode,
+                             long double x)
+{
+  static int use_this_code_path = -1; /* unknown */
+  static int no_minus_zero = -1; /* unknown */
 
+  struct formatting_control control;
+
+  /* First call initializations */
+  if (use_this_code_path == -1)
+    use_this_code_path = __fortio_new_fp_formatter();
+  if (no_minus_zero == -1)
+    no_minus_zero = __fortio_no_minus_zero();
+
+  *result = 0;
+  if (!use_this_code_path)
+    return FALSE;
+  /* deal with format F0 */
+  if (format_char == 'F' && width == 0) {
+    control.format_F0 = 1;
+    width = G_REAL16_W + fraction_digits;
+  /* deal with format G0 and G0.d */
+  } else if (format_char == 'G' && width == 0) {
+    if (fraction_digits == 0) {
+      control.format_G0 = FORMAT_G0;
+      fraction_digits = G_REAL16_D;
+    } else
+      control.format_G0 = FORMAT_G0_D;
+    width = G_REAL16_W + fraction_digits;
+  } else {
+    control.format_G0 = control.format_F0 = 0;
+  }
+  control.rounding = rounding_mode;
+  control.format_char = format_char;
+  control.fraction_digits = fraction_digits;
+  control.exponent_digits = exponent_digits;
+  control.scale_factor = scale_factor; /* 1 for ES */
+  control.plus_sign = explicit_plus ? '+' : '\0';
+  control.point_char = comma_radix ? ',' : '.';
+  control.ESN_format = ESN_mode;
+  control.no_minus_zero = no_minus_zero;
+
+  if (elide_leading_spaces || elide_trailing_spaces || width > BUFFER_SIZE) {
+    /* Format into a buffer, chop spaces, and copy.  Eschew alloca(). */
+    char stack_buffer[BUFFER_SIZE];
+    char *emit = stack_buffer;
+    char *malloced_buffer = NULL;
+    char *pos = NULL;
+    memset(stack_buffer, ' ', BUFFER_SIZE);
+    if (width > sizeof stack_buffer &&
+        !(emit = malloced_buffer = malloc(((unsigned long)width)))) {
+      *result = __fortio_error(FIO_ENOMEM);
+    } else {
+      __fortio_format_quad(emit, width, &control, x);
+      if (elide_leading_spaces && (emit != NULL)) {
+        while (*emit == ' ' && width > 1) {
+          ++emit;
+          --width;
+        }
+      }
+      if (elide_trailing_spaces) {
+        width = 0;
+        pos = emit;
+        while(*pos != ' ' && *pos != '\0') {
+          ++pos;
+          ++width;
+        }
+      }
+      *result = fw_write_item(emit, width);
+      if (malloced_buffer != NULL)
+        free(malloced_buffer);
+    }
+  } else {
+    /* Format right into g->rec_buff, no copy */
+    char *emit = reserve_buffer(width);
+    if (emit == NULL) {
+      /* fw_check_size() failed, __fortio_error() was called */
+      *result = ERR_FLAG;
+    } else {
+      __fortio_format_quad(emit, width, &control, x);
+    }
+  }
+
+  return TRUE;
+}
+#endif
+
+/* ------------------------------------------------------------------- */
+#ifdef TARGET_SUPPORTS_QUADFP
+#define IFORT_R16_EXPONENT 3
+#endif
 static int
 fw_writenum(int code, char *item, int type)
 {
   __BIGINT_T ival;
   __BIGREAL_T dval;
+#ifdef TARGET_SUPPORTS_QUADFP
+  __REAL16_T ldval;
+#endif
 #undef IS_INT
   DBLINT64 i8val;
 #define IS_INT(t) (t == __BIGINT || t == __INT8)
@@ -1828,7 +1929,6 @@ fw_writenum(int code, char *item, int type)
     ty = __INT8;
     w = 24;
     break;
-
   case __WORD4:
     ival = *(__WORD4_T *)item;
     ty = __BIGINT;
@@ -1853,15 +1953,17 @@ fw_writenum(int code, char *item, int type)
       e = REAL8_E;
     }
     break;
-
+#ifdef TARGET_SUPPORTS_QUADFP
   case __REAL16:
     dval = *(__REAL16_T *)item;
+    /* to support the quad precision */
+    ldval = *(__REAL16_T *)item;
     ty = __REAL16;
-    w = REAL16_W;
-    d = REAL16_D;
-    e = 2; /* pmn. REAL16_E? if not 2, this may break Ew.d format*/
+    w = G_REAL16_W;
+    d = G_REAL16_D;
+    e = REAL16_E;
     break;
-
+#endif
   default:
     goto fmt_mismatch;
   }
@@ -1950,13 +2052,37 @@ fw_writenum(int code, char *item, int type)
   g_shared:
     if (ty != __REAL4 && ty != __REAL8 && ty != __REAL16)
       goto fmt_mismatch;
+#ifdef TARGET_SUPPORTS_QUADFP
+    if (ty == __REAL16) {
+      if (code == FED_G0 || code == FED_G0_d) {
+        w = 0;
+        if (code == FED_G0)
+	        d = 0;
+        e = 0;
+        call_format_quad(&result, w, 'G', d, e, '\0',
+                         g->scale_factor, g->plus_flag, dc_flag,
+                         elide_leading_spaces, elide_trailing_spaces,
+                         g->round, ldval);
+      } else {
+        int e1 = 0;
+        /* compatible with ifort */
+        if (code == FED_G)
+          e1 = IFORT_R16_EXPONENT;
+        call_format_quad(&result, w, 'G', d, e_flag ? e : e1, '\0',
+                         g->scale_factor, g->plus_flag, dc_flag,
+                         elide_leading_spaces, elide_trailing_spaces,
+                         g->round, ldval);
+      }
+      return result;
+    }
+#endif
     if (call_format_double(&result, w, 'G', d, e_flag ? e : 0, '\0',
                            g->scale_factor, g->plus_flag, dc_flag,
                            elide_leading_spaces, elide_trailing_spaces,
                            g->round, dval))
       return result;
     p = __fortio_fmt_g(dval, w, d, e, g->scale_factor, ty, g->plus_flag, e_flag,
-                      dc_flag, g->round);
+                      dc_flag, g->round, FALSE);
     return fw_write_item(p, w);
 
   case FED_I:
@@ -1972,7 +2098,12 @@ fw_writenum(int code, char *item, int type)
         break;
       case __REAL8:
       case __REAL16:
+#ifdef TARGET_SUPPORTS_QUADFP
+        /* Flang does not support integer*16, so it converts real*16 to integer*8. */
+        crc.r8 = (ty == __REAL8) ? dval : ldval;
+#else
         crc.r8 = dval;
+#endif
         i8val[0] = crc.i8v[0];
         i8val[1] = crc.i8v[1];
         ty = __INT8;
@@ -1999,7 +2130,12 @@ fw_writenum(int code, char *item, int type)
         break;
       case __REAL8:
       case __REAL16:
+#ifdef TARGET_SUPPORTS_QUADFP
+        /* Flang does not support integer*16, so it converts real*16 to integer*8. */
+        crc.r8 = (ty == __REAL8) ? dval : ldval;
+#else
         crc.r8 = dval;
+#endif
         i8val[0] = crc.i8v[0];
         i8val[1] = crc.i8v[1];
         ty = __INT8;
@@ -2059,7 +2195,12 @@ fw_writenum(int code, char *item, int type)
         break;
       case __REAL8:
       case __REAL16:
+#ifdef TARGET_SUPPORTS_QUADFP
+        /* Flang does not support integer*16, so it converts real*16 to integer*8. */
+        crc.r8 = (ty == __REAL8) ? dval : ldval;
+#else
         crc.r8 = dval;
+#endif
         i8val[0] = crc.i8v[0];
         i8val[1] = crc.i8v[1];
         ty = __INT8;
@@ -2095,6 +2236,14 @@ fw_writenum(int code, char *item, int type)
       break;
     }
     if (w == 0) {
+#ifdef TARGET_SUPPORTS_QUADFP
+      if (ty == __REAL16) {
+        call_format_quad(&result, w, 'F', d, 0, '\0', g->scale_factor,
+                         g->plus_flag, dc_flag, TRUE, FALSE, g->round,
+                         ldval);
+        return result;
+      }
+#endif
       /* compute a w which is the minimal value to represent
        * the item.
        */
@@ -2111,6 +2260,13 @@ fw_writenum(int code, char *item, int type)
       }
       return fw_write_item(p, w);
     }
+#ifdef TARGET_SUPPORTS_QUADFP
+    if (ty == __REAL16) {
+      call_format_quad(&result, w, 'F', d, 0, '\0', g->scale_factor,
+                       g->plus_flag, dc_flag, FALSE, FALSE, g->round, ldval);
+      return result;
+    }
+#endif
     if (call_format_double(&result, w, 'F', d, 0, '\0', g->scale_factor,
                            g->plus_flag, dc_flag, FALSE, FALSE, g->round, dval))
       return result;
@@ -2138,6 +2294,13 @@ fw_writenum(int code, char *item, int type)
       ty = __REAL8;
       break;
     }
+#ifdef TARGET_SUPPORTS_QUADFP
+    if (ty == __REAL16) {
+      call_format_quad(&result, w, 'F', d, 0, '\0', g->scale_factor,
+                       g->plus_flag, dc_flag, FALSE, FALSE, g->round, ldval);
+      return result;
+    }
+#endif
     if (call_format_double(&result, w, 'F', d, 0, '\0', g->scale_factor,
                            g->plus_flag, dc_flag, FALSE, FALSE, g->round, dval))
       return result;
@@ -2177,6 +2340,15 @@ fw_writenum(int code, char *item, int type)
       ty = __REAL8;
       break;
     }
+#ifdef TARGET_SUPPORTS_QUADFP
+    if (ty == __REAL16) {
+      call_format_quad(&result, w, 'E', d, e_flag ? e : 0,
+                       code == FED_ESw_d ? 'S' : code == FED_ENw_d ? 'N' : '\0',
+                       g->scale_factor, g->plus_flag, dc_flag, FALSE, FALSE,
+                       g->round, ldval);
+      return result;
+    }
+#endif
     if (call_format_double(&result, w, 'E', d, e_flag ? e : 0,
                            code == FED_ESw_d ? 'S' :
                              code == FED_ENw_d ? 'N' : '\0',
@@ -2210,6 +2382,14 @@ fw_writenum(int code, char *item, int type)
       ty = __REAL8;
       break;
     }
+#ifdef TARGET_SUPPORTS_QUADFP
+    if (ty == __REAL16) {
+      /* exponent compatible with ifort */
+      call_format_quad(&result, w, 'E', d, IFORT_R16_EXPONENT, '\0', g->scale_factor,
+                       g->plus_flag, dc_flag, FALSE, FALSE, g->round, ldval);
+      return result;
+    }
+#endif
     if (call_format_double(&result, w, 'E', d, 0, '\0', g->scale_factor,
                            g->plus_flag, dc_flag, FALSE, FALSE, g->round, dval))
       return result;
@@ -2262,6 +2442,16 @@ fw_writenum(int code, char *item, int type)
       break;
     }
   d_shared:
+#ifdef TARGET_SUPPORTS_QUADFP
+    if (ty == __REAL16) {
+      int e1 = 0;
+      if (code == FED_D)
+        e1 = IFORT_R16_EXPONENT;
+      call_format_quad(&result, w, 'D', d, e1, '\0', g->scale_factor,
+                       g->plus_flag, dc_flag, FALSE, FALSE, g->round, ldval);
+      return result;
+    }
+#endif
     if (call_format_double(&result, w, 'D', d, 0, '\0', g->scale_factor,
                            g->plus_flag, dc_flag, FALSE, FALSE, g->round, dval))
       return result;
@@ -2838,6 +3028,13 @@ ENTF90IO(SC_D_FMT_WRITE, sc_d_fmt_write)(double item, int type)
   return __f90io_fmt_write(type, 1, 0, (char *)&item, 0);
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
+__INT_T ENTF90IO(SC_Q_FMT_WRITE, sc_q_fmt_write)(long double item, int type)
+{
+  return __f90io_fmt_write(type, 1, 0, (char *)&item, 0);
+}
+#endif
+
 __INT_T
 ENTF90IO(SC_CF_FMT_WRITE, sc_cf_fmt_write)(float real, float imag, int type)
 {
@@ -2857,6 +3054,17 @@ ENTF90IO(SC_CD_FMT_WRITE, sc_cd_fmt_write)(double real, double imag, int type)
     return err;
   return __f90io_fmt_write(__REAL8, 1, 0, (char *)&imag, 0);
 }
+
+#ifdef TARGET_SUPPORTS_QUADFP
+__INT_T ENTF90IO(SC_CQ_FMT_WRITE, sc_cq_fmt_write)(long double real, long double imag, int type)
+{
+  int err;
+  err = __f90io_fmt_write(__REAL16, 1, 0, (char *)&real, 0);
+  if (err)
+    return err;
+  return __f90io_fmt_write(__REAL16, 1, 0, (char *)&imag, 0);
+}
+#endif
 
 /* --------------------------------------------------------------------- */
 #define CHAR_ONLY 1

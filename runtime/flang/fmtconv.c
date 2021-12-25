@@ -33,7 +33,7 @@ static char *conv_int(__BIGINT_T, int *, int *);
 static char *conv_int8(DBLINT64, int *, int *);
 static void put_buf(int, const char *, int, int);
 
-static void conv_e(int, int, int, bool);
+static void conv_e(int, int, int, bool, int);
 static void conv_en(int, int, bool);
 static void conv_es(int, int, bool);
 static void conv_f(int, int);
@@ -66,7 +66,7 @@ char __f90io_conv_buf[96] = {0}; /* sufficient size for non-char types - must
                                   * be init'd for 32-bit OSX
                                   */
 static char *conv_bufp = __f90io_conv_buf;
-static unsigned conv_bufsize = sizeof(__f90io_conv_buf);
+static signed conv_bufsize = sizeof(__f90io_conv_buf);
 
 static char cmplx_buf[64]; /* just for list-directed and nml io */
 static char exp_letter = 'E';
@@ -77,6 +77,12 @@ void
 __fortio_printbigreal(__BIGREAL_T val)
 {
   __io_printf("(%f)", val);
+}
+
+void
+__fortio_printreal16(__REAL16_T val)
+{
+  __io_printf("(%Lf)", val);
 }
 
 /* ----------------------------------------------------------------- */
@@ -123,7 +129,7 @@ __fortio_default_convert(char *item, int type,
   case __REAL4:
     width = REAL4_W;
     (void) __fortio_fmt_g((__BIGREAL_T)PP_REAL4(item), width, REAL4_D, REAL4_E,
-                         1, __REAL4, plus_flag, TRUE, dc_flag, round);
+                          1, __REAL4, plus_flag, TRUE, dc_flag, round, FALSE);
     break;
   case __WORD8:
     width = 16;
@@ -140,13 +146,13 @@ __fortio_default_convert(char *item, int type,
   case __REAL8:
     width = REAL8_W;
     (void) __fortio_fmt_g((__BIGREAL_T)PP_REAL8(item), width, REAL8_D, REAL8_E,
-                         1, __REAL8, plus_flag, TRUE, dc_flag, round);
+                          1, __REAL8, plus_flag, TRUE, dc_flag, round, FALSE);
     break;
   case __REAL16:
-    width = REAL16_W;
+    width = G_REAL16_W;
     (void)
-        __fortio_fmt_g((__BIGREAL_T)PP_REAL16(item), width, REAL16_D, REAL16_E,
-                      1, __REAL16, plus_flag, TRUE, dc_flag, round);
+        __fortio_fmt_g((__REAL16_T)PP_REAL16(item), width, G_REAL16_D, REAL16_E,
+                       1, __REAL16, plus_flag, TRUE, dc_flag, round, TRUE);
     break;
   case __WORD16:
     assert(0);
@@ -158,14 +164,14 @@ __fortio_default_convert(char *item, int type,
     *p++ = '(';
     width = REAL4_W;
     (void) __fortio_fmt_g((__BIGREAL_T)PP_REAL4(item), width, REAL4_D, REAL4_E,
-                         1, __REAL4, plus_flag, TRUE, dc_flag, round);
+                          1, __REAL4, plus_flag, TRUE, dc_flag, round, FALSE);
     p = strip_blnk(p, conv_bufp);
     if (dc_flag == TRUE)
       *p++ = ';';
     else
       *p++ = ',';
     (void) __fortio_fmt_g((__BIGREAL_T)PP_REAL4(item + 4), width, REAL4_D,
-                         REAL4_E, 1, __REAL4, plus_flag, TRUE, dc_flag, round);
+                          REAL4_E, 1, __REAL4, plus_flag, TRUE, dc_flag, round, FALSE);
     p = strip_blnk(p, conv_bufp);
     *p++ = ')';
     *p++ = '\0';
@@ -176,14 +182,14 @@ __fortio_default_convert(char *item, int type,
     *p++ = '(';
     width = REAL8_W;
     (void) __fortio_fmt_g((__BIGREAL_T)PP_REAL8(item), width, REAL8_D, REAL8_E,
-                         1, __REAL8, plus_flag, TRUE, dc_flag, round);
+                          1, __REAL8, plus_flag, TRUE, dc_flag, round, FALSE);
     p = strip_blnk(p, conv_bufp);
     if (dc_flag == TRUE)
       *p++ = ';';
     else
       *p++ = ',';
     (void) __fortio_fmt_g((__BIGREAL_T)PP_REAL8(item + 8), width, REAL8_D,
-                         REAL8_E, 1, __REAL8, plus_flag, TRUE, dc_flag, round);
+                          REAL8_E, 1, __REAL8, plus_flag, TRUE, dc_flag, round, FALSE);
     p = strip_blnk(p, conv_bufp);
     *p++ = ')';
     *p++ = '\0';
@@ -192,18 +198,18 @@ __fortio_default_convert(char *item, int type,
   case __CPLX32:
     p = cmplx_buf;
     *p++ = '(';
-    width = REAL16_W;
+    width = G_REAL16_W;
     (void)
-        __fortio_fmt_g((__BIGREAL_T)PP_REAL16(item), width, REAL16_D, REAL16_E,
-                      1, __REAL16, plus_flag, TRUE, dc_flag, round);
+        __fortio_fmt_g((__REAL16_T)PP_REAL16(item), width, G_REAL16_D, REAL16_E,
+                       1, __REAL16, plus_flag, TRUE, dc_flag, round, TRUE);
     p = strip_blnk(p, conv_bufp);
     if (dc_flag == TRUE)
       *p++ = ';';
     else
       *p++ = ',';
     (void)
-        __fortio_fmt_g((__BIGREAL_T)PP_REAL16(item + 16), width, REAL16_D,
-                      REAL16_E, 1, __REAL16, plus_flag, TRUE, dc_flag, round);
+        __fortio_fmt_g((__REAL16_T)PP_REAL16(item + 16), width, G_REAL16_D,
+                       REAL16_E, 1, __REAL16, plus_flag, TRUE, dc_flag, round, TRUE);
     p = strip_blnk(p, conv_bufp);
     *p++ = ')';
     *p++ = '\0';
@@ -521,7 +527,7 @@ __fortio_fmt_d(__BIGREAL_T val, int w, int d, int sf, int type, bool plus_flag,
     return conv_bufp;
   }
   newd = d + ((sf > 0) ? 1 : sf);
-  fpdat.cvtp = __io_ecvt(val, newd, &fpdat.exp, &fpdat.sign, round);
+  fpdat.cvtp = __io_ecvt(val, w, newd, &fpdat.exp, &fpdat.sign, round, FALSE);
   fpdat.ndigits = strlen(fpdat.cvtp);
   fpdat.curp = fpdat.buf;
 
@@ -541,7 +547,7 @@ __fortio_fmt_d(__BIGREAL_T val, int w, int d, int sf, int type, bool plus_flag,
       sign_char = 0;
     put_buf(w, fpdat.cvtp, fpdat.ndigits, sign_char);
   } else {
-    conv_e(d, 2, sf, FALSE);
+    conv_e(d, 2, sf, FALSE, FALSE);
     if (fpdat.sign) /* must check after conv_e */
       sign_char = '-';
     else if (plus_flag)
@@ -555,8 +561,9 @@ __fortio_fmt_d(__BIGREAL_T val, int w, int d, int sf, int type, bool plus_flag,
 }
 
 extern char *
-__fortio_fmt_g(__BIGREAL_T val, int w, int d, int e, int sf, int type,
-              bool plus_flag, bool e_flag, bool dc_flag, int round)
+__fortio_fmt_g(__REAL16_T val, int w, int d, int e, int sf, int type,
+              bool plus_flag, bool e_flag, bool dc_flag, int round,
+              int is_quad) /* TRUE, if the value is quad precision. */
 {
   int sign_char;
   int newd;
@@ -567,7 +574,7 @@ __fortio_fmt_g(__BIGREAL_T val, int w, int d, int e, int sf, int type,
    * comparison will say val is identical to 0, but the bits of val will
    * indicate otherwise and the ensuing code may go down the wrong path.
    */
-  if (val == fpdat.zero) {
+  if ((__BIGREAL_T)val == fpdat.zero && !is_quad) {
     union {
       __BIGREAL_T vv;
       int ii[2];
@@ -588,8 +595,11 @@ __fortio_fmt_g(__BIGREAL_T val, int w, int d, int e, int sf, int type,
     put_buf(w, (char *)0, 0, 0);
     return conv_bufp;
   }
-  newd = d + ((sf > 0) ? 1 : sf);
-  fpdat.cvtp = __io_ecvt(val, newd, &fpdat.exp, &fpdat.sign, round);
+  if (!is_quad)
+    newd = d + ((sf > 0) ? 1 : sf);
+  else
+    newd = d + ((sf > 0) ? 0 : sf - 1);
+  fpdat.cvtp = __io_ecvt(val, w, newd, &fpdat.exp, &fpdat.sign, round, is_quad);
   fpdat.ndigits = strlen(fpdat.cvtp);
   fpdat.curp = fpdat.buf;
 
@@ -616,7 +626,7 @@ __fortio_fmt_g(__BIGREAL_T val, int w, int d, int e, int sf, int type,
              (*fpdat.cvtp == '0' || fpdat.exp < 0 || fpdat.exp >= d + 1)) {
     /*  m  .lt. 0.1  or  m .ge. 10**d  */
     /*  Ew.dEe */
-    conv_e(d, e, sf, e_flag);
+    conv_e(d, e, sf, e_flag, is_quad);
     if (fpdat.sign) /* must check after conv_e */
       sign_char = '-';
     else if (plus_flag)
@@ -643,12 +653,12 @@ __fortio_fmt_g(__BIGREAL_T val, int w, int d, int e, int sf, int type,
      * If this value is positive, then the digit is to the right of '.';
      * negative => to the left of '.'.
      */
-    fpdat.cvtp = __io_fcvt(val, d - fpdat.exp, 0, &texp, &fpdat.sign, round);
+    fpdat.cvtp = __io_fcvt(val, w, d - fpdat.exp, 0, &texp, &fpdat.sign, round, is_quad);
     if (val == (__BIGREAL_T)0.0) {
       texp = fpdat.exp;
     } else if (texp != fpdat.exp) {
       fpdat.exp = texp;
-      fpdat.cvtp = __io_fcvt(val, d - texp, 0, &texp, &fpdat.sign, round);
+      fpdat.cvtp = __io_fcvt(val, w, d - texp, 0, &texp, &fpdat.sign, round, is_quad);
     }
     fpdat.ndigits = strlen(fpdat.cvtp);
     ww = m;
@@ -717,7 +727,7 @@ __fortio_fmt_e(__BIGREAL_T val, int w, int d, int e, int sf, int type,
     newrnd = round;
   }
 
-  fpdat.cvtp = __io_ecvt(val, newd, &fpdat.exp, &fpdat.sign, newrnd);
+  fpdat.cvtp = __io_ecvt(val, w, newd, &fpdat.exp, &fpdat.sign, newrnd, FALSE);
   fpdat.ndigits = strlen(fpdat.cvtp);
   fpdat.curp = fpdat.buf;
 
@@ -746,7 +756,7 @@ __fortio_fmt_e(__BIGREAL_T val, int w, int d, int e, int sf, int type,
     } else if (code == FED_ESw_d) {
       conv_es(d, e, e_flag);
     } else {
-      conv_e(d, e, sf, e_flag);
+      conv_e(d, e, sf, e_flag, FALSE);
     }
     if (fpdat.sign) /* must check after conv_e */
       sign_char = '-';
@@ -775,7 +785,7 @@ __fortio_fmt_f(__BIGREAL_T val, int w, int d,
    * If this value is positive, then the digit is to the right of '.';
    * negative => to the left of '.'.
    */
-  fpdat.cvtp = __io_fcvt(val, d, sf, &fpdat.exp, &fpdat.sign, round);
+  fpdat.cvtp = __io_fcvt(val, w, d, sf, &fpdat.exp, &fpdat.sign, round, FALSE);
 
   if (dc_flag == TRUE)
     fpdat.decimal_char = ',';
@@ -815,7 +825,8 @@ __fortio_fmt_f(__BIGREAL_T val, int w, int d,
 /* ------------------------------------------------------------------- */
 
 static void conv_e(int d, int e, int sf,
-                   bool e_flag) /* TRUE, if Ee was specified */
+                   bool e_flag, /* TRUE, if Ee was specified */
+                   int is_quad) /* TRUE, if the value is quad */
 {
   char *p;
   int len, neg;
@@ -838,7 +849,10 @@ static void conv_e(int d, int e, int sf,
     /* cvtp_round(d+1); */
     cvtp_cp(sf);
     *fpdat.curp++ = fpdat.decimal_char;
-    cvtp_cp(d - sf + 1);
+    if (!is_quad)
+      cvtp_cp(d - sf + 1);
+    else
+      cvtp_cp(d - sf);
   } else if (sf < 0 && (-d) < sf) {
     /*  0 . <|sf| 0's> <(d - |sf|) digits>  */
     /* cvtp_round(d + sf); */
@@ -1075,11 +1089,11 @@ static void
 fp_canon(__BIGREAL_T val, int type, int round)
 {
   if (type == __REAL4)
-    fpdat.cvtp = __io_ecvt(val, REAL4_D + 1, &fpdat.exp, &fpdat.sign, round);
+    fpdat.cvtp = __io_ecvt(val, REAL4_W, REAL4_D + 1, &fpdat.exp, &fpdat.sign, round, FALSE);
   else if (type == __REAL8)
-    fpdat.cvtp = __io_ecvt(val, REAL8_D + 1, &fpdat.exp, &fpdat.sign, round);
+    fpdat.cvtp = __io_ecvt(val, REAL8_W, REAL8_D + 1, &fpdat.exp, &fpdat.sign, round, FALSE);
   else
-    fpdat.cvtp = __io_ecvt(val, REAL16_D + 1, &fpdat.exp, &fpdat.sign, round);
+    fpdat.cvtp = __io_ecvt(val, G_REAL16_W, G_REAL16_D + 1, &fpdat.exp, &fpdat.sign, round, FALSE);
   if (DBGBIT(0x2)) {
     __io_printf("fp_canon ");
     __fortio_printbigreal(val);

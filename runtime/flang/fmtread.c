@@ -102,10 +102,10 @@ static int fr_readnum(int, char *, int);
 static int fr_init(__INT_T *, __INT_T *, __INT_T *, __INT_T *, __INT_T *,
                    __INT8_T *, char *, __CLEN_T);
 
-static int fr_assign(char *, int, __BIGINT_T, DBLINT64, __BIGREAL_T);
+static int fr_assign(char *, int, __BIGINT_T, DBLINT64, __REAL16_T);
 static int fr_OZreadnum(int, char *, int, int);
 static int fr_Breadnum(char *, int, int);
-static __BIGREAL_T fr_getreal(char *, int, int, int *);
+static __REAL16_T fr_getreal(char *, int, int, int *);
 static int fr_move_fwd(int);
 static int fr_read_record(void);
 static int malloc_obuff(G *, size_t);
@@ -1888,7 +1888,7 @@ static int
 fr_readnum(int code, char *item, int type)
 {
   __BIGINT_T ival;
-  __BIGREAL_T dval;
+  __REAL16_T dval;
 #undef IS_INT
   DBLINT64 i8val; /* always declare because of fr_assign() */
 #define IS_INT(t) (t == __INT || t == __INT8)
@@ -1955,8 +1955,8 @@ fr_readnum(int code, char *item, int type)
 
   case __REAL16:
     ty = __REAL16;
-    w = REAL16_W;
-    d = REAL16_D;
+    w = G_REAL16_W;
+    d = G_REAL16_D;
     ival = FALSE; /* I don't think this is valid for this code. */
     break;
 
@@ -2310,7 +2310,7 @@ fr_readnum(int code, char *item, int type)
 /* ------------------------------------------------------------------ */
 
 static int
-fr_assign(char *item, int type, __BIGINT_T ival, DBLINT64 i8val, __BIGREAL_T dval)
+fr_assign(char *item, int type, __BIGINT_T ival, DBLINT64 i8val, __REAL16_T dval)
 {
   switch (type) {
   case __INT1:
@@ -2867,14 +2867,14 @@ fr_Bbyte(int c)
 
 /* ------------------------------------------------------------------- */
 
-static __BIGREAL_T
+static __REAL16_T
 fr_getreal(char *p, int w, int d, int *errflag)
 {
 #define MAXFLEN 400
   int expval = 0;
   int dotflag = -1;
   char *errp;
-  __BIGREAL_T dval;
+  __REAL16_T dval;
   char buff[MAXFLEN], buff2[MAXFLEN];
   int ipos = 0, jpos = 0;
   int c;
@@ -2932,7 +2932,8 @@ fr_getreal(char *p, int w, int d, int *errflag)
   if (w == -1)
     goto after_exponent;
 
-  if (c != 'E' && c != 'D' && c != 'e' && c != 'd' && c != '+' && c != '-')
+  if (c != 'E' && c != 'D' && c != 'Q' && c != 'e' && c != 'd' && c != 'q'  &&
+      c != '+' && c != '-')
     goto conv_error;
 
   if (c == '+' || c == '-')
@@ -2992,7 +2993,8 @@ after_exponent:
   } else
     buff[ipos] = '\0';
 
-  dval = __io_strtod(buff, &errp);
+  dval = __io_strtold(buff, &errp);
+
   if (errp != buff)
     return dval; /* successful conversion */
 

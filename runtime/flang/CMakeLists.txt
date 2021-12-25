@@ -209,6 +209,12 @@ SET(FTN_INTRINSICS_DESC_DEP
   scatter_minval.c
   )
 
+SET(FTN_SUPPORT_DESC_INDEP_QUADFP
+  format-quad.c
+)
+
+LIST(APPEND LLVM_OPTIONAL_SOURCES ${FTN_SUPPORT_DESC_INDEP_QUADFP})
+
 SET(FTN_SUPPORT_DESC_INDEP
   bcopy.c
   bcopys.c
@@ -453,7 +459,17 @@ add_custom_command(
   DEPENDS flang1 flang2
 )
 
-# The files lists FTN_INTRINSICS_DESC_DEP and FTN_SUPPORT_DESC_DEP need to be compiled twice (with and without 'DESC_I8' compile definition). So an actual copy is made in a temp file on which this is done.
+# REAL*16 is not yet available on all platforms.
+get_property(cdefs DIRECTORY PROPERTY COMPILE_DEFINITIONS)
+list(FIND cdefs "TARGET_SUPPORTS_QUADFP" _quadfp)
+if(${_quadfp} GREATER -1)
+  LIST(APPEND FTN_SUPPORT_DESC_INDEP ${FTN_SUPPORT_DESC_INDEP_QUADFP})
+  LIST(APPEND FTN_SUPPORT_DESC_DEP ${FTN_SUPPORT_DESC_DEP_QUADFP})
+endif()
+
+# The files lists FTN_INTRINSICS_DESC_DEP and FTN_SUPPORT_DESC_DEP need to be
+# compiled twice (with and without 'DESC_I8' compile definition). So an actual
+# copy is made in a temp file on which this is done.
 
 FOREACH(file ${FTN_INTRINSICS_DESC_DEP})
     set(I8_FILE "${I8_FILES_DIR}/${file}")

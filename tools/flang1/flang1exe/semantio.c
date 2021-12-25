@@ -6129,6 +6129,10 @@ getWriteByDtypeRtn(int dtype, FormatType fmttyp)
     rtlRtn = (fmttyp == FT_LIST_DIRECTED) ? RTE_f90io_sc_d_ldw
                                           : RTE_f90io_sc_d_fmt_write;
     break;
+  case DT_QUAD:
+    rtlRtn = (fmttyp == FT_LIST_DIRECTED) ? RTE_f90io_sc_q_ldw
+                                          : RTE_f90io_sc_q_fmt_write;
+    break;
   case DT_INT8:
     rtlRtn = (fmttyp == FT_LIST_DIRECTED) ? RTE_f90io_sc_l_ldw
                                           : RTE_f90io_sc_l_fmt_write;

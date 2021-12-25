@@ -33,6 +33,8 @@ struct formatting_control {
   int point_char; /* '.' or ',' */
   int ESN_format; /* 'S', 'N', or NUL for ES/EN variants of Ew.d */
   int no_minus_zero; /* '-' appears only if a nonzero digit does */
+  int format_F0;    /* format is F0 */
+  int format_G0;    /* format is G0 or G0.d */
 };
 
 /*
@@ -43,5 +45,8 @@ struct formatting_control {
 void __fortio_format_double(char *out, int width,
                             const struct formatting_control *control,
                             double x);
+void __fortio_format_quad(char *out, int width,
+                          const struct formatting_control *control,
+                          long double x);
 
 #endif /* FORMAT_DOUBLE_H_ */
