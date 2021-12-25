@@ -34,7 +34,7 @@
 #define I_SIZE 2 /* i[] has 2 elements and 128 bits */
 #define LITTLE_SIGN_MASK  0x7fffffff
 #define BIG_SIGN_MASK 0xffffff7f
-
+typedef long double float128_t;
 static const int g_one = 1;
 #define is_little_endian()    (*(const char *) & g_one != 0)
 #endif
@@ -452,6 +452,7 @@ float __mth_i_bessel_yn(int n, float arg);
 float __f90_bessel_yn(int n1, int n2, float f);
 float __mth_i_ceil(float);
 float __mth_i_floor(float);
+float __mth_i_aqanint(long double d);
 
 int __mth_i_idnint(double d);
 int __mth_i_mod(int i, int j);
@@ -511,10 +512,46 @@ double __mth_i_dfloor(double);
 double __mth_i_dqanint(long double d);
 int  __mth_i_iqnint(long double q);
 long long __mth_i_kiqnint(long double q);
+long double __mth_i_qpowq(long double x, long double y);
+long double __mth_i_qpowi(long double x, int i);
+long double __mth_i_qpowk(long double x, long long i);
+long double __mth_i_qacos(long double q);
 long double __mth_i_qexp(long double q);
+long double __mth_i_qlog(long double q);
+long double __mth_i_qatan(long double q);
+long double __mth_i_qcos(long double q);
+long double __mth_i_qsin(long double q);
+long double __mth_i_qsqrt(long double q);
 long double __mth_i_qabs(long double q);
+long double __mth_i_qfloor(long double q);
+long double __mth_i_qceil(long double q);
+long double __mth_i_qmod(long double f, long double g);
+long double __mth_i_qsign(long double f, long double g);
+long double __mth_i_qtan(long double q);
+long double __mth_i_qasin(long double q);
+long double __mth_i_qasind(long double q);
+long double __mth_i_qsind(long double q);
+long double __mth_i_qacosd(long double q);
+long double __mth_i_qcosd(long double q);
+long double __mth_i_qatand(long double q);
+long double __mth_i_qtand(long double q);
 long double __mth_i_qint(long double q);
 long double __mth_i_qanint(long double q);
+long double __mth_i_qerf(long double q);
+long double __mth_i_qerfc(long double q);
+long double __mth_i_qerfc_scaled(long double q);
+long double __mth_i_qasinh(long double q);
+long double __mth_i_qacosh(long double q);
+long double __mth_i_qatanh(long double q);
+long double __mth_i_qsinh(long double q);
+long double __mth_i_qcosh(long double q);
+long double __mth_i_qtanh(long double q);
+long double __mth_i_qlog10(long double q);
+long double __mth_i_qgamma(long double q);
+long double __mth_i_qlog_gamma(long double q);
+long double __mth_i_qatan2(long double x, long double y);
+long double __mth_i_qatan2d(long double f, long double g);
+long double __mth_i_qhypot(long double x, long double y);
 #endif
 
 #if	! defined (TARGET_X8664) && ! defined(LINUX8664)

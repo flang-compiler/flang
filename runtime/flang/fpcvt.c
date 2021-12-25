@@ -31,6 +31,17 @@ union ieee {
   int i[2];
 };
 
+union ieeeq {
+  long double q;
+  struct {
+    unsigned int lm[3];
+    unsigned int hm : 16;
+    unsigned int e : 15;
+    unsigned int s : 1;
+  } v;
+  int i[4];
+};
+
 typedef long INT;
 typedef unsigned long UINT;
 typedef double IEEE64;
@@ -675,7 +686,8 @@ atoxufp(char *s, UFP *u, char **p)
   u->fman[2] = 0;
   u->fman[3] = 0;
   u->fexp = exp;
-  if (*s != 'd' && *s != 'D' && *s != 'e' && *s != 'E') {
+  if (*s != 'd' && *s != 'D' && *s != 'e' && *s != 'E' && *s != 'q' &&
+      *s != 'Q') {
     goto ret;
   }
   s++;
@@ -741,7 +753,7 @@ __fortio_strtod(char *s, char **p)
 int __fenv_fegetround();
 
 static void
-writefmt(char *fmt, int prec, char c)
+writefmt(char *fmt, int prec, char c, int is_quad)
 {
   int i, hprec, mprec, lprec;
   hprec = mprec = 0;
@@ -767,23 +779,33 @@ writefmt(char *fmt, int prec, char c)
     fmt[i++] = '0' + mprec;
   }
   fmt[i++] = '0' + lprec;
+  if (is_quad)
+    fmt[i++] = 'L';
   fmt[i++] = c;
   fmt[i++] = '\0';
 }
 
+#define EXPONENT_BIAS_D 0x3ff
+#define EXPONENT_BIAS_Q 0x3fff
+#define INFINITY_STR_LEN 8 /* len of strings "Infinity". */
+#define SUBSCRIPT_2 2      /* subscript is 2 */
+#define SUBSCRIPT_3 3      /* subscript is 3 */
+
 char *
-__fortio_ecvt(double value, int ndigit, int *decpt, int *sign, int round)
+__fortio_ecvt(long double lvalue, int width, int ndigit, int *decpt, int *sign,
+              int round, int is_quad)
 {
   void ufptosci();
   int i, j;
 
   union ieee ieee_v;
+  union ieeeq ieeeq_v;
 
   static char tmp[512];
   static char fmt[16];
   int idx, fexp, kdz, engfmt;
   int i0, i1;
-
+  double value = (double)lvalue;
   /* This block of stuff is under consideration */
   engfmt = 0;
   if (round >= 256) {
@@ -806,35 +828,64 @@ __fortio_ecvt(double value, int ndigit, int *decpt, int *sign, int round)
     /* Is there anything else? */
   }
 
-  ieee_v.d = value;
-  fexp = ieee_v.v.e - 1023;
-  if (fexp == 1024) {
-    if (ieee_v.v.hm == 0 && ieee_v.v.lm == 0) {
-      strcpy(tmp, "Inf");
-      *sign = ieee_v.v.s;
-      *decpt = 0;
-      return tmp;
-    } else {
-      strcpy(tmp, "NaN");
-      *sign = 0;
-      *decpt = 0;
-      return tmp;
+  if (!is_quad) {
+    ieee_v.d = value;
+    fexp = ieee_v.v.e - EXPONENT_BIAS_D;
+    if (fexp == EXPONENT_BIAS_D + 1) {
+      if (ieee_v.v.hm == 0 && ieee_v.v.lm == 0) {
+        strcpy(tmp, "Inf");
+        *sign = ieee_v.v.s;
+        *decpt = 0;
+        return tmp;
+      } else {
+        strcpy(tmp, "NaN");
+        *sign = 0;
+        *decpt = 0;
+        return tmp;
+      }
     }
-  }
 
-  *sign = ieee_v.v.s;
-  ieee_v.v.s = 0;
-  value = ieee_v.d;
+    *sign = ieee_v.v.s;
+    ieee_v.v.s = 0;
+    value = ieee_v.d;
+  } else {
+    ieeeq_v.q = lvalue;
+    fexp = ieeeq_v.v.e - EXPONENT_BIAS_Q;
+    if (fexp == EXPONENT_BIAS_Q + 1) {
+      if (ieeeq_v.v.lm[SUBSCRIPT_2] == 0 && ieeeq_v.v.lm[1] == 0 &&
+          ieeeq_v.v.lm[0] == 0 && ieeeq_v.v.hm == 0) {
+        if (width < INFINITY_STR_LEN + ieeeq_v.v.s)
+          strcpy(tmp, "Inf");
+        else
+          strcpy(tmp, "Infinity");
+        *sign = ieeeq_v.v.s;
+        *decpt = 0;
+        return tmp;
+      } else {
+        strcpy(tmp, "NaN");
+        *sign = 0;
+        *decpt = 0;
+        return tmp;
+      }
+    }
+
+    *sign = ieeeq_v.v.s;
+    ieeeq_v.v.s = 0;
+    lvalue = ieeeq_v.q;
+  }
 
   /* For compatible mode, round '5' away from zero */
   /* Compatible rounding, or compatible in number of good bits??? */
 
   if (round == FIO_COMPATIBLE) {
-      writefmt(fmt, ndigit, 'E');
+    writefmt(fmt, ndigit, 'E', is_quad);
+    if (!is_quad)
       j = sprintf(tmp, fmt, value);
-      if (ndigit) {
-        i0 = 1;
-        tmp[i0] = tmp[0];
+    else
+      j = sprintf(tmp, fmt, lvalue);
+    if (ndigit) {
+      i0 = 1;
+      tmp[i0] = tmp[0];
       } else {
         i0 = 0;
       }
@@ -860,8 +911,11 @@ __fortio_ecvt(double value, int ndigit, int *decpt, int *sign, int round)
 
         /* We know sprintf is rounded, so get more bits */
         if (tmp[i1] == '5') {
-          writefmt(fmt, ndigit + 20, 'E');
-          j = sprintf(tmp, fmt, value);
+          writefmt(fmt, ndigit + 20, 'E', is_quad);
+          if (!is_quad)
+            j = sprintf(tmp, fmt, value);
+          else
+            j = sprintf(tmp, fmt, lvalue);
           i0 = 1;
           tmp[i0] = tmp[0];
         }
@@ -893,8 +947,11 @@ __fortio_ecvt(double value, int ndigit, int *decpt, int *sign, int round)
          Turns out that sprintf is nearest
       */
       if (ndigit) {
-        writefmt(fmt, ndigit - 1, 'E');
-        j = sprintf(tmp, fmt, value);
+        writefmt(fmt, ndigit - 1, 'E', is_quad);
+        if (!is_quad)
+          j = sprintf(tmp, fmt, value);
+        else
+          j = sprintf(tmp, fmt, lvalue);
         if (ndigit > 1) {
           i0 = 1;
           tmp[i0] = tmp[0];
@@ -920,8 +977,11 @@ __fortio_ecvt(double value, int ndigit, int *decpt, int *sign, int round)
           i1 = i0 + ndigit;
           if (tmp[i1] == '5') {
             /* Use sprintf to round again */
-            writefmt(fmt, ndigit - 1, 'E');
-            j = sprintf(tmp, fmt, value);
+            writefmt(fmt, ndigit - 1, 'E', is_quad);
+            if (!is_quad)
+              j = sprintf(tmp, fmt, value);
+            else
+              j = sprintf(tmp, fmt, lvalue);
             if (ndigit > 1) {
               i0 = 1;
               tmp[i0] = tmp[0];
@@ -980,8 +1040,11 @@ __fortio_ecvt(double value, int ndigit, int *decpt, int *sign, int round)
          Round Down:
          Lop everything extra off.
       */
-      writefmt(fmt, ndigit, 'E');
-      j = sprintf(tmp, fmt, value);
+      writefmt(fmt, ndigit, 'E', is_quad);
+      if (!is_quad)
+        j = sprintf(tmp, fmt, value);
+      else
+        j = sprintf(tmp, fmt, lvalue);
       i0 = 1;
       tmp[i0] = tmp[0];
       i = ndigit + 4;
@@ -1004,8 +1067,11 @@ __fortio_ecvt(double value, int ndigit, int *decpt, int *sign, int round)
       if (ndigit) {
         i = ndigit + 1;
         if (tmp[i] == '0') {
-          writefmt(fmt, ndigit + 20, 'E');
-          j = sprintf(tmp, fmt, value);
+          writefmt(fmt, ndigit + 20, 'E', is_quad);
+          if (!is_quad)
+            j = sprintf(tmp, fmt, value);
+          else
+            j = sprintf(tmp, fmt, lvalue);
           i0 = 1;
           tmp[i0] = tmp[0];
         }
@@ -1031,8 +1097,11 @@ __fortio_ecvt(double value, int ndigit, int *decpt, int *sign, int round)
          If we find a character other than 9, add 1 and we're done
          If we went all the way, make tmp[0] 1, and return that.
       */
-      writefmt(fmt, ndigit, 'E');
-      j = sprintf(tmp, fmt, value);
+      writefmt(fmt, ndigit, 'E', is_quad);
+      if (!is_quad)
+        j = sprintf(tmp, fmt, value);
+      else
+        j = sprintf(tmp, fmt, lvalue);
       i0 = 1;
       tmp[i0] = tmp[0];
       i = ndigit + 4;
@@ -1055,8 +1124,11 @@ __fortio_ecvt(double value, int ndigit, int *decpt, int *sign, int round)
       i = ndigit + 1;
       if (ndigit) {
         if (tmp[i] == '0') {
-          writefmt(fmt, ndigit + 20, 'E');
-          j = sprintf(tmp, fmt, value);
+          writefmt(fmt, ndigit + 20, 'E', is_quad);
+          if (!is_quad)
+            j = sprintf(tmp, fmt, value);
+          else
+            j = sprintf(tmp, fmt, lvalue);
           i0 = 1;
           tmp[i0] = tmp[0];
           tmp[ndigit + 21] = '\0';
@@ -1105,14 +1177,17 @@ __fortio_ecvt(double value, int ndigit, int *decpt, int *sign, int round)
 }
 
 char *
-__fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
+__fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
+              int round, int is_quad)
 {
 
   union ieee ieee_v;
+  union ieeeq ieeeq_v;
   static char tmp[512];
   static char fmt[16];
   int idx, fexp, nexp, kdz, ldz;
   int i, j, i0, i1;
+  double v = (double)lv;
 
   /* This block of stuff is under consideration */
   if (round == 0)
@@ -1130,29 +1205,59 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
     /* Is there anything else? */
   }
 
-  ieee_v.d = v;
-  fexp = ieee_v.v.e - 1023;
-  if (fexp == 1024) {
-    if (ieee_v.v.hm == 0 && ieee_v.v.lm == 0) {
-      strcpy(tmp, "Inf");
-      *sign = ieee_v.v.s;
-      *decpt = 0;
-      return tmp;
-    } else {
-      strcpy(tmp, "NaN");
-      *sign = 0;
-      *decpt = 0;
-      return tmp;
+  if (!is_quad) {
+    ieee_v.d = v;
+    fexp = ieee_v.v.e - EXPONENT_BIAS_D;
+    if (fexp == EXPONENT_BIAS_D + 1) {
+      if (ieee_v.v.hm == 0 && ieee_v.v.lm == 0) {
+        strcpy(tmp, "Inf");
+        *sign = ieee_v.v.s;
+        *decpt = 0;
+        return tmp;
+      } else {
+        strcpy(tmp, "NaN");
+        *sign = 0;
+        *decpt = 0;
+        return tmp;
+      }
     }
+
+    /* I've determined sprintf is FIO_NEAREST */
+    /* I've determined Intel seems to use PROCESSOR_DEFINED as NEAREST */
+    /* Use an sprintf implementation; this is probably the fastest path thru */
+
+    *sign = ieee_v.v.s;
+    ieee_v.v.s = 0;
+    v = ieee_v.d;
+  } else {
+    ieeeq_v.q = lv;
+    fexp = ieeeq_v.v.e - EXPONENT_BIAS_Q;
+    if (fexp == EXPONENT_BIAS_Q + 1) {
+      if (ieeeq_v.v.lm[SUBSCRIPT_2] == 0 && ieeeq_v.v.lm[1] == 0 &&
+          ieeeq_v.v.lm[0] == 0 && ieeeq_v.v.hm == 0) {
+        if (width < INFINITY_STR_LEN + ieeeq_v.v.s)
+          strcpy(tmp, "Inf");
+        else
+          strcpy(tmp, "Infinity");
+        *sign = ieeeq_v.v.s;
+        *decpt = 0;
+        return tmp;
+      } else {
+        strcpy(tmp, "NaN");
+        *sign = 0;
+        *decpt = 0;
+        return tmp;
+      }
+    }
+
+    /* I've determined sprintf is FIO_NEAREST */
+    /* I've determined Intel seems to use PROCESSOR_DEFINED as NEAREST */
+    /* Use an sprintf implementation; this is probably the fastest path thru */
+
+    *sign = ieeeq_v.v.s;
+    ieeeq_v.v.s = 0;
+    lv = ieeeq_v.q;
   }
-
-  /* I've determined sprintf is FIO_NEAREST */
-  /* I've determined Intel seems to use PROCESSOR_DEFINED as NEAREST */
-  /* Using an sprintf implementation, this is probably the fastest path thru */
-
-  *sign = ieee_v.v.s;
-  ieee_v.v.s = 0;
-  v = ieee_v.d;
 
   if (fexp >= 0) {
 /* Here for abs(v) >= 1.0 */
@@ -1172,8 +1277,14 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
         128, 132, 136, 140, 144, 148, 152, 155, 159, 163, 167, 170, 174,
         178, 181, 185, 188, 192, 195, 198, 202, 205, 208, 212, 215, 218,
         221, 224, 228, 231, 234, 237, 240, 243, 246, 249, 252, 255};
-      nexp = ((ieee_v.i[1] & 0x7ff00000) >> 12) - 261881; // 261880 works too
-      idx = ((ieee_v.i[1] & 0xfc000) >> 14);
+      if (!is_quad) {
+        nexp = ((ieee_v.i[1] & 0x7ff00000) >> 12) - 261881; // 261880 works too
+        idx = ((ieee_v.i[1] & 0xfc000) >> 14);
+      } else {
+        nexp = ((ieeeq_v.i[SUBSCRIPT_3] & 0x7fff0000) >> 8) -
+               4194041; // 4194040 works too
+        idx = ((ieeeq_v.i[SUBSCRIPT_3] & 0xfc00) >> 10);
+      }
       nexp += lkup[idx];
       ldz = (nexp * 1233) >> 20;
 
@@ -1193,8 +1304,11 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
            Round according to first extra character.  5+ goes up.  < 5 down.
         */
         if ((prec + ldz + 1) <= 0) {
-          writefmt(fmt, 1, 'E');
-          j = sprintf(tmp, fmt, v);
+          writefmt(fmt, 1, 'E', is_quad);
+          if (!is_quad)
+            j = sprintf(tmp, fmt, v);
+          else
+            j = sprintf(tmp, fmt, lv);
           i0 = 1;
           tmp[i0] = tmp[0];
           i = 5;
@@ -1206,8 +1320,11 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
           *decpt = kdz + 1;
           return tmp + i0;
         } else {
-          writefmt(fmt, prec + ldz + 1, 'E');
-          j = sprintf(tmp, fmt, v);
+          writefmt(fmt, prec + ldz + 1, 'E', is_quad);
+          if (!is_quad)
+            j = sprintf(tmp, fmt, v);
+          else
+            j = sprintf(tmp, fmt, lv);
           i0 = 1;
           tmp[i0] = tmp[0];
           i = prec + ldz + 4 + 1;
@@ -1217,15 +1334,21 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
           i = prec + ldz + 2;
           *decpt = kdz + 1;
           if ((kdz == ldz) && (tmp[i] == '5')) {
-            writefmt(fmt, prec + ldz + 1 + 20, 'E');
-            j = sprintf(tmp, fmt, v);
+            writefmt(fmt, prec + ldz + 1 + 20, 'E', is_quad);
+            if (!is_quad)
+              j = sprintf(tmp, fmt, v);
+            else
+              j = sprintf(tmp, fmt, lv);
             i0 = 1;
             tmp[i0] = tmp[0];
           } else if (kdz + 1 == ldz) {
             ldz = kdz;
             if ((tmp[i - 1] == '5') && (tmp[i] == '0')) {
-              writefmt(fmt, prec + ldz + 1 + 20, 'E');
-              j = sprintf(tmp, fmt, v);
+              writefmt(fmt, prec + ldz + 1 + 20, 'E', is_quad);
+              if (!is_quad)
+                j = sprintf(tmp, fmt, v);
+              else
+                j = sprintf(tmp, fmt, lv);
               i0 = 1;
               tmp[i0] = tmp[0];
             }
@@ -1258,8 +1381,11 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
         /* Algorithm for round nearest, positive or negative > 1.0:
            Turns out that sprintf is nearest
         */
-        writefmt(fmt, prec + ldz, 'E');
-        j = sprintf(tmp, fmt, v);
+        writefmt(fmt, prec + ldz, 'E', is_quad);
+        if (!is_quad)
+          j = sprintf(tmp, fmt, v);
+        else
+          j = sprintf(tmp, fmt, lv);
         i0 = 1;
         tmp[i0] = tmp[0];
         i = prec + ldz + 4;
@@ -1268,8 +1394,11 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
           kdz = kdz * 10 + tmp[i++] - '0';
         if (kdz + 1 == ldz) {
           ldz = kdz;
-          writefmt(fmt, prec + ldz, 'E');
-          j = sprintf(tmp, fmt, v);
+          writefmt(fmt, prec + ldz, 'E', is_quad);
+          if (!is_quad)
+            j = sprintf(tmp, fmt, v);
+          else
+            j = sprintf(tmp, fmt, lv);
           i0 = 1;
           tmp[i0] = tmp[0];
         }
@@ -1289,8 +1418,11 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
            Round Down:
            Lop everything extra off.
         */
-        writefmt(fmt, prec + ldz + 1, 'E');
-        j = sprintf(tmp, fmt, v);
+        writefmt(fmt, prec + ldz + 1, 'E', is_quad);
+        if (!is_quad)
+          j = sprintf(tmp, fmt, v);
+        else
+          j = sprintf(tmp, fmt, lv);
         i0 = 1;
         tmp[i0] = tmp[0];
         i = prec + ldz + 4 + 1;
@@ -1303,8 +1435,11 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
           j = prec + kdz + 2;
           ldz = kdz;
           if ((tmp[i] == '0') && (tmp[j] == '0')) {
-            writefmt(fmt, prec + ldz + 1 + 20, 'E');
-            j = sprintf(tmp, fmt, v);
+            writefmt(fmt, prec + ldz + 1 + 20, 'E', is_quad);
+            if (!is_quad)
+              j = sprintf(tmp, fmt, v);
+            else
+              j = sprintf(tmp, fmt, lv);
             i0 = 1;
             tmp[i0] = tmp[0];
           }
@@ -1328,8 +1463,11 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
            If we find a character other than 9, add 1 and we're done
            If we went all the way, make tmp[0] 1, and return that.
         */
-        writefmt(fmt, prec + ldz + 1, 'E');
-        j = sprintf(tmp, fmt, v);
+        writefmt(fmt, prec + ldz + 1, 'E', is_quad);
+        if (!is_quad)
+          j = sprintf(tmp, fmt, v);
+        else
+          j = sprintf(tmp, fmt, lv);
         i0 = 1;
         tmp[i0] = tmp[0];
         i = prec + ldz + 4 + 1;
@@ -1342,8 +1480,11 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
           j = prec + kdz + 2;
           ldz = kdz;
           if ((tmp[i] == '0') && (tmp[j] == '0')) {
-            writefmt(fmt, prec + ldz + 1 + 20, 'E');
-            j = sprintf(tmp, fmt, v);
+            writefmt(fmt, prec + ldz + 1 + 20, 'E', is_quad);
+            if (!is_quad)
+              j = sprintf(tmp, fmt, v);
+            else
+              j = sprintf(tmp, fmt, lv);
             i0 = 1;
             tmp[i0] = tmp[0];
             tmp[prec + ldz + 22] = '\0';
@@ -1397,56 +1538,62 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
         /* Avoid calling sprintf though.  Another optimization, I think */
         if ((round == FIO_UP) || (round == FIO_DOWN) || (round == FIO_ZERO))
           /* Want one extra bit for rounding */
-          writefmt(fmt, prec + 1, 'f');
+          writefmt(fmt, prec + 1, 'f', is_quad);
         else if (round == FIO_COMPATIBLE)
-          writefmt(fmt, prec + 1, 'f');
+          writefmt(fmt, prec + 1, 'f', is_quad);
         else
-          writefmt(fmt, prec, 'f');
+          writefmt(fmt, prec, 'f', is_quad);
 
         /* Rely on sprintf to correctly round the result */
-        j = sprintf(tmp, fmt, v);
-
-      if (round == FIO_COMPATIBLE) {
-        i1 = 2 + prec;
-        if (i1 <= 2) {
-          tmp[1] = tmp[0];
-          tmp[2] = '\0';
-          *decpt = 0;
-          return tmp + 1;
-        }
-
-        if (tmp[0] == '1') { /* Already rounded up to 1.0 */
-          tmp[1] = tmp[0];
-          *decpt = 1;
-          tmp[prec + 2] = '\0';
-          return tmp + 1;
-        }
-
-        if (tmp[2 + prec] == '5') {
-          writefmt(fmt, prec + 21, 'f');
+        if (!is_quad)
           j = sprintf(tmp, fmt, v);
-        }
-        if (tmp[i1] < '5') {
-          tmp[prec + 2] = '\0';
-          *decpt = 0;
-          return tmp + 2;
-        } else {
-          i = 1 + prec;
-          while ((tmp[i] == '9') && (i != 1)) {
-            tmp[i--] = '0';
+        else
+          j = sprintf(tmp, fmt, lv);
+
+        if (round == FIO_COMPATIBLE) {
+          i1 = 2 + prec;
+          if (i1 <= 2) {
+            tmp[1] = tmp[0];
+            tmp[2] = '\0';
+            *decpt = 0;
+            return tmp + 1;
           }
-          if (i != 1) {
+
+          if (tmp[0] == '1') { /* Already rounded up to 1.0 */
+            tmp[1] = tmp[0];
+            *decpt = 1;
             tmp[prec + 2] = '\0';
-            tmp[i] = tmp[i] + 1;
+            return tmp + 1;
+          }
+
+          if (tmp[2 + prec] == '5') {
+            writefmt(fmt, prec + 21, 'f', is_quad);
+            if (!is_quad)
+              j = sprintf(tmp, fmt, v);
+            else
+              j = sprintf(tmp, fmt, lv);
+          }
+          if (tmp[i1] < '5') {
+            tmp[prec + 2] = '\0';
             *decpt = 0;
             return tmp + 2;
           } else {
-            tmp[prec + 2] = '\0';
-            tmp[1] = '1';
-            *decpt = 1;
-            return tmp + 1;
+            i = 1 + prec;
+            while ((tmp[i] == '9') && (i != 1)) {
+              tmp[i--] = '0';
+            }
+            if (i != 1) {
+              tmp[prec + 2] = '\0';
+              tmp[i] = tmp[i] + 1;
+              *decpt = 0;
+              return tmp + 2;
+            } else {
+              tmp[prec + 2] = '\0';
+              tmp[1] = '1';
+              *decpt = 1;
+              return tmp + 1;
+            }
           }
-        }
       }
 
       if ((round == FIO_NEAREST) || (round == FIO_PROCESSOR_DEFINED)) {
@@ -1480,12 +1627,15 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
            If we went all the way, make tmp[0] 1, and return that.
         */
         if (tmp[2 + prec] == '0') {
-            writefmt(fmt, prec + 20, 'f');
+          writefmt(fmt, prec + 20, 'f', is_quad);
+          if (!is_quad)
             j = sprintf(tmp, fmt, v);
-            tmp[2 + prec + 20] = '\0';
-            for (i = prec + 2; tmp[i] != '\0'; i++) {
-              if (tmp[i] != '0')
-                break;
+          else
+            j = sprintf(tmp, fmt, lv);
+          tmp[2 + prec + 20] = '\0';
+          for (i = prec + 2; tmp[i] != '\0'; i++) {
+            if (tmp[i] != '0')
+              break;
             }
             if (i == 2 + prec + 20) {
               tmp[prec + 2] = '\0';
@@ -1520,8 +1670,11 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
    lop it off.
 */
         if (tmp[2 + prec] == '0') {
-          writefmt(fmt, prec + 20, 'f');
-          j = sprintf(tmp, fmt, v);
+          writefmt(fmt, prec + 20, 'f', is_quad);
+          if (!is_quad)
+            j = sprintf(tmp, fmt, v);
+          else
+            j = sprintf(tmp, fmt, lv);
         }
         tmp[2 + prec] = '\0';
         *decpt = 0;
@@ -1532,21 +1685,44 @@ __fortio_fcvt(__BIGREAL_T v, int prec, int sf, int *decpt, int *sign, int round)
       /* Order is important in these cases below... */
       tmp[1] = '\0';
       *decpt = 1;
-      if ((ieee_v.i[1] == 0x0) && (ieee_v.i[0] == 0x0)) {
-        /* Always zero */
-        tmp[0] = '0';
-      } else if (round == FIO_UP) {
-        tmp[0] = (*sign) ? '0' : '1';
-      } else if (round == FIO_DOWN) {
-        tmp[0] = (*sign) ? '1' : '0';
-      } else if (round == FIO_ZERO) {
-        tmp[0] = '0';
-      } else if (round == FIO_COMPATIBLE) {
-        tmp[0] = (ieee_v.i[1] < 0x3fe00000) ? '0' : '1';
-      } else if ((ieee_v.i[1] == 0x3fe00000) && (ieee_v.i[0] == 0x0)) {
-        tmp[0] = '0';
+      if (!is_quad) {
+        if ((ieee_v.i[1] == 0x0) && (ieee_v.i[0] == 0x0)) {
+          /* Always zero */
+          tmp[0] = '0';
+        } else if (round == FIO_UP) {
+          tmp[0] = (*sign) ? '0' : '1';
+        } else if (round == FIO_DOWN) {
+          tmp[0] = (*sign) ? '1' : '0';
+        } else if (round == FIO_ZERO) {
+          tmp[0] = '0';
+        } else if (round == FIO_COMPATIBLE) {
+          tmp[0] = (ieee_v.i[1] < 0x3fe00000) ? '0' : '1';
+        } else if ((ieee_v.i[1] == 0x3fe00000) && (ieee_v.i[0] == 0x0)) {
+          tmp[0] = '0';
+        } else {
+          tmp[0] = (ieee_v.i[1] < 0x3fe00000) ? '0' : '1';
+        }
       } else {
-        tmp[0] = (ieee_v.i[1] < 0x3fe00000) ? '0' : '1';
+        if ((ieeeq_v.i[SUBSCRIPT_3] == 0x0) &&
+            (ieeeq_v.i[SUBSCRIPT_2] == 0x0) && (ieeeq_v.i[1] == 0x0) &&
+            (ieeeq_v.i[0] == 0x0)) {
+          /* Always zero */
+          tmp[0] = '0';
+        } else if (round == FIO_UP) {
+          tmp[0] = (*sign) ? '0' : '1';
+        } else if (round == FIO_DOWN) {
+          tmp[0] = (*sign) ? '1' : '0';
+        } else if (round == FIO_ZERO) {
+          tmp[0] = '0';
+        } else if (round == FIO_COMPATIBLE) {
+          tmp[0] = (ieeeq_v.i[SUBSCRIPT_3] < 0x3ffe0000) ? '0' : '1';
+        } else if ((ieeeq_v.i[SUBSCRIPT_3] == 0x3ffe0000) &&
+                   (ieeeq_v.i[SUBSCRIPT_2] == 0x0 && (ieeeq_v.i[1] == 0x0) &&
+                    (ieeeq_v.i[0] == 0x0))) {
+          tmp[0] = '0';
+        } else {
+          tmp[0] = (ieeeq_v.i[SUBSCRIPT_3] < 0x3ffe0000) ? '0' : '1';
+        }
       }
       return tmp;
     }

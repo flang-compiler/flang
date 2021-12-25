@@ -2605,13 +2605,27 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
   case I_CPU_TIME:
     is_icall = FALSE;
     arg1 = ARGT_ARG(func_args, 0);
-    rtlRtn = DTYG(A_DTYPEG(arg1)) == TY_DBLE ? RTE_cpu_timed : RTE_cpu_time;
+    if (DTYG(A_DTYPEG(arg1)) == TY_DBLE)
+      rtlRtn = RTE_cpu_timed;
+#ifdef TARGET_SUPPORTS_QUADFP
+    else if (DTYG(A_DTYPEG(arg1)) == TY_QUAD)
+      rtlRtn = RTE_cpu_timeq;
+#endif
+    else
+      rtlRtn = RTE_cpu_time;
     nargs = 1;
     goto opt_common;
   case I_RANDOM_NUMBER:
     is_icall = FALSE;
     arg1 = ARGT_ARG(func_args, 0);
-    rtlRtn = DTYG(A_DTYPEG(arg1)) == TY_DBLE ? RTE_rnumd : RTE_rnum;
+    if (DTYG(A_DTYPEG(arg1)) == TY_DBLE)
+      rtlRtn = RTE_rnumd;
+#ifdef TARGET_SUPPORTS_QUADFP
+    else if (DTYG(A_DTYPEG(arg1)) == TY_QUAD)
+      rtlRtn = RTE_rnumq;
+#endif
+    else
+      rtlRtn = RTE_rnum;
     nargs = 1;
     goto opt_common;
   case I_RANDOM_SEED:
@@ -6702,6 +6716,15 @@ matmul(int func_ast, int func_args, int lhs)
       rtlRtn = RTE_matmul_real8;
     }
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    if (matmul_transpose) {
+      rtlRtn = RTE_matmul_real16mxv_t;
+    } else {
+      rtlRtn = RTE_matmul_real16;
+    }
+    break;
+#endif
   case TY_CMPLX:
     if (matmul_transpose) {
       rtlRtn = RTE_matmul_cplx8mxv_t;
@@ -6912,6 +6935,13 @@ mmul(int func_ast, int func_args, int lhs)
     beta = stb.dbl0;
     rtlRtn = RTE_mmul_real8;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case DT_QUAD:
+    alpha = stb.quad1;
+    beta = stb.quad0;
+    rtlRtn = RTE_mmul_real16;
+    break;
+#endif
   case DT_CMPLX8:
     num[0] = CONVAL2G(stb.flt1);
     num[1] = CONVAL2G(stb.flt0);

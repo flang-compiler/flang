@@ -39,7 +39,7 @@ static int buf_size = sizeof(buf);
 int
 __fortio_getnum(
     char *currc, /* pointer to string to convert */
-    int *type,   /* 0 ==> integer, 1 ==> __BIGREAL_T
+    int *type,   /* 0 ==> integer, 1 ==> __BIGREAL_T (or __REAL16_T)
                   * 2 ==> integer*8 (TM_I8-only).
                   * 3 ==> VMS degenerate REAL (e.g., 'd6', '-d6', 'e',...)
                   */
@@ -59,7 +59,7 @@ __fortio_getnum(
   int itmp;
   union {
     __BIGINT_T i;
-    __BIGREAL_T d;
+    __REAL16_T d;
     DBLINT64 i8v;
   } * val; /* value of token to return */
 
@@ -90,7 +90,7 @@ __fortio_getnum(
     *cp = '.';
     goto state2;
   }
-  if (c == 'e' || c == 'E' || c == 'd' || c == 'D')
+  if (c == 'e' || c == 'E' || c == 'd' || c == 'D' || c == 'q' || c == 'Q')
     goto state3;
   if (c == '+' || c == '-')
     goto state6;
@@ -99,14 +99,14 @@ state2: /* . digit [digits] or digits . [ digits ] */
   do {
     c = *++cp;
   } while (ISDIGIT(c));
-  if (c == 'e' || c == 'E' || c == 'd' || c == 'D')
+  if (c == 'e' || c == 'E' || c == 'd' || c == 'D' || c == 'q' || c == 'Q')
     goto state3;
   if (c == '+' || c == '-')
     goto state6;
   goto return_real;
 
-state3: /* digits [ . [ digits ] ] { e | d } */
-  if (c == 'd' || c == 'D')
+state3: /* digits [ . [ digits ] ] { e | d | q} */
+  if (c == 'd' || c == 'D' || c == 'q' || c == 'Q')
     *cp = 'e'; /* to ensure that strtod works */
   c = *++cp;
   if (ISDIGIT(c))
@@ -162,7 +162,7 @@ state6: /* digits [ . [ digits ] ] { + | - } */
   }
   *bp = '\0';
   fcptr = NULL;
-  val->d = __io_strtod(buf_p, &fcptr);
+  val->d = (__REAL16_T)__io_strtold(buf_p, &fcptr);
   if (fcptr == buf_p) {
     /* illegal real constant */
     ret_err = FIO_EERR_DATA_CONVERSION;
@@ -180,7 +180,8 @@ junk0:
     c = *++cp;
     while (ISDIGIT(c))
       c = *++cp;
-  } else if (c == 'e' || c == 'E' || c == 'd' || c == 'D') {
+  } else if (c == 'e' || c == 'E' || c == 'd' || c == 'D' || c == 'q' ||
+             c == 'Q') {
     c = *++cp;
     if (c == '+' || c == '-')
       c = *++cp;
@@ -207,7 +208,7 @@ return_integer:
 return_real:
   *type = 1;
   fcptr = NULL;
-  val->d = __io_strtod(currc, &fcptr);
+  val->d = (__REAL16_T)__io_strtold(currc, &fcptr);
   if (fcptr == currc)
     /* illegal real constant */
     ret_err = FIO_EERR_DATA_CONVERSION;
@@ -219,7 +220,11 @@ ret:
                  ret_err);
     __io_printf("   str:#%.*s#, val:", *len, currc);
     if (*type) {
+#ifdef TARGET_SUPPORTS_QUADFP
+      __fortio_printreal16(val->d);
+#else
       __fortio_printbigreal(val->d);
+#endif
       __io_printf("\n");
     } else
       __io_printf("%d\n", val->i);

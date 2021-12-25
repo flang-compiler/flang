@@ -2009,6 +2009,11 @@ collapse_assignment(int asn, int std)
       case 16:
         rtlRtn = RTE_mzeroz16;
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case 32:
+        rtlRtn = RTE_mzeroz32;
+        break;
+#endif
       }
     } else {
       switch (size_of(dtype)) {
@@ -2024,6 +2029,11 @@ collapse_assignment(int asn, int std)
       case 8:
         rtlRtn = RTE_mzero8;
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case 16:
+        rtlRtn = RTE_mzero16;
+        break;
+#endif
       }
     }
     nm = mkRteRtnNm(rtlRtn);
@@ -2044,6 +2054,11 @@ collapse_assignment(int asn, int std)
       case 16:
         rtlRtn = RTE_mcopyz16;
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case 32:
+        rtlRtn = RTE_mcopyz32;
+        break;
+#endif
       }
     } else {
       switch (size_of(dtype)) {
@@ -2059,6 +2074,11 @@ collapse_assignment(int asn, int std)
       case 8:
         rtlRtn = RTE_mcopy8;
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case 16:
+        rtlRtn = RTE_mcopy16;
+        break;
+#endif
       }
     }
     nm = mkRteRtnNm(rtlRtn);
@@ -2080,6 +2100,11 @@ collapse_assignment(int asn, int std)
       case 16:
         rtlRtn = RTE_msetz16;
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case 32:
+        rtlRtn = RTE_msetz32;
+        break;
+#endif
       }
     } else {
       switch (size_of(dtype)) {
@@ -2095,6 +2120,11 @@ collapse_assignment(int asn, int std)
       case 8:
         rtlRtn = RTE_mset8;
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case 16:
+        rtlRtn = RTE_mset16;
+        break;
+#endif
       }
     }
     nm = mkRteRtnNm(rtlRtn);

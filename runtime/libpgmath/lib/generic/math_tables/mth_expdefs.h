@@ -29,6 +29,9 @@
 
 MTHINTRIN(exp  , ss   , any        ,  __mth_i_exp          ,  __mth_i_exp          , __mth_i_exp           ,__math_dispatch_error)
 MTHINTRIN(exp  , ds   , any        ,  __mth_i_dexp         ,  __mth_i_dexp         , __mth_i_dexp          ,__math_dispatch_error)
+#ifdef TARGET_SUPPORTS_QUADFP
+MTHINTRIN(exp  , qs   , any        ,  __mth_i_qexp         ,  __mth_i_qexp         , __mth_i_qexp          ,__math_dispatch_error)
+#endif
 MTHINTRIN(exp  , sv4  , any        ,  __gs_exp_4_f         ,  __gs_exp_4_r         , __gs_exp_4_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , dv2  , any        ,  __gd_exp_2_f         ,  __gd_exp_2_r         , __gd_exp_2_p          ,__math_dispatch_error)
 MTHINTRIN(exp  , sv4m , any        , __fs_exp_4_mn         , __rs_exp_4_mn         , __ps_exp_4_mn         ,__math_dispatch_error)

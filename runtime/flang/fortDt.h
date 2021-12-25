@@ -148,9 +148,11 @@ typedef unsigned short __REAL2_T; /* 45 __REAL2      real*2 */
 typedef float __REAL4_T; /* 27 __REAL4      real*4 */
 
 typedef double __REAL8_T; /* 28 __REAL8      real*8 */
-
+#ifdef TARGET_SUPPORTS_QUADFP
+typedef long double __REAL16_T; /* 29 __REAL16     real*16 */
+#else
 typedef double __REAL16_T; /* 29 __REAL16     real*16 */
-
+#endif
 typedef struct {
   __REAL4_T r, i;
 } __CPLX8_T; /*  9 __CPLX8       complex*8 */
@@ -238,6 +240,7 @@ typedef __LOG4_T __LOG_T;
 #define __DCPLX __CPLX16
 typedef __REAL4_T __REAL_T;
 typedef __REAL8_T __DBLE_T;
+typedef __REAL16_T __QUAD_T;
 typedef __CPLX8_T __CPLX_T;
 typedef __CPLX16_T __DCPLX_T;
 #endif

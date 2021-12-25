@@ -29,6 +29,9 @@
 
 MTHINTRIN(cos  , ss   , any        ,  __mth_i_cos          ,  __mth_i_cos          , __mth_i_cos           ,__math_dispatch_error)
 MTHINTRIN(cos  , ds   , any        ,  __mth_i_dcos         ,  __mth_i_dcos         , __mth_i_dcos          ,__math_dispatch_error)
+#ifdef TARGET_SUPPORTS_QUADFP
+MTHINTRIN(cos  , qs   , any        ,  __mth_i_qcos         ,  __mth_i_qcos         , __mth_i_qcos          ,__math_dispatch_error)
+#endif
 MTHINTRIN(cos  , sv4  , any        ,  __gs_cos_4_f         ,  __gs_cos_4_r         , __gs_cos_4_p          ,__math_dispatch_error)
 MTHINTRIN(cos  , dv2  , any        ,  __gd_cos_2_f         ,  __gd_cos_2_r         , __gd_cos_2_p          ,__math_dispatch_error)
 MTHINTRIN(cos  , sv4m , any        , __fs_cos_4_mn         , __rs_cos_4_mn         , __ps_cos_4_mn         ,__math_dispatch_error)

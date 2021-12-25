@@ -29,6 +29,9 @@
 
 MTHINTRIN(tanh , ss   , any        ,  __mth_i_tanh         ,  __mth_i_tanh         , __mth_i_tanh          ,__math_dispatch_error)
 MTHINTRIN(tanh , ds   , any        ,  __mth_i_dtanh        ,  __mth_i_dtanh        , __mth_i_dtanh         ,__math_dispatch_error)
+#ifdef TARGET_SUPPORTS_QUADFP
+MTHINTRIN(tanh , qs   , any        ,  __mth_i_qtanh        ,  __mth_i_qtanh        , __mth_i_qtanh         ,__math_dispatch_error)
+#endif
 MTHINTRIN(tanh , sv4  , any        ,  __gs_tanh_4_f        ,  __gs_tanh_4_r        , __gs_tanh_4_p         ,__math_dispatch_error)
 MTHINTRIN(tanh , dv2  , any        ,  __gd_tanh_2_f        ,  __gd_tanh_2_r        , __gd_tanh_2_p         ,__math_dispatch_error)
 MTHINTRIN(tanh , sv4m , any        , __fs_tanh_4_mn        , __rs_tanh_4_mn        , __ps_tanh_4_mn        ,__math_dispatch_error)

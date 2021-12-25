@@ -73,11 +73,28 @@ set(GENERIC_SRCS_QUADFP
   aqanint.c
   dqanint.c
   qabs.c
+  qacos.c
+  qacosh.c
   qanint.c
+  qasin.c
+  qasinh.c
+  qatan2.c
+  qatan.c
+  qatanh.c
+  qcos.c
+  qcosh.c
   qexp.c
   qint.c
+  qlog10.c
+  qlog.c
+  qpowq.c
   qremainder.c
-  qround.c)
+  qround.c
+  qsin.c
+  qsinh.c
+  qsqrt.c
+  qtan.c
+  qtanh.c)
 
 if(TARGET_SUPPORTS_QUADFP)
   LIST(APPEND GENERIC_SRCS ${GENERIC_SRCS_QUADFP})

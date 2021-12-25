@@ -1032,6 +1032,12 @@ ENTF90IO(SC_D_LDW, sc_d_ldw)(double item, int type)
 }
 
 __INT_T
+ENTF90IO(SC_Q_LDW, sc_q_ldw)(long double item, int type)
+{
+  return __f90io_ldw(type, 1, 0, (char *)&item, 0);
+}
+
+__INT_T
 ENTF90IO(SC_CF_LDW, sc_cf_ldw)(float real, float imag, int type)
 {
   struct {

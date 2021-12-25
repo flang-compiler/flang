@@ -289,7 +289,7 @@ typedef struct atag {
   int dtype;       /* __BIGINT,__BIGLOG, __BIGREAL, __BIGCPLX, __(N)CHAR */
   union {          /* value: depends on dtype */
     __BIGINT_T i;  /* __BIGINT, __BIGLOG */
-    __BIGREAL_T d; /* __BIGREAL */
+    __REAL16_T d;  /* __REAL16 */
     DBLINT64 i8; /* __INT8 */
     __INT8_T i8v;
     DBLUINT64 ui8; /* __LOG8 */
@@ -299,7 +299,7 @@ typedef struct atag {
       char *str; /* ptr to its characters */
     } c;
     struct atag *cmplx; /* __BIGCPLX: ptr to 2 element TKNVAL, */
-    /* [0] - real, [1] - imag, both are __BIGREAL */
+    /* [0] - real, [1] - imag, both are __REAL16 */
   } val;
 } AVAL;
 
@@ -341,10 +341,12 @@ __INT_T __fort_time(void);
 extern int __fortio_assign(char *, int, __CLEN_T, AVAL *);
 
 /*****  fpcvt.c  *****/
-extern char *__fortio_ecvt(double, int, int *, int *, int);
-extern char *__fortio_fcvt(__BIGREAL_T, int, int, int *, int *, int);
+extern char *__fortio_ecvt(long double, int, int, int *, int *, int, int);
+extern char *__fortio_fcvt(__REAL16_T, int, int, int, int *, int *, int, int);
 WIN_MSVCRT_IMP double WIN_CDECL strtod(const char *, char **);
+WIN_MSVCRT_IMP long double WIN_CDECL strtold(const char *, char **);
 #define __fortio_strtod(x, y) strtod(x, y)
+#define __fortio_strtold(x, y) strtold(x, y)
 
 /*****  error.c  *****/
 extern VOID set_gbl_newunit(bool newunit);

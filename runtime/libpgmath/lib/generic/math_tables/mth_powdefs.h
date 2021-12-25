@@ -29,6 +29,9 @@
 
 MTHINTRIN(pow  , ss   , any        ,  __mth_i_rpowr        ,  __mth_i_rpowr        , __mth_i_rpowr         ,__math_dispatch_error)
 MTHINTRIN(pow  , ds   , any        ,  __mth_i_dpowd        ,  __mth_i_dpowd        , __mth_i_dpowd         ,__math_dispatch_error)
+#ifdef TARGET_SUPPORTS_QUADFP
+MTHINTRIN(pow  , qs   , any        ,  __mth_i_qpowq        ,  __mth_i_qpowq        , __mth_i_qpowq         ,__math_dispatch_error)
+#endif
 MTHINTRIN(pow  , sv4  , any        ,  __gs_pow_4_f         ,  __gs_pow_4_r         , __gs_pow_4_p          ,__math_dispatch_error)
 MTHINTRIN(pow  , dv2  , any        ,  __gd_pow_2_f         ,  __gd_pow_2_r         , __gd_pow_2_p          ,__math_dispatch_error)
 MTHINTRIN(pow  , sv4m , any        , __fs_pow_4_mn         , __rs_pow_4_mn         , __ps_pow_4_mn         ,__math_dispatch_error)

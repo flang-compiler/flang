@@ -209,6 +209,21 @@ SET(FTN_INTRINSICS_DESC_DEP
   scatter_minval.c
   )
 
+SET(FTN_SUPPORT_DESC_INDEP_QUADFP
+  format-quad.c
+  gather_real16.F95
+  mmreal16.c
+  mnaxnb_real16.F95
+  mnaxtb_real16.F95
+  mtaxnb_real16.F95
+  mtaxtb_real16.F95
+  mvmul_real16.F95
+  transpose_real16.F95
+  vmmul_real16.F95
+)
+
+LIST(APPEND LLVM_OPTIONAL_SOURCES ${FTN_SUPPORT_DESC_INDEP_QUADFP})
+
 SET(FTN_SUPPORT_DESC_INDEP
   bcopy.c
   bcopys.c
@@ -261,7 +276,7 @@ SET(FTN_SUPPORT_DESC_INDEP
   initpar.c
   inquire.c
   iso_c_bind.F95
-  iso_fortran_env.f90
+  iso_fortran_env.F90
   ldread.c
   ldwrite.c
   linux_dummy.c
@@ -315,6 +330,18 @@ SET(FTN_SUPPORT_DESC_INDEP
   xfer_rpm1.c
   alias.c
   )
+
+SET(FTN_SUPPORT_DESC_DEP_QUADFP
+  mmulreal16.c
+  mmul_real16contmxm.F95
+  mmul_real16contmxv.F95
+  mmul_real16contvxm.F95
+  mmul_real16str1.F95
+  mmul_real16str1_t.F95
+  mmulreal16_t.c
+)
+
+list(APPEND LLVM_OPTIONAL_SOURCES ${FTN_SUPPORT_DESC_DEP_QUADFP})
 
 SET(FTN_SUPPORT_DESC_DEP
   aligned.c
@@ -453,7 +480,15 @@ add_custom_command(
   DEPENDS flang1 flang2
 )
 
-# The files lists FTN_INTRINSICS_DESC_DEP and FTN_SUPPORT_DESC_DEP need to be compiled twice (with and without 'DESC_I8' compile definition). So an actual copy is made in a temp file on which this is done.
+# REAL*16 is not yet available on all platforms.
+if(TARGET_SUPPORTS_QUADFP)
+  LIST(APPEND FTN_SUPPORT_DESC_INDEP ${FTN_SUPPORT_DESC_INDEP_QUADFP})
+  LIST(APPEND FTN_SUPPORT_DESC_DEP ${FTN_SUPPORT_DESC_DEP_QUADFP})
+endif()
+
+# The files lists FTN_INTRINSICS_DESC_DEP and FTN_SUPPORT_DESC_DEP need to be
+# compiled twice (with and without 'DESC_I8' compile definition). So an actual
+# copy is made in a temp file on which this is done.
 
 FOREACH(file ${FTN_INTRINSICS_DESC_DEP})
     set(I8_FILE "${I8_FILES_DIR}/${file}")

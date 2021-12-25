@@ -1897,9 +1897,6 @@ ldst_size(DTYPE dtype, ILI_OP *ldo, ILI_OP *sto, int *siz)
     *ldo = IL_LDKR;
     *sto = IL_STKR;
     break;
-#ifndef TARGET_SUPPORTS_QUADFP
-  case TY_QUAD:
-#endif
   case TY_DBLE:
   case TY_DCMPLX:
     *siz = MSZ_F8;

@@ -218,8 +218,13 @@ program e10
        8,		&
    !select_rkind4
        8,		&
+#ifdef __flang_quadfp__
+   !select_rkind5
+       16,		&
+#else
    !select_rkind5
        -1,		&
+#endif
    !select_rkind6
        4,		&
    !select_rkind7
@@ -230,8 +235,13 @@ program e10
        8,		&
    !select_rkind10
        8,		&
+#ifdef __flang_quadfp__
+   !select_rkind11
+       16,		&
+#else
    !select_rkind11
        -2,		&
+#endif
    !select_rkind12
        -2,		&
    !select_rkind13
@@ -246,14 +256,26 @@ program e10
        8,		&
    !select_rkind18
        8,		&
+#ifdef __flang_quadfp__
+   !select_rkind19
+       16,		&
+   !select_rkind20
+       16,		&
+#else
    !select_rkind19
        -2,		&
    !select_rkind20
        -3,		&
+#endif
    !select_rkind21
        -2,		&
+#ifdef __flang_quadfp__
+   !select_rkind22
+       -2,		&
+#else
    !select_rkind22
        -3,		&
+#endif
    !i2dimarryparam1
        50, 40, 30, 20, 10, 1,		&
        2, 3, 4, 5,		&

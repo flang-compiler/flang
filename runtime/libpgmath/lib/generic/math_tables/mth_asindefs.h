@@ -29,6 +29,9 @@
 
 MTHINTRIN(asin , ss   , any        ,  __mth_i_asin         ,  __mth_i_asin         , __mth_i_asin          ,__math_dispatch_error)
 MTHINTRIN(asin , ds   , any        ,  __mth_i_dasin        ,  __mth_i_dasin        , __mth_i_dasin         ,__math_dispatch_error)
+#ifdef TARGET_SUPPORTS_QUADFP
+MTHINTRIN(asin , qs   , any        ,  __mth_i_qasin        ,  __mth_i_qasin        , __mth_i_qasin         ,__math_dispatch_error)
+#endif
 MTHINTRIN(asin , sv4  , any        ,  __gs_asin_4_f        ,  __gs_asin_4_r        , __gs_asin_4_p         ,__math_dispatch_error)
 MTHINTRIN(asin , dv2  , any        ,  __gd_asin_2_f        ,  __gd_asin_2_r        , __gd_asin_2_p         ,__math_dispatch_error)
 MTHINTRIN(asin , sv4m , any        , __fs_asin_4_mn        , __rs_asin_4_mn        , __ps_asin_4_mn        ,__math_dispatch_error)

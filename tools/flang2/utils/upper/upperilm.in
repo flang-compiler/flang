@@ -6,7 +6,13 @@
 ABS	ilm
 ACON	sym
 ACOS	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QACOS   ilm
+#endif
 ACOSD	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QACOSD  ilm
+#endif
 ADJARR	sym	sym	sym
 AGOTO	num	ilm	syms
 AINT	ilm
@@ -17,25 +23,52 @@ AND64	ilm	ilm
 ANINT	ilm
 ARET	ilm
 ASIN	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QASIN   ilm
+#endif
 ASIND	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QASIND  ilm
+#endif
 AST	ilm	ilm
 ATAN	ilm
 ATAN2	ilm	ilm
 ATAN2D	ilm	ilm
 ATAND	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QATAND  ilm
+#endif
 ERF	ilm
 DERF	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QERF    ilm
+#endif
 ERFC	ilm
 ERFC_SCALED	ilm
 DERFC	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QERFC   ilm
+#endif
 DERFC_SCALED	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QERFC_SCALED    ilm
+#endif
 GAMMA	ilm
 DGAMMA	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QGAMMA  ilm
+#endif
 LOG_GAMMA	ilm
 LSECTION	ilm	sym	sym
 DLOG_GAMMA	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QLOG_GAMMA  ilm
+#endif
 HYPOT	ilm	ilm
 DHYPOT	ilm	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QHYPOT  ilm     ilm
+#endif
 ACOSH	ilm
 DACOSH	ilm
 ASINH	ilm
@@ -196,6 +229,10 @@ DASIND	ilm
 DATAN	ilm
 DATAN2	ilm	ilm
 DATAN2D	ilm	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QATAN2  ilm     ilm
+QATAN2D ilm     ilm
+#endif
 DATAND	ilm
 DBLE	ilm
 DCEIL	ilm
@@ -205,8 +242,14 @@ DCON	sym
 DCONJG	ilm
 DCOS	ilm
 DCOSD	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QCOSD   ilm
+#endif
 DCOSH	ilm
 DDIM	ilm	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QDIM    ilm     ilm
+#endif
 DDIV	ilm	ilm
 DEALLOCA	ilm	sym	sym	num
 DEXP	ilm
@@ -224,6 +267,9 @@ DINT	ilm
 DISNAN	ilm
 DLD	ilm
 DLOG	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QLOG    ilm
+#endif
 DLOG10	ilm
 DMAX	ilm	ilm
 DMERGE	ilm	ilm	ilm
@@ -245,12 +291,18 @@ DREAL	ilm
 DSIGN	ilm	ilm
 DSIN	ilm
 DSIND	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QSIND   ilm
+#endif
 DSINH	ilm
 DSQRT	ilm
 DST	ilm	ilm
 DSUB	ilm	ilm
 DTAN	ilm
 DTAND	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QTAND   ilm
+#endif
 DTANH	ilm
 DTOD	ilm	ilm
 DTOI	ilm	ilm
@@ -569,6 +621,9 @@ SNGL	ilm
 SPOPCNT	ilm
 SPOPPAR	ilm
 SQRT	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QSQRT   ilm
+#endif
 SST	ilm	ilm
 STOI	ilm
 STOUDI	ilm
@@ -576,6 +631,9 @@ STOUI	ilm
 STRAILZ ilm
 SUBS	ilm	ilm	ilm
 TAN	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QTAN    ilm
+#endif
 TAND	ilm
 TANH	ilm
 TARGETENTERDATA	ilm	num
@@ -676,6 +734,10 @@ Q2K	ilm
 QTOI    ilm     ilm
 QTOK    ilm     ilm
 QTOQ    ilm     ilm
+QATAN   ilm
+QSIN    ilm
+QCOS    ilm
+
 QFUNC	num	sym	ilms
 QFUNCA	num	num	ilm	ilms
 PQFUNCA	num	num	sym	ilm	ilms
@@ -685,10 +747,21 @@ QUFUNCA/QFUNCA	num	num	ilm	args
 PQUFUNCA/PQFUNCA	num	num	sym	ilm	args
 QUVFUNCA/QVFUNCA	num	num	sym	ilm	sym	args
 QABS    ilm
+QFLOOR  ilm
+QCEIL   ilm
 IQNINT	ilm
 KQNINT	ilm
 QINT    ilm
 QQANINT ilm
 DQANINT ilm
 AQANINT ilm
+QMOD    ilm ilm
+QSIGN   ilm ilm
+QASINH  ilm
+QACOSH  ilm
+QATANH  ilm
+QSINH   ilm
+QCOSH   ilm
+QTANH   ilm
+QLOG10  ilm
 #endif

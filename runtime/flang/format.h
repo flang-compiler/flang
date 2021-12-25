@@ -19,6 +19,8 @@
 #define REAL4_D 7
 #define REAL8_D 16
 #define REAL16_D 34
+/* compatible with gfortran */
+#define G_REAL16_D 36
 
 /* define number of decimal digit characters to represent a real         */
 /* appears to be  W  ==  E + D + 6                                       */
@@ -27,6 +29,8 @@
 #define REAL4_W 15
 #define REAL8_W 25
 #define REAL16_W 44
+/* compatible with gfortran */
+#define G_REAL16_W 45
 
 /* Only use these for converting BIGreals */
 #define BIGREAL_E REAL8_E
@@ -37,6 +41,8 @@
 
 /** \brief Generate a formated REAL*8 string */
 void __fortio_printbigreal(__BIGREAL_T);
+/** \brief Generate a formated REAL*16 string */
+void __fortio_printreal16(__REAL16_T);
 
 /** \brief Drive the generation of output strings based on format strings */
 char *__fortio_default_convert(char *, int, int, int *, bool, bool, int);
@@ -51,7 +57,7 @@ char *__fortio_fmt_i8(DBLINT64, int, int, bool);
 char *__fortio_fmt_d(__BIGREAL_T, int, int, int, int, bool, int);
 
 /** \brief Generate a string for a 'G' format characer */
-char *__fortio_fmt_g(__BIGREAL_T, int, int, int, int, int, bool, bool, bool,
+char *__fortio_fmt_g(__REAL16_T, int, int, int, int, int, bool, bool, bool, int,
                      int);
 
 /** \brief Generate a string for an 'F' format characer */

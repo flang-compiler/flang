@@ -61,6 +61,18 @@ SET(PGC_SRC_FILES
   llcrit.c
   )
 
+SET(PGC_SRC_FILES_QUADFP
+  mcopy16.c
+  mset16.c
+  mzero16.c
+)
+
+list(APPEND LLVM_OPTIONAL_SOURCES ${PGC_SRC_FILES_QUADFP})
+
+if(TARGET_SUPPORTS_QUADFP)
+  LIST(APPEND PGC_SRC_FILES ${PGC_SRC_FILES_QUADFP})
+endif()
+
 add_flang_library(flangrti_static
   ${PGC_SRC_FILES}
   ${SHARED_SOURCES}

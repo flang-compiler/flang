@@ -2614,6 +2614,9 @@ addarth(ILI *ilip)
   case IL_IDIM:
   case IL_FDIM:
   case IL_DDIM:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QDIM:
+#endif
     /* add constant folding later */
     break;
 
@@ -2682,7 +2685,15 @@ addarth(ILI *ilip)
       goto add_dcon;
     }
     break;
-
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QSQRT:
+    if (ncons == 1) {
+      GETVAL128(qnum1, cons1);
+      xqsqrt(qnum1.numq, qres.numq);
+      goto add_qcon;
+    }
+    break;
+#endif
 #ifdef IL_FRSQRT
   case IL_FRSQRT:
 #if !defined(TARGET_LLVM_ARM)
@@ -4702,6 +4713,30 @@ addarth(ILI *ilip)
     ilix = ad2altili(opc, op1, op2, ilix);
     return ilix;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QMOD:
+    if (!flg.ieee) {
+#ifdef TARGET_X8664
+      (void)mk_prototype(fast_math("mod", 's', 'd', FMTH_I_DMOD), "f pure",
+                         DT_QUAD, 2, DT_QUAD, DT_QUAD);
+#else
+      (void)mk_prototype(MTH_I_QMOD, "f pure", DT_QUAD, ARGS_NUMBER, DT_QUAD,
+                         DT_QUAD);
+      ilix = ad_func(IL_DFRQP, IL_QJSR, MTH_I_QMOD, ARGS_NUMBER, op1, op2);
+      ilix = ad2altili(opc, op1, op2, ilix);
+      return ilix;
+#endif
+      ilix = ad_func(IL_DFRQP, IL_QJSR, fast_math("mod", 's', 'd', FMTH_I_DMOD),
+                     ARGS_NUMBER, op1, op2);
+    } else {
+      (void)mk_prototype(MTH_I_QMOD, "f pure", DT_QUAD, ARGS_NUMBER, DT_QUAD,
+                         DT_QUAD);
+      ilix = ad_func(IL_DFRQP, IL_QJSR, MTH_I_QMOD, ARGS_NUMBER, op1, op2);
+    }
+    ilix = ad2altili(opc, op1, op2, ilix);
+    return ilix;
+#endif
+
   case IL_FSINH:
     if (XBIT_NEW_MATH_NAMES) {
       fname = make_math(MTH_sinh, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
@@ -5673,6 +5708,45 @@ addarth(ILI *ilip)
 #endif
     break;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QSIN:
+    if (ncons == 1 && is_quad0(cons1)) {
+      return op1;
+    }
+    if (XBIT_NEW_MATH_NAMES) {
+      ilix =
+          gen_sincos(opc, op1, IL_NONE, IL_NONE, MTH_sin, DT_QUAD, IL_qpfunc);
+      return ilix;
+    }
+#if defined(PGOCL) || defined(TARGET_LLVM_ARM)
+    break;
+#else
+    if (flg.ieee) {
+      (void)mk_prototype(MTH_I_DSIN, "f pure", DT_DBLE, 1, DT_DBLE);
+      ilix = ad_func(IL_DFRDP, IL_QJSR, MTH_I_DSIN, 1, op1);
+      return ad1altili(opc, op1, ilix);
+    }
+#if defined(TARGET_LLVM_X8664)
+    mk_prototype(fast_math("sin", 's', 'd', FMTH_I_DSIN), "f pure", DT_DBLE, 1,
+                 DT_DBLE);
+    ilix = ad_func(IL_DFRDP, IL_QJSR, fast_math("sin", 's', 'd', FMTH_I_DSIN),
+                   1, op1);
+    return ad1altili(opc, op1, ilix);
+#elif defined(TARGET_POWER)
+    mk_prototype(fast_math("sin", 's', 'd', MTH_I_DSIN), "f pure", DT_DBLE, 1,
+                 DT_DBLE);
+    ilix = ad_func(IL_DFRDP, IL_QJSR, fast_math("sin", 's', 'd', MTH_I_DSIN), 1,
+                   op1);
+    return ad1altili(opc, op1, ilix);
+#else
+    (void)mk_prototype(MTH_I_DSIN, "f pure", DT_DBLE, 1, DT_DBLE);
+    ilix = ad_func(IL_qpfunc, IL_QJSR, MTH_I_DSIN, 1, op1);
+    return ad1altili(opc, op1, ilix);
+#endif
+#endif
+    break;
+#endif
+
   case IL_DSIN:
     if (ncons == 1 && is_dbl0(cons1)) {
       return op1;
@@ -5747,6 +5821,23 @@ addarth(ILI *ilip)
 #endif
 #endif
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCOS:
+    if (ncons == 1 && is_quad0(cons1)) {
+      return ad1ili(IL_QCON, stb.quad1);
+    }
+    if (XBIT_NEW_MATH_NAMES) {
+      ilix =
+          gen_sincos(opc, op1, IL_NONE, IL_NONE, MTH_cos, DT_QUAD, IL_qpfunc);
+      return ilix;
+    }
+#if defined(PGOCL) || defined(TARGET_LLVM_ARM)
+    break;
+#else
+#endif
+    break;
+#endif
 
   case IL_DCOS:
     if (ncons == 1 && is_dbl0(cons1)) {
@@ -5854,6 +5945,26 @@ addarth(ILI *ilip)
     return ad1altili(opc, op1, ilix);
 #endif
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QTAN:
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_tan, &funcsptr, 1, false, DT_QUAD, 1, DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+#if defined(TARGET_X8664)
+    break;
+#endif
+#if defined(TARGET_POWER)
+    break;
+#else
+    (void)mk_prototype(MTH_I_QTAN, "f pure", DT_QUAD, 1, DT_QUAD);
+    ilix = ad_func(IL_qpfunc, IL_QJSR, MTH_I_QTAN, 1, op1);
+    return ad1altili(opc, op1, ilix);
+#endif
+#endif
+
   case IL_FATAN:
     if (ncons == 1) {
       xfatan(con1v2, &res.numi[1]);
@@ -5891,6 +6002,32 @@ addarth(ILI *ilip)
     ilix = ad_func(IL_DFRSP, IL_QJSR, MTH_I_ATAN, 1, op1);
     return ad1altili(opc, op1, ilix);
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QATAN:
+    if (ncons == 1) {
+      GETVAL128(qnum1, cons1);
+      xqatan(qnum1.numq, qres.numq);
+      goto add_qcon;
+    }
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_atan, &funcsptr, 1, false, DT_QUAD, 1, DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+#if defined(TARGET_X8664)
+    break;
+#endif
+#if defined(TARGET_POWER)
+    break;
+#else
+    (void)mk_prototype(MTH_I_QATAN, "f pure", DT_QUAD, 1, DT_QUAD);
+    ilix = ad_func(IL_DFRQP, IL_QJSR, MTH_I_QATAN, 1, op1);
+    return ad1altili(opc, op1, ilix);
+#endif
+    break;
+#endif
 
   case IL_DATAN:
     if (ncons == 1) {
@@ -5981,6 +6118,20 @@ addarth(ILI *ilip)
     return ad1altili(opc, op1, ilix);
     break;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QACOS:
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_acos, &funcsptr, 1, false, DT_QUAD, 1, DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+    (void)mk_prototype(MTH_I_QACOS, "f pure", DT_QUAD, 1, DT_QUAD);
+    ilix = ad_func(IL_DFRQP, IL_QJSR, MTH_I_QACOS, 1, op1);
+    return ad1altili(opc, op1, ilix);
+    break;
+#endif
+
   case IL_DASIN:
     if (XBIT_NEW_MATH_NAMES) {
       fname = make_math(MTH_asin, &funcsptr, 1, false, DT_DBLE, 2, DT_DBLE,
@@ -5994,6 +6145,21 @@ addarth(ILI *ilip)
     return ad1altili(opc, op1, ilix);
     break;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QASIN:
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_asin, &funcsptr, VECTLEN1, false, DT_QUAD,
+                        ARGS_NUMBER, DT_QUAD, DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+    (void)mk_prototype(MTH_I_QASIN, "f pure", DT_QUAD, 1, DT_QUAD);
+    ilix = ad_func(IL_DFRDP, IL_QJSR, MTH_I_QASIN, 1, op1);
+    return ad1altili(opc, op1, ilix);
+    break;
+#endif
+
   case IL_DATAN2:
     if (XBIT_NEW_MATH_NAMES) {
       fname = make_math(MTH_atan2, &funcsptr, 1, false, DT_DBLE, 2, DT_DBLE,
@@ -6006,6 +6172,27 @@ addarth(ILI *ilip)
     ilix = ad_func(IL_DFRDP, IL_QJSR, MTH_I_DATAN2, 2, op1, op2);
     return ad2altili(opc, op1, op2, ilix);
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QATAN2:
+    if (ncons == 3) {
+      GETVAL128(qnum1, cons1);
+      GETVAL128(qnum2, cons2);
+      xqatan2(qnum1.numq, qnum2.numq, qres.numq);
+      goto add_qcon;
+    }
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_atan2, &funcsptr, 1, false, DT_QUAD, 2, DT_QUAD,
+                        DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, fname, 2, op1, op2);
+      ilix = ad2altili(opc, op1, op2, ilix);
+      return ilix;
+    }
+    (void)mk_prototype(MTH_I_QATAN2, "f pure", DT_QUAD, 2, DT_QUAD, DT_QUAD);
+    ilix = ad_func(IL_DFRQP, IL_QJSR, MTH_I_QATAN2, 2, op1, op2);
+    return ad2altili(opc, op1, op2, ilix);
+    break;
+#endif
 
   case IL_FLOG:
     if (XBIT_NEW_MATH_NAMES) {
@@ -6088,6 +6275,30 @@ addarth(ILI *ilip)
 #endif
 #endif /*if !defined(PGOCL) && !defined(TARGET_LLVM_ARM) */
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QLOG:
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_log, &funcsptr, 1, false, DT_QUAD, 1, DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+#if defined(TARGET_X8664)
+    if (!flg.ieee) {
+      (void)mk_prototype(gnr_math("log", 's', 'q', FMTH_I_QLOG, 0), "f pure",
+                         DT_QUAD, 1, DT_QUAD);
+      ilix = ad_func(IL_DFRQP, IL_QJSR,
+                     gnr_math("log", 's', 'q', FMTH_I_QLOG, 0), 1, op1);
+    } else {
+      (void)mk_prototype(MTH_I_QLOG, "f pure", DT_QUAD, 1, DT_QUAD);
+      ilix = ad_func(IL_DFRQP, IL_QJSR, MTH_I_QLOG, 1, op1);
+    }
+    ilix = ad1altili(opc, op1, ilix);
+    return ilix;
+#endif
+    break;
+#endif
 
   case IL_FLOG10:
     if (XBIT_NEW_MATH_NAMES) {
@@ -6777,6 +6988,136 @@ addarth(ILI *ilip)
     ilix = ad2altili(opc, op1, op2, ilix);
     return ilix;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QPOWI:
+    if ((!flg.ieee || con2v2 == POW1 || con2v2 == POW2) && ncons >= 2 &&
+        !XBIT(124, 0x200)) {
+      if (con2v2 == 1)
+        return op1;
+      if (con2v2 > 1 && con2v2 <= __MAXPOW) {
+        ilix = _xpowi(op1, con2v2, IL_QMUL);
+        return ilix;
+      }
+    }
+    if (XBIT_NEW_MATH_NAMES) {
+      fname =
+          make_math(MTH_powi, &funcsptr, 1, false, DT_QUAD, 2, DT_QUAD, DT_INT);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, fname, ARGS_NUMBER, op1, op2);
+      ilix = ad2altili(opc, op1, op2, ilix);
+      return ilix;
+    }
+    (void)mk_prototype(MTH_I_QPOWI, "f pure", DT_QUAD, ARGS_NUMBER, DT_QUAD,
+                       DT_INT);
+    ilix = ad_func(IL_qpfunc, IL_QJSR, MTH_I_QPOWI, ARGS_NUMBER, op1, op2);
+    ilix = ad2altili(opc, op1, op2, ilix);
+    return ilix;
+  case IL_QPOWK:
+    if ((!flg.ieee || con2v2 == 1 || con2v2 == 2) && ncons >= 2 &&
+        !XBIT(124, 0x200) && con2v1 == 0) {
+      if (con2v2 == 1)
+        return op1;
+      if (con2v2 > 1 && con2v2 <= __MAXPOW) {
+        ilix = _xpowi(op1, con2v2, IL_QMUL);
+        return ilix;
+      }
+    }
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_powk, &funcsptr, 1, false, DT_QUAD, ARGS_NUMBER,
+                        DT_QUAD, DT_INT8);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, fname, ARGS_NUMBER, op1, op2);
+      ilix = ad2altili(opc, op1, op2, ilix);
+      return ilix;
+    }
+    (void)mk_prototype(MTH_I_QPOWK, "f pure", DT_QUAD, ARGS_NUMBER, DT_QUAD,
+                       DT_INT8);
+    ilix = ad_func(IL_qpfunc, IL_QJSR, MTH_I_QPOWK, ARGS_NUMBER, op1, op2);
+    ilix = ad2altili(opc, op1, op2, ilix);
+    return ilix;
+  case IL_QPOWQ:
+    if (!flg.ieee && ncons >= 2 && con2v2 == 0) {
+      if (con2v1 == 0x3ffd0000) {
+        /* x ** .25 -> sqrt(sqrt(x)) */
+        ilix = ad1ili(IL_QSQRT, op1);
+        ilix = ad1ili(IL_QSQRT, ilix);
+        return ilix;
+      }
+      if (con2v1 == 0x3ffe0000) {
+        /* x ** 0.5 -> sqrt(x) */
+        ilix = ad1ili(IL_QSQRT, op1);
+        return ilix;
+      }
+      if (con2v1 == 0x3ffe8000) {
+        /* && !do_newton_sqrt() if newton's is possible for QSQRT */
+        /* x ** .75 -> sqrt(x) * sqrt(sqrt(x)) */
+        ilix = ad1ili(IL_QSQRT, op1);
+        op2 = ad1ili(IL_QSQRT, ilix);
+        ilix = ad2ili(IL_QMUL, ilix, op2);
+        return ilix;
+      }
+      if (con2v1 == 0x40004000) {
+        /* x ** 2.5 -> x * x * sqrt(x)) */
+        ilix = ad2ili(IL_QMUL, op1, op1);
+        op2 = ad1ili(IL_QSQRT, op1);
+        ilix = ad2ili(IL_QMUL, ilix, op2);
+        return ilix;
+      }
+      if (con2v1 == 0x3fff8000) {
+        /* x ** 1.5 -> sqrt(x)*x */
+        ilix = ad1ili(IL_QSQRT, op1);
+        ilix = ad2ili(IL_QMUL, op1, ilix);
+        return ilix;
+      }
+    }
+    is_int = 0;
+    pw = 0;
+    if (ncons >= 2 && !XBIT(124, 0x40000)) {
+      GETVAL128(qnum2, cons2);
+      is_int = xqisint(qnum2.numq, &pw);
+    }
+    if ((!flg.ieee || pw == 1 || pw == 2) && ncons >= 2 && is_int &&
+        !XBIT(124, 0x40000)) {
+      ilix = ad2ili(IL_QPOWI, op1, ad_icon(pw));
+      return ilix;
+    }
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_pow, &funcsptr, 1, false, DT_QUAD, ARGS_NUMBER,
+                        DT_QUAD, DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, fname, ARGS_NUMBER, op1, op2);
+      ilix = ad2altili(opc, op1, op2, ilix);
+      return ilix;
+    }
+#if defined(TARGET_X8664)
+    if (!flg.ieee) {
+      (void)mk_prototype(gnr_math("pow", 's', 'q', FMTH_I_QPOWQ, 0), "f pure",
+                         DT_QUAD, ARGS_NUMBER, DT_QUAD, DT_QUAD);
+      ilix =
+          ad_func(IL_DFRQP, IL_QJSR, gnr_math("pow", 's', 'q', FMTH_I_QPOWQ, 0),
+                  ARGS_NUMBER, op1, op2);
+    } else
+#endif
+    {
+#if defined(TARGET_POWER)
+      if (flg.ieee) {
+        (void)mk_prototype(MTH_I_QPOWQ, "f pure", DT_QUAD, ARGS_NUMBER, DT_QUAD,
+                           DT_QUAD);
+        ilix = ad_func(IL_DFRQP, IL_QJSR, MTH_I_QPOWQ, ARGS_NUMBER, op1, op2);
+      } else {
+        (void)mk_prototype(fast_math("pow", 's', 'q', MTH_I_QPOWQ), "f pure",
+                           DT_QUAD, ARGS_NUMBER, DT_QUAD, DT_QUAD);
+        ilix =
+            ad_func(IL_DFRQP, IL_QJSR, fast_math("pow", 's', 'q', MTH_I_QPOWQ),
+                    ARGS_NUMBER, op1, op2);
+      }
+#else
+      (void)mk_prototype(MTH_I_QPOWQ, "f pure", DT_QUAD, ARGS_NUMBER, DT_QUAD,
+                         DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, MTH_I_QPOWQ, ARGS_NUMBER, op1, op2);
+#endif
+    }
+    ilix = ad2altili(opc, op1, op2, ilix);
+    return ilix;
+#endif
+
   case IL_SIGN:
     if (1) {
       /*
@@ -7254,6 +7595,28 @@ addarth(ILI *ilip)
 #endif
     break;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCEIL:
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_ceil, &funcsptr, 1, false, DT_QUAD, 1, DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+#if defined(TARGET_LLVM_ARM) || defined(TARGET_WIN)
+    else {
+      (void)mk_prototype(MTH_I_QCEIL, "f pure", DT_QUAD, 1, DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, MTH_I_QCEIL, 1, op1);
+      return ad1altili(opc, op1, ilix);
+    }
+#else
+    else
+      interr("addarth: old math name for ili not handled", opc,
+             ERR_Informational);
+#endif
+    break;
+#endif
+
   case IL_FFLOOR:
     if (XBIT_NEW_MATH_NAMES) {
       fname = make_math(MTH_floor, &funcsptr, 1, false, DT_FLOAT, 1, DT_FLOAT);
@@ -7293,6 +7656,29 @@ addarth(ILI *ilip)
              opc, ERR_Informational);
 #endif
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFLOOR:
+    if (XBIT_NEW_MATH_NAMES) {
+      fname = make_math(MTH_floor, &funcsptr, 1, false, DT_QUAD, 1, DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, fname, 1, op1);
+      ilix = ad1altili(opc, op1, ilix);
+      return ilix;
+    }
+
+#if defined(TARGET_LLVM_ARM) || defined(TARGET_WIN)
+    else {
+      (void)mk_prototype(MTH_I_QFLOOR, "f pure", DT_QUAD, 1, DT_QUAD);
+      ilix = ad_func(IL_qpfunc, IL_QJSR, MTH_I_QFLOOR, 1, op1);
+      return ad1altili(opc, op1, ilix);
+    }
+#else
+    else
+      interr("addarth: old math name for ili not handled", opc,
+             ERR_Informational);
+#endif
+    break;
+#endif
 
   case IL_AINT:
     if (XBIT_NEW_MATH_NAMES) {

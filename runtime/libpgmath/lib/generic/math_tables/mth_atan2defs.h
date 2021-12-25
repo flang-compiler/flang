@@ -29,6 +29,9 @@
 
 MTHINTRIN(atan2, ss   , any        , __mth_i_atan2         , __mth_i_atan2         , __mth_i_atan2         ,__math_dispatch_error)
 MTHINTRIN(atan2, ds   , any        , __mth_i_datan2        , __mth_i_datan2        , __mth_i_datan2        ,__math_dispatch_error)
+#ifdef TARGET_SUPPORTS_QUADFP
+MTHINTRIN(atan2, qs   , any        , __mth_i_qatan2        , __mth_i_qatan2        , __mth_i_qatan2        ,__math_dispatch_error)
+#endif
 MTHINTRIN(atan2, sv4  , any        , __gs_atan2_4_f        , __gs_atan2_4_r        , __gs_atan2_4_p        ,__math_dispatch_error)
 MTHINTRIN(atan2, dv2  , any        , __gd_atan2_2_f        , __gd_atan2_2_r        , __gd_atan2_2_p        ,__math_dispatch_error)
 MTHINTRIN(atan2, sv4m , any        , __fs_atan2_4_mn       , __rs_atan2_4_mn       , __ps_atan2_4_mn       ,__math_dispatch_error)

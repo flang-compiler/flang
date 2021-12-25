@@ -25,7 +25,7 @@
 #define PP_REAL16(i) (*(__REAL16_T *)(i))
 
 static __BIGINT_T to_bigint(AVAL *);
-static __BIGREAL_T to_bigreal(AVAL *);
+static __REAL16_T to_real16(AVAL *);
 static __INT8_T to_int8(AVAL *);
 static __LOG8_T to_log8(AVAL *);
 
@@ -54,7 +54,7 @@ __fortio_assign(char *item,           /* where to store */
       I64_MSH(valp->val.i8) = 0;
     FLANG_FALLTHROUGH;
   case __BIGINT:
-  case __BIGREAL:
+  case __REAL16:
     lp = valp;
   assn_shared:
     switch (type) {
@@ -74,37 +74,37 @@ __fortio_assign(char *item,           /* where to store */
       PP_INT8(item) = to_int8(lp);
       break;
     case __REAL4:
-      PP_REAL4(item) = (__REAL4_T)to_bigreal(lp);
+      PP_REAL4(item) = (__REAL4_T)to_real16(lp);
       break;
     case __REAL8:
-      PP_REAL8(item) = (__REAL8_T)to_bigreal(lp);
+      PP_REAL8(item) = (__REAL8_T)to_real16(lp);
       break;
     case __REAL16:
-      PP_REAL16(item) = (__REAL16_T)to_bigreal(lp);
+      PP_REAL16(item) = (__REAL16_T)to_real16(lp);
       break;
     case __WORD16:
       return FIO_EQUAD;
     case __CPLX8:
-      PP_REAL4(item) = (__REAL4_T)to_bigreal(lp);
+      PP_REAL4(item) = (__REAL4_T)to_real16(lp);
       if (valp->dtype == __BIGCPLX)
         PP_REAL4(item + (sizeof(__CPLX8_T) >> 1)) =
-            (__REAL4_T)to_bigreal(lp + 1);
+            (__REAL4_T)to_real16(lp + 1);
       else
         PP_REAL4(item + (sizeof(__CPLX8_T) >> 1)) = 0;
       break;
     case __CPLX16:
-      PP_REAL8(item) = (__REAL8_T)to_bigreal(lp);
+      PP_REAL8(item) = (__REAL8_T)to_real16(lp);
       if (valp->dtype == __BIGCPLX)
         PP_REAL8(item + (sizeof(__CPLX16_T) >> 1)) =
-            (__REAL8_T)to_bigreal(lp + 1);
+            (__REAL8_T)to_real16(lp + 1);
       else
         PP_REAL8(item + (sizeof(__CPLX16_T) >> 1)) = 0;
       break;
     case __CPLX32:
-      PP_REAL16(item) = (__REAL16_T)to_bigreal(lp);
+      PP_REAL16(item) = (__REAL16_T)to_real16(lp);
       if (valp->dtype == __BIGCPLX)
         PP_REAL16(item + (sizeof(__CPLX32_T) >> 1)) =
-            (__REAL16_T)to_bigreal(lp + 1);
+            (__REAL16_T)to_real16(lp + 1);
       else
         PP_REAL16(item + (sizeof(__CPLX32_T) >> 1)) = 0;
       break;
@@ -267,22 +267,22 @@ assn_err:
 static __BIGINT_T
 to_bigint(AVAL *valp)
 {
-  if (valp->dtype == __BIGREAL)
+  if (valp->dtype == __REAL16)
     return (__BIGINT_T)valp->val.d;
   assert(valp->dtype == __BIGINT || valp->dtype == __BIGLOG);
   return (__BIGINT_T)valp->val.i;
 }
 
-static __BIGREAL_T
-to_bigreal(AVAL *valp)
+static __REAL16_T
+to_real16(AVAL *valp)
 {
-  if (valp->dtype == __BIGREAL)
+  if (valp->dtype == __REAL16)
     return valp->val.d;
   if (valp->dtype == __INT8 || valp->dtype == __LOG8) {
-    return (__BIGREAL_T)valp->val.i8v;
+    return (__REAL16_T)valp->val.i8v;
   }
   assert(valp->dtype == __BIGINT || valp->dtype == __BIGLOG);
-  return (__BIGREAL_T)valp->val.i;
+  return (__REAL16_T)valp->val.i;
 }
 
 static __INT8_T
@@ -294,6 +294,8 @@ to_int8(AVAL *valp)
       I64_MSH(valp->val.i8) = 0xFFFFFFFF;
     else
       I64_MSH(valp->val.i8) = 0;
+  } else if (valp->dtype == __REAL16) {
+    return (__INT8_T)valp->val.d;
   }
   return valp->val.i8v;
 }
