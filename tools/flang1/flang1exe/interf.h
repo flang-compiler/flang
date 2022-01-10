@@ -86,6 +86,7 @@ void import_host(FILE *, const char *, int, int, int, int, int, int, int);
 void import_module_end(void);
 int imported_directly(char *name, int except);
 void init_use_tree(void);
+void remove_from_use_tree(char *module);
 int aliased_sym_visible(int sptralias);
 void interf_init(void);
 void ipa_import_open(char *import_file, BIGUINT offset);
