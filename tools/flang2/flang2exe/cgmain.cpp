@@ -1349,35 +1349,31 @@ cons_unroll_count_metadata(int unroll_factor)
   unroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
   return unroll;
 }
-static LL_MDRef
-cons_vectorlength_enable_metadata( int scalable )
+
+void
+cons_vectorlength_enable_metadata( int scalable, LL_MDRef* md)
 {
   LL_MDRef vectorlength = cons_vectorize_metadata();
-  LL_MDRef vectorlength_scalable = cons_vectorlength_scalable_metadata( scalable );
+  LL_MDRef vectorlength_scalable = cons_vectorlength_scalable_metadata(scalable);
 
-  LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
-  ll_extend_md_node(cpu_llvm_module, md, md);
-  ll_extend_md_node(cpu_llvm_module, md, vectorlength_scalable);
-  ll_extend_md_node(cpu_llvm_module, md, vectorlength);
-  return md;
+  ll_extend_md_node(cpu_llvm_module, *md, vectorlength_scalable);
+  ll_extend_md_node(cpu_llvm_module, *md, vectorlength);
 }
-static LL_MDRef
-cons_vectorlength_width_metadata( int vectorlength_factor )
+
+void
+cons_vectorlength_width_metadata( int vectorlength_factor, LL_MDRef* md)
 {
   LL_MDRef lvcomp[2];
   LL_MDRef width;
   LL_MDRef vectorize = cons_vectorize_metadata();
   LL_MDRef vectorlength_scalable = cons_vectorlength_scalable_metadata( 0 );
   lvcomp[0] = ll_get_md_string( cpu_llvm_module, "llvm.loop.vectorize.width");
-  lvcomp[1] = ll_get_md_i32( cpu_llvm_module, vectorlength_factor );
-  width= ll_get_md_node( cpu_llvm_module, LL_PlainMDNode, lvcomp, 2 );
-  LL_MDRef md = ll_create_flexible_md_node( cpu_llvm_module );
+  lvcomp[1] = ll_get_md_i32(cpu_llvm_module, vectorlength_factor);
+  width = ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
 
-  ll_extend_md_node( cpu_llvm_module, md, md );
-  ll_extend_md_node( cpu_llvm_module, md, width );
-  ll_extend_md_node( cpu_llvm_module, md, vectorlength_scalable );
-  ll_extend_md_node( cpu_llvm_module, md, vectorize );
-  return md;
+  ll_extend_md_node(cpu_llvm_module, *md, width);
+  ll_extend_md_node(cpu_llvm_module, *md, vectorlength_scalable);
+  ll_extend_md_node(cpu_llvm_module, *md, vectorize);
 }
 INLINE static bool
 ignore_simd_block(int bih)
@@ -1824,11 +1820,11 @@ restartConcur:
         if(BIH_VECTORIZE_WIDTH_FACTOR(bih)){
            if (LL_MDREF_IS_NULL(loop_md))
             loop_md = cons_loop_id_md();
-          ll_extend_md_node(cpu_llvm_module, loop_md, cons_vectorlength_width_metadata( vectorlength_factor ));
+          cons_vectorlength_width_metadata( vectorlength_factor , &loop_md);
         } else if(BIH_VECTORIZE_WIDTH_ENABLED(bih)){
-          if (LL_MDREF_IS_NULL(loop_md))
-            loop_md = cons_loop_id_md();
-          ll_extend_md_node(cpu_llvm_module, loop_md, cons_vectorlength_enable_metadata( BIH_VECTORIZE_WIDTH_SCALABLE( bih )));
+            if (LL_MDREF_IS_NULL(loop_md))
+              loop_md = cons_loop_id_md();
+            cons_vectorlength_enable_metadata( BIH_VECTORIZE_WIDTH_SCALABLE( bih ), &loop_md);
         }
 
         if (BIH_UNROLL(bih)) { // Set on open_pragma() -> if(XBIT(11,0X3))
