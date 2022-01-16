@@ -5,7 +5,13 @@
  *
  */
 
-MTHINTRIN(ceil  , ss   , any        ,  __mth_i_ceil         , __mth_i_ceil          , __mth_i_ceil          ,__math_dispatch_error)
+MTHINTRIN(ceil  , ss   , em64t      ,  __mth_i_ceil         , __mth_i_ceil          , __mth_i_ceil          ,__math_dispatch_error)
+MTHINTRIN(ceil  , ss   , sse4       ,  __mth_i_ceil_sse     , __mth_i_ceil_sse      , __mth_i_ceil_sse      ,__math_dispatch_error)
+MTHINTRIN(ceil  , ss   , avx        ,  __mth_i_ceil_avx     , __mth_i_ceil_avx      , __mth_i_ceil_avx      ,__math_dispatch_error)
+MTHINTRIN(ceil  , ss   , avxfma4    ,  __mth_i_ceil_avx     , __mth_i_ceil_avx      , __mth_i_ceil_avx      ,__math_dispatch_error)
+MTHINTRIN(ceil  , ss   , avx2       ,  __mth_i_ceil_avx     , __mth_i_ceil_avx      , __mth_i_ceil_avx      ,__math_dispatch_error)
+MTHINTRIN(ceil  , ss   , avx512knl  ,  __mth_i_ceil_avx     , __mth_i_ceil_avx      , __mth_i_ceil_avx      ,__math_dispatch_error)
+MTHINTRIN(ceil  , ss   , avx512     ,  __mth_i_ceil_avx     , __mth_i_ceil_avx      , __mth_i_ceil_avx      ,__math_dispatch_error)
 MTHINTRIN(ceil  , ds   , em64t      ,  __mth_i_dceil        , __mth_i_dceil         , __mth_i_dceil         ,__math_dispatch_error)
 MTHINTRIN(ceil  , ds   , sse4       ,  __mth_i_dceil_sse    , __mth_i_dceil_sse     , __mth_i_dceil_sse     ,__math_dispatch_error)
 MTHINTRIN(ceil  , ds   , avx        ,  __mth_i_dceil_avx    , __mth_i_dceil_avx     , __mth_i_dceil_avx     ,__math_dispatch_error)
