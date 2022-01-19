@@ -11916,6 +11916,16 @@ get_parm_ast(int parent, SPTR sptr, DTYPE dtype)
       return ast;
     }
   }
+  /* Field not found, so try again and take more recursive approach */
+  for (mem = DTY(dtype + 1); mem > NOSYM; mem = SYMLKG(mem)) {
+    /* Act only on the cases that were not considered before */
+    if ((!PARENTG(mem)) && strcmp(SYMNAME(sptr), SYMNAME(mem))) {
+      ast = mk_member(parent, mk_id(mem), dtype);
+      rslt = get_parm_ast(ast, sptr, DTYPEG(mem)); /* recurse here */
+      if (rslt)
+        return rslt;
+    }
+  }
   return 0;
 }
 
