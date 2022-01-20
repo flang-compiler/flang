@@ -184,6 +184,8 @@ typedef struct {
   char **linker_directives;
   const char *llvm_target_triple;
   const char *target_features;
+  int vscale_range_min;
+  int vscale_range_max;
   bool dlines;
   int extend_source;
   bool i4;
