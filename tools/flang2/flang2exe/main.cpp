@@ -648,6 +648,8 @@ init(int argc, char *argv[])
   register_integer_arg(arg_parser, "vect", &vect_val, 0);
   register_string_arg(arg_parser, "cmdline", &flg.cmdline, NULL);
   register_string_arg(arg_parser, "target_features", &flg.target_features, NULL);
+  register_integer_arg(arg_parser, "vscale_range_min", &flg.vscale_range_min, 0);
+  register_integer_arg(arg_parser, "vscale_range_max", &flg.vscale_range_max, 0);
   register_boolean_arg(arg_parser, "debug", &flg.debug, false);
 
   flg.linker_directives = (char **)getitem(8, argc * sizeof(char *));

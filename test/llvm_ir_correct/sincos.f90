@@ -46,4 +46,4 @@ end subroutine
 ! CHECK: declare float @__ps_sin_1(float) #[[ATTR_ID]]
 ! CHECK: declare float @__ps_cos_1(float) #[[ATTR_ID]]
 
-! CHECK: attributes #[[ATTR_ID]] = { nounwind readnone willreturn }
+! CHECK: attributes #[[ATTR_ID]] = { nounwind readnone willreturn

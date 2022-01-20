@@ -13568,6 +13568,13 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
     print_token(flg.target_features);
     print_token("\"");
   }
+  if (flg.vscale_range_min && flg.vscale_range_max) {
+    char vsrange[64U];
+    snprintf(vsrange, sizeof vsrange, " vscale_range(%d,%d)",
+                                      flg.vscale_range_min,
+                                      flg.vscale_range_max);
+    print_token(vsrange);
+  }
 
   if (func_sptr > NOSYM) {
 /* print_function_signature() can be called with func_sptr=0 */

@@ -30,6 +30,8 @@ FLG flg = {
     NULL,       /* linker_directives == empty list */
     NULL,       /* llvm_target_triple == empty ptr */
     NULL,       /* target_features == empty ptr */
+    0,          /* vscale_range_min = -vscale_range_min 0 */
+    0,          /* vscale_range_max = -vscale_range_max 0 */
     false,      /* dlines = -nodlines */
     72,         /* extend_source = -noextend_source */
     true,       /* i4 = -i4 */
