@@ -84,6 +84,19 @@ typedef struct {
   int last;
 } FLITM;
 
+typedef struct _std_range {
+  int start;
+  int mid;
+  int end;
+  struct _std_range *next;
+} STD_RANGE;
+
+typedef struct _std_record {
+  struct sst *stkp;      /* the value of the semantic stack for the <elp> */
+  int std;               /* the STD_LAST when meeting the <elp> */
+  struct _std_record *next;
+} STD_RECORD;
+
 typedef struct xyyz {
   struct xyyz *next;
   int ast;
@@ -501,6 +514,7 @@ typedef struct _acl {
   } u1;
   union {
     int array_i; /* if AC_EXPR, AC_AST */
+    STD_RANGE *std_range; /* if AC_IDO */
   } u2;
 } ACL;
 
@@ -1407,9 +1421,13 @@ typedef struct {
                                * internal procedure (set on demand)
                                */
   bool module_procedure;      /* in instantiated MODULE PROCEDURE <id> def'n */
-  bool in_array_const;        /* true when we are currently processing an
-                               * array constructor.
+  int array_const_level;      /* increment at the beginning of the processing
+                               * array constructor and decrement when it finishes.
                                */
+  STD_RANGE *ac_std_range;    /* list of ranges that holds statements generated from
+                               * implied-do loop in array constructor.
+                               */
+  STD_RECORD *elp_stack;      /* all <elp> met in array constructor. */
   bool parsing_operator;      /* true when we are parsing an ST_OPERATOR */
   bool equal_initializer;     /* true if we are parsing an assignment
                                * initializer (e.g., integer :: a = 100)
