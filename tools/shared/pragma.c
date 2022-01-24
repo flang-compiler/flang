@@ -680,7 +680,7 @@ do_sw(void)
               break;
             }
           }
-          bset(DIR_OFFSET(currdir, x[27]), toSet);
+          bset(DIR_OFFSET(currdir, x[234]), toSet);
           assn(DIR_OFFSET(currdir, x[161]), (int)Num);
         } else if (strcmp(ctok, "always") == 0) {
           bclr(DIR_OFFSET(currdir, x[19]), 0x18);

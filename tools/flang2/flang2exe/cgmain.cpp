@@ -1712,11 +1712,11 @@ restartConcur:
     } else {
       clear_rw_access_grp();
     }
-    if(flg.x[27] > 0) {
+    if(flg.x[234] > 0) {
       BIH_VECTORIZE_WIDTH_ENABLED(bih) = true;
-      BIH_VECTORIZE_WIDTH_FIXED( bih ) = (XBIT(27, 0x2));
-      BIH_VECTORIZE_WIDTH_SCALABLE( bih ) = (XBIT(27, 0x4)>0);
-      BIH_VECTORIZE_WIDTH_FACTOR( bih) = (XBIT(27, 0x1));
+      BIH_VECTORIZE_WIDTH_FIXED( bih ) = (XBIT(234, 0x2));
+      BIH_VECTORIZE_WIDTH_SCALABLE( bih ) = (XBIT(234, 0x4)>0);
+      BIH_VECTORIZE_WIDTH_FACTOR( bih) = (XBIT(234, 0x1));
       vectorlength_factor = flg.x[161];
     }
     if (flg.x[9] > 0)
