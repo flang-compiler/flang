@@ -119,9 +119,20 @@ typedef struct {
       unsigned unroll : 1;     /* bih is a loop to be fully unrolled */
       unsigned unroll_cnt : 1; /* bih has a user-specified unroll factor */
       unsigned nounroll : 1;   /* bih is a loop that must not be unrolled */
-      unsigned vectorize_width_scalable : 1; /*bih is a loop that must be vectorized width scalable*/
-      unsigned vectorize_width_enabled : 1; /*bih is a loop that must be vectorized */
-      unsigned vectorize_width_factor : 1; /*bih is a loop that must be vectorized width vectorize width number*/
+      unsigned vectorize_width_scalable : 1; /* bih is a loop that must be 
+                                                vectorized width scalable
+                                              */
+      unsigned vectorize_width_enabled : 1;  /* bih is a loop that must be 
+                                                vectorized 
+                                              */
+      unsigned vectorize_width_factor : 1;   /* bih is a loop that must be
+                                                vectorized width vectorize width 
+                                                number
+                                              */
+      unsigned vectorize_width_fixed : 1;     /* bih is a loop that must be 
+                                                vectorized width vectorize width
+                                                fixed
+                                              */
     } bits;
   } flags2;
   int lpcntFrom;  /* When a loop count temp is created, record the induction
@@ -237,11 +248,12 @@ typedef struct {
 #define BIH_BLKCNT(i) bihb.stg_base[i].blkCnt
 #define BIH_AVLPCNT(i) bihb.stg_base[i].aveLpCnt
 #define BIH_UNROLL(i) bihb.stg_base[i].flags2.bits.unroll
-#define BIH_VECTORIZE_WIDTH_SCALABLE(i) bihb.stg_base[i].flags2.bits.vectorize_width_scalable
-#define BIH_VECTORIZE_WIDTH_ENABLED(i) bihb.stg_base[i].flags2.bits.vectorize_width_enabled
-#define BIH_VECTORIZE_WIDTH_FACTOR(i) bihb.stg_base[i].flags2.bits.vectorize_width_factor
 #define BIH_UNROLL_COUNT(i) bihb.stg_base[i].flags2.bits.unroll_cnt
 #define BIH_NOUNROLL(i) bihb.stg_base[i].flags2.bits.nounroll
+#define BIH_VECTORIZE_WIDTH_SCALABLE(i) bihb.stg_base[i].flags2.bits.vectorize_width_scalable
+#define BIH_VECTORIZE_WIDTH_ENABLED(i) bihb.stg_base[i].flags2.bits.vectorize_width_enabled
+#define BIH_VECTORIZE_WIDTH_FIXED(i) bihb.stg_base[i].flags2.bits.vectorize_width_fixed
+#define BIH_VECTORIZE_WIDTH_FACTOR(i) bihb.stg_base[i].flags2.bits.vectorize_width_factor
 
 #define EXEC_COUNT double
 #define UNKNOWN_EXEC_CNT -1.0

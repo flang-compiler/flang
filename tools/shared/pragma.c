@@ -410,7 +410,6 @@ p_pragma(char *pg, int pline)
 #define SW_LIBM 70
 #define SW_SIMD 71
 #define SW_FORCEINLINE 73
-#define SW_VECTORIZE_WIDTH 74
 
 struct c {
   const char *cmd;
@@ -664,22 +663,26 @@ do_sw(void)
           if (gtok() != T_LP){
             return true;
           }
-          while (true) {
+          int toSet = 0x0;
+          int Num = -1;
+          while(typ!=T_RP) {
             typ = gtok();
-            if (typ==T_INT) {
-              bset(DIR_OFFSET(currdir, x[27]), 0x1);
-              assn(DIR_OFFSET(currdir, x[161]), (int)itok);
-              break;}
-            else if (strcmp(ctok, "fixed")==0){
-              bset(DIR_OFFSET(currdir, x[27]), 0x2 );
+            if(typ == T_INT && Num == -1) {
+              Num = (int)itok;
+              toSet|=1;
+            }
+            if(strcmp(ctok, "fixed") == 0) {
+              toSet|= 2;
               break;
             }
-            else if (strcmp(ctok, "scalable") == 0 ){
-              bset(DIR_OFFSET(currdir, x[27]), 0x4);
+            else if (strcmp(ctok, "scalable") == 0 ) {
+              toSet |= 4;
               break;
             }
           }
-        }else if (strcmp(ctok, "always") == 0) {
+          bset(DIR_OFFSET(currdir, x[27]), toSet);
+          assn(DIR_OFFSET(currdir, x[161]), (int)Num);
+        } else if (strcmp(ctok, "always") == 0) {
           bclr(DIR_OFFSET(currdir, x[19]), 0x18);
           bset(DIR_OFFSET(currdir, x[191]), 0x4);
         } else {

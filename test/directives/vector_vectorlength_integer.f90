@@ -41,9 +41,9 @@ end subroutine func2
 ! CHECK-DISABLED-NOT: !"llvm.loop.vectorize.scalable.enable", i1 false
 ! CHECK-DISABLED-NOT: !"llvm.loop.vectorize.enable", i1 true
 
-! CHECK-00:      !"llvm.loop.vectorize.width", i32 2}
-! CHECK-00:      !"llvm.loop.vectorize.scalable.enable", i1 false
 ! CHECK-00:      !"llvm.loop.vectorize.enable", i1 true
+! CHECK-00:      !"llvm.loop.vectorize.scalable.enable", i1 false
+! CHECK-00:      !"llvm.loop.vectorize.width", i32 2}
 ! CHECK-02:      !"llvm.loop.vectorize.width", i32 2}
 ! CHECK-02:      !"llvm.loop.vectorize.scalable.enable", i1 false
 ! CHECK-02:      !"llvm.loop.vectorize.enable", i1 true
