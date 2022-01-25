@@ -1336,6 +1336,7 @@ be positive integer values.
 .MS W 602 "No clause specified for the vector directive. Note: Only the always clause is supported."
 .MS W 603 "Unsupported clause specified for the vector directive. Only the always clause is supported."
 .MS W 604 "Unsupported clause specified for the omp simd directive. The directive will be ignored."
+.MS W 803 "Unsupported clause specified for the vector vectorlength directive. Only fixed|scalable|num is supported"
 .MS S 901 "#elif after #else"
 A preprocessor #elif directive was found after a #else directive; only
 #endif is allowed in this context.

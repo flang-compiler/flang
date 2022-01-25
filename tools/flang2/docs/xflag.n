@@ -4186,10 +4186,6 @@ The value is:
 Above this threashold, global locations are not tracked in the code generation phase global data flow.
 .XF "160:"
 Used in intense.c for computing intensity
-.XF "161:"
-Provides a parameter
-.i n
-for vectorize_width
 .XB 0x01:
 Display load/store information per loop
 .XB 0x02:
@@ -5553,6 +5549,11 @@ vector vectorlength(number)
 vector vectorlength(fixed)
 .XB "0x04:"
 vector vectorlength(scalable)
+
+.XF "235:"
+Provides a parameter
+.i n
+for vector vectorlength(number)
 
 .XF "248:"
 OpenMP Threadprivate TLS/TPvector implementation control.

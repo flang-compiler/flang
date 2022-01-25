@@ -2,17 +2,17 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-! Check that the vectorize_width(int) directive generates the correct metadata.
-! RUN: %flang -S -emit-llvm %s -o - | FileCheck %s --check-prefix=CHECK-00
+! Check that the vector vectorlength(int) directive generates the correct metadata.
+! RUN: %flang -S -emit-llvm %s -o - | FileCheck %s --check-prefixes=CHECK-00,CHECK-ALL
 
 ! Check that LLVM vectorizes the loop automatically at -O2.
-! RUN: %flang -O2 -S -emit-llvm %s -o - | FileCheck %s -check-prefix=CHECK-O2
+! RUN: %flang -O2 -S -emit-llvm %s -o - | FileCheck %s -check-prefixes=CHECK-O2,CHECK-ALL
 
 ! Check that "-Hx,59,2" disables both kinds of vector directives.
-! RUN: %flang -Hx,59,2 -S -emit-llvm %s -o - | FileCheck %s --check-prefixes=CHECK-DISABLED
+! RUN: %flang -Hx,59,2 -S -emit-llvm %s -o - | FileCheck %s --check-prefixes=CHECK-DISABLED,CHECK-ALL
 
 subroutine func1(a, b, m)
-! CHECK-00-LABEL: define void @func1
+! CHECK-ALL: define void @func1
   integer :: i, m, a(m), b(m)
   !dir$ vector vectorlength(2)
   do i = 1, m
@@ -22,10 +22,11 @@ subroutine func1(a, b, m)
 ! CHECK-00:      store i32
 ! CHECK-00:      br i1 {{.*}}, label %[[LOOP]], label %L.LB
 ! CHECK-O2:      vector.body:{{[ \t]+}}; preds = %vector.body,
+! CHECK-O2:      br i1 {{.*}}, label {{.*}}
 end subroutine func1
 
 subroutine func2(a, b, m)
-! CHECK-00-LABEL: define void @func2
+! CHECK-ALL: define void @func2
   integer :: i, m, a(m), b(m)
   !dir$ vector vectorlength(2,4,16)
   do i = 1, m
@@ -35,6 +36,7 @@ subroutine func2(a, b, m)
 ! CHECK-00:      store i32
 ! CHECK-00:      br i1 {{.*}}, label %[[LOOP]], label %L.LB
 ! CHECK-O2:      vector.body:{{[ \t]+}}; preds = %vector.body,
+! CHECK-O2:      br i1 {{.*}}, label {{.*}}
 end subroutine func2
 
 ! CHECK-DISABLED-NOT: !"llvm.loop.vectorize.width", i32 2}

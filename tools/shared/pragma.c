@@ -659,7 +659,7 @@ do_sw(void)
         }
         LCASE(ctok);
         if (strcmp(ctok, "vectorlength") == 0) {
-          assn( DIR_OFFSET(currdir, x[161]), 0);
+          assn( DIR_OFFSET(currdir, x[235]), 0);
           if (gtok() != T_LP){
             return true;
           }
@@ -680,8 +680,14 @@ do_sw(void)
               break;
             }
           }
+          if (toSet == 0x0) {
+            backup_nowarn = gbl.nowarn;
+            gbl.nowarn = false;
+            errwarn((error_code_t)803);
+            gbl.nowarn = backup_nowarn;
+          }
           bset(DIR_OFFSET(currdir, x[234]), toSet);
-          assn(DIR_OFFSET(currdir, x[161]), (int)Num);
+          assn(DIR_OFFSET(currdir, x[235]), (int)Num);
         } else if (strcmp(ctok, "always") == 0) {
           bclr(DIR_OFFSET(currdir, x[19]), 0x18);
           bset(DIR_OFFSET(currdir, x[191]), 0x4);
