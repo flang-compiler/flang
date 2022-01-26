@@ -1,4 +1,4 @@
-! RUN: %flang -c %s 2>&1 | FileCheck %s --check-prefix=CHECK-WRONG-CLAUSE
+! RUN: %flang -O0 -c %s 2>&1 | FileCheck %s --check-prefix=CHECK-WRONG-CLAUSE
 subroutine func1(a, b, m)
   integer :: i, m, a(m), b(m)
   !dir$ vector vectorlength(garbage)

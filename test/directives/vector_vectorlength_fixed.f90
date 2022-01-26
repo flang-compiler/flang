@@ -3,12 +3,12 @@
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ! Check that the vector vectorlength(fixed) directive generates the correct metadata.
-! RUN: %flang -S -emit-llvm %s -o - | FileCheck %s --check-prefixes=CHECK-00,CHECK-ALL
+! RUN: %flang -O0 -S -emit-llvm %s -o - | FileCheck %s --check-prefixes=CHECK-00,CHECK-ALL
 
 ! Check that LLVM vectorizes the loop automatically at -O2.
 ! RUN: %flang -O2 -S -emit-llvm %s -o - | FileCheck %s -check-prefixes=CHECK-O2,CHECK-ALL
 
-! Check that "-Hx,59,2" disables both kinds of vector directives.
+! Check that "-Hx,59,2" disables vector directive.
 ! RUN: %flang -Hx,59,2 -S -emit-llvm %s -o - | FileCheck %s --check-prefixes=CHECK-DISABLED,CHECK-ALL
 
 subroutine func1(a, b, m)

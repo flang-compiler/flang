@@ -665,26 +665,48 @@ do_sw(void)
           }
           int toSet = 0x0;
           int Num = -1;
-          while(typ!=T_RP) {
+          while (typ!=T_RP) {
             typ = gtok();
-            if(typ == T_INT && Num == -1) {
-              Num = (int)itok;
-              toSet|=1;
+            if(typ == T_INT) {
+              if(Num == -1) {
+                Num = (int)itok;
+                toSet |= 1;
+              }
+              typ = gtok();
+              if (typ != T_COMMA && typ != T_RP) {
+                backup_nowarn = gbl.nowarn;
+                gbl.nowarn = false;
+                errwarn((error_code_t)803);
+                gbl.nowarn = backup_nowarn;
+                break;
+              }
+              continue;
             }
-            if(strcmp(ctok, "fixed") == 0) {
-              toSet|= 2;
+            if (strcmp(ctok, "fixed") == 0) {
+              toSet |= 2;
+              if (gtok()!=T_RP) {
+                backup_nowarn = gbl.nowarn;
+                gbl.nowarn = false;
+                errwarn((error_code_t)803);
+                gbl.nowarn = backup_nowarn;
+              }
               break;
-            }
-            else if (strcmp(ctok, "scalable") == 0 ) {
+            } else if (strcmp(ctok, "scalable") == 0) {
               toSet |= 4;
+              if (gtok()!=T_RP) {
+                backup_nowarn = gbl.nowarn;
+                gbl.nowarn = false;
+                errwarn((error_code_t)803);
+                gbl.nowarn = backup_nowarn;
+              }
+              break;
+            } else {
+              backup_nowarn = gbl.nowarn;
+              gbl.nowarn = false;
+              errwarn((error_code_t)803);
+              gbl.nowarn = backup_nowarn;
               break;
             }
-          }
-          if (toSet == 0x0) {
-            backup_nowarn = gbl.nowarn;
-            gbl.nowarn = false;
-            errwarn((error_code_t)803);
-            gbl.nowarn = backup_nowarn;
           }
           bset(DIR_OFFSET(currdir, x[234]), toSet);
           assn(DIR_OFFSET(currdir, x[235]), (int)Num);

@@ -1688,11 +1688,9 @@ restartConcur:
     } else {
       clear_rw_access_grp();
     }
-    if(flg.x[234] > 0) {
-      BIH_VECTORIZE_WIDTH_ENABLED(bih) = true;
-      BIH_VECTORIZE_WIDTH_FIXED( bih ) = (XBIT(234, 0x2));
-      BIH_VECTORIZE_WIDTH_SCALABLE( bih ) = (XBIT(234, 0x4)>0);
-      BIH_VECTORIZE_WIDTH_FACTOR( bih) = (XBIT(234, 0x1));
+    if (flg.x[234] > 0) {
+      BIH_VECTORLENGTH_ENABLED(bih) = true;
+      BIH_VECTORLENGTH_SCALABLE( bih ) = (XBIT(234, 0x4)>0);
       vectorlength_factor = flg.x[235];
     }
     if (flg.x[9] > 0)
@@ -1791,15 +1789,15 @@ restartConcur:
           }
         }
 
-        if(BIH_VECTORIZE_WIDTH_ENABLED(bih)) {
-          if (LL_MDREF_IS_NULL(loop_md)){
+        if (BIH_VECTORLENGTH_ENABLED(bih)) {
+          if (LL_MDREF_IS_NULL(loop_md)) {
             loop_md = cons_loop_id_md();
           }
           LL_MDRef vectorlength_enable = cons_vectorize_metadata();
           ll_extend_md_node(cpu_llvm_module, loop_md, vectorlength_enable);
-          LL_MDRef vectorlength_scalable  = cons_vectorlength_scalable_metadata(BIH_VECTORIZE_WIDTH_SCALABLE( bih )>0);
+          LL_MDRef vectorlength_scalable  = cons_vectorlength_scalable_metadata(BIH_VECTORLENGTH_SCALABLE( bih )>0);
           ll_extend_md_node(cpu_llvm_module, loop_md, vectorlength_scalable);
-          if(BIH_VECTORIZE_WIDTH_FACTOR( bih) && vectorlength_factor > 0) {
+          if (vectorlength_factor > 0) {
             LL_MDRef lvcomp[2];
             LL_MDRef width;
             lvcomp[0] = ll_get_md_string( cpu_llvm_module, "llvm.loop.vectorize.width");
