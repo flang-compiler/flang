@@ -21,7 +21,7 @@ subroutine func1(a, b, m)
   end do
 ! CHECK-00:      [[LOOP:L.LB[0-9]_[0-9]+]]:{{[' ',\t]+}}; preds = %[[LOOP]], %L.LB
 ! CHECK-00:      store i32
-! CHECK-00:      br i1 {{.*}}, label %[[LOOP]], label %L.LB
+! CHECK-00:      br i1 {{.*}}, label %[[LOOP]], {{.*}} !llvm.loop [[LOOP_LATCH_MD:![0-9]+]]
 ! CHECK-O2:      vector.body:{{[ \t]+}}; preds = %vector.body,
 ! CHECK-O2:      br i1 {{.*}}, label {{.*}}
 end subroutine func1
@@ -35,7 +35,7 @@ subroutine func2(a, b, m)
   end do
 ! CHECK-00:      [[LOOP:L.LB2_[0-9]+]]:{{[' ',\t]+}}; preds = %[[LOOP]], %L.LB
 ! CHECK-00:      store i32
-! CHECK-00:      br i1 {{.*}}, label %[[LOOP]], label %L.LB
+! CHECK-00:      br i1 {{.*}}, label %[[LOOP]], {{.*}} !llvm.loop [[LOOP_LATCH_MD2:![0-9]+]]
 ! CHECK-O2:      vector.body:{{[ \t]+}}; preds = %vector.body,
 ! CHECK-O2:      br i1 {{.*}}, label {{.*}}
 end subroutine func2
@@ -45,11 +45,18 @@ end subroutine func2
 ! CHECK-DISABLED-NOT: !"llvm.loop.vectorize.enable", i1 true
 
 ! CHECK-00-NOT:  !"llvm.loop.vectorize.width"
-! CHECK-00:      !"llvm.loop.vectorize.enable", i1 true
-! CHECK-00:      !"llvm.loop.vectorize.scalable.enable", i1 false
+! CHECK-00:      [[VE_MD:![0-9]+]] = !{!"llvm.loop.vectorize.enable", i1 true}
+! CHECK-00:      [[VS_MD:![0-9]+]] = !{!"llvm.loop.vectorize.scalable.enable", i1 false}
+! CHECK-00:      [[LOOP_LATCH_MD]] = distinct !{
+! CHECK-00-SAME: [[VE_MD]]
+! CHECK-00-SAME: [[VS_MD]]
+! CHECK-00-SAME: }
+! CHECK-00:      [[LOOP_LATCH_MD2]] = distinct !{
+! CHECK-00-SAME: [[VE_MD]]
+! CHECK-00-SAME: [[VS_MD]]
+! CHECK-00-SAME: }
 ! CHECK-02-NOT:  !"llvm.loop.vectorize.width"
 ! CHECK-02:      !"llvm.loop.vectorize.scalable.enable", i1 false
 ! CHECK-02:      !"llvm.loop.vectorize.enable", i1 true
 ! CHECK-O2:      !{!"llvm.loop.isvectorized", i32 1}
-! CHECK-00:  !"llvm.loop.vectorize.width", i32 2
-! CHECK-02:  !"llvm.loop.vectorize.width", i32 2
+! CHECK-02:      !"llvm.loop.vectorize.width", i32 2
