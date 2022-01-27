@@ -21,18 +21,18 @@ jobs:
         cc: [clang]
         cpp: [clang++]
         version: [10, 11]
-        llvm_branch: [release_11x, release_12x]
+        llvm_branch: [release_12x, release_13x]
         include:
           - target: X86
             cc: gcc
             cpp: g++
             version: 10
-            llvm_branch: release_11x
+            llvm_branch: release_12x
           - target: X86
             cc: gcc
             cpp: g++
             version: 10
-            llvm_branch: release_12x
+            llvm_branch: release_13x
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so the job can access it
