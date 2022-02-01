@@ -5,9 +5,6 @@
 ! Check that the vector vectorlength(int) directive generates the correct metadata.
 ! RUN: %flang -O0 -S -emit-llvm %s -o - | FileCheck %s --check-prefixes=CHECK-00,CHECK-ALL
 
-! Check that LLVM vectorizes the loop automatically at -O2.
-! RUN: %flang -O2 -S -emit-llvm %s -o - | FileCheck %s -check-prefixes=CHECK-O2,CHECK-ALL
-
 ! Check that "-Hx,59,2" disables vector directive.
 ! RUN: %flang -Hx,59,2 -S -emit-llvm %s -o - | FileCheck %s --check-prefixes=CHECK-DISABLED,CHECK-ALL
 
@@ -19,10 +16,7 @@ subroutine func1(a, b, m)
     b(i) = a(i) + 1
   end do
 ! CHECK-00:      [[LOOP:L.LB1_[0-9]+]]:{{[' ',\t]+}}; preds = %[[LOOP]], %L.LB
-! CHECK-00:      store i32
 ! CHECK-00:      br i1 {{.*}}, label %[[LOOP]], {{.*}} !llvm.loop [[LOOP_LATCH_MD:![0-9]+]]
-! CHECK-O2:      vector.body:{{[ \t]+}}; preds = %vector.body,
-! CHECK-O2:      br i1 {{.*}}, label {{.*}}
 end subroutine func1
 
 subroutine func2(a, b, m)
@@ -33,10 +27,7 @@ subroutine func2(a, b, m)
     b(i) = a(i) + 1
   end do
 ! CHECK-00:      [[LOOP:L.LB2_[0-9]+]]:{{[' ',\t]+}}; preds = %[[LOOP]], %L.LB
-! CHECK-00:      store i32
 ! CHECK-00:      br i1 {{.*}}, label %[[LOOP]], {{.*}} !llvm.loop [[LOOP_LATCH_MD2:![0-9]+]]
-! CHECK-O2:      vector.body:{{[ \t]+}}; preds = %vector.body,
-! CHECK-O2:      br i1 {{.*}}, label {{.*}}
 end subroutine func2
 
 ! CHECK-DISABLED-NOT: !"llvm.loop.vectorize.width", i32 2}
@@ -45,17 +36,14 @@ end subroutine func2
 
 ! CHECK-00:      [[VE_MD:![0-9]+]] = !{!"llvm.loop.vectorize.enable", i1 true}
 ! CHECK-00:      [[VS_MD:![0-9]+]] = !{!"llvm.loop.vectorize.scalable.enable", i1 false}
-! CHECK-00:      [[VS_MD:![0-9]+]] = !{!"llvm.loop.vectorize.width", i32 2}
+! CHECK-00:      [[VW_MD:![0-9]+]] = !{!"llvm.loop.vectorize.width", i32 2}
 ! CHECK-00:      [[LOOP_LATCH_MD]] = distinct !{
 ! CHECK-00-SAME: [[VE_MD]]
 ! CHECK-00-SAME: [[VS_MD]]
+! CHECK-00-SAME: [[VW_MD]]
 ! CHECK-00-SAME: }
 ! CHECK-00:      [[LOOP_LATCH_MD2]] = distinct !{
 ! CHECK-00-SAME: [[VE_MD]]
 ! CHECK-00-SAME: [[VS_MD]]
+! CHECK-00-SAME: [[VW_MD]]
 ! CHECK-00-SAME: }
-
-! CHECK-02:      !"llvm.loop.vectorize.width", i32 2}
-! CHECK-02:      !"llvm.loop.vectorize.scalable.enable", i1 false
-! CHECK-02:      !"llvm.loop.vectorize.enable", i1 true
-! CHECK-O2:      !{!"llvm.loop.isvectorized", i32 1}

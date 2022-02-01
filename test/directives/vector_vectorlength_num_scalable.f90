@@ -11,8 +11,7 @@
 subroutine func1(a, b, m)
 ! CHECK-ALL: define void @func1
   integer :: i, m, a(m), b(m)
-
-  !dir$ vector vectorlength(scalable)
+  !dir$ vector vectorlength(2,scalable)
   do i = 1, m
     b(i) = a(i) + 1
   end do
@@ -27,7 +26,9 @@ end subroutine func1
 ! CHECK-00-NOT:  !"llvm.loop.vectorize.width"
 ! CHECK-00:      [[VE_MD:![0-9]+]] = !{!"llvm.loop.vectorize.enable", i1 true}
 ! CHECK-00:      [[VS_MD:![0-9]+]] = !{!"llvm.loop.vectorize.scalable.enable", i1 true}
+! CHECK-00:      [[VW_MD:![0-9]+]] = !{!"llvm.loop.vectorize.width", i32 2}
 ! CHECK-00:      [[LOOP_LATCH_MD]] = distinct !{
 ! CHECK-00-SAME: [[VE_MD]]
 ! CHECK-00-SAME: [[VS_MD]]
+! CHECK-00-SAME: [[VW_MD]]
 ! CHECK-00-SAME: }
