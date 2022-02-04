@@ -34,7 +34,7 @@
 #define VFLOAT  CONCAT4(vr,PREC,VLEN,_t)
 #define VINT    CONCAT4(vi,PREC,VLEN,_t)
 
-#ifndef TARGET_OSX_X8664
+#ifndef TARGET_OSX
 #define VFLOATRETURN    CONCAT4(__mth_return2,VFLOAT,,)
 #else
 /*

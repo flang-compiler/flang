@@ -56,7 +56,7 @@ __mth_return2vectors(void)
     return;
 }
 
-#if !defined(TARGET_OSX_X8664) && !defined(TARGET_WIN_X8664)
+#if !defined(TARGET_OSX) && !defined(TARGET_WIN)
 #if defined(TARGET_ARM64)
 #define ALIAS(altname)						\
   void    __mth_return2##altname(void)				\

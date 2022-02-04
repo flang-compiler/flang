@@ -507,7 +507,7 @@ __fenv_feraiseexcept(int exc)
 {
   return feraiseexcept(exc);
 }
-#if defined(TARGET_WIN_ARM64)
+#if defined(TARGET_WIN_ARM64) || defined(TARGET_OSX_GENERIC)
 /* TODO: Implement and test these functions */
 int
 __fenv_feenableexcept(int exc)

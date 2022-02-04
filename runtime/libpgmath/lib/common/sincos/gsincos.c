@@ -34,7 +34,7 @@
 #define VFLOAT  CONCAT4(vr,PREC,VLEN,_t)
 #define VINT    CONCAT4(vi,PREC,VLEN,_t)
 
-#if     ! defined(TARGET_OSX_X8664) && ! defined(TARGET_WIN_X8664)
+#if     ! defined(TARGET_OSX) && ! defined(TARGET_WIN)
 #define VFLOATRETURN    CONCAT4(__mth_return2,VFLOAT,,)
 #else
 /*
@@ -66,9 +66,9 @@
   #define VEC_LOAD(_a)    *((VFLOAT *)(_a))
 #endif
 
-#if     ! defined(TARGET_WIN) && ! defined(TARGET_OSX_X8664)
+#if     ! defined(TARGET_WIN) && ! defined(TARGET_OSX)
 extern  void   SINCOS(FLOAT, FLOAT *, FLOAT *);
-#endif      /* #if     ! defined(TARGET_WIN_X8664) */
+#endif
 extern  VFLOAT  VFLOATRETURN(VFLOAT, VFLOAT);
 
 VFLOAT

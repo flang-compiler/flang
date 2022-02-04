@@ -642,7 +642,7 @@ static inline void __attribute__((always_inline)) __mth_dsincos(double angle, do
   *s = sin(angle);
   *c = cos(angle);
 }
-#elif	defined (TARGET_OSX_X8664) /* if	defined(TARGET_WIN_X8664) */
+#elif	defined (TARGET_OSX) /* if	defined(TARGET_WIN_X8664) */
 #define		__mth_sincos(_a,_s,_c) __sincosf(_a,_s,_c)
 #define		__mth_dsincos(_a,_s,_c) __sincos(_a,_s,_c)
 #else	/* if	defined(TARGET_WIN_X8664) */

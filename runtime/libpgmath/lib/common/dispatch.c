@@ -388,7 +388,7 @@ static text2archtype_t text2archtype[] = {
 	{arch_armv81a,  "armv81a"},
 	{arch_armv82,    "armv82"},
 #endif
-#ifdef TARGET_LINUX_GENERIC
+#if defined(TARGET_LINUX_GENERIC) || defined(TARGET_OSX_GENERIC)
         {arch_generic,  "generic"},
 #endif
 };
@@ -1075,7 +1075,7 @@ __math_dispatch()
 #ifdef TARGET_ARM64
     __math_target = ARCH_DEFAULT;
 #endif
-#ifdef TARGET_LINUX_GENERIC
+#if defined(TARGET_LINUX_GENERIC) || defined(TARGET_OSX_GENERIC)
     __math_target = ARCH_DEFAULT;
 #endif
   }
