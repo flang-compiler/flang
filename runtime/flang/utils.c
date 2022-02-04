@@ -122,6 +122,11 @@ __fortio_alloc_fcb(void)
 extern void
 __fortio_free_fcb(FIO_FCB *p)
 {
+  if (p->name) {
+    free(p->name);
+    p->name = NULL;
+  }
+
   if (fioFcbTbls.fcbs == p) /* delete p from list */
     fioFcbTbls.fcbs = p->next;
   else {
