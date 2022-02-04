@@ -1435,7 +1435,9 @@ ll_create_named_struct_type(LLVMModuleRef module, int id, bool unique,
   LL_Value *struct_value;
 
   if (!unique) {
+    va_start(ap, format);
     struct_value = ll_named_struct_type_exists(module, id, format, ap);
+    va_end(ap);
     if (struct_value)
       return struct_value->type_struct;
     ll_remove_struct_type(module, id);
