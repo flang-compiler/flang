@@ -290,5 +290,11 @@ void insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode, SPTR sptr,
                            LL_Type *type);
 
 
+/**
+   \brief Check if sptr is the midnum of a scalar and scalar has POINTER/ALLOCATABLE attribute
+   \param sptr  A symbol
+ */
+bool pointer_scalar_need_debug_info(SPTR sptr);
+
 int get_parnum(SPTR sptr);
 #endif

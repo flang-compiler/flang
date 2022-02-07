@@ -10,7 +10,7 @@
 !CHECK-SAME: baseType: [[FUNPTRTYPE:![0-9]+]]
 !CHECK: [[FUNPTRTYPE]] = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: [[FUNTYPE:![0-9]+]]
 !CHECK: [[FUNTYPE]] = !DISubroutineType(types: [[FUNSIGNATURE:![0-9]+]])
-!CHECK: [[FUNSIGNATURE]] = !{[[DTYPE]]}
+!CHECK: [[FUNSIGNATURE]] = !{[[DTYPE]]
 
 module pdt
   type dtype
