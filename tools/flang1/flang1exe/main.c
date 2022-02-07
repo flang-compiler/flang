@@ -760,6 +760,7 @@ init(int argc, char *argv[])
   register_string_arg(arg_parser, "cmdline", &(flg.cmdline), NULL);
   register_boolean_arg(arg_parser, "es", (bool *)&(flg.es), false);
   register_boolean_arg(arg_parser, "pp", (bool *)&(flg.p), false);
+  register_boolean_arg(arg_parser, "list-macros", &flg.list_macros, false);
 
   /* Set values form command line arguments */
   parse_arguments(arg_parser, argc, argv);
