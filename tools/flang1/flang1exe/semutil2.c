@@ -9544,6 +9544,10 @@ eval_selected_real_kind(ACL *arg)
     r = 4;
   else if (con <= 15)
     r = 8;
+#ifdef TARGET_SUPPORTS_QUADFP
+  else if (con <= MAX_EXP_OF_QMANTISSA)
+    r = REAL_16;
+#endif
   else
     r = -1;
 
@@ -9556,6 +9560,11 @@ eval_selected_real_kind(ACL *arg)
     } else if (con <= 307) {
       if (r > 0 && r < 8)
         r = 8;
+#ifdef TARGET_SUPPORTS_QUADFP
+    } else if (con <= MAX_EXP_QVALUE) {
+      if (r > REAL_0 && r < REAL_16)
+        r = REAL_16;
+#endif
     } else {
       if (r > 0)
         r = 0;
