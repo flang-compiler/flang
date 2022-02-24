@@ -1,8 +1,8 @@
 !RUN: %flang -g -S -emit-llvm %s -o - | FileCheck %s
 
 !Verify the DebugInfo metadata contains DIStringType followed by DILocalVariable
-!CHECK: !DIStringType(name: "character(*)!2", stringLength: [[N:![0-9]+]]
-!CHECK: [[N]] = !DILocalVariable(
+!CHECK-DAG: !DIStringType(name: "character(*)!2", stringLength: [[N:![0-9]+]]
+!CHECK-DAG: [[N]] = !DILocalVariable(
 
 program assumedLength
   call sub('Hello')
