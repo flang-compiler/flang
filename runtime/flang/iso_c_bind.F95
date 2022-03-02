@@ -88,7 +88,11 @@
         integer C_DOUBLE
         parameter ( C_DOUBLE = 8 )
         integer C_LONG_DOUBLE
+#ifdef TARGET_SUPPORTS_QUADFP
+        parameter ( C_LONG_DOUBLE = 16  )
+#else
         parameter ( C_LONG_DOUBLE = 8  )
+#endif
         integer C_FLOAT_COMPLEX
         parameter ( C_FLOAT_COMPLEX = 4 )
         integer C_DOUBLE_COMPLEX

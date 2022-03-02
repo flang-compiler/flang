@@ -376,20 +376,20 @@ SPTR getccsym_copy(SPTR oldsptr);
    \brief create (or possibly reuse) a compiler created symbol whose name is of
    the form . <letter> dddd where dddd is the decimal representation of n.
  */
-SPTR getccsym(int letter, int n, SYMTYPE stype);
+SPTR getccsym(char letter, int n, SYMTYPE stype);
 
 /**
    \brief Similar to getccsym, but storage class is an argument. Calls
    getccsym if the storage class is not private; if private, a 'p' is
    appended to the name.
  */
-SPTR getccsym_sc(int letter, int n, SYMTYPE stype, SC_KIND sc);
+SPTR getccsym_sc(char letter, int n, SYMTYPE stype, SC_KIND sc);
 
 /**
    \brief Create (or possibly reuse) a compiler created temporary where the
    caller constructs the name and passes the storage class as an argument.
  */
-SPTR getcctemp_sc(char *name, SYMTYPE stype, SC_KIND sc);
+SPTR getcctemp_sc(const char *name, SYMTYPE stype, SC_KIND sc);
 
 /**
    \brief ...
@@ -405,7 +405,7 @@ SPTR getlab(void);
    \brief Create (never reuse) a compiler created symbol whose name is of the
    form . <letter> dddd where dddd is the decimal representation of n.
  */
-SPTR getnewccsym(int letter, int n, SYMTYPE stype);
+SPTR getnewccsym(char letter, int n, SYMTYPE stype);
 
 /**
    \brief ...

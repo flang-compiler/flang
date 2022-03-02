@@ -209,7 +209,6 @@ expand(void)
   int len;        /* length of the ILM		 */
   ILM *ilmp;      /* absolute pointer to the ILM */
   ILM_OP opc;     /* opcode of the ILM		 */
-  int countcalls; /* how many calls in this block of ilms */
   int last_label_bih = 0;
   int last_ftag = 0;
   int nextftag = 0, nextfindex = 0;
@@ -302,7 +301,6 @@ expand(void)
         len += ILM_OPND(ilmp, 1); /* include the number of
                                    * variable operands */
       if (IM_TRM(opc)) {
-        int cur_label = BIH_LABEL(expb.curbih);
         eval_ilm(ilmx);
       }
       else if (flg.smp && len) {
@@ -661,7 +659,7 @@ eval_ilm(int ilmx)
 void
 exp_estmt(int ilix)
 {
-  int noprs, i, ilix1;
+  int noprs, i;
 
   ILI_OP opc = ILI_OPC(ilix);
   if (IL_TYPE(opc) == ILTY_PROC && opc >= IL_JSR) {
@@ -963,7 +961,7 @@ void
 replace_by_zero(ILM_OP opc, ILM *ilmp, int curilm)
 {
   INT num[4];
-  int zero;
+  int zero = 0;
   ILM_OP newopc;
   int i1 = ILM_OPND(ilmp, 1);
   switch (opc) {
@@ -1017,6 +1015,7 @@ replace_by_zero(ILM_OP opc, ILM *ilmp, int curilm)
 
   default:
     interr("replace_by_zero opc not cased", opc, ERR_Severe);
+    newopc = IM_ICON;
     break;
   }
   /* CHANGE the ILM in place */
@@ -1062,8 +1061,7 @@ optional_present(int nme)
 void
 replace_by_one(ILM_OP opc, ILM *ilmp, int curilm)
 {
-  INT num[4];
-  int one;
+  int one = 0;
   ILM_OP newopc;
   int i1;
   i1 = ILM_OPND(ilmp, 1);
@@ -1089,15 +1087,14 @@ replace_by_one(ILM_OP opc, ILM *ilmp, int curilm)
 void
 exp_load(ILM_OP opc, ILM *ilmp, int curilm)
 {
-  int sym; /* symbol ST item		 */
   int op1;
-  int imag; /* address of the imag. part if complex */
+  int imag;     /* address of the imag. part if complex */
 
-  int nme;  /* names entry			 */
-  int addr, /* address of the load		 */
-      load; /* load ili generated	         */
+  int nme;      /* names entry */
+  int addr,     /* address of the load */
+      load = 0; /* load ili generated */
   SPTR tmp;
-  int siz; /* MSZ value for load  */
+  int siz;      /* MSZ value for load */
   DTYPE dt;
   bool confl;
   ILM *tmpp;
@@ -1184,7 +1181,6 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_SLLD:
   case IM_SILD:
     siz = MSZ_SHWORD;
-  ld_hw:
     confl = false;
     dt = dt_nme(nme);
     if (dt && DT_ISSCALAR(dt) && size_of(dt) != 2)
@@ -1195,7 +1191,6 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
 
   case IM_CHLD:
     siz = MSZ_SBYTE;
-  ld_byte:
     confl = false;
     dt = dt_nme(nme);
     if (dt && DT_ISSCALAR(dt) && size_of(dt) != 1)
@@ -1217,7 +1212,14 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
     CHECK_NME(nme, DTY(dt_nme(nme)) != TY_128);
     load = ad3ili(IL_LDQ, addr, nme, MSZ_F16);
     goto cand_load;
-  case IM_M256LD: /*m256*/
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* transform the QFLD ilm to LDQP ili */
+  case IM_QFLD: /* fp128 */
+    CHECK_NME(nme, DTY(dt_nme(nme)) != TY_QUAD);
+    load = ad3ili(IL_LDQP, addr, nme, MSZ_F16);
+    goto cand_load;
+#endif
+  case IM_M256LD: /* m256 */
     CHECK_NME(nme, DTY(dt_nme(nme)) != TY_256);
     load = ad3ili(IL_LD256, addr, nme, MSZ_F32);
     goto cand_load;
@@ -1388,23 +1390,18 @@ set_assn(int nme)
 void
 exp_store(ILM_OP opc, ILM *ilmp, int curilm)
 {
-  INT val[2]; /* constant value array		 	*/
-  int nme;    /* names entry				*/
-  int op1,    /* operand 1 of the ILM			*/
-      op2;    /* operand 2 of the ILM			*/
-  int store,  /* store ili generated			*/
-      addr,   /* address ili where value stored	*/
-      expr,   /* ili of value being stored		*/
-      sym,    /* ST item				*/
-      siz,    /* size of the field in the field store */
-      cnt,    /* left shift amount to field align expr*/
-      ilix,   /* ili index				*/
-      ilix1;  /* ili index                            */
-  INT n, un;  /* value of field mask			*/
+  int nme;       /* names entry                          */
+  int op1,       /* operand 1 of the ILM                 */
+      op2;       /* operand 2 of the ILM                 */
+  int store = 0, /* store ili generated                  */
+      addr,      /* address ili where value stored       */
+      expr,      /* ili of value being stored            */
+      siz,       /* size of the field in the field store */
+      ilix,      /* ili indexi                           */
+      ilix1;     /* ili index                            */
   int tmp;
   DTYPE dt;
   bool confl;
-  ILM *tmpp;
 
   int imag; /* address of the imag. part if complex */
 
@@ -1486,7 +1483,6 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_SLST:
   case IM_SIST:
     siz = MSZ_SHWORD;
-  do_sist:
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
       nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
     confl = false;
@@ -1500,7 +1496,6 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
 
   case IM_CHST:
     siz = MSZ_SBYTE;
-  do_chst:
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
       nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
     confl = false;
@@ -1586,7 +1581,16 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
       nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
     CHECK_NME(nme, DTY(dt_nme(nme)) != TY_128);
     store = ad4ili(IL_STQ, (int)ILI_OF(op2), (int)ILI_OF(op1), nme, MSZ_F16);
+	goto cand_store;
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* transform the QFST ilm TO STQP ili */
+  case IM_QFST:
+    if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
+      nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
+    CHECK_NME(nme, DTY(dt_nme(nme)) != TY_QUAD);
+    store = ad4ili(IL_STQP, (int)ILI_OF(op2), (int)ILI_OF(op1), nme, MSZ_F16);
     goto cand_store;
+#endif
   case IM_M256ST: /*m256*/
     if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
       nme = add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
@@ -1935,8 +1939,6 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
     break;
   } /*****  end of switch(opc)  *****/
 
-end_exp_store:
-
   if (!exp_end_atomic(store, curilm)) {
     chk_block(store);
     ILM_RESULT(curilm) = store;
@@ -2157,6 +2159,15 @@ exp_mac(ILM_OP opc, ILM *ilmp, int curilm)
         interr("exp_mac: need DP_RETVAL", (int)ilmopr->type, ERR_Severe);
 #endif
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case ILMO_QPRET:
+#if defined(QP_RETVAL)
+        newili.opnd[i] = QP_RETVAL;
+#else
+        interr("exp_mac: need QP_RETVAL", (int)ilmopr->type, ERR_Severe);
+#endif
+        break;
+#endif
       case ILMO_KRRET:
 #if defined(KR_RETVAL)
         newili.opnd[i] = KR_RETVAL;
@@ -2276,6 +2287,11 @@ efunc(const char *nm)
     case 'd':
       resdt = DT_DBLE;
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case 'q':
+      resdt = DT_QUAD;
+      break;
+#endif
     case 'i':
       resdt = DT_INT;
       break;
@@ -2328,10 +2344,8 @@ exp_ref(ILM_OP opc, ILM *ilmp, int curilm)
 {
   SPTR sym;   /* symbol table entry		 */
   int ili1;   /* ili pointer			 */
-  int ili2;   /* another ili pointer		 */
   int base;   /* base ili of reference	 */
   int basenm; /* names entry of base ili	 */
-  int dtype;
 
   switch (opc) {
   default:
@@ -2401,7 +2415,6 @@ create_ref(SPTR sym, int *pnmex, int basenm, int baseilix, int *pclen,
   int ilix;     /* result */
   int ili1;     /* ili pointer			 */
   int ili2;     /* another ili pointer		 */
-  int base;     /* base ili of reference	 */
   int nmex = 0;
   DTYPE dtype;
   int clen = 0, mxlen = 0, restype = 0;
@@ -2589,13 +2602,13 @@ create_ref(SPTR sym, int *pnmex, int basenm, int baseilix, int *pclen,
 
     if ((gbl.outlined || ISTASKDUPG(GBL_CURRFUNC)) && PARREFG(sym)) {
       if (EXP_ISINDIR(sym)) {
-        int asym, anme;
+        int asym;
         asym = mk_argasym(sym);
       }
     }
     else if (gbl.internal > 1 && INTERNREFG(sym)) {
       if (EXP_ISINDIR(sym)) {
-        int asym, anme;
+        int asym;
         asym = mk_argasym(sym);
       }
     }
@@ -2718,7 +2731,7 @@ llGetThreadprivateAddr(int sptr)
 {
   int addr;
   SPTR cm;
-  int basenm, tpv;
+  int basenm;
 
   ll_set_new_threadprivate(sptr);
   cm = THPRVTOPTG(sptr);
@@ -2761,8 +2774,6 @@ void
 ref_threadprivate(int cmsym, int *addr, int *nm)
 {
   SPTR vector;
-  int size, cm = 0;
-  int sub;
   int basenm;
   int ili1;
   int ili2;
@@ -2807,12 +2818,9 @@ void
 ref_threadprivate_var(int cmsym, int *addr, int *nm, int mark)
 {
   SPTR vector;
-  int size;
-  int sub;
   int basenm;
   int ili1;
   int ili2;
-  int cm;
 
   /* compute the base address of vector */
   vector = MIDNUMG(cmsym);

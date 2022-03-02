@@ -66,7 +66,7 @@ putline()
 } /* putline */
 
 static void
-putint(char *s, int d)
+putint(const char *s, int d)
 {
   sprintf(BUF, "%s:%d", s, d);
   putit();
@@ -86,7 +86,7 @@ putintstar(char *s, int d, int star, char *starstring)
 #endif
 
 static void
-put2int(char *s, int d1, int d2)
+put2int(const char *s, int d1, int d2)
 {
   sprintf(BUF, "%s(%d:%d)", s, d1, d2);
   putit();
@@ -114,7 +114,7 @@ put2int1(int d1, int d2)
 } /* put2int1 */
 
 static void
-putint1star(int d, int star, char *starstring)
+putint1star(int d, int star, const char *starstring)
 {
   if (star) {
     sprintf(BUF, "%d%s", d, starstring);
@@ -125,7 +125,7 @@ putint1star(int d, int star, char *starstring)
 } /* putint1star */
 
 static void
-putnzint(char *s, int d)
+putnzint(const char *s, int d)
 {
   if (d != 0) {
     sprintf(BUF, "%s:%d", s, d);
@@ -134,7 +134,7 @@ putnzint(char *s, int d)
 } /* putnzint */
 
 static void
-putnzhex(char *s, int d)
+putnzhex(const char *s, int d)
 {
   if (d != 0) {
     sprintf(BUF, "%s:0x%x", s, d);
@@ -143,7 +143,7 @@ putnzhex(char *s, int d)
 } /* putnzhex */
 
 static void
-putnzbits(char *s, int d)
+putnzbits(const char *s, int d)
 {
   if (d != 0) {
     char *b;
@@ -167,7 +167,7 @@ putnzbits(char *s, int d)
 } /* putnzbits */
 
 static void
-putcharacter(char *s, char c)
+putcharacter(const char *s, char c)
 {
   sprintf(BUF, "%s:%c", s, c);
   putit();
@@ -181,7 +181,7 @@ putedge(int d1, int d2)
 } /* putedge */
 
 static void
-putsym(char *s, int sptr)
+putsym(const char *s, int sptr)
 {
   if (sptr == NOSYM) {
     sprintf(BUF, "%s:%d=%s", s, sptr, "NOSYM");
@@ -243,7 +243,7 @@ dumpsymi(int symi)
 } /* dumpsymi */
 
 static void
-putnsym(char *s, int sptr)
+putnsym(const char *s, int sptr)
 {
   if (sptr == NOSYM) {
     sprintf(BUF, "%s:%d=%s", s, sptr, "NOSYM");
@@ -266,28 +266,28 @@ putnsym(char *s, int sptr)
 } /* putnsym */
 
 static void
-putstring(char *s, char *t)
+putstring(const char *s, const char *t)
 {
   sprintf(BUF, "%s:%s", s, t);
   putit();
 } /* putstring */
 
 static void
-putstring1(char *t)
+putstring1(const char *t)
 {
   sprintf(BUF, "%s", t);
   putit();
 } /* putstring1 */
 
 static void
-appendstring1(char *t)
+appendstring1(const char *t)
 {
   sprintf(BUF, "%s", t);
   appendit();
 } /* appendstring1 */
 
 static void
-putsc(char *s, int sc)
+putsc(const char *s, int sc)
 {
   if (sc >= 0 && sc <= SC_MAX) {
     sprintf(BUF, "%s:%d=%s", s, sc, stb.scnames[sc] + 3);
@@ -298,7 +298,7 @@ putsc(char *s, int sc)
 } /* putsc */
 
 static void
-putstype(char *s, int stype)
+putstype(const char *s, int stype)
 {
   if (stype >= 0 && stype <= ST_MAX) {
     sprintf(BUF, "%s:%d=%s", s, stype, stb.stypes[stype]);
@@ -321,7 +321,7 @@ putstype1(int stype)
 
 #ifdef CUDAG
 static void
-putcuda(char *s, int cu)
+putcuda(const char *s, int cu)
 {
   if (cu) {
     strcpy(BUF, s);
@@ -362,7 +362,7 @@ putcuda(char *s, int cu)
 #endif
 
 static void
-putintent(char *s, int intent)
+putintent(const char *s, int intent)
 {
   switch (intent) {
   case 0:
@@ -387,7 +387,7 @@ putintent(char *s, int intent)
 } /* putintent */
 
 static void
-putinkind(char *s, int k)
+putinkind(const char *s, int k)
 {
   switch (k) {
   case IK_ELEMENTAL:
@@ -409,7 +409,7 @@ putinkind(char *s, int k)
 } /* putinkind */
 
 static void
-put_inkwd(char *s, int k)
+put_inkwd(const char *s, int k)
 {
   if (k) {
     putstring(s, intrinsic_kwd[k]);
@@ -417,7 +417,7 @@ put_inkwd(char *s, int k)
 } /* put_inkwd */
 
 static void
-putnname(char *s, int off)
+putnname(const char *s, int off)
 {
   if (off) {
     putstring(s, stb.n_base + off);
@@ -425,7 +425,7 @@ putnname(char *s, int off)
 } /* putnname */
 
 static void
-putdtype(char *s, int d)
+putdtype(const char *s, int d)
 {
   if (d) {
     char typebuff[4096];
@@ -436,7 +436,7 @@ putdtype(char *s, int d)
 } /* putdtype */
 
 static void
-putdty(char *s, int dty)
+putdty(const char *s, int dty)
 {
   if (dty < 0 || dty > TY_MAX || stb.tynames[dty] == NULL) {
     sprintf(BUF, "%s:<%d>", s, dty);
@@ -464,7 +464,7 @@ putparam(int dpdsc, int paramct)
 } /* putparam */
 
 void
-putsymlk(char *name, int list)
+putsymlk(const char *name, int list)
 {
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   if (list <= NOSYM)
@@ -585,7 +585,7 @@ putsymflags()
 #endif
 
 static void
-putbit(char *s, int b)
+putbit(const char *s, int b)
 {
   /* single space between flags */
   if (b) {
@@ -604,7 +604,7 @@ putbit(char *s, int b)
 } /* putbit */
 
 static void
-check(char *s, int v)
+check(const char *s, int v)
 {
   if (v) {
     fprintf(dfile, "*** %s: %d 0x%x\n", s, v, v);
@@ -634,7 +634,7 @@ putmap(char *s, int m)
 #endif
 
 void
-putasttype(char *s, int opc)
+putasttype(const char *s, int opc)
 {
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   if (opc < 0 || opc > AST_MAX) {
@@ -646,7 +646,7 @@ putasttype(char *s, int opc)
 } /* putasttype */
 
 static void
-putast(char *s, int a)
+putast(const char *s, int a)
 {
   if (a == 0)
     return;
@@ -674,7 +674,7 @@ putast(char *s, int a)
 } /* putast */
 
 static void
-putval(char *s, int val, char *values[], int sizeofvalues)
+putval(const char *s, int val, const char *values[], int sizeofvalues)
 {
   if (val < 0 || val >= sizeofvalues) {
     sprintf(BUF, "%s:%d", s, val);
@@ -687,14 +687,14 @@ putval(char *s, int val, char *values[], int sizeofvalues)
 #define SIZEOF(array) (sizeof(array) / sizeof(char *))
 
 static void
-putoptype(char *s, int optype)
+putoptype(const char *s, int optype)
 {
-  static char *opt[] = {"neg",    "add",   "sub",    "mul",  "div",   "xtoi",
-                        "xtox",   "cmp",   "aif",    "ld",   "st",    "func",
-                        "con",    "cat",   "log",    "leqv", "lneqv", "lor",
-                        "land",   "eq",    "ge",     "gt",   "le",    "lt",
-                        "ne",     "lnot",  "loc",    "ref",  "val",   "scand",
-                        "scalar", "array", "derived"};
+  static const char *opt[] = {
+      "neg", "add",   "sub",    "mul",   "div",    "xtoi", "xtox",
+      "cmp", "aif",   "ld",     "st",    "func",   "con",  "cat",
+      "log", "leqv",  "lneqv",  "lor",   "land",   "eq",   "ge",
+      "gt",  "le",    "lt",     "ne",    "lnot",   "loc",  "ref",
+      "val", "scand", "scalar", "array", "derived"};
   putval(s, optype, opt, SIZEOF(opt));
 } /* putoptype */
 
@@ -716,7 +716,7 @@ dastli(int astli)
 void
 dast(int astx)
 {
-  int atype, dtype, shape, asdx, j, argcnt, args, astli;
+  int atype, dtype, asdx, j, argcnt, args, astli;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   if (astx < 0 || astx >= astb.stg_avail) {
     fprintf(dfile, "\nast %d out of range [0:%d)\n", astx, astb.stg_avail);
@@ -1375,7 +1375,7 @@ dumpasts()
 void
 dumpshape(int shd)
 {
-  int l, nd, ii;
+  int nd, ii;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   if (shd < 0 || shd >= astb.shd.stg_avail) {
     fprintf(dfile, "\nshd %d out of range [0:%d)\n", shd, astb.shd.stg_avail);
@@ -1728,7 +1728,7 @@ past(int astx)
 } /* past */
 
 static void
-putflags(char *s, int flags)
+putflags(const char *s, int flags)
 {
   if (flags) {
     sprintf(BUF, "%s=%8.8x ", s, flags);
@@ -1876,7 +1876,7 @@ putnme(int n)
 } /* putnme */
 
 void
-putnmetype(char *s, int t)
+putnmetype(const char *s, int t)
 {
   switch (t) {
   case NT_ADD:
@@ -2432,7 +2432,7 @@ dstdpa()
 void
 dumpstdtrees()
 {
-  int stdx, std1, std2;
+  int stdx, std1;
   std1 = STD_NEXT(0);
   for (stdx = STD_NEXT(0); stdx != 0; stdx = STD_NEXT(stdx)) {
     dstdtree(stdx);
@@ -2461,7 +2461,7 @@ dsocptr(int sochead)
 } /* dsocptr */
 
 void
-puttmpltype(char *s, int t)
+puttmpltype(const char *s, int t)
 {
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   switch (t) {
@@ -2485,7 +2485,7 @@ puttmpltype(char *s, int t)
 } /* puttmpltype */
 
 void
-puttmplsc(char *s, int t)
+puttmplsc(const char *s, int t)
 {
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   switch (t) {
@@ -2532,7 +2532,7 @@ puttmplflag(char *s, int f)
 
 #ifdef IGNORE_TKRG
 static void
-put_ignore(char *s, int tkr)
+put_ignore(const char *s, int tkr)
 {
   if (tkr) {
     strcpy(BUF, s);
@@ -2660,7 +2660,6 @@ dalnd(int alnd)
 void
 dsecd(int secd)
 {
-  int i, any;
   if (secd == 0)
     return;
   if (dtb.base == NULL)
@@ -4426,8 +4425,8 @@ getdddir(DDEDGE *dd)
 void
 putdd(DDEDGE *dd)
 {
-  static char *types[] = {"flow", "anti", "output", "?3",
-                          "?4",   "?5",   "?6",     "?7"};
+  static const char *types[] = {"flow", "anti", "output", "?3",
+                                "?4",   "?5",   "?6",     "?7"};
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   if (dd == NULL) {
     fprintf(dfile, "null-dd-edge");
@@ -4439,7 +4438,7 @@ putdd(DDEDGE *dd)
 } /* putdd */
 
 void
-putddlist(char *s, DDEDGE *ddlist)
+putddlist(const char *s, DDEDGE *ddlist)
 {
   DDEDGE *dd;
   if (ddlist == NULL)
@@ -4570,7 +4569,7 @@ dumpmemrefs(int m1, int m2)
 } /* dumpmemrefs */
 
 void
-putmrlist(char *s, int ivlist)
+putmrlist(const char *s, int ivlist)
 {
   if (ivlist) {
     int i;
@@ -4583,7 +4582,7 @@ putmrlist(char *s, int ivlist)
 } /* putmrlist */
 
 void
-putsclist(char *s, int sclist)
+putsclist(const char *s, int sclist)
 {
   if (sclist) {
     int sc;

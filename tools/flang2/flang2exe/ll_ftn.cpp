@@ -459,7 +459,7 @@ ll_process_routine_parameters(SPTR func_sptr)
           ++param_num;
         } else { /* Else, pass by value */
           LL_Type *type;
-          LL_ABI_ArgInfo arg = {LL_ARG_UNKNOWN};
+          LL_ABI_ArgInfo arg = {LL_ARG_UNKNOWN, 0, false, NULL, SPTR_NULL};
           if (is_iso_cptr(DTYPEG(param_sptr)))
             type = ref_dummy;
           else {
@@ -694,7 +694,6 @@ fix_llvm_fptriface(void)
    */
 
   DTYPE dtype;
-  int dt;
   SPTR sptr;
   SPTR iface;
   char *ifacenm;
@@ -751,9 +750,6 @@ fix_llvm_fptriface(void)
 void
 store_llvm_localfptr(void)
 {
-  int dtype, dt, sptr, iface;
-  char *ifacenm;
-
   if (!gbl.currsub)
     return;
 
@@ -888,7 +884,6 @@ get_entries_argnum(void)
   int master_dpdsc;
   int sptr = gbl.currsub;
   int fval = FVALG(gbl.currsub);
-  int fvaldt = 0;
   int found = 0;
   char name[100];
   bool ret_scalar;
@@ -1074,11 +1069,10 @@ print_entry_subroutine(LL_Module *module)
   SPTR sptr = gbl.entries;
   int iter = 0;
   char num[16];
-  DTYPE dtype, param_dtype;
+  DTYPE param_dtype;
   int clen, fval;
   DTYPE rettype;
   int chararg = 0;
-  char *nm;
   int *dpdscp;
   TMPS *tmp, *atmp;
   LL_ABI_Info *abi;
@@ -1425,10 +1419,7 @@ mk_charlen_address(int sptr)
 LL_Type *
 get_ftn_lltype(SPTR sptr)
 {
-  int dtype, gblsym;
-  char *name;
-  char tname[250];
-  LL_Type *llt;
+  LL_Type *llt = NULL;
   LL_Type *rslt = NULL;
 
   if (LLTYPE(sptr))

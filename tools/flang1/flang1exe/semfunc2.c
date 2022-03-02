@@ -27,7 +27,7 @@
 #include "rte.h"
 #include "rtlRtns.h"
 
-static LOGICAL get_keyword_args(ITEM *, int, char *, int, int);
+static LOGICAL get_keyword_args(ITEM *, int, const char *, int, int);
 static int get_fval_array(int);
 static LOGICAL cmpat_arr_arg(int, int);
 static void dump_stfunc(int);
@@ -105,8 +105,6 @@ define_stfunc(int sptr, ITEM *argl, SST *estk)
   SFDSC *sfdsc;
   SST *stkptr;
   int ast;
-  int argt;
-  int i;
   static int last_stfunc; /* last ST_FUNC created */
   SFUSE *sfuse;
 
@@ -285,7 +283,6 @@ ref_stfunc(SST *stktop, ITEM *args)
   SFUSE *sfuse;
   ARGINFO *ai;
   int ast;
-  int i;
   int tmp;
   int new;
   int asn;
@@ -560,7 +557,7 @@ asn_sfuse(SFUSE *l_use)
 int
 mkarg(SST *stkptr, int *dtype)
 {
-  int sptr, cp, sp2, ast;
+  int sptr, sp2, ast;
   int dt;
 
 again:
@@ -1310,7 +1307,6 @@ ref_entry(int ent)
 {
   int fval;
   int dtype;
-  int sptr;
 
   fval = FVALG(ent);
   if (fval) {
@@ -1482,7 +1478,7 @@ make_keyword_str(int paramct, int dpdsc)
   int cnt;
   int arg; /* argument sptr */
   int i;
-  char *name;
+  const char *name;
   int optional;
   int len;
   int size;
@@ -1548,7 +1544,7 @@ static int nz_digit_str(char *);
  *  \param kwdarg  string defining position and keywords of arguments
  */
 LOGICAL
-get_kwd_args(ITEM *list, int cnt, char *kwdarg)
+get_kwd_args(ITEM *list, int cnt, const char *kwdarg)
 {
   return get_keyword_args(list, cnt, kwdarg, 0, 0);
 }
@@ -1562,12 +1558,12 @@ get_kwd_args(ITEM *list, int cnt, char *kwdarg)
  *  \param pass_pos index of the passed-object dummy argument when pod is set
  */
 static LOGICAL
-get_keyword_args(ITEM *list, int cnt, char *kwdarg, int pod, int pass_pos)
+get_keyword_args(ITEM *list, int cnt, const char *kwdarg, int pod, int pass_pos)
 {
   SST *stkp;
   int pos;
   int i;
-  char *kwd, *np;
+  const char *kwd, *np;
   int kwd_len;
   char *actual_kwd; /* name of keyword used with the actual arg */
   int actual_kwd_len;
@@ -1790,14 +1786,10 @@ nz_digit_str(char *s)
  *  \param kwdarg  string defining position and keywords of arguments
  */
 LOGICAL
-evl_kwd_args(ITEM *list, int cnt, char *kwdarg)
+evl_kwd_args(ITEM *list, int cnt, const char *kwdarg)
 {
   SST *stkp;
-  int pos;
   int i, sptr;
-  char *kwd, *np;
-  int kwd_len;
-  char *actual_kwd; /* name of keyword used with the actual arg */
 
   if (get_kwd_args(list, cnt, kwdarg))
     return TRUE;
@@ -1898,7 +1890,7 @@ sum_scatter_args(ITEM *list, int cnt)
       ARG_AST(i) = SST_ASTG(stkp);
     } else {
       if (ARG_STK(pos)) {
-        char *str;
+        const char *str;
         if (pos == 0)
           str = "array";
         else if (pos == 1)
@@ -2166,7 +2158,7 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
     }
   } else {
     /* component procedure pointer with a passed-object dummy argument */
-    int pass_pos;
+    int pass_pos = 0;
     int pdum;
 
     pdum = PASSG(ext);
@@ -2207,7 +2199,6 @@ chk_arguments(int ext, int count, ITEM *list, char *kwd_str, int paramct,
     int arg;
     char buf[32];
     int sptr;
-    int doif;
 
     sprintf(buf, "%d", i + 1); /* prepare for error messages */
     if ((sp = ARG_STK(i))) {
@@ -2826,6 +2817,13 @@ iface_intrinsic(int sptr)
     dtyper = DT_DBLE;
     argdtype = DT_DBLE;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QABS: /* qabs */
+    paramct = 1;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+#endif
   case I_DACOS: /* dacos */
     paramct = 1;
     dtyper = DT_DBLE;
@@ -2936,6 +2934,18 @@ iface_intrinsic(int sptr)
     dtyper = DT_REAL;
     argdtype = DT_REAL;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QEXP: /* qexp */
+    paramct = 1;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+  case I_QINT: /* qint */
+    paramct = 1;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+#endif
   case I_IABS: /* iabs */
     paramct = 1;
     dtyper = DT_INT;

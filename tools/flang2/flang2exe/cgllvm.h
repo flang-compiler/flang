@@ -96,7 +96,7 @@ typedef enum {
 #define IS_OLD_STYLE_CAND(s) (DEFDG(sptr) || CCSYMG(sptr))
 
 typedef struct{
-    STG_DECLARE(array, char*);
+    STG_DECLARE(array, const char*);
     STG_DECLARE(type_array, LL_Type*);
 }SPTRINFO_T;
 

@@ -66,16 +66,8 @@ static struct {
 /* common blocks containing values for inlined number_of_processors()
    and my_processor() functions */
 
-#if defined(WIN64) || defined(WIN32)
-WIN_IMP __INT_T ENTCOMN(NP, np)[];
-WIN_IMP __INT_T ENTCOMN(ME, me)[];
-#elif defined(C90) || defined(WINNT)
-__INT_T ENTCOMN(NP, np)[1];
-__INT_T ENTCOMN(ME, me)[1];
-#else
-extern __INT_T ENTCOMN(NP, np)[];
-extern __INT_T ENTCOMN(ME, me)[];
-#endif
+WIN_API __INT_T ENTCOMN(NP, np)[];
+WIN_API __INT_T ENTCOMN(ME, me)[];
 
 #if defined(WIN32) || defined(WIN64)
 #define write _write
@@ -363,10 +355,7 @@ static char *dumarg = NULL;
 static void
 __fort_initarg()
 {
-  char *p, *q;
-  int i;
   char **v;
-  int c;
 
   if (arg != (char **)0) {
     return;
@@ -837,12 +826,6 @@ __fort_pull_them_in()
 
 /* -------------------------------------------------------------------- */
 
-#pragma global opt = 1
-static void
-f90_compiled_arg()
-{
-}
-
 /*
  * this routine is called from .init.  it does limited initialization
  * for f90 routines called from a non-f90 main routine.  argc and
@@ -854,9 +837,6 @@ void
 __attribute__((constructor))
 f90_compiled()
 {
-#ifndef TARGET_LINUX_ARM
-  static void (*p)(void) = f90_compiled_arg;
-#endif
   if (!inited.consts) {
     __fort_tcpus = 1;
     __fort_np2 = 1;

@@ -24,6 +24,7 @@
 #include "fdirect.h"
 #include "pragma.h"
 #include "x86.h"
+#include "rte.h" /* for get_static_descriptor */
 
 #include "llmputil.h"
 #include "mp.h"
@@ -32,9 +33,7 @@
 /* contents of this file:  */
 
 static void add_clause(int, LOGICAL);
-static bool clause_errchk(BIGINT64, char *);
-static void accel_sched_errchk();
-static void accel_nosched_errchk();
+static bool clause_errchk(BIGINT64, const char *);
 static void accel_pragmagen(int, int, int);
 
 static int sched_type(char *);
@@ -65,23 +64,21 @@ static void add_ptr_assignment(int, SST *);
 static void assign_cval(int, int, int);
 static int enter_dir(int, LOGICAL, LOGICAL, BITMASK64);
 static int leave_dir(int, LOGICAL, LOGICAL);
-static char *name_of_dir(int);
+static const char *name_of_dir(int);
 static int find_reduc_intrinsic(int);
-static int get_csect_sym(char *);
+static int get_csect_sym(const char *);
 static int get_csect_pfxlen(void);
 static void check_barrier(void);
 static void check_crit(char *);
 static int check_cancel(int);
-static void check_targetdata(int, char *);
+static void check_targetdata(int, const char *);
 static void check_valid_data_sharing(int);
 #ifdef FLANG_SEMSMP_UNUSED
 static LOGICAL check_map_data_sharing(int);
 #endif
 static void cray_pointer_check(ITEM *, int);
 static void other_firstlast_check(ITEM *, int);
-static void copyprivate_check(ITEM *, int);
-static int sym_in_clause(int sptr, int clause);
-static void non_private_check(int, char *);
+static void non_private_check(int, const char *);
 static void private_check();
 static void deallocate_no_scope_sptr();
 static int get_stblk_uplevel_sptr();
@@ -91,7 +88,6 @@ static void end_targteams();
 static LOGICAL is_last_private(int);
 static void mp_add_shared_var(int, int);
 static void mk_reduction_list(void);
-static void mk_private_list(void);
 static void mk_shared_list(void);
 static void mk_lastprivate_list(void);
 static void save_private_list(void);
@@ -292,7 +288,7 @@ static struct cl_tag { /* clause table */
   BIGINT64 val;
   void *first;
   void *last;
-  char *name;
+  const char *name;
   BIGINT64 stmt; /* stmts which may use the clause */
 } cl[CL_MAXV] = {
     {0, 0, NULL, NULL, "DEFAULT",
@@ -566,7 +562,7 @@ static int kernel_argnum;
 void
 semsmp(int rednum, SST *top)
 {
-  int sptr, sptr1, sptr2, ilmptr;
+  int sptr, sptr1;
   int dtype;
   ITEM *itemp; /* Pointers to items */
   int doif;
@@ -574,15 +570,14 @@ semsmp(int rednum, SST *top)
   int ast, arg, std;
   int opc;
   int clause;
-  INT val[2];
   INT rhstop;
-  int op, i, d, ctype, bind_type;
+  int op, d, ctype, bind_type;
   int ditype, ditype2, ditype3, pr1, pr2;
   BIGINT64 bttype;
   BITMASK64 dimask, dinestmask;
   LOGICAL dignorenested;
-  char *dirname;
-  char *nmptr;
+  const char *dirname;
+  const char *nmptr;
   REDUC *reducp;
   REDUC_SYM *reduc_symp;
   REDUC_SYM *reduc_symp_last;
@@ -5798,7 +5793,7 @@ add_clause(int clause, LOGICAL one_only)
 }
 
 static bool
-clause_errchk(BIGINT64 bt, char *dirname)
+clause_errchk(BIGINT64 bt, const char *dirname)
 {
   int i;
   bool any = false;
@@ -6216,9 +6211,7 @@ get_stblk_uplevel_sptr()
 static int
 emit_btarget(int atype)
 {
-  int opc;
-  int ast, shast;
-  int sptr, stblk;
+  int ast;
 
   ast = mk_stmt(atype, 0);
   sem.target++;
@@ -6255,8 +6248,7 @@ static int
 emit_bpar(void)
 {
   int opc;
-  int ast, shast;
-  int sptr, stblk;
+  int ast;
 
   if (sem.parallel++ == 0) {
     /* outermost parallel */
@@ -6328,7 +6320,6 @@ emit_bcs_ecs(int opc)
 static void
 do_schedule(int doif)
 {
-  int di_id;
   if (doif == 0)
     return;
 
@@ -6419,10 +6410,9 @@ do_dist_schedule(int doif, LOGICAL chk_collapse)
 int
 do_distbegin(DOINFO *doinfo, int do_label, int construct_name)
 {
-  int iv, di_id, doif, sptr, initvar, limitvar, stepvar;
+  int iv, doif, sptr, initvar, limitvar, stepvar;
   int dast, dovar, step_expr;
   int past, aast;
-  SST dsst, ssst;
 
   iv = doinfo->index_var;
   if (!DT_ISINT(DTYPEG(iv))) {
@@ -6658,7 +6648,6 @@ do_firstprivate(int istask)
 {
   ITEM *itemp;
   int ast, taskdupstd, cntfp = 0, maxfp = 50, sptr, i;
-  SST tmpsst;
   int *fpsptr;
   LOGICAL isnew;
   taskdupstd = 0;
@@ -6720,7 +6709,7 @@ do_firstprivate(int istask)
 static void
 do_lastprivate(void)
 {
-  int sptr, curr_scope_level;
+  int sptr;
   REDUC_SYM *reduc_symp;
   SCOPESTACK *scope;
 
@@ -6758,10 +6747,8 @@ do_lastprivate(void)
 static void
 mk_lastprivate_list(void)
 {
-  int sptr, curr_scope_level;
   REDUC_SYM *reduc_symp;
   REDUC_SYM *first, *last, *tmp;
-  SCOPESTACK *scope;
   first = last = NULL;
 
   if (CL_PRESENT(CL_LASTPRIVATE)) {
@@ -6927,7 +6914,7 @@ is_atomic_update_binop(int lop, int rop)
 static LOGICAL
 is_atomic_update_intr(int lop, int rop)
 {
-  int lhs, rhs, cnt;
+  int cnt;
   int argcnt, argt, i;
   ATOMIC_RMW_OP aop_op = sem.mpaccatomic.rmw_op;
 
@@ -7013,7 +7000,6 @@ mk_atomic_capture(int lop, int rop)
 
 {
   int ast = 0;
-  LOGICAL isupdate = FALSE;
   ATOMIC_RMW_OP aop_op;
   MEMORY_ORDER mem_order = sem.mpaccatomic.mem_order;
 
@@ -7031,7 +7017,7 @@ mk_atomic_capture(int lop, int rop)
 int
 do_openmp_atomics(SST *l_stktop, SST *r_stktop)
 {
-  int ast, opr, first, lop, rop, shape;
+  int ast, lop, rop, shape;
   int action_type = sem.mpaccatomic.action_type;
   LOGICAL atomic_ok = FALSE;
   DTYPE dtype;
@@ -7267,7 +7253,7 @@ do_reduction(void)
     for (reduc_symp = reducp->list; reduc_symp; reduc_symp = reduc_symp->next) {
       int dtype, ast;
       INT val[2];
-      INT conval;
+      INT conval = 0;
       SST cnst;
       SST lhs;
       char *nm;
@@ -7468,7 +7454,7 @@ save_shared_list(void)
 static void
 mk_shared_list(void)
 {
-  ITEM *tmp, *first, *last, *itemp;
+  ITEM *first, *last, *itemp;
 
   first = last = NULL;
 
@@ -7790,7 +7776,7 @@ begin_parallel_clause(int doif)
 {
   {
     switch (DI_ID(doif)) {
-      int sptr, ast;
+      int ast;
     default:
       break;
     case DI_PARDO:
@@ -7994,7 +7980,7 @@ end_parallel_clause(int doif)
 
   {
     switch (DI_ID(doif)) {
-      int sptr, ast;
+      int ast;
     default:
       break;
     case DI_PARDO:
@@ -8175,7 +8161,10 @@ end_reduction(REDUC *red, int doif)
 {
   REDUC *reducp;
   REDUC_SYM *reduc_symp;
-  int ast_crit, ast_endcrit, ast_red;
+  int ast_crit, ast_endcrit;
+#ifdef OMP_OFFLOAD_LLVM
+  int ast_red;
+#endif
   int save_par, save_target, save_teams;
   LOGICAL done = FALSE;
   LOGICAL in_parallel = FALSE;
@@ -8261,7 +8250,6 @@ end_lastprivate(int doif)
   int i1, i2;
   int lab;
   int sptr;
-  INT val[2];
   int save_par, save_target, save_teams;
 
   if (DI_LASTPRIVATE(doif) == NULL)
@@ -8540,7 +8528,7 @@ save_clauses()
 static void
 restore_clauses(void)
 {
-  int i, ast, sptr;
+  int i, sptr;
   for (i = 0; i < CL_MAXV; i++) {
     CL_PRESENT(i) = SAVCL_PRESENT(i);
     CL_VAL(i) = SAVCL_VAL(i);
@@ -8630,7 +8618,10 @@ static void
 begin_combine_constructs(BIGINT64 construct)
 {
   int doif = sem.doif_depth;
-  int ast, combinedMode;
+  int ast;
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
+  int combinedMode;
+#endif
   LOGICAL do_enter = FALSE;
 
   has_team = FALSE;
@@ -9121,7 +9112,7 @@ leave_dir(int typ,               /* end of which structured directive */
   return 0;
 }
 
-static char *
+static const char *
 name_of_dir(int typ)
 {
   switch (typ) {
@@ -9233,7 +9224,7 @@ find_reduc_intrinsic(int ident)
 }
 
 static int
-get_csect_sym(char *nm)
+get_csect_sym(const char *nm)
 {
 #undef CSECT_PFX
 #define CSECT_PFX "__cs_"
@@ -9245,7 +9236,7 @@ get_csect_sym(char *nm)
     SYMLKP(sptr, gbl.cmblks); /* link into list */
     gbl.cmblks = sptr;
     if (!XBIT(69, 0x100)) {
-      int sptr1, sptr2;
+      int sptr1;
       ADSC *ad;
       int dtype;
 
@@ -9359,7 +9350,7 @@ check_crit(char *nm)
 }
 
 static void
-check_targetdata(int type, char *nm)
+check_targetdata(int type, const char *nm)
 {
   int i;
   if (type == OMP_TARGET) {
@@ -9408,7 +9399,6 @@ check_targetdata(int type, char *nm)
 static int
 check_cancel(int cancel_type)
 {
-  int sptr;
   int prev;
   int res;
   prev = sem.doif_depth;
@@ -9528,7 +9518,6 @@ other_firstlast_check(ITEM *itp, int clause)
 {
   ITEM *itemp;
   int sptr;
-  char bf[128];
 
   for (itemp = itp; itemp != ITEM_END; itemp = itemp->next) {
     sptr = itemp->t.sptr;
@@ -9540,9 +9529,7 @@ static void
 private_check()
 {
   ITEM *itemp;
-  int sptr, i;
   int sptr1;
-  SST tmpsst;
   char bf[128];
 
   if (CL_PRESENT(CL_FIRSTPRIVATE)) {
@@ -9562,22 +9549,6 @@ private_check()
   }
 }
 
-static int
-sym_in_clause(int sptr, int clause)
-{
-  ITEM *itemp;
-
-  if (CL_PRESENT(clause)) {
-    for (itemp = CL_FIRST(clause); itemp != ITEM_END; itemp = itemp->next) {
-      if (itemp->t.sptr == sptr) {
-        return 1;
-      }
-    }
-  }
-
-  return 0;
-}
-
 void
 add_non_private(int sptr)
 {
@@ -9590,7 +9561,7 @@ add_non_private(int sptr)
 }
 
 static void
-non_private_check(int sptr, char *cl)
+non_private_check(int sptr, const char *cl)
 {
   int i;
   for (i = 0; i < sem.non_private_avail; i++) {
@@ -9693,14 +9664,12 @@ is_dovar_sptr(int sptr)
 void
 par_add_stblk_shvar()
 {
-  int i, ncnt = 0;
 }
 
 static LLUplevel *
 findUplevelForSharedVar(int sptr, int stblk)
 {
   LLUplevel *up, *curr_up;
-  int parent;
   if (SCG(sptr) == SC_PRIVATE) {
     SPTR paruplevel;
     SPTR encl = ENCLFUNCG(sptr);
@@ -9757,8 +9726,6 @@ needCharLen(int sptr)
 static void
 mp_add_shared_var(int sptr, int stblk)
 {
-  SCOPE_SYM *newsh;
-  int paramct, parsyms, i;
   int dolen = 0;
 
   if (stblk) {
@@ -9882,7 +9849,7 @@ set_parref_flag(int sptr, int psptr, int stblk)
 void
 set_parref_flag2(int sptr, int psptr, int std)
 {
-  int i, stblk, paramct, parsyms, ast, key;
+  int i, stblk, parsyms, ast, key;
   LLUplevel *up;
   if (!SCG(sptr))
     return;
@@ -10010,22 +9977,12 @@ set_private_encl(int old, int new)
   }
 }
 
-static void
-set_private_bnd_taskflag(int ast)
-{
-  if (ast && A_TYPEG(ast) == A_ID) {
-    int sptr;
-    sptr = A_SPTRG(ast);
-    TASKP(sptr, 1);
-  }
-}
-
 void
 set_private_taskflag(int sptr)
 {
   /* make sure its midnum and bound has has scope and encl set - backend relies
    * on it */
-  int midnum, sdsc, descr;
+  int midnum, sdsc;
 
   if (!sem.task)
     return;
@@ -10044,23 +10001,6 @@ set_private_taskflag(int sptr)
     midnum = MIDNUMG(sptr);
     if (midnum && SCG(midnum) == SC_PRIVATE)
       TASKP(midnum, 1);
-  }
-}
-
-static void
-add_firstprivate_bnd_assn(int ast, int ast1)
-{
-  if (A_TYPEG(ast) == A_ID && A_TYPEG(ast1) == A_ID) {
-    int sptr = A_SPTRG(ast);
-    int sptr1 = A_SPTRG(ast1);
-    if (TASKG(sptr)) {
-      int ast = mk_stmt(A_MP_TASKFIRSTPRIV, 0);
-      int sptr1_ast = mk_id(sptr1);
-      int sptr_ast = mk_id(sptr);
-      A_LOPP(ast, sptr1_ast);
-      A_ROPP(ast, sptr_ast);
-      add_stmt(ast);
-    }
   }
 }
 
@@ -10336,6 +10276,7 @@ check_map_data_sharing(int sptr)
 }
 #endif
 
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
 static LOGICAL is_in_omptarget_data(int d)
 {
   if(flg.omptarget && (DI_IN_NEST(d, DI_TARGETENTERDATA) ||
@@ -10344,6 +10285,9 @@ static LOGICAL is_in_omptarget_data(int d)
     return TRUE;
   return FALSE;
 }
+#endif
+
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
 static LOGICAL is_in_omptarget(int d)
 {
   if(flg.omptarget && (DI_IN_NEST(d, DI_TARGET) ||
@@ -10355,6 +10299,8 @@ static LOGICAL is_in_omptarget(int d)
     return TRUE;
   return FALSE;
 }
+#endif
+
 /**
  * \brief Decide to use optimized atomic usage.
  */

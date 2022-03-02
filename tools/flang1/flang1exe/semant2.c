@@ -50,31 +50,18 @@ void
 semant2(int rednum, SST *top)
 {
   int sptr, sptr1, sptr2, dtype;
-  int acltype, stype, i;
-  int begin, count;
+  int i;
   int opc;
-  int lab;
   SST *e1;
   INT rhstop;
   ITEM *itemp, *itemp1;
-  INT conval;
   DOINFO *doinfo;
-  char name[7];
   int dum;
-  SWEL *swel;
   INT val[2];
   int ast;
-  int ast1, ast2;
-  int astli;
-  ACL *aclp, *aclp2;
-  int std;
+  int ast2;
+  ACL *aclp;
   char *np;
-  int numdim;
-  ADSC *ad;
-  int mn;
-  int j;
-  int pfx;
-  int (*p_cmp)(int, int);
   int set_aclp;
 
   switch (rednum) {
@@ -769,7 +756,7 @@ semant2(int rednum, SST *top)
         int dty = TBPLNKG(sptr);
         itemp = ITEM_END;
         if (generic_tbp_has_pass_and_nopass(dty, sptr)) {
-          int parent, sp;
+          int sp;
           e1 = (SST *)getitem(0, sizeof(SST));
           sp = sym_of_ast(ast);
           SST_SYMP(e1, sp);
@@ -802,7 +789,6 @@ semant2(int rednum, SST *top)
     }
     if (sptr && STYPEG(sptr) == ST_TYPEDEF && sem.in_struct_constr &&
         sem.param_struct_constr) {
-      ITEM *itemp1;
       ACL *aclp;
       int offset, use_keyword, all_set;
       aclp = (ACL *)SST_BEGG(RHS(3));
@@ -912,7 +898,7 @@ semant2(int rednum, SST *top)
         int sp;
         int dty = DTYPEG(pass_sym_of_ast(ast));
         if (generic_tbp_has_pass_and_nopass(dty, sptr)) {
-          int parent, mem2;
+          int mem2;
           int iface, paramct, arg_cnt;
 
           mem2 = get_generic_tbp_pass_or_nopass(dty, sptr, 1);
@@ -1086,7 +1072,6 @@ semant2(int rednum, SST *top)
          * the first default initializer...
          */
         ACL *a;
-        SST *s;
         a = GET_ACL(15);
         a->id = AC_SCONST;
         a->next = NULL;
@@ -1315,8 +1300,6 @@ semant2(int rednum, SST *top)
     } else {
       /* resolve generic type bound procedure for defined binary
        * operator */
-      int mem;
-      int tmp;
       sptr1 = SST_SYMG(RHS(3));
       dtype = DTYPEG(sptr1);
       if (dtype)
@@ -2789,7 +2772,7 @@ rewrite_cmplxpart_rval(SST *e)
 {
   int ast;
   ITEM *list;
-  char *intrnm;
+  const char *intrnm;
   SST *arg;
   int sptr;
   int part; /* 1==> real, 2==>imag */

@@ -1,8 +1,8 @@
-#
-# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-# See https://llvm.org/LICENSE.txt for license information.
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-#
+/*
+ * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+ * See https://llvm.org/LICENSE.txt for license information.
+ * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+ */
 ABS	ilm
 ACON	sym
 ACOS	ilm
@@ -293,6 +293,9 @@ ETASKLOOPREG
 ETASKREG
 ETEAMS
 EXP	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QEXP    ilm
+#endif
 FARG	ilm	dtype
 FARGF	ilm	dtype   num
 FILE	num	num	num
@@ -642,3 +645,48 @@ UXLAND8    ilm ilm
 UXLNOT8    ilm
 MP_BEGIN_DIR
 MP_END_DIR
+#ifdef TARGET_SUPPORTS_QUADFP
+
+QFLD	ilm
+QFST	ilm	ilm
+QADD	ilm	ilm
+QSUB	ilm	ilm
+QMUL	ilm	ilm
+QNEG	ilm
+QDIV	ilm	ilm
+QCMP	ilm	ilm
+QMAX	ilm	ilm
+QMIN	ilm	ilm
+QFLOAT	ilm
+QFLOATK	ilm
+QAIF	ilm	sym	sym	sym
+RQUAD	ilm
+DQUAD	ilm
+QCON	sym
+UITOQ	ilm
+K2Q	ilm
+SNGQ	ilm
+DBLEQ	ilm
+QFIX	ilm
+KQFIX	ilm
+QTOUI	ilm
+Q2K	ilm
+QTOI    ilm     ilm
+QTOK    ilm     ilm
+QTOQ    ilm     ilm
+QFUNC	num	sym	ilms
+QFUNCA	num	num	ilm	ilms
+PQFUNCA	num	num	sym	ilm	ilms
+QVFUNCA	num	num	sym	ilm	sym	ilms
+QUFUNC/QFUNC	num	sym	args
+QUFUNCA/QFUNCA	num	num	ilm	args
+PQUFUNCA/PQFUNCA	num	num	sym	ilm	args
+QUVFUNCA/QVFUNCA	num	num	sym	ilm	sym	args
+QABS    ilm
+IQNINT	ilm
+KQNINT	ilm
+QINT    ilm
+QQANINT ilm
+DQANINT ilm
+AQANINT ilm
+#endif

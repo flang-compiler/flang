@@ -13,7 +13,7 @@
 #else
 #include <execinfo.h>
 #include <unistd.h>
-#include <linux/limits.h>
+#include <limits.h>
 #include <sys/types.h>
 #endif
 #include <stdioInterf.h>
@@ -25,8 +25,8 @@
 /* codes and strings for signals */
 
 struct cods {
-  int code;  /* signal code */
-  char *str; /* string */
+  int code;        /* signal code */
+  const char *str; /* string */
 };
 
 #define CODNULL ((struct cods *)0)
@@ -67,7 +67,7 @@ static struct cods codbus[] = {{BUS_ADRALN, "invalid address alignment"},
 struct sigs {
   int sig;          /* signal value */
   struct cods *cod; /* address of optional code info */
-  char *str;        /* message string */
+  const char *str;  /* message string */
 };
 
 static struct sigs sigs[] = {
@@ -90,20 +90,20 @@ static struct sigs sigs[] = {
 static FLANGRTI_GREGSET_T *regs; /* pointer to regs at signal  */
 
 extern char **__io_get_argv();
-static char ** saved_argv = NULL;
+static char **saved_argv = NULL;
 
 /* walk the stack back */
 
 #define MAXTRACE (32 * 1024)
 
 void
-print_back_trace_line(char * bt_str, void const * const addr)
+print_back_trace_line(char *bt_str, void const *const addr)
 {
   char addr2line_cmd[512], cmd_out[1024];
   char *ptr_qmark, *ptr_colon, *ptr_lparen, *ptr_rparen, *ptr_plus;
   static char buffer[4096];
   FILE *fp;
-  static char exec_name[PATH_MAX];  // Includes terminating NULL
+  static char exec_name[PATH_MAX]; // Includes terminating NULL
   static char *pexec_name = exec_name;
 
   if (NULL == saved_argv) {
@@ -122,8 +122,8 @@ print_back_trace_line(char * bt_str, void const * const addr)
 
     FILE *f;
 
-    snprintf(exec_name, sizeof exec_name,
-      "/proc/%" PRIu64 "/cmdline", (uint64_t) getpid());
+    snprintf(exec_name, sizeof exec_name, "/proc/%" PRIu64 "/cmdline",
+             (uint64_t)getpid());
     f = fopen(exec_name, "r");
     if (NULL == f) {
       /*
@@ -134,12 +134,12 @@ print_back_trace_line(char * bt_str, void const * const addr)
       return;
     }
     fread(exec_name, sizeof exec_name, 1, f);
-    exec_name[PATH_MAX-1] = '\0';   // In case filename+pathname > PATH_MAX
+    exec_name[PATH_MAX - 1] = '\0'; // In case filename+pathname > PATH_MAX
     fclose(f);
     saved_argv = &pexec_name;
   }
 
-  sprintf(addr2line_cmd,"addr2line -e %s %p", saved_argv[0], addr);
+  sprintf(addr2line_cmd, "addr2line -e %s %p", saved_argv[0], addr);
 
   fp = popen(addr2line_cmd, "r");
   if (fp != NULL) {
@@ -148,13 +148,14 @@ print_back_trace_line(char * bt_str, void const * const addr)
         cmd_out[strlen(cmd_out) - 1] = '\0';
       ptr_qmark = strchr(cmd_out, '?');
       ptr_colon = strchr(cmd_out, ':');
-      ptr_lparen=strchr(bt_str, '(');
-      ptr_rparen=strchr(bt_str, ')');
+      ptr_lparen = strchr(bt_str, '(');
+      ptr_rparen = strchr(bt_str, ')');
       if (ptr_lparen != NULL && ptr_lparen != NULL && ptr_lparen < ptr_rparen)
         ptr_plus = strchr(ptr_lparen, '+');
-      if(ptr_qmark != NULL) {
+      if (ptr_qmark != NULL) {
         fprintf(__io_stderr(), "  %s\n", bt_str);
-      } else if (ptr_colon != NULL && ptr_plus != NULL && ptr_plus < ptr_rparen) {
+      } else if (ptr_colon != NULL && ptr_plus != NULL &&
+                 ptr_plus < ptr_rparen) {
         /* replace offset by line number */
         strncpy(buffer, bt_str, ptr_plus - bt_str);
         sprintf(buffer + (ptr_plus - bt_str), "%s%s", ptr_colon, ptr_rparen);
@@ -208,7 +209,7 @@ __abort_trace(int skip)
 static void
 __abort_sig_hand(int sig, siginfo_t *in, FLANGRTI_UCONTEXT_T *u)
 {
-  char *p;
+  const char *p;
   char b[128];
   int n, m;
   struct sigaction new;
@@ -270,88 +271,88 @@ __abort_sig_init(void)
   }
 }
 #else
- void
-  __abort_trace(int skip)
-  {
-    //TODO
-    return;
+void
+__abort_trace(int skip)
+{
+  // TODO
+  return;
+}
+
+LONG WINAPI
+windows_exception_handler(EXCEPTION_POINTERS *ExceptionInfo)
+{
+  switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {
+  case EXCEPTION_ACCESS_VIOLATION:
+    fputs("Error: EXCEPTION_ACCESS_VIOLATION\n", stderr);
+    break;
+  case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+    fputs("Error: EXCEPTION_ARRAY_BOUNDS_EXCEEDED\n", stderr);
+    break;
+  case EXCEPTION_BREAKPOINT:
+    fputs("Error: EXCEPTION_BREAKPOINT\n", stderr);
+    break;
+  case EXCEPTION_DATATYPE_MISALIGNMENT:
+    fputs("Error: EXCEPTION_DATATYPE_MISALIGNMENT\n", stderr);
+    break;
+  case EXCEPTION_FLT_DENORMAL_OPERAND:
+    fputs("Error: EXCEPTION_FLT_DENORMAL_OPERAND\n", stderr);
+    break;
+  case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+    fputs("Error: EXCEPTION_FLT_DIVIDE_BY_ZERO\n", stderr);
+    break;
+  case EXCEPTION_FLT_INEXACT_RESULT:
+    fputs("Error: EXCEPTION_FLT_INEXACT_RESULT\n", stderr);
+    break;
+  case EXCEPTION_FLT_INVALID_OPERATION:
+    fputs("Error: EXCEPTION_FLT_INVALID_OPERATION\n", stderr);
+    break;
+  case EXCEPTION_FLT_OVERFLOW:
+    fputs("Error: EXCEPTION_FLT_OVERFLOW\n", stderr);
+    break;
+  case EXCEPTION_FLT_STACK_CHECK:
+    fputs("Error: EXCEPTION_FLT_STACK_CHECK\n", stderr);
+    break;
+  case EXCEPTION_FLT_UNDERFLOW:
+    fputs("Error: EXCEPTION_FLT_UNDERFLOW\n", stderr);
+    break;
+  case EXCEPTION_ILLEGAL_INSTRUCTION:
+    fputs("Error: EXCEPTION_ILLEGAL_INSTRUCTION\n", stderr);
+    break;
+  case EXCEPTION_IN_PAGE_ERROR:
+    fputs("Error: EXCEPTION_IN_PAGE_ERROR\n", stderr);
+    break;
+  case EXCEPTION_INT_DIVIDE_BY_ZERO:
+    fputs("Error: EXCEPTION_INT_DIVIDE_BY_ZERO\n", stderr);
+    break;
+  case EXCEPTION_INT_OVERFLOW:
+    fputs("Error: EXCEPTION_INT_OVERFLOW\n", stderr);
+    break;
+  case EXCEPTION_INVALID_DISPOSITION:
+    fputs("Error: EXCEPTION_INVALID_DISPOSITION\n", stderr);
+    break;
+  case EXCEPTION_NONCONTINUABLE_EXCEPTION:
+    fputs("Error: EXCEPTION_NONCONTINUABLE_EXCEPTION\n", stderr);
+    break;
+  case EXCEPTION_PRIV_INSTRUCTION:
+    fputs("Error: EXCEPTION_PRIV_INSTRUCTION\n", stderr);
+    break;
+  case EXCEPTION_SINGLE_STEP:
+    fputs("Error: EXCEPTION_SINGLE_STEP\n", stderr);
+    break;
+  case EXCEPTION_STACK_OVERFLOW:
+    fputs("Error: EXCEPTION_STACK_OVERFLOW\n", stderr);
+    break;
+  default:
+    fputs("Error: Unrecognized Exception\n", stderr);
+    break;
   }
-  
-  LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS * ExceptionInfo)
-  {
-    switch(ExceptionInfo->ExceptionRecord->ExceptionCode)
-    {
-      case EXCEPTION_ACCESS_VIOLATION:
-        fputs("Error: EXCEPTION_ACCESS_VIOLATION\n", stderr);
-        break;
-      case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-        fputs("Error: EXCEPTION_ARRAY_BOUNDS_EXCEEDED\n", stderr);
-        break;
-      case EXCEPTION_BREAKPOINT:
-        fputs("Error: EXCEPTION_BREAKPOINT\n", stderr);
-        break;
-      case EXCEPTION_DATATYPE_MISALIGNMENT:
-        fputs("Error: EXCEPTION_DATATYPE_MISALIGNMENT\n", stderr);
-        break;
-      case EXCEPTION_FLT_DENORMAL_OPERAND:
-        fputs("Error: EXCEPTION_FLT_DENORMAL_OPERAND\n", stderr);
-        break;
-      case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-        fputs("Error: EXCEPTION_FLT_DIVIDE_BY_ZERO\n", stderr);
-        break;
-      case EXCEPTION_FLT_INEXACT_RESULT:
-        fputs("Error: EXCEPTION_FLT_INEXACT_RESULT\n", stderr);
-        break;
-      case EXCEPTION_FLT_INVALID_OPERATION:
-        fputs("Error: EXCEPTION_FLT_INVALID_OPERATION\n", stderr);
-        break;
-      case EXCEPTION_FLT_OVERFLOW:
-        fputs("Error: EXCEPTION_FLT_OVERFLOW\n", stderr);
-        break;
-      case EXCEPTION_FLT_STACK_CHECK:
-        fputs("Error: EXCEPTION_FLT_STACK_CHECK\n", stderr);
-        break;
-      case EXCEPTION_FLT_UNDERFLOW:
-        fputs("Error: EXCEPTION_FLT_UNDERFLOW\n", stderr);
-        break;
-      case EXCEPTION_ILLEGAL_INSTRUCTION:
-        fputs("Error: EXCEPTION_ILLEGAL_INSTRUCTION\n", stderr);
-        break;
-      case EXCEPTION_IN_PAGE_ERROR:
-        fputs("Error: EXCEPTION_IN_PAGE_ERROR\n", stderr);
-        break;
-      case EXCEPTION_INT_DIVIDE_BY_ZERO:
-        fputs("Error: EXCEPTION_INT_DIVIDE_BY_ZERO\n", stderr);
-        break;
-      case EXCEPTION_INT_OVERFLOW:
-        fputs("Error: EXCEPTION_INT_OVERFLOW\n", stderr);
-        break;
-      case EXCEPTION_INVALID_DISPOSITION:
-        fputs("Error: EXCEPTION_INVALID_DISPOSITION\n", stderr);
-        break;
-      case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-        fputs("Error: EXCEPTION_NONCONTINUABLE_EXCEPTION\n", stderr);
-        break;
-      case EXCEPTION_PRIV_INSTRUCTION:
-        fputs("Error: EXCEPTION_PRIV_INSTRUCTION\n", stderr);
-        break;
-      case EXCEPTION_SINGLE_STEP:
-        fputs("Error: EXCEPTION_SINGLE_STEP\n", stderr);
-        break;
-      case EXCEPTION_STACK_OVERFLOW:
-        fputs("Error: EXCEPTION_STACK_OVERFLOW\n", stderr);
-        break;
-      default:
-        fputs("Error: Unrecognized Exception\n", stderr);
-        break;
-    }
-    fflush(stderr);
-    return EXCEPTION_EXECUTE_HANDLER;
-  }
- 
-  void
-  __abort_sig_init(void)
-  {
-     SetUnhandledExceptionFilter(windows_exception_handler);
-  }
+  fflush(stderr);
+  return EXCEPTION_EXECUTE_HANDLER;
+}
+
+void
+__abort_sig_init(void)
+{
+  SetUnhandledExceptionFilter(windows_exception_handler);
+}
 #endif

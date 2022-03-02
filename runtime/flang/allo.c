@@ -611,8 +611,6 @@ I8(__fort_kalloc)(__INT8_T nelem, dtype kind, size_t len, __STAT_T *stat,
 int
 I8(__fort_allocated)(char *area)
 {
-  ALLO_HDR *p;
-
   ALLHDR();
 
   if (area) {
@@ -935,6 +933,37 @@ ENTF90(ALLOC03_CHK, alloc03_chk)(__INT_T *nelem, __INT_T *kind, __INT_T *len,
   ENTF90(ALLOC03_CHKA, alloc03_chka)(nelem, kind, len,
                          stat, pointer, offset,
                          firsttime, CADR(errmsg), (__CLEN_T)CLEN(errmsg));
+}
+
+void
+ENTF90(REALLOC_ARR_IN_IMPLIED_DO, realloc_arr_in_impiled_do)(char **ptr,
+                         F90_Desc *ad, F90_Desc *dd)
+{
+  int i, total_extent;
+  char *tmp = NULL;
+  __NELEM_T old_size;
+
+  if (F90_LSIZE_G(dd) * F90_LEN_G(dd) <= 0)
+    return; /* no need to realloc */
+
+  old_size = F90_LSIZE_G(ad) * F90_LEN_G(ad);
+  total_extent = 1;
+  for (i = 0; i < F90_RANK_G(dd) ; i++) {
+    total_extent *= F90_DIM_EXTENT_G(dd, i);
+  }
+
+  F90_LSIZE_G(ad) += F90_LSIZE_G(dd);
+  F90_GSIZE_G(ad) += F90_GSIZE_G(dd);
+
+  ad->dim[0].extent += total_extent;
+
+  (void)I8(__fort_allocate)(F90_LSIZE_G(ad), F90_KIND_G(ad), F90_LEN_G(ad), 0,
+                            &tmp, 0);
+  if (old_size > 0)
+    __fort_bcopy(tmp, *ptr, old_size);
+
+  I8(__fort_deallocate)(*ptr);
+  *ptr = tmp;
 }
 
 void
@@ -1516,7 +1545,7 @@ I8(__fort_local_kallocate)(long nelem, dtype kind, size_t len, char *base,
 char *
 I8(__fort_dealloc)(char *area, __STAT_T *stat, void (*freefn)(void *))
 {
-  ALLO_HDR *p, *q;
+  ALLO_HDR *p = NULL;
   char msg[80];
 
   ALLHDR();
@@ -1550,7 +1579,7 @@ static char *
 I8(__fort_dealloc03)(char *area, __STAT_T *stat, void (*freefn)(void *),
                      char *errmsg, int errlen)
 {
-  ALLO_HDR *p, *q;
+  ALLO_HDR *p = NULL;
   char msg[80];
 
   ALLHDR();

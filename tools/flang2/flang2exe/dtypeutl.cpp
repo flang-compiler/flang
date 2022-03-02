@@ -1110,6 +1110,9 @@ Scale_Of(DTYPE dtype, ISZ_T *size)
   case TY_UBINT:
   case TY_BLOG:
   case TY_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+#endif
   case TY_CMPLX:
   case TY_DCMPLX:
   case TY_INT8:

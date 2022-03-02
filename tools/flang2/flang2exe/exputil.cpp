@@ -1175,7 +1175,7 @@ void
 exp_add_copy(SPTR lhssptr, SPTR rhssptr)
 {
   int rhsacon, lhsacon, rhsnme, lhsnme, rhsld, lhsst, sz;
-  ILI_OP rhsopc, lhsopc;
+  ILI_OP rhsopc = IL_LD, lhsopc = IL_ST;
   MSZ msz;
   if (lhssptr == rhssptr)
     return;
@@ -1186,16 +1186,15 @@ exp_add_copy(SPTR lhssptr, SPTR rhssptr)
     lhsopc = IL_STKR;
     msz = MSZ_I8;
   } else if (sz == 4) {
-    rhsopc = IL_LD;
-    lhsopc = IL_ST;
     msz = MSZ_WORD;
   } else if (sz == 2) {
-    rhsopc = IL_LD;
-    lhsopc = IL_ST;
     msz = MSZ_SHWORD;
   } else if (sz == 1) {
-    rhsopc = IL_LD;
-    lhsopc = IL_ST;
+    msz = MSZ_BYTE;
+  } else {
+#if DEBUG
+    interr("exp_add_copy: illegal type size", sz, ERR_Severe);
+#endif
     msz = MSZ_BYTE;
   }
   rhsnme = addnme(NT_VAR, rhssptr, 0, 0);

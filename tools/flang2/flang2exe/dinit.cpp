@@ -76,6 +76,13 @@ static FILE *df; /* defer dinit until semfin */
 /* Define repeat value when use of REPEAT dinit records becomes worthwhile */
 
 #define THRESHOLD 6
+#define MAX_EXP_QVALUE 4931 /* max value exponent */
+#define MAX_EXP_OF_QMANTISSA 33 /* 2^112 : 5.19e+33 */
+#define REAL_16 16
+#define REAL_0 0
+#define RADIX2 2 /* Binary */
+#define NOT_GET_VAL 0 /* 0 is default, This should be ruled out */
+#define NO_REAL -5 /* if the processor supports no real type with radix RADIX  */
 
 /*****************************************************************/
 
@@ -451,6 +458,10 @@ is_zero(DTYPE dtype, INT conval)
     break;
   case TY_DBLE:
     if (conval == stb.dbl0)
+      return true;
+    break;
+  case TY_QUAD:
+    if (conval == stb.quad0)
       return true;
     break;
   case TY_CMPLX:
@@ -1276,7 +1287,7 @@ _ddiv(INT *dividend, INT *divisor, INT *quotient)
 static int
 get_ast_op(int op)
 {
-  int ast_op;
+  int ast_op = -1;
 
   switch (op) {
   case AC_NEG:
@@ -1349,6 +1360,9 @@ get_ast_op(int op)
 static INT
 init_fold_const(int opr, INT conval1, INT conval2, DTYPE dtype)
 {
+#ifdef TARGET_SUPPORTS_QUADFP
+  IEEE128 qresult, qnum1, qnum2;
+#endif
   DBLE dtemp, dresult, num1, num2;
   DBLE dreal1, dreal2, drealrs, dimag1, dimag2, dimagrs;
   DBLE dtemp1, dtemp2;
@@ -1505,6 +1519,40 @@ init_fold_const(int opr, INT conval1, INT conval2, DTYPE dtype)
       goto err_exit;
     }
     return getcon(dresult, DT_DBLE);
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    qnum1[0] = CONVAL1G(conval1);
+    qnum1[1] = CONVAL2G(conval1);
+    qnum1[2] = CONVAL3G(conval1);
+    qnum1[3] = CONVAL4G(conval1);
+    qnum2[0] = CONVAL1G(conval2);
+    qnum2[1] = CONVAL2G(conval2);
+    qnum2[2] = CONVAL3G(conval2);
+    qnum2[3] = CONVAL4G(conval2);
+    switch (opr) {
+    case OP_ADD:
+      xqadd(qnum1, qnum2, qresult);
+      break;
+    case OP_SUB:
+      xqsub(qnum1, qnum2, qresult);
+      break;
+    case OP_MUL:
+      xqmul(qnum1, qnum2, qresult);
+      break;
+    case OP_DIV:
+      xqdiv(qnum1, qnum2, qresult);
+      break;
+    case OP_CMP:
+      return xqcmp(qnum1, qnum2);
+    case OP_XTOX:
+      xqpow(qnum1, qnum2, qresult);
+      break;
+    default:
+      goto err_exit;
+    }
+    return getcon(qresult, DT_QUAD);
+#endif
 
   case TY_CMPLX:
     real1 = CONVAL1G(conval1);
@@ -1824,6 +1872,9 @@ init_negate_const(INT conval, DTYPE dtype)
 {
   SNGL result;
   DBLE drealrs, dimagrs;
+#ifdef TARGET_SUPPORTS_QUADFP
+  QUAD qrealrs;
+#endif
   static INT num[4];
 
   switch (DTY(dtype)) {
@@ -1848,6 +1899,16 @@ init_negate_const(INT conval, DTYPE dtype)
     num[1] = CONVAL2G(conval);
     xdneg(num, drealrs);
     return getcon(drealrs, DT_DBLE);
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    num[0] = CONVAL1G(conval);
+    num[1] = CONVAL2G(conval);
+    num[2] = CONVAL3G(conval);
+    num[3] = CONVAL4G(conval);
+    xqneg(num, qrealrs);
+    return getcon(qrealrs, DT_QUAD);
+#endif
 
   case TY_CMPLX:
     xfneg(CONVAL1G(conval), &num[0]); /* real part */
@@ -2306,7 +2367,7 @@ eval_int(CONST *arg, DTYPE dtype)
 static CONST *
 eval_null(CONST *arg, DTYPE dtype)
 {
-  CONST c = {0};
+  CONST c = {0, NULL, NULL, 0, SPTR_NULL, SPTR_NULL, DT_NONE, 0, {0}};
   CONST *p = clone_init_const(&c, true);
   p->id = AC_CONST;
   p->repeatc = 1;
@@ -2385,6 +2446,14 @@ eval_abs(CONST *arg, DTYPE dtype)
       xdabsv(num1, res);
       con1 = getcon(res, dtype);
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      con1 = wrkarg->u1.conval;
+      GET_QUAD(num1, con1);
+      xqabsv(num1, res);
+      con1 = getcon(res, dtype);
+      break;
+#endif
     case TY_CMPLX:
       con1 = wrkarg->u1.conval;
       num1[0] = CONVAL1G(con1);
@@ -2513,6 +2582,9 @@ eval_min(CONST *arg, DTYPE dtype)
         break;
       case TY_INT8:
       case TY_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+#endif
         if (init_fold_const(OP_CMP, wrkarg2->u1.conval, wrkarg1->u1.conval,
                             dtype) < 0) {
           c->u1 = wrkarg2->u1;
@@ -2646,6 +2718,9 @@ eval_max(CONST *arg, DTYPE dtype)
         break;
       case TY_INT8:
       case TY_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+#endif
         if (init_fold_const(OP_CMP, wrkarg2->u1.conval, wrkarg1->u1.conval,
                             dtype) > 0) {
           c->u1 = wrkarg2->u1;
@@ -2701,6 +2776,9 @@ cmp_acl(DTYPE dtype, CONST *x, CONST *y, bool want_max, bool back)
     break;
   case TY_INT8:
   case TY_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+#endif
     cmp = init_fold_const(OP_CMP, x->u1.conval, y->u1.conval, dtype);
     break;
   default:
@@ -2761,7 +2839,7 @@ static int
 _huge(DTYPE dtype)
 {
   INT val[4];
-  int tmp, ast, sptr;
+  int tmp;
 
   switch (DTYG(dtype)) {
   case TY_BINT:
@@ -2812,8 +2890,10 @@ negate_const_be(INT conval, DTYPE dtype)
 {
   SNGL result, realrs, imagrs;
   DBLE dresult, drealrs, dimagrs;
-  IEEE128 qresult, qrealrs, qimagrs;
-  static INT num[4], numz[4];
+#ifdef TARGET_SUPPORTS_QUADFP
+  IEEE128 qresult;
+#endif
+  static INT num[4];
 
   switch (DTY(dtype)) {
   case TY_BINT:
@@ -2837,6 +2917,16 @@ negate_const_be(INT conval, DTYPE dtype)
     num[1] = CONVAL2G(conval);
     xdneg(num, dresult);
     return getcon(dresult, DT_DBLE);
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    num[0] = CONVAL1G(conval);
+    num[1] = CONVAL2G(conval);
+    num[2] = CONVAL3G(conval);
+    num[3] = CONVAL4G(conval);
+    xqneg(num, qresult);
+    return getcon(qresult, DT_QUAD);
+#endif
 
   case TY_CMPLX:
     xfneg(CONVAL1G(conval), &realrs);
@@ -2878,6 +2968,9 @@ mk_unop(int optype, int lop, DTYPE dtype)
     case TY_LOG:
     case TY_REAL:
     case TY_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+#endif
     case TY_CMPLX:
     case TY_DCMPLX:
     case TY_INT8:
@@ -2935,6 +3028,9 @@ mk_smallest_val(DTYPE dtype)
     return tmp;
   case TY_REAL:
   case TY_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+#endif
     tmp = _huge(dtype);
     tmp = mk_unop(OP_SUB, tmp, dtype);
     return tmp;
@@ -3006,7 +3102,6 @@ do_eval_minval_or_maxval(INDEX *index, DTYPE elem_dt, DTYPE loc_dt,
   unsigned locs_size;
   bool want_max = intrin == AC_I_maxloc || intrin == AC_I_maxval;
   bool want_val = intrin == AC_I_minval || intrin == AC_I_maxval;
-  CONST *result;
  
 /* vals[vals_size] contains the result for {min,max}val()
  * locs[locs_size] contains the result for {min,max}loc() */
@@ -3092,6 +3187,10 @@ eval_scale(CONST *arg, int type)
   DBLINT64 inum1, inum2;
   INT e;
   DBLE dconval;
+#ifdef TARGET_SUPPORTS_QUADFP
+  INT qnum1[4], qnum2[4];
+  QUAD qconval;
+#endif
  
   rslt = (CONST*)getitem(4, sizeof(CONST));
   BZERO(rslt, CONST, 1);
@@ -3141,6 +3240,28 @@ eval_scale(CONST *arg, int type)
     xdmul(inum1, inum2, dconval);
     rslt->u1.conval = getcon(dconval, DT_DBLE);
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case 16:
+    e = 16383 + i;
+    if (e < 0)
+      e = 0;
+    else if (e > 32767)
+      e = 32767;
+
+    qnum1[0] = CONVAL1G(conval1);
+    qnum1[1] = CONVAL2G(conval1);
+    qnum1[2] = CONVAL3G(conval1);
+    qnum1[3] = CONVAL4G(conval1);
+
+    qnum2[0] = e << 16;
+    qnum2[1] = 0;
+    qnum2[2] = 0;
+    qnum2[3] = 0;
+    xqmul(qnum1, qnum2, qconval);
+    rslt->u1.conval = getcon(qconval, DT_QUAD);
+    break;
+#endif
   }
 
   return rslt;
@@ -3237,6 +3358,15 @@ eval_nint(CONST *arg, DTYPE dtype)
         res[0] = init_fold_const(OP_SUB, con1, stb.dblhalf, DT_DBLE);
       conval = cngcon(res[0], DT_DBLE, DT_INT);
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      if (init_fold_const(OP_CMP, con1, stb.quad0, DT_QUAD) >= 0)
+        res[0] = init_fold_const(OP_ADD, con1, stb.quadhalf, DT_QUAD);
+      else
+        res[0] = init_fold_const(OP_SUB, con1, stb.quadhalf, DT_QUAD);
+      conval = cngcon(res[0], DT_QUAD, DT_INT);
+      break;
+#endif
     }
 
     wrkarg->id = AC_CONST;
@@ -3503,6 +3633,10 @@ eval_selected_real_kind(CONST *arg, DTYPE dtype)
     r = 4;
   else if (con <= 15)
     r = 8;
+#ifdef TARGET_SUPPORTS_QUADFP
+  else if (con <= MAX_EXP_OF_QMANTISSA)
+    r = REAL_16;
+#endif
   else
     r = -1;
 
@@ -3515,10 +3649,27 @@ eval_selected_real_kind(CONST *arg, DTYPE dtype)
     } else if (con <= 307) {
       if (r > 0 && r < 8)
         r = 8;
+#ifdef TARGET_SUPPORTS_QUADFP
+    } else if (con <= MAX_EXP_QVALUE) {
+      if (r > REAL_0 && r < REAL_16)
+        r = REAL_16;
+#endif
     } else {
       if (r > 0)
         r = 0;
       r -= 2;
+    }
+  }
+
+  arg = arg->next;
+  if (arg->next) {
+    wrkarg = eval_init_expr_item(arg->next);;
+    con = wrkarg->u1.conval;
+    if (con != RADIX2) {
+      if (con == NOT_GET_VAL && (wrkarg->sptr == 0)) {}
+      else {
+        r = NO_REAL;
+      }
     }
   }
 
@@ -4193,6 +4344,15 @@ transfer_store(INT conval, DTYPE dtype, char *destination)
     dest[1] = CONVAL1G(conval);
     break;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    dest[0] = CONVAL4G(conval);
+    dest[1] = CONVAL3G(conval);
+    dest[2] = CONVAL2G(conval);
+    dest[3] = CONVAL1G(conval);
+    break;
+#endif
+
   case TY_CMPLX:
     dest[0] = CONVAL1G(conval);
     dest[1] = CONVAL2G(conval);
@@ -4221,7 +4381,7 @@ static INT
 transfer_load(DTYPE dtype, char *source)
 {
   int *src = (int *)source;
-  INT num[2], real[2], imag[2];
+  INT num[4], real[2], imag[2];
 
   if (DT_ISWORD(dtype))
     return src[0];
@@ -4234,6 +4394,15 @@ transfer_load(DTYPE dtype, char *source)
     num[1] = src[0];
     num[0] = src[1];
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    num[3] = src[0];
+    num[2] = src[1];
+    num[1] = src[2];
+    num[0] = src[3];
+    break;
+#endif
 
   case TY_CMPLX:
     num[0] = src[0];

@@ -10,7 +10,7 @@
  */
 
 typedef struct {
-  char *dirname;  /**< directory name */
+  const char *dirname;  /**< directory name */
   const char *filename; /**< file name (only) */
   const char *fullname; /**< full file name */
   const char *funcname; /**< function name */

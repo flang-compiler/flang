@@ -238,8 +238,6 @@ function_init(void)
 static void
 function_end(void)
 {
-  int bihx;
-
   optshrd_fend();
 
 }
@@ -772,9 +770,6 @@ add_loop_preheader(int lp)
 
 /*******************************************************************/
 
-static int newtarget_bih;
-static int newtarget_fg;
-
 /*
  * After a loop has been processed, the flow graph is updated to include
  * the exit node. A copy of the exit block is added for each exit of the
@@ -946,7 +941,7 @@ void
 unconditional_branches(void)
 {
   int stdx, nextstdx;
-  int astx, nest, stdifx, stdstmtx, sptr, stdelsex, stdendx, astelsex, astendx;
+  int astx, nest = 0, stdifx, stdstmtx, sptr, stdelsex, stdendx, astelsex, astendx;
   int condx;
   int *ifnest;
   int ifnestsize;

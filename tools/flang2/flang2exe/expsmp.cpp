@@ -72,7 +72,6 @@ static int critCnt;     /* counter for critical sections */
 static int taskbih;     /* mark where task allocation should be */
 static int taskCnt;     /* counter for task regions  */
 static int taskLoopCnt; /* counter for taskloop regions  */
-static int taskLab;     /* label after ETASK */
 static int taskBv;      /* bit values for flag for BTASK & TASKREG:
                          *   0x01 -- untied
                          *   0x02 -- if clause present
@@ -340,7 +339,6 @@ resetMppBih(int set, int eampp)
 static void
 resetTaskBih(int set)
 {
-  int bih;
   static int savebih;
   static int savex14;
 
@@ -389,18 +387,6 @@ sptrListFree(sptrListT **list)
     n = next;
   }
   *list = NULL;
-}
-
-static int
-sptrListLength(const sptrListT *list)
-{
-  int count = 0;
-  const sptrListT *n;
-
-  for (n = list; n; n = n->next)
-    ++count;
-
-  return count;
 }
 
 /* Returns an ili of a temporary variable that conatins size information
@@ -456,7 +442,7 @@ makeCopyprivArray(const sptrListT *list, bool pass_size_addresses)
   int i, ili, nme, n_elts;
   SPTR array;
   DTYPE dtype;
-  int basenme, adsc;
+  int basenme;
   static int id;
   const sptrListT *node;
 
@@ -581,6 +567,9 @@ jsrAddArg(int arglist, ILI_OP opc, int argili)
   case IL_ARGKR:
   case IL_ARGSP:
   case IL_ARGDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_ARGQP:
+#endif
     ili = ad2ili(opc, argili, arglist);
     return ili;
   default:
@@ -643,7 +632,7 @@ makeCall(const char *fname, ILI_OP opc, int argili)
 static void
 addCopyinInplace(const sptrListT *list)
 {
-  int i, ili, nme, n_elts, dest_nme, argili, call;
+  int i, ili, n_elts, dest_nme, argili, call;
   int master_ili;
   SPTR lab;
   int altili, func;
@@ -726,8 +715,8 @@ addCopyinInplace(const sptrListT *list)
 static void
 makeCopyprivArray_tls(const sptrListT *list)
 {
-  int i, ili, nme, n_elts, array, dtype, basenme, adsc, argili, call;
-  int master_ili, thread_addr;
+  int i, ili, n_elts, basenme, argili, call;
+  int master_ili;
   SPTR lab;
   int altili, master_nme, func;
   SPTR sptr;
@@ -736,7 +725,7 @@ makeCopyprivArray_tls(const sptrListT *list)
   n_elts = 0;
   lab = getlab();
   for (node = list, i = 0; node; node = node->next, ++i) {
-    int sptr_nme, sptr_ili;
+    int sptr_ili;
 
     sptr = MIDNUMG(node->sptr);
     if (STYPEG(sptr) == ST_CMBLK) {
@@ -804,9 +793,8 @@ findEnlabBih(int func)
 static void
 setTaskloopVars(SPTR lb, SPTR ub, SPTR stride, SPTR lastitr)
 {
-  int nme, basenm, baseili, ili, bih;
+  int nme, basenm, baseili, ili;
   SPTR arg;
-  int asym;
   int oldbih;
   ILI_OP ld, st;
   MSZ msz;
@@ -925,26 +913,24 @@ void
 exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
 {
 #ifdef IM_BPAR
-  int argili = 0;
-  int ili, tili, ili_arg;
-  int lastilt;
+  int ili = 0;
   SPTR sym;
   SPTR sptr;
   int offset, savebih;
-  SPTR end_label, beg_label;
   int off;
-  int addr, nmex, stili;
-  int prev_scope;
-  char name[10];
+  int addr, stili;
   int argilm;
   SPTR tpv;
   int pv;
   int savex14;
   const char *doschedule;
-  int semaphore, dotarget;
+  int semaphore;
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
+  int dotarget;
+  SPTR beg_label;
+#endif
   static int assign_rou = 0; /* C++ only, lets avoid more ifdefs */
-  ILM_T rou_op;
-  int num_elem, element_size;
+  int element_size;
   loop_args_t loop_args;
   LLTask *task;
   bool is_cmblk;
@@ -952,8 +938,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   static SPTR uplevel_sptr;
   static SPTR single_thread;
   static SPTR in_single;
-  static SPTR targetfunc_sptr = SPTR_NULL, targetdevice_func_sptr = SPTR_NULL;
-  static int target_mode = 0;
+  static SPTR targetfunc_sptr = SPTR_NULL;
   SPTR nlower, nupper, nstride;
 #if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
   static int target_ili_num_threads = 0;
@@ -1111,7 +1096,6 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
 
     break;
   case IM_BPARD:
-  bpard:
     /* lexically nested begin parallel */
     incrOutlinedCnt();
     if (outlinedCnt > 1) {
@@ -1284,7 +1268,9 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
     if (gbl.outlined)
       expb.sc = SC_AUTO;
 
-    SPTR par_label, end_label;
+#if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
+    SPTR end_label;
+#endif
     int iliarg;
 
 #ifdef OMP_OFFLOAD_LLVM
@@ -1333,7 +1319,6 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
               "Parallel region terminated", NULL);
     break;
   case IM_EPARD:
-  epard:
     if (outlinedCnt == 1) {
       ilm_outlined_pad_ilm(curilm);
     }
@@ -1760,7 +1745,7 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
         /* we should know lower bound but don't know upper bound */
         /* make a call to static_for_init here - we will fill upper bound later
          */
-        int *args, lb, ub, st, last;
+        int *args;
         wr_block();
         cr_block();
         ili = ad4ili(IL_ST, ad_icon(0), ad_acon(SECT_LB, 0),
@@ -1931,8 +1916,6 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_ECOPYIN:
     if (!ll_ilm_is_rewriting()) {
       if (opc == IM_ECOPYIN) {
-        const int n = sptrListLength(copysptr_list);
-
         if (XBIT(69, 0x80)) {
           makeCopyprivArray_tls(copysptr_list);
           sptrListFree(&copysptr_list);
@@ -2511,14 +2494,14 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
       s_scope = scopeSptr;
       scopeSptr = (SPTR)OUTLINEDG(taskFnsptr);     // ???
       taskAllocSptr = ll_make_kmpc_task_arg(
-          taskAllocSptr, taskFnsptr, scopeSptr, taskFlags, ili_arg);
-      ili_arg = ll_load_outlined_args(scopeSptr, taskFnsptr, false);
+          taskAllocSptr, taskFnsptr, scopeSptr, taskFlags);
+      ll_load_outlined_args(scopeSptr, taskFnsptr, false);
       /* Load taskloop vars and store onto task_alloc ptr
        * Also get its address on task_alloc ptr to pass
        * to __kmpc_taskloop.
        */
       if (opc == IM_ETASKLOOP) {
-        int nme, ldnme, task_ili, addr, ilix;
+        int nme, task_ili;
         ILI_OP ld, st;
         MSZ msz;
         INT offset = 0;
@@ -2937,10 +2920,7 @@ add_mp_v(SPTR semaphore)
 int
 add_mp_penter(int ispar)
 {
-  int size_symptr;
-  int sizeili, argili, ili;
-  int funcsptr;
-  return ili;
+  return 0;
 }
 
 int
@@ -2993,11 +2973,9 @@ void
 exp_mp_func_prologue(bool process_tp)
 {
   SPTR sym;
-  int ili, tmpthread;
+  int tmpthread;
   int func;
-  int next_tp;
   int cond_ili = 0;
-  int class_register = 0;
   int bih = 0;
 
 #ifdef CUDAG
@@ -3010,8 +2988,6 @@ exp_mp_func_prologue(bool process_tp)
        * copies by calling:
        * _kmpc_threadprivate_cached(&cmn_block, &cmn_vector, size(cmn_block))
        */
-      int call;
-
       tmpthread = allocThreadprivate(sym, &cond_ili);
       if (gbl.outlined)
         func = gbl.currsub;
@@ -3141,7 +3117,6 @@ allocThreadprivate(SPTR sym, int *tmpthr)
   int size;
   int adr_vector;
   int adr_cm;
-  int call;
 
   cm = MIDNUMG(sym); /* corresponding common block  or threadprivate var */
   if (STYPEG(cm) == ST_CMBLK) {

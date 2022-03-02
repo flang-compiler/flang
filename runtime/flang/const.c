@@ -267,7 +267,6 @@ static __REAL8_T unit_real8 = 1.0;
 static __REAL16_T unit_real16 = 1.0;
 static __CPLX8_T unit_cplx8 = {1.0, 0.0};
 static __CPLX16_T unit_cplx16 = {1.0, 0.0};
-static __CPLX32_T unit_cplx32 = {1.0, 0.0};
 
 void *__fort_units[__NTYPES] = {
     (void *)0,    /*  0 __NONE       no type */

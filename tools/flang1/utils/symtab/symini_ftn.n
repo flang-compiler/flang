@@ -236,7 +236,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DEXP 1 D D none * V
 .AT elemental x
-.IN .QEXP 1 Q Q none * V
+.IN QEXP 1 Q Q none * V
 .AT elemental x
 .IN .CEXP 1 C C none * V
 .AT elemental x
@@ -474,7 +474,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental a
 .IN DABS 1 D D DABS * V
 .AT elemental a
-.IN .QABS 1 Q Q QABS * V
+.IN QABS 1 Q Q QABS * V
 .AT elemental a
 .IN .CABS 1 C R none * V
 .AT elemental a
@@ -531,7 +531,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental a1 a2 #2#3#a
 .IN KMAX0 12 I8 I8 I8MAX - V native
 .AT elemental a1 a2 #2#3#a
-.IN .QMAX 12 Q Q QMAX * V
+.IN QMAX 12 Q Q QMAX * V
 .AT elemental a1 a2 #2#3#a
 
 .IN JMAX0 12 I I IMAX - V
@@ -569,7 +569,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental a1 a2 #2#3#a
 .IN KMIN0 12 I8 I8 I8MIN - V native
 .AT elemental a1 a2 #2#3#a
-.IN .QMIN 12 Q Q QMIN * V
+.IN QMIN 12 Q Q QMIN * V
 .AT elemental a1 a2 #2#3#a
 
 .IN JMIN0 12 I I IMIN - V
@@ -881,8 +881,15 @@ Convert any numeric data type to double complex.
 .AT elemental a
 .IN DINT 1 D D none * V
 .AT elemental a
-
+.IN QINT 1 Q Q none * V
+.AT elemental a
 .IN DNINT 1 D D none * V
+.AT elemental a
+
+.IN QNINT 1 Q Q none * V
+.AT elemental a
+
+.IN QANINT 1 Q Q none * V
 .AT elemental a
 
 .IN ..ININT 1 R SI NINT * V
@@ -941,13 +948,13 @@ sptr	name	siname	iname	rname	dname	cname	cdname	i8name
 .AT elemental z
 .GN AIMAG - - - - .AIMAG DIMAG - - .QIMAG
 .AT elemental z
-.GN CONJG - - - - .CONJG DCONJG - - .QCONJG
+.GN CONJG - - - - .CONJG DCONJG - - .QCONJG QCONJG -
 .AT elemental z
 .GN ININT - - .ININT IIDNNT - - - - -
 .AT elemental a
 .GN JNINT - - .JNINT JIDNNT - - - - -
 .AT elemental a
-.GN ABS IIABS IABS .ABS DABS CABS CDABS KIABS .QABS .CQABS
+.GN ABS IIABS IABS .ABS DABS CABS CDABS KIABS QABS .CQABS
 .AT elemental a
 .GN MOD IMOD .MOD AMOD DMOD - - KMOD .QMOD -
 .AT elemental a p
@@ -955,13 +962,13 @@ sptr	name	siname	iname	rname	dname	cname	cdname	i8name
 .AT elemental a b
 .GN DIM IIDIM IDIM .DIM DDIM - - KIDIM .QDIM -
 .AT elemental x y
-.GN MAX IMAX0 MAX0 AMAX1 DMAX1 - - .KMAX .QMAX -
+.GN MAX IMAX0 MAX0 AMAX1 DMAX1 - - .KMAX QMAX -
 .AT elemental a1 a2 #2#3#a
-.GN MIN IMIN0 MIN0 AMIN1 DMIN1 - - .KMIN .QMIN -
+.GN MIN IMIN0 MIN0 AMIN1 DMIN1 - - .KMIN QMIN -
 .AT elemental a1 a2 #2#3#a
 .GN SQRT - - .SQRT DSQRT CSQRT CDSQRT - .QSQRT .CQSQRT
 .AT elemental x
-.GN EXP - - .EXP DEXP CEXP CDEXP - .QEXP .CQEXP
+.GN EXP - - .EXP DEXP CEXP CDEXP - QEXP .CQEXP
 .AT elemental x
 .GN LOG - - ALOG DLOG CLOG CDLOG - .QLOG .CQLOG
 .AT elemental x

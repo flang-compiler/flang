@@ -15,8 +15,6 @@ extern int __isatty3f();
 
 int ENT3F(ISATTY, isatty)(int *lu)
 {
-  int u;
-
   if (__isatty3f(*lu))
     return -1; /* .true. */
   return 0;

@@ -283,7 +283,6 @@ typedef enum LL_InstrListFlags {
   NOSIGNEDWRAP            = (1 << 11),
   NOUNSIGNEDWRAP          = (1 << 12),
   FUNC_RETURN_IS_FUNC_PTR = (1 << 13),
-  LDST_HAS_METADATA       = (1 << 13), /**< I_LOAD, I_STORE only */
   LDST_HAS_ACCESSGRP_METADATA = (1 << 14), /**< I_LOAD, I_STORE only, for llvm.loop.parallel_accesses */
 
   /* Information for atomic operations.
@@ -1015,22 +1014,17 @@ bool small_aggr_return(DTYPE dtype);
 /**
    \brief ...
  */
-char *ll_get_cstring_buf(int sptr, int skip_quotes);
-
-/**
-   \brief ...
- */
 const char *llvm_fc_type(DTYPE dtype);
 
 /**
    \brief ...
  */
-char *process_dtype_struct(DTYPE dtype);
+const char *process_dtype_struct(DTYPE dtype);
 
 /**
    \brief ...
  */
-char *process_ftn_dtype_struct(DTYPE dtype, char *tname, bool printed);
+const char *process_ftn_dtype_struct(DTYPE dtype, char *tname, bool printed);
 
 /**
    \brief ...

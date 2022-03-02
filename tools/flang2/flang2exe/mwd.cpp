@@ -2909,8 +2909,6 @@ smsz(int m)
   return B;
 } /* smsz */
 
-const char* scond(int);
-
 static void
 putstc(ILI_OP opc, int opnum, int opnd)
 {
@@ -3233,6 +3231,9 @@ _printili(int i)
   case IL_ICJMP:
   case IL_FCJMP:
   case IL_DCJMP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMP:
+#endif
   case IL_ACJMP:
   case IL_UICJMP:
     _printili(ILI_OPND(i, 1));
@@ -3253,6 +3254,9 @@ _printili(int i)
   case IL_ICJMPZ:
   case IL_FCJMPZ:
   case IL_DCJMPZ:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMPZ:
+#endif
   case IL_ACJMPZ:
   case IL_UICJMPZ:
     _printili(ILI_OPND(i, 1));
@@ -3415,6 +3419,9 @@ _printili(int i)
   case IL_CSEIR:
   case IL_CSESP:
   case IL_CSEDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_CSEQP:
+#endif
   case IL_CSEAR:
   case IL_CSECS:
   case IL_CSECD:
@@ -4153,6 +4160,12 @@ dili(int ilix)
       case ILIO_DP:
         putint("dp", opnd);
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      /* just for debug to dump ili */
+      case ILIO_QP:
+        putint("qp", opnd);
+        break;
+#endif
       default:
         put2int("Unknown", IL_OPRFLAG(opc, j), opnd);
         break;
@@ -4212,6 +4225,9 @@ dilitreex(int ilix, int l, int notlast)
   case IL_CSEIR:
   case IL_CSESP:
   case IL_CSEDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_CSEQP:
+#endif
   case IL_CSECS:
   case IL_CSECD:
   case IL_CSEAR:
@@ -4767,7 +4783,7 @@ static const char *nmetypes[] = {"unknown ", "indirect", "variable",
 void
 _dumpnme(int n, bool dumpdefsuses)
 {
-  int store, pte;
+  int pte;
   dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
   if (n <= 0 || n >= nmeb.stg_avail) {
     fprintf(dfile, "\nNME %d out of %d\n", n, nmeb.stg_avail - 1);

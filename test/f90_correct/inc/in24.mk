@@ -11,8 +11,8 @@
 in24: run
 	
 
-fcheck.$(OBJX) check_mod.mod: $(SRC)/check_mod.f90
-	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.f90 -o fcheck.$(OBJX)
+fcheck.$(OBJX) check_mod.mod: $(SRC)/check_mod.F90
+	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.F90 -o fcheck.$(OBJX)
 
 build:  $(SRC)/in24.f90 $(SRC)/in24_expct.c fcheck.$(OBJX) check_mod.mod
 	-$(RM) in24.$(EXESUFFIX) in24.$(OBJX) in24_expct.$(OBJX)

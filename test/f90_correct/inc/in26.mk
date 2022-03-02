@@ -11,15 +11,15 @@
 in26: run
 	
 
-fcheck.$(OBJX): $(SRC)/check_mod.f90
-	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.f90 -o fcheck.$(OBJX)
+fcheck.$(OBJX): $(SRC)/check_mod.F90
+	-$(FC) -c $(FFLAGS) $(SRC)/check_mod.F90 -o fcheck.$(OBJX)
 
 build:  $(SRC)/in26.f90 $(SRC)/in26_expct.c fcheck.$(OBJX)
 	-$(RM) in26.$(EXESUFFIX) in26.$(OBJX) in26_expct.$(OBJX)
 	@echo ------------------------------------ building test $@
-	-$(CC) -g -c $(CFLAGS) $(SRC)/in26_expct.c -o in26_expct.$(OBJX)
-	-$(FC) -g -c $(FFLAGS) $(LDFLAGS) $(SRC)/in26.f90 -o in26.$(OBJX)
-	-$(FC) -g $(FFLAGS) $(LDFLAGS) in26.$(OBJX) in26_expct.$(OBJX) fcheck.$(OBJX) $(LIBS) -o in26.$(EXESUFFIX)
+	-$(CC) -c $(CFLAGS) $(SRC)/in26_expct.c -o in26_expct.$(OBJX)
+	-$(FC) -c $(FFLAGS) $(LDFLAGS) $(SRC)/in26.f90 -o in26.$(OBJX)
+	-$(FC) $(FFLAGS) $(LDFLAGS) in26.$(OBJX) in26_expct.$(OBJX) fcheck.$(OBJX) $(LIBS) -o in26.$(EXESUFFIX)
 
 
 run:

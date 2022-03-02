@@ -723,6 +723,8 @@ dinit_acl_val2(int sptr, int dtype, ACL *ict, int op)
     case AC_MUL:
     case AC_DIV:
     case AC_EXP:
+    case AC_EXPK:
+    case AC_EXPX:
     case AC_LOR:
     case AC_LAND:
     case AC_LEQV:
@@ -970,12 +972,12 @@ dinit_val(int sptr, int dtype, int dtypev, int astval, int op)
   switch (DTY(A_DTYPEG(astval))) {
   case TY_DWORD:
   case TY_DBLE:
+  case TY_QUAD:
   case TY_CMPLX:
   case TY_DCMPLX:
+  case TY_QCMPLX:
   case TY_CHAR:
   case TY_NCHAR:
-  case TY_QUAD:
-  case TY_QCMPLX:
   case TY_INT8:
   case TY_LOG8:
     val = A_SPTRG(astval);
@@ -1000,11 +1002,11 @@ dinit_val(int sptr, int dtype, int dtypev, int astval, int op)
     if (do_dvl == 1) {
       switch (dtype) {
       case TY_DBLE:
+      case TY_QUAD:
       case TY_INT8:
       case TY_LOG8:
       case TY_CMPLX:
       case TY_DCMPLX:
-      case TY_QUAD:
       case TY_QCMPLX:
         newast = mk_cnst(val);
         break;
@@ -1361,7 +1363,7 @@ ac_opname(int id)
 static void
 find_base(int ast, int *psptr, int *pmemptr)
 {
-  int sptr, memptr, a;
+  int sptr, memptr = 0, a;
   int i;
   int asd;
   ADSC *ad;
@@ -1650,7 +1652,6 @@ void rw_dinit_state(RW_ROUTINE, RW_FILE)
   FILE *readfile;
   FILE *writefile;
   int i;
-  int sptr;
   int seq_astb_df;
   int fileno = 1;
 

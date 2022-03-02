@@ -66,6 +66,9 @@ static void put_i8(int);
 static void put_i16(int);
 static void put_r4(INT);
 static void put_r8(int, int);
+#ifdef TARGET_SUPPORTS_QUADFP
+static void put_r16(int, int);
+#endif
 static void put_cmplx_n(int, int);
 static void add_ctor(const char *);
 static void write_proc_pointer(SPTR sptr);
@@ -103,10 +106,10 @@ ISZ_T
 put_skip(ISZ_T old, ISZ_T New, bool is_char)
 {
   ISZ_T amt;
-  char *s = "i8 0";
-  char *str = "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,"
-              "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,"
-              "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0";
+  const char *s = "i8 0";
+  const char *str = "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,"
+                    "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,"
+                    "i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0,i8 0";
 
   if (is_char) {
     s = "i8 32";
@@ -142,15 +145,14 @@ static void
 write_proc_pointer(SPTR sptr)
 {
   const char *fntype = "void()";
-  LL_Type * lt;
 
   if (PTR_INITIALIZERG(sptr) && PTR_TARGETG(sptr)) {
     sptr = (SPTR) PTR_TARGETG(sptr);
-  } 
+  }
   LL_ABI_Info *abi = ll_proto_get_abi(ll_proto_key(sptr));
   if (abi) {
     fntype = ll_abi_function_type(abi)->str;
-  } 
+  }
   fprintf(ASMFIL, "i8* bitcast(%s* @%s to i8*)", fntype, getsname(sptr));
 }
 
@@ -159,13 +161,11 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
           ISZ_T loc_base, ISZ_T *i8cnt, int *ptrcnt, char **cptr, bool is_char)
 {
   ISZ_T al;
-  int area, d;
+  int area;
   int size_of_item;
   int putval;
   INT skip_size;
   char str[32];
-  char *initstr = NULL;
-  DINIT_REC *item;
   area = LLVM_LONGTERM_AREA;
   const ISZ_T orig_tconval = tconval;
   char *oldptr;
@@ -422,6 +422,12 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
         if (tconval == stb.dbl0)
           goto do_zeroes;
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+        if (tconval == stb.quad0)
+          goto do_zeroes;
+        break;
+#endif
       case TY_CMPLX:
         if (CONVAL1G(tconval) == 0 && CONVAL2G(tconval) == 0)
           goto do_zeroes;
@@ -540,6 +546,17 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
         }
         put_r8((int)tconval, putval);
         break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+        if (DBGBIT(5, 32)) {
+          fprintf(gbl.dbgfil,
+                  "emit_init:put_r18 first_data:%d i8cnt:%ld ptrcnt:%d\n",
+                  first_data, *i8cnt, *ptrcnt);
+        }
+        put_r16((int)tconval, putval);
+        break;
+#endif
 
       case TY_CMPLX:
         if (DBGBIT(5, 32)) {
@@ -723,9 +740,7 @@ static void
 put_ncharstring_n(char *p, ISZ_T len, int size_of_char)
 {
   int n, bytes;
-  char ch;
   const char *ptrch = "i8";
-  char chnm[10];
   union {
     char a[2];
     short i;
@@ -749,7 +764,7 @@ put_ncharstring_n(char *p, ISZ_T len, int size_of_char)
       fprintf(ASMFIL, ",");
   }
 
-} /* put_string_n */
+} /* put_ncharstring_n */
 
 static void
 put_zeroes(ISZ_T len)
@@ -778,7 +793,6 @@ put_zeroes(ISZ_T len)
 static void
 put_i8(int val)
 {
-  int i;
   i8bit.i8 = (short)val;
   fprintf(ASMFIL, "i8 %u", i8bit.byte[0] & 0xff);
 }
@@ -846,6 +860,35 @@ put_r8(int sptr, int putval)
   }
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
+static void put_r16(int sptr, int putval)
+{
+  INT num[4];
+
+  num[0] = CONVAL1G(sptr);
+  num[1] = CONVAL2G(sptr);
+  num[2] = CONVAL3G(sptr);
+  num[3] = CONVAL4G(sptr);
+  if (flg.endian) {
+    put_r4(num[0]);
+    fprintf(ASMFIL, ",");
+    put_r4(num[1]);
+    fprintf(ASMFIL, ",");
+    put_r4(num[2]);
+    fprintf(ASMFIL, ",");
+    put_r4(num[3]);
+  } else {
+    put_r4(num[3]);
+    fprintf(ASMFIL, ",");
+    put_r4(num[2]);
+    fprintf(ASMFIL, ",");
+    put_r4(num[1]);
+    fprintf(ASMFIL, ",");
+    put_r4(num[0]);
+  }
+}
+#endif
+
 static void
 put_cmplx_n(int sptr, int putval)
 {
@@ -876,7 +919,7 @@ put_dcmplx_n(int sptr, int putval)
    The caller expects a string that is an i8*.
  */
 LL_Value *
-gen_ptr_offset_val(int offset, LL_Type *ret_type, char *ptr_nm)
+gen_ptr_offset_val(int offset, LL_Type *ret_type, const char *ptr_nm)
 {
   /* LL_Type for i8* (used as bitcast target for GEP to get byte offsets) */
   LL_Type *ll_type_i8_ptr =
@@ -976,7 +1019,6 @@ mk_struct_for_llvm_init(const char *name, int size)
 {
   int tag;
   DTYPE dtype;
-  int gblsym;
   char sname[MXIDLN];
 
   snprintf(sname, sizeof(sname), "struct%s", name);

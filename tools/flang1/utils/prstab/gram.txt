@@ -656,7 +656,8 @@
 <only> ::= <ident> |
 	   <ident> '=>' <ident> |
 	   <id name> ( <only operator> ) |
-	   <id name> ( = )
+	   <id name> ( = ) |
+	   <id name> ( <only operator> ) '=>' <id name> ( <only operator> )
 
 <only operator> ::= <intrinsic op> |
 	            . <ident> .    |

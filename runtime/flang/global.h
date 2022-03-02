@@ -16,6 +16,7 @@
 #include "fioMacros.h"
 #include "stdioInterf.h" /* stubbed version of stdio.h */
 #include "cnfg.h" /* declarations for configuration items */
+#include <stdint.h>
 
 #define GBL_SIZE_T_FORMAT "zu"
 
@@ -46,8 +47,8 @@ WIN_MSVCRT_IMP long WIN_CDECL strtol(const char *, char **, int);
 WIN_MSVCRT_IMP char *WIN_CDECL strerror(int);
 WIN_MSVCRT_IMP char *WIN_CDECL strstr(const char *, const char *);
 
-typedef __INT_T INT;       /* native integer at least 32 bits */
-typedef unsigned int UINT; /* unsigned 32 bit native integer */
+typedef int32_t INT;       /* native integer at least 32 bits */
+typedef uint32_t UINT; /* unsigned 32 bit native integer */
 #define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
 
 /*
@@ -80,7 +81,6 @@ typedef char sbool; /* short boolean (for use in large structs) */
 #define assert(ex)
 #endif
 
-extern char *strcpy();
 #define STASH(str) (strcpy((char *)malloc(strlen(str) + 1), str))
 
 /* defs used by __fortio_error */

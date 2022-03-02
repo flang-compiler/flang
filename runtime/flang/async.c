@@ -17,7 +17,7 @@
  * Fio_asy_close - called from close
  */
 
-#if !defined(TARGET_WIN_X8664)
+#if !defined(TARGET_WIN)
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -42,7 +42,7 @@ struct asy_transaction_data {
   seekoffx_t off;
 };
 
-#if defined(TARGET_WIN_X8664)
+#if defined(TARGET_WIN)
 struct asy {
   FILE *fp;
   int fd;
@@ -82,7 +82,7 @@ static int slime;
 
 /* internal wait for asynch i/o */
 
-#if defined(TARGET_WIN_X8664)
+#if defined(TARGET_WIN)
 static int
 asy_wait(struct asy *asy)
 {
@@ -122,9 +122,6 @@ asy_wait(struct asy *asy)
   long len;
   int s;
   int tn;
-  int offset;
-  int n;
-
   struct aiocb *p[1];
 
   if (!(asy->flags & ASY_IOACT)) { /* i/o active? */
@@ -242,8 +239,7 @@ int
 Fio_asy_open(FILE *fp, struct asy **pasy)
 {
   struct asy *asy;
-  char *p;
-#if defined(TARGET_WIN_X8664)
+#if defined(TARGET_WIN)
   HANDLE temp_handle;
 #endif
   asy = (struct asy *)calloc(sizeof(struct asy), 1);
@@ -253,7 +249,7 @@ Fio_asy_open(FILE *fp, struct asy **pasy)
   }
   asy->fp = fp;
   asy->fd = __io_getfd(fp);
-#if defined(TARGET_WIN_X8664)
+#if defined(TARGET_WIN)
   temp_handle = _get_osfhandle(asy->fd);
   asy->handle =
       ReOpenFile(temp_handle, GENERIC_READ | GENERIC_WRITE,
@@ -277,13 +273,13 @@ Fio_asy_read(struct asy *asy, void *adr, long len)
   int n;
   int tn;
 
-#if defined(TARGET_WIN_X8664)
+#if defined(TARGET_WIN)
   union Converter converter;
 #endif
   if (slime)
     printf("--Fio_asy_read %d %p %ld\n", asy->fd, adr, len);
 
-#if defined(TARGET_WIN_X8664)
+#if defined(TARGET_WIN)
   if (asy->flags & ASY_IOACT) { /* i/o active? */
     if (asy_wait(asy) == -1) {  /* ..yes, wait */
       return (-1);
@@ -330,14 +326,14 @@ Fio_asy_write(struct asy *asy, void *adr, long len)
 {
   int n;
   int tn;
-#if defined(TARGET_WIN_X8664)
+#if defined(TARGET_WIN)
   union Converter converter;
 #endif
 
   if (slime)
     printf("--Fio_asy_write %d %p %ld\n", asy->fd, adr, len);
 
-#if defined(TARGET_WIN_X8664)
+#if defined(TARGET_WIN)
   if (asy->flags & ASY_IOACT) { /* i/o active? */
     if (asy_wait(asy) == -1) {  /* ..yes, wait */
       return (-1);
@@ -398,7 +394,7 @@ Fio_asy_close(struct asy *asy)
   if (asy->flags & ASY_IOACT) { /* i/o active? */
     n = asy_wait(asy);
   }
-#if defined(TARGET_WIN_X8664)
+#if defined(TARGET_WIN)
   /* Close the Re-opened handle that we created. */
   CloseHandle(asy->handle);
 #endif

@@ -597,7 +597,6 @@ add_assumshp(int arg)
 static int
 early_specification_stmt_needed(int ast)
 {
-  int lop;
   int argt;
   int argcnt;
   int i;
@@ -653,7 +652,6 @@ gen_early_bnd_dependencies(int ast)
 {
   int sptr;
   int std;
-  int next_std;
   ADSC *ad;
   int ndims;
   int i;
@@ -745,10 +743,7 @@ static void
 gen_early_str_len()
 {
   SPTR sptr;
-  int ast;
-  int std;
   int dtype;
-  int laststd;
   int i;
 
   for (sptr = gbl.p_adjstr; sptr != NOSYM; sptr = ADJSTRLKG(sptr)) {
@@ -848,7 +843,6 @@ static void
 adj_based_arrays(void)
 {
   int sptr;
-  int i;
 
   for (sptr = gbl.p_adjarr; sptr != NOSYM; sptr = SYMLKG(sptr)) {
     if (!IGNOREG(sptr)) {
@@ -875,7 +869,6 @@ add_bound_assignments(int sym)
   int ast;
   int tmp;
   int zbaseast;
-  int insertstd = 0;
   int save_entry_point = entry_point;
 
   if (CONSTRUCTSYMG(sym))
@@ -1292,7 +1285,7 @@ add_equivalence(int cmn1, int cmn2, int mem1, int mem2)
   }
   /* unaligned, need to add something */
   if (merge_common_symbol == 0) {
-    int d1, d2, dty, size, sizeast, mem, message;
+    int d1, d2, dty, size, sizeast;
     /* find smallest item in cmn1, cmn2 */
     d1 = smallest_dtype(cmn1);
     d2 = smallest_dtype(cmn2);
@@ -1358,7 +1351,6 @@ merge(int cmn1, int cmn2)
   int mem1, mem2, nmem1, nmem2;
   ISZ_T off1, off2, size1, size2;
   int unignore;
-  static char errmsg[256];
 #if DEBUG
   if (DBGBIT(10, 8))
     fprintf(gbl.dbgfil, "common/%s/ at symbols %d and %d\n", SYMNAME(cmn1),
@@ -1475,7 +1467,7 @@ mark(int sptr, int limit)
 static void
 mark_used_variable(int ast, int *plimit)
 {
-  int sptr, limit, aln, dist;
+  int sptr, limit;
   limit = *plimit;
   switch (A_TYPEG(ast)) {
   case A_CNST:

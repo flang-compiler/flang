@@ -861,9 +861,12 @@ static struct {        /* Register temporary information */
     {'k', "ka", DT_DCMPLX, 0, 0, -1}, /* 6: double complex temps */
     {'h', "ha", DT_NONE, 0, 0, -1},   /* 7: filler */
     {'v', "va", DT_NONE, 0, 0, -1},   /* 8: vector temps */
-#if   defined LONG_DOUBLE_FLOAT128
+#if defined(LONG_DOUBLE_FLOAT128)
     {'X', "Xa", DT_FLOAT128, 0, 0, -1}, /* 9: float128 temps */
-    {'x', "xa", DT_CMPLX128, 0, 0, -1}, /*10: float complex temps */
+    {'x', "xa", DT_CMPLX128, 0, 0, -1}, /*10: float128 complex temps */
+#elif defined(TARGET_SUPPORTS_QUADFP)
+    {'X', "Xa", DT_QUAD, 0, 0, -1},   /* 9: quad precision temps  */
+    {'x', "xa", DT_NONE, 0, 0, -1}, /* 9 and 10: filler */
 #else
     {'X', "Xa", DT_NONE, 0, 0, -1}, /* 9 and 10: filler */
     {'x', "xa", DT_NONE, 0, 0, -1}, /* 9 and 10: filler */
@@ -1102,7 +1105,7 @@ assn_rtemp(int ili)
 static int
 _assn_rtemp(int ili, int temp)
 {
-  int rcand, rtype;
+  int rcand, rtype = 0;
   ILI_OP opc = ILI_OPC(ili);
   GET_RCAND(rcand);
 
@@ -1268,6 +1271,11 @@ select_rtemp(int ili)
   case ILIA_DP:
     type = 3;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case ILIA_QP:
+    type = 9;
+    break;
+#endif
   case ILIA_KR:
     type = 4;
     break;
@@ -1289,6 +1297,11 @@ select_rtemp(int ili)
 #ifdef ILIA_CD
   case ILIA_CD:
     type = 6;
+    break;
+#endif
+#ifdef TARGET_SUPPORTS_QUADFP
+  case ILIA_CQ:
+    type = 10;
     break;
 #endif
 #ifdef LONG_DOUBLE_FLOAT128

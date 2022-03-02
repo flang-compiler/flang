@@ -18,21 +18,20 @@ jobs:
     strategy:
       matrix:
         target: [X86]
-        cc: [clang]
-        cpp: [clang++]
+        cc: [clang, gcc]
         version: [10, 11]
-        llvm_branch: [release_11x, release_12x]
+        llvm_branch: [release_12x, release_13x]
         include:
           - target: X86
             cc: gcc
             cpp: g++
             version: 10
-            llvm_branch: release_11x
+            llvm_branch: release_12x
           - target: X86
             cc: gcc
             cpp: g++
             version: 10
-            llvm_branch: release_12x
+            llvm_branch: release_13x
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so the job can access it
@@ -60,7 +59,7 @@ jobs:
 
           i="0"
           # Keep checking older builds to find the right branch and correct number of artifacts
-          while { [ `jq -r '.total_count?' artifacts_llvm` != "3" ] || \
+          while { [ `jq -r '.total_count?' artifacts_llvm` != "4" ] || \
               [ `jq -r --argjson i "$i" '.workflow_runs[$i].head_branch?' runs_llvm.json` != ${{ matrix.llvm_branch }} ]; } && \
               [ $i -lt 10 ];
           do
@@ -79,6 +78,10 @@ jobs:
           tar xzf llvm_build.tar.gz
           cd classic-flang-llvm-project/build
           sudo make install/fast
+
+      # gcc11 and g++11 are needed to install llvm
+      - if: matrix.cc == 'gcc' && matrix.version == '11'
+        run: sudo apt install gcc-11 g++-11
 
       - name: Build and install flang & libpgmath
         run: ./build-flang.sh -t ${{ matrix.target }} -p ${{ env.install_prefix }} -n $(nproc) -c -s

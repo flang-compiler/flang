@@ -43,7 +43,7 @@ static const char *tok_name[] = {"id",  "equal", "or",   "eoln",
 int
 main()
 {
-  int i, j;
+  int i;
   int tok;
 
   infile = fopen("gram.txt", "r");
@@ -131,7 +131,7 @@ readln()
 static int
 scan()
 {
-  int token;
+  int token = -1;
   char c;
 
   while (1) {
@@ -227,7 +227,7 @@ init()
 {
   char c;
   char *p, *q;
-  int i, cnt;
+  int i;
 
   current = 0;
   p = name + 1;

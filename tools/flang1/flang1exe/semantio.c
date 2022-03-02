@@ -218,7 +218,7 @@ static struct pt_tag { /* parameter table for I/O statements */
                    *                   variable.
                    */
   int tmp_in_use; /* 1==>a tmp is being used in the current call (see above) */
-  char *name;
+  const char *name;
   int stmt; /* I/O stmts which may use parameter/keyword */
 } pt[PT_MAXV + 1] = {
     {0, 0, 0, 0, "UNIT",
@@ -306,7 +306,6 @@ static int last_edit;         /* last edit descriptor seen */
 static int fmt_length;        /* ast representing length of an unencoded
                                * format string (FT_CHARACTER).
                                */
-static INT num[2];            /* scratch area for making integer constants */
 static int filename_type = 0; /* TY_CHAR or TY_NCHAR */
 static int iolist;            /* ASTLI list for io items in read/write */
 static LOGICAL noparens;      /* no parens enclosing control list */
@@ -445,7 +444,7 @@ static void rw_array(int, int, int, FtnRtlEnum);
 static void get_derived_iolptrs(SST *, int, SST *);
 static void gen_derived_io(int, FtnRtlEnum, int);
 static void gen_lastval(DOINFO *);
-static int misc_io_checks(char *);
+static int misc_io_checks(const char *);
 static void iomsg_check(void);
 static void newunit_check(void);
 static void put_vlist(SST *);
@@ -475,7 +474,7 @@ semantio(int rednum, SST *top)
 {
   int sptr, i, iofunc;
   int len;
-  int dtype, ddtype;
+  int dtype;
   int dum;
   ADSC *ad;
   SST *stkptr, *e1;
@@ -484,7 +483,6 @@ semantio(int rednum, SST *top)
   DOINFO *doinfo;
   FtnRtlEnum rtlRtn;
   int ast;
-  int argt;
   int count;
   int ast1, ast2, ast3;
   int dim; /* dimension # of the index variable */
@@ -1086,11 +1084,10 @@ semantio(int rednum, SST *top)
             udt = DTYPEG(sptr);
           }
           if (DTYG(udt) == TY_DERIVED) {
-            int iotype_ast, vlist_ast, ast_size;
+            int iotype_ast = 0, vlist_ast = 0;
             int fsptr, argcnt, has_io, asn, tast;
-            int val[2];
-            char *iotype;
-            ITEM *arglist, *p;
+            const char *iotype;
+            ITEM *arglist;
 
             dtype = udt;
             has_io = dtype_has_defined_io(dtype);
@@ -1168,7 +1165,7 @@ semantio(int rednum, SST *top)
                    (dtype == DT_INT8 || dtype == DT_INT4 || dtype == DT_SINT ||
                     dtype == DT_BINT || dtype == DT_LOG8 || dtype == DT_LOG ||
                     dtype == DT_SLOG || dtype == DT_BLOG || dtype == DT_REAL4 ||
-                    dtype == DT_REAL8 || dtype == DT_CMPLX8 ||
+                    dtype == DT_REAL8 || dtype == DT_QUAD || dtype == DT_CMPLX8 ||
                     dtype == DT_CMPLX16 ||
                     (DTY(dtype) == TY_CHAR && fmttyp == FT_LIST_DIRECTED))) {
 
@@ -1295,11 +1292,11 @@ semantio(int rednum, SST *top)
         int bytfunc;
         if (DTY(dtype) == TY_DERIVED &&
             (dtype_has_defined_io(dtype) & functype[is_read][fmttyp])) {
-          int tast, iotype_ast, vlist_ast, argcnt, asn, fsptr, sptr;
-          char *iotype;
+          const char *iotype;
+          int tast, iotype_ast = 0, vlist_ast = 0, argcnt, asn, fsptr;
           int shape, forall, triplet_list, n, lb, ub, st, newast;
-          int index_var, triplet, dovar, list, lc, sym, triple;
-          ITEM *arglist, *p;
+          int index_var, triplet, dovar, list, sym, triple;
+          ITEM *arglist;
           int subs[7], std;
           int i;
           if (fmttyp == FT_UNFORMATTED) {
@@ -3008,7 +3005,7 @@ semantio(int rednum, SST *top)
       asd = A_ASDG(ast1);
       numdim = ASD_NDIM(asd); /* get number of subscripts */
       for (i = 0; i < numdim; i++) {
-        int asd2, ss2;
+        int asd2;
         /* look for difficult subscripts */
         ast2 = ASD_SUBS(asd, i);
         switch (A_TYPEG(ast2)) {
@@ -4333,7 +4330,6 @@ static int
 add_cgoto(int ast)
 {
   int lbsptr;
-  int tmp;
   int last_ast;
   int inquire_cnt = 13;
 
@@ -4590,7 +4586,6 @@ chk_fmtid(SST *stk)
 {
   int dtype;
   int sptr, lab;
-  char name[8];
   ADSC *ad;
 
   fmt_is_var = 0;
@@ -4882,7 +4877,7 @@ kwd_errchk(int bt)
 static void
 _put(INT n, int dtype)
 {
-  static char *desc[] = {
+  static const char *desc[] = {
       " ",        "END",     "LP",      "RP",      "K",       "STR",
       "T",        "TL",      "TR",      "X",       "S",       "SP",
       "SS",       "BN",      "BZ",      "SLASH",   "COLON",   "Q",
@@ -4920,10 +4915,10 @@ cntl_name(int p)
   return buf;
 }
 
-char *
+const char *
 ed_name(int ed)
 {
-  static char *desc[] = {
+  static const char *desc[] = {
       " ",  "END", "(",  ")",  "P",  "STR", "T", "TL", "TR", "X", "S",
       "SP", "SS",  "BN", "BZ", "/",  ":",   "Q", "$",  "A",  "L", "I",
       "F",  "E",   "E",  "EN", "ES", "G",   "D", "O",  "Z",  "A", "L",
@@ -5073,9 +5068,7 @@ static int
 end_io_call(void)
 {
   int asn;
-  int i, j;
-  int nargs;
-  int argt;
+  int i;
 
   if (io_call.ast_type == A_FUNC)
     asn = mk_assn_stmt(ast_ioret(), io_call.ast, DT_INT);
@@ -5401,14 +5394,13 @@ add_iolptrs(int dtype, SST *in_stkptr, int *mndscp)
   IOL *iolptr;
   IOL *startlist;
   IOL *endlist;
-  int ast, astm, asd;
+  int ast = 0;
   int sptr1, sptrm;
-  int j, numdim, numdimm;
+  int j, numdim;
   int derived_dtype, dtypem;
   int mem_id;
-  int subs[7], rsubs[7];
+  int subs[7];
   SST *stkptr;
-  ADSC *ad;
   SST tmpstk;
   IOL *dobegin;
   IOL *doend;
@@ -5509,7 +5501,6 @@ add_iolptrs(int dtype, SST *in_stkptr, int *mndscp)
     for (i = 0; i < numdim; ++i) {
       int shpss, astss, sptrivar, astivar;
       int init, final, stride, normalize;
-      IOL *iol_tmp;
       normalize = 0;
       astss = ASD_SUBS(asd, i);
       shpss = A_SHAPEG(astss);
@@ -5670,7 +5661,6 @@ get_derived_iolptrs(SST *result, int sptr1, SST *instkptr)
 {
   IOL *iolptr;
   IOL *start;
-  int ast, ast1;
 
   start = add_iolptrs(SST_DTYPEG(instkptr), instkptr, NULL);
   iolptr = find_end_iollist(start);
@@ -5682,9 +5672,7 @@ static void
 gen_derived_io(int sptr, FtnRtlEnum rtlRtn, int read)
 {
   int bytfunc;
-  int leaf_cnt;
-  int ast_sptr;
-  int i, mndsc;
+  int i;
 
   if (!sptr) {
     /*
@@ -5750,7 +5738,7 @@ gen_lastval(DOINFO *doinfo)
  * except bufferin/bufferout
  */
 static int
-misc_io_checks(char *iostmt)
+misc_io_checks(const char *iostmt)
 {
   (void)not_in_forall(iostmt);
   /*    if (PTV(PT_IOMSG)) {
@@ -5771,7 +5759,6 @@ iomsg_check()
 {
   if (PTV(PT_IOMSG)) {
     int sptr;
-    int ast;
     sptr = mk_iofunc(RTE_f90io_iomsga, DT_NONE, 0);
     (void)begin_io_call(A_CALL, sptr, 1);
     (void)add_io_arg(PTV(PT_IOMSG));
@@ -5790,9 +5777,8 @@ static int
 gen_dtsfmt_args(int *iotype_ast, int *vlist_ast)
 {
   int sptr;
-  int tempbase, templen, lenast, listast;
-  int tmpast, iosize_ast, tast, baseast, asn;
-  int arraydsc;
+  int tempbase, templen;
+  int tast, baseast, asn;
   int dtype;
   ADSC *ad;
   tast = 0;
@@ -6050,8 +6036,7 @@ gen_dtio_args(SST *stkptr, int arg1, int iotype_ast, int vlist_ast)
 static int
 get_defined_io_call(int fsptr, int argcnt, ITEM *arglist)
 {
-  int ast, mem, i, td, dtv, dtv_sptr;
-  int sdsc_mem;
+  int ast, mem, i, dtv, dtv_sptr;
   ITEM *p;
 
   if (CLASSG(fsptr) && VTABLEG(fsptr) && VTOFFG(fsptr)) {

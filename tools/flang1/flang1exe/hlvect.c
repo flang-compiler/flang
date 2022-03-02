@@ -118,15 +118,9 @@ static void save_subs(int mr);
 static void find_ztrip(void);
 static int check_ztrip(int loop, int ili);
 static void find_init(void);
-static int derive_induc(int base, int *stride, int *isptr);
-static LOGICAL create_int_intrinsic(int ast, void *extra_arg);
-static void add_bounds(int loop);
-static void add_last_values(int loop);
 
 static void vunlnk_bih(void);
 static void delbih(int fgx);
-static LOGICAL _contains_shape_string(int ast, LOGICAL *pflag);
-static LOGICAL has_valid_stmts(int lp);
 
 static void hlv_syminitfunc(void);
 #endif
@@ -164,14 +158,6 @@ VTMP hlv_temps[VT_PHASES][VT_MAX] = {
 VTMP hlv_vtemps = {
     0, 0, 0, "vt", DT_INT4,
 };
-
-static struct {
-  int loop;
-  int iltx;
-  int fgx;
-  int search_base;
-  int level;
-} lpinfo;
 
 /* Causes of loops not being vectorized. See messages in report_cause(). */
 enum {
@@ -292,7 +278,6 @@ hlv_syminitfunc(void)
 int
 hlv_getsym(int phase, int type)
 {
-  char name[32];
   int sptr;
   VTMP *p;
 
@@ -306,11 +291,9 @@ hlv_getsym(int phase, int type)
 int
 hlv_getvsym(int baseDtype)
 {
-  char name[32];
   int sptr = getsymf("pgf_%s%04d", hlv_vtemps.pfx, hlv_vtemps.iavl++);
   int dtype;
   ADSC *ad;
-  int ival[2];
 
   if (hlv_vtemps.iavl > hlv_vtemps.iavl_max)
     hlv_vtemps.iavl_max = hlv_vtemps.iavl;

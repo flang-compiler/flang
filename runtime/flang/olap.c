@@ -464,7 +464,10 @@ static void I8(olap_copy)(char *adr0, F90_Desc *as, olap_sked *o, int len)
 {
   DECL_DIM_PTRS(dd);
   char *adr1, *adr2;
-  __INT_T ak, i, m, n, nl, nu, l, u;
+  __INT_T ak, m, n, nl, nu, l, u;
+#if defined(DEBUG)
+  __INT_T i;
+#endif
 
   SET_DIM_PTRS(dd, as, o->dim - 1);
 
@@ -530,7 +533,7 @@ static void I8(olap_loop)(char *adr0, F90_Desc *as, olap_sked *o, int len,
 {
   DECL_DIM_PTRS(dd);
   char *adr1;
-  __INT_T ak, bl, bn, bu, cl, cn, gap, clof;
+  __INT_T ak, bl, bn, bu, cl, cn, clof;
 
   if (dim == o->dim)
     --dim;

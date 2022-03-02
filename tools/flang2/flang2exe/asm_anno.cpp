@@ -51,7 +51,7 @@ static struct {
   int curlin;  /* Current line number */
   INT curpos;  /* Current file position.  Good after each output */
   char buf[ALEN + 4];
-} lanno = {0};
+} lanno;
 
 static FILE *fanno = NULL;
 static ANNO *amod = NULL;
@@ -325,9 +325,9 @@ annomod_initx(ANNO *ahead)
 static int
 qs_anno(const void *p1, const void *p2)
 {
-  if (((ANNO *)p1)->lineno < ((ANNO *)p2)->lineno)
+  if (((const ANNO *)p1)->lineno < ((const ANNO *)p2)->lineno)
     return (-1);
-  if (((ANNO *)p1)->lineno > ((ANNO *)p2)->lineno)
+  if (((const ANNO *)p1)->lineno > ((const ANNO *)p2)->lineno)
     return (1);
 #ifdef HOST_MSDOS
   return 0;

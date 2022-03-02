@@ -89,6 +89,7 @@ typedef struct {
 #define ILMO_ARPOS 32
 #define ILMO_SPPOS 33
 #define ILMO_DPPOS 34
+#define ILMO_QPRET 35
 
 #define ILMO_P 1
 #define ILMO_RP 2

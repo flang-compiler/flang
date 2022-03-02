@@ -20,7 +20,6 @@ extern void __cstr_free();
 int ENT3F(GETENVQQ, getenvqq)(DCHAR(en), DCHAR(ev) DCLEN(en) DCLEN(ev))
 {
   char *p, *q;
-  char ch;
   int i;
 
   q = __fstr2cstr(CADR(en), CLEN(en));

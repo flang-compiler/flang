@@ -22,7 +22,7 @@ const char *__fort_transnam = "rpm1";
 
 /* pg access routines for data shared between windows dlls */
 
-char *
+const char *
 __get_fort_transnam(void)
 {
   return __fort_transnam;

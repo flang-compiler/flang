@@ -186,7 +186,7 @@ int I8(__fort_fetch_int_element)(void *b, F90_Desc *d, int i)
 {
   double tmp[2];
   __INT_T idx;
-  int val;
+  int val = 0;
 
   if (F90_RANK_G(d) != 1)
     __fort_abort("fetch_int_element: non-unit rank");
@@ -249,7 +249,6 @@ void I8(__fort_store_int_element)(void *b, F90_Desc *d, int i, int val)
 void I8(__fort_fetch_int_vector)(void *b, F90_Desc *d, int *vec, int veclen)
 {
   double tmp[2];
-  dtype kind;
   __INT_T i;
 
   if (F90_RANK_G(d) != 1)

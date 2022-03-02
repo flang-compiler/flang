@@ -50,7 +50,11 @@ __ktrap(void)
         excepts |= FE_UNDERFLOW;
       if (bv & 0x100)
         excepts |= FE_INEXACT;
+#ifdef TARGET_OSX
+      __fenv_feenableexcept(excepts);
+#else
       feenableexcept(excepts);  /* glibc 2.2 extension to fenv.h */
+#endif
     }
   }
 }

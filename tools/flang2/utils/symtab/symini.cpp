@@ -78,6 +78,7 @@ public:
     argtype["I8"] = DT_INT8;
     argtype["L8"] = DT_LOG8;
     argtype["K"] = DT_NCHAR;
+    argtype["Q"] = DT_QUAD;
     argtype["PI"] = __POINT_T;
 
     elt[".IN"] = LT_IN;

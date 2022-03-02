@@ -27,6 +27,7 @@
 #include "sharedefs.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "llassem.h"
 #include "ll_write.h"
 #include "expand.h"
@@ -63,29 +64,6 @@ typedef enum SincosOptimizationFlags {
 
 /* clang-format off */
 
-const int max_operands[I_LAST + 1] = {
-    1,  1,  -1, -1, /* I_NONE, I_RET, I_BR, I_SW, */
-    -1, -1, -1,     /* I_INVOKE, I_UNWIND, I_UNREACH */
-    2,  2,  2,  2,  /* I_ADD, I_FADD, I_SUB,  I_FSUB, */
-    2,  2,  2,      /* I_MUL, I_FMUL, I_UDIV */
-    2,  2,  2,  2,  /* I_SDIV, I_FDIV, I_UREM, I_SREM, */
-    2,  2,  2,      /* I_FREM, I_SHL, I_LSHR */
-    2,  2,  2,  2,  /* I_ASHR, I_AND, I_OR, I_XOR, */
-    2,  3,  3,      /* I_EXTELE, I_INSELE, I_SHUFFVEC */
-    -1, -1, -1, -1, /* I_EXTRACTVAL, I_INSERTVAL, I_MALLOC, I_FREE, */
-    -1, 1,  2,      /* I_ALLOCA, I_LOAD, I_STORE */
-    -1, 1,  1,  1,  /* I_GEP, I_TRUNC, I_ZEXT, I_SEXT, */
-    1,  1,  1,      /* I_FPTRUNC, I_FPEXT, I_FPTOUI */
-    1,  1,  1,  1,  /* I_FPTOSI, I_UITOFP, I_SITOFP, I_PTRTOINT, */
-    1,  1,  3,      /* I_INTTOPTR, I_BITCAST, I_ICMP */
-    3,  3,  3,  -1, /* I_FCMP, I_VICMP, I_VFCMP, I_PHI, */
-    3,  -1, 1,      /* I_SELECT, I_CALL, I_VA_ARG */
-    1,  2,  1,  1,  /* I_DECL, I_LANDINGPAD,  I_RESUME, I_CLEANUP, */
-    1,  1,  1,      /* I_CATCH, I_BARRIER, I_ATOMICRMW */
-    3,  -1, -1, -1, /* I_CMPXCHG, I_PICALL, I_INDBR, I_FILTER */
-    -1              /* I_NONE */
-};
-
 static const char *const llvm_instr_names[I_LAST] = {
   "none", "ret", "br", "switch", "invoke", "unwind", "unreachable",
   "add nsw",
@@ -113,13 +91,10 @@ static const char *const stmt_names[STMT_LAST] = {
 
 const int MEM_EXTRA = 500;
 
-static int fn_sig_len = MAXARGLEN;
-static char *fn_sig_ptr = NULL;
 static void insert_entry_label(int);
 static void insert_jump_entry_instr(int);
 static void store_return_value_for_entry(OPERAND *, int);
 
-static int openacc_prefix_sptr = 0;
 static unsigned addressElementSize;
 
 #define ENTOCL_PREFIX "__pgocl_"
@@ -209,7 +184,6 @@ static struct {
   unsigned _float_jmp : 1;
   unsigned _fcmp_negate : 1;
   unsigned _last_stmt_is_branch : 1;
-  unsigned _rw_no_dep_check : 1;
   unsigned _rw_acc_grp_check : 1;
 } CGMain;
 
@@ -221,7 +195,6 @@ static struct {
 #define float_jmp (CGMain._float_jmp)
 #define fcmp_negate (CGMain._fcmp_negate)
 #define last_stmt_is_branch (CGMain._last_stmt_is_branch)
-#define rw_nodepcheck (CGMain._rw_no_dep_check)
 #define rw_access_group (CGMain._rw_acc_grp_check)
 
 static int funcId;
@@ -229,14 +202,15 @@ static int fnegcc[17] = LLCCF_NEG;
 static int expr_id;
 static int entry_bih = 0;
 static int routine_count;
-static int addr_func_ptrs;
 static STMT_Type curr_stmt_type;
-static int *idxstack = NULL;
 static hashmap_t sincos_map;
 static hashmap_t sincos_imap;
-static LL_MDRef cached_loop_metadata;
-static LL_MDRef cached_unroll_enable_metadata;
-static LL_MDRef cached_unroll_disable_metadata;
+static LL_MDRef cached_loop_id_md = ll_get_md_null();
+static bool cached_loop_id_md_has_vectorize = false;
+static LL_MDRef cached_vectorize_enable_metadata = ll_get_md_null();
+static LL_MDRef cached_vectorize_disable_metadata = ll_get_md_null();
+static LL_MDRef cached_unroll_enable_metadata = ll_get_md_null();
+static LL_MDRef cached_unroll_disable_metadata = ll_get_md_null();
 static LL_MDRef cached_access_group_metadata;
 
 static bool CG_cpu_compile = false;
@@ -283,24 +257,6 @@ static struct llvm_tag {
   unsigned no_debug_info : 1; /* set to emit engineering diagnostics */
 } llvm_info;
 
-typedef struct temp_buf {
-  char *buffer;
-  int size;
-} TEMP_BUF;
-static TEMP_BUF sbuf;
-
-typedef struct char_len {
-  int sptr;
-  int base_sptr;
-  struct char_len *next;
-} sclen;
-static sclen *c_len;
-
-typedef struct temp_buf_list {
-  TEMP_BUF buf;
-  struct temp_buf_list *next;
-} TEMP_BUF_LIST;
-
 static GBL_LIST *Globals;
 static GBL_LIST *recorded_Globals;
 static INSTR_LIST *Instructions;
@@ -324,9 +280,8 @@ static ComplexResultList_t complexResultList;
 
 static void fma_rewrite(INSTR_LIST *isns);
 static void undo_recip_div(INSTR_LIST *isns);
-static char *set_local_sname(int sptr, const char *name);
+static const char *set_local_sname(int sptr, const char *name);
 static const char *get_llvm_sname(SPTR sptr);
-static const char *get_llvm_mips_sname(SPTR sptr);
 static int is_special_return_symbol(int sptr);
 static bool cgmain_init_call(int);
 static OPERAND *gen_call_llvm_intrinsic(const char *, OPERAND *, LL_Type *,
@@ -510,7 +465,7 @@ map_to_llvm_name(const char *function_name)
   if (strcmp(function_name, "__builtin_frame_address") == 0) {
     return "llvm.frameaddress";
   }
-  return (char *)function_name;
+  return function_name;
 }
 
 void
@@ -520,10 +475,10 @@ set_llvm_sptr_name(OPERAND *operand)
   operand->string = SNAME(sptr);
 }
 
-char *
+const char *
 get_label_name(int sptr)
 {
-  char *nm = SNAME(sptr);
+  const char *nm = SNAME(sptr);
   if (*nm == '@')
     nm++;
   return nm;
@@ -542,19 +497,13 @@ get_llvm_sname(SPTR sptr)
     if (p == NULL)
       return "";
     p = map_to_llvm_name(p);
-    SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(p) + 1);
-    p = strcpy(SNAME(sptr), p);
-    return p;
+    char *buf = (char *)getitem(LLVM_LONGTERM_AREA, strlen(p) + 1);
+    SNAME(sptr) = strcpy(buf, p);
+    return SNAME(sptr);
   }
   if (*p == '@')
     p++;
   return p;
-}
-
-const char *
-get_llvm_mips_sname(SPTR sptr)
-{
-  return get_llvm_sname(sptr);
 }
 
 DTYPE
@@ -807,18 +756,22 @@ fix_nodepchk_flag(int bih)
 }
 
 INLINE static void
-mark_rw_nodepchk(int bih)
+clear_cached_loop_id_md()
 {
-  rw_nodepcheck = 1;
-  if (!BIH_NODEPCHK2(bih))
-    cached_loop_metadata = ll_get_md_null();
+  cached_loop_id_md = ll_get_md_null();
+  cached_loop_id_md_has_vectorize = false;
 }
 
-INLINE static void
-clear_rw_nodepchk(void)
+// Construct a new loop ID node or return previously cached one.
+// It looks like: !0 = !{!0}
+INLINE static LL_MDRef
+cons_loop_id_md()
 {
-  rw_nodepcheck = 0;
-  cached_loop_metadata = ll_get_md_null();
+  if (LL_MDREF_IS_NULL(cached_loop_id_md)) {
+    cached_loop_id_md = ll_create_flexible_md_node(cpu_llvm_module);
+    ll_extend_md_node(cpu_llvm_module, cached_loop_id_md, cached_loop_id_md);
+  }
+  return cached_loop_id_md;
 }
 
 INLINE static void
@@ -826,14 +779,14 @@ mark_rw_access_grp(int bih)
 {
   rw_access_group = 1;
   if (!BIH_NODEPCHK2(bih))
-    cached_loop_metadata = ll_get_md_null();
+    clear_cached_loop_id_md();
 }
 
 INLINE static void
 clear_rw_access_grp(void)
 {
   rw_access_group = 0;
-  cached_loop_metadata = ll_get_md_null();
+  clear_cached_loop_id_md();
 }
 
 void
@@ -1000,51 +953,51 @@ cons_loop_parallel_accesses_metadata(void)
   return ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
 } // cons_loop_parallel_accesses_metadata
 
+/**
+   \brief Construct exactly one cached instance of !{!"llvm.loop.vectorize.enable", 0}.
+ */
 INLINE static LL_MDRef
 cons_novectorize_metadata(void)
 {
   LL_MDRef lvcomp[2];
-  LL_MDRef loopVect;
-  LL_MDRef rv;
-
-  if (cpu_llvm_module->loop_md)
-    return cpu_llvm_module->loop_md;
-  rv = ll_create_flexible_md_node(cpu_llvm_module);
-  lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.enable");
-  lvcomp[1] = ll_get_md_i1(0);
-  loopVect = ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
-  ll_extend_md_node(cpu_llvm_module, rv, rv);
-  ll_extend_md_node(cpu_llvm_module, rv, loopVect);
-  cpu_llvm_module->loop_md = rv;
-  return rv;
+  if (LL_MDREF_IS_NULL(cached_vectorize_disable_metadata)) {
+    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.enable");
+    lvcomp[1] = ll_get_md_i1(0);
+    cached_vectorize_disable_metadata = ll_get_md_node(cpu_llvm_module,
+        LL_PlainMDNode, lvcomp, 2);
+  }
+  return cached_vectorize_disable_metadata;
 }
 
+/**
+   \brief Construct exactly one cached instance of !{!"llvm.loop.unroll.disable"}.
+ */
 INLINE static LL_MDRef
 cons_nounroll_metadata(void)
 {
   LL_MDRef lvcomp[1];
-  LL_MDRef loopUnroll;
-  LL_MDRef rv;
-
   if (LL_MDREF_IS_NULL(cached_unroll_disable_metadata)) {
-   rv = ll_create_flexible_md_node(cpu_llvm_module);
    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.disable");
-   loopUnroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 1);
-   ll_extend_md_node(cpu_llvm_module, rv, rv);
-   ll_extend_md_node(cpu_llvm_module, rv, loopUnroll);
-   cached_unroll_disable_metadata=rv;
+   cached_unroll_disable_metadata = ll_get_md_node(cpu_llvm_module,
+       LL_PlainMDNode, lvcomp, 1);
   }
   return cached_unroll_disable_metadata;
 }
 
+/**
+   \brief Construct exactly one cached instance of !{!"llvm.loop.vectorize.enable", 1}.
+ */
 INLINE static LL_MDRef
 cons_vectorize_metadata(void)
 {
   LL_MDRef lvcomp[2];
-
-  lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.enable");
-  lvcomp[1] = ll_get_md_i1(1);
-  return ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
+  if (LL_MDREF_IS_NULL(cached_vectorize_enable_metadata)) {
+    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.enable");
+    lvcomp[1] = ll_get_md_i1(1);
+    cached_vectorize_enable_metadata = ll_get_md_node(cpu_llvm_module,
+        LL_PlainMDNode, lvcomp, 2);
+  }
+  return cached_vectorize_enable_metadata;
 }
 
 /**
@@ -1335,50 +1288,47 @@ finish_routine(void)
   }
 }
 
-static LL_MDRef
-cons_no_depchk_metadata(void)
-{
-  if (LL_MDREF_IS_NULL(cached_loop_metadata)) {
-    LL_MDRef vectorize = cons_vectorize_metadata();
-    LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
-    ll_extend_md_node(cpu_llvm_module, md, md);
-    ll_extend_md_node(cpu_llvm_module, md, vectorize);
-    cached_loop_metadata = md;
-  }
-  return cached_loop_metadata;
-}
+/**
+   \brief Return current loop ID and mark it as vectorizable.
 
+   "NODEPCHK" and "VECTOR ALWAYS" currently both mean to mark a loop ID with
+   !"llvm.loop.vectorize.enable", and to mark memory instructions with
+   !llvm.access.group referring to the cached access group. This function
+   returns the current loop ID metadata via cons_loop_id_md() and marks the
+   loop as vectorizable.
+ */
 static LL_MDRef
 cons_vec_always_metadata(void)
 {
-  if (LL_MDREF_IS_NULL(cached_loop_metadata)) {
+  LL_MDRef loop_id_md = cons_loop_id_md();
+  if (!cached_loop_id_md_has_vectorize) {
+    cached_loop_id_md_has_vectorize = true;
     LL_MDRef vectorize = cons_vectorize_metadata();
     LL_MDRef paraccess = cons_loop_parallel_accesses_metadata();
-    LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
-    ll_extend_md_node(cpu_llvm_module, md, md);
-    ll_extend_md_node(cpu_llvm_module, md, vectorize);
-    ll_extend_md_node(cpu_llvm_module, md, paraccess);
-    cached_loop_metadata = md;
+    ll_extend_md_node(cpu_llvm_module, loop_id_md, vectorize);
+    ll_extend_md_node(cpu_llvm_module, loop_id_md, paraccess);
   }
-  return cached_loop_metadata;
+  return loop_id_md;
 }
 
+/**
+   \brief Construct exactly one cached instance of !{!"llvm.loop.unroll.enable"}.
+ */
 static LL_MDRef
-cons_unroll_metadata(void) //Calls the metadata for unroll
+cons_unroll_metadata(void)
 {
   LL_MDRef lvcomp[1];
-  LL_MDRef unroll;
   if (LL_MDREF_IS_NULL(cached_unroll_enable_metadata)) {
-    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.enable");
-    unroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 1);
-    LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
-    ll_extend_md_node(cpu_llvm_module, md, md);
-    ll_extend_md_node(cpu_llvm_module, md, unroll);
-    cached_unroll_enable_metadata = md;
+   lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.enable");
+   cached_unroll_enable_metadata = ll_get_md_node(cpu_llvm_module,
+       LL_PlainMDNode, lvcomp, 1);
   }
   return cached_unroll_enable_metadata;
 }
 
+/**
+   \brief Construct instance of !{!"llvm.loop.unroll.count", <unroll_factor>}.
+ */
 static LL_MDRef
 cons_unroll_count_metadata(int unroll_factor)
 {
@@ -1387,10 +1337,7 @@ cons_unroll_count_metadata(int unroll_factor)
   lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.unroll.count");
   lvcomp[1] = ll_get_md_i32(cpu_llvm_module, unroll_factor);
   unroll= ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
-  LL_MDRef md = ll_create_flexible_md_node(cpu_llvm_module);
-  ll_extend_md_node(cpu_llvm_module, md, md);
-  ll_extend_md_node(cpu_llvm_module, md, unroll);
-  return md;
+  return unroll;
 }
 
 INLINE static bool
@@ -1491,7 +1438,7 @@ schedule(void)
   int bihx, ilt, ilix, ilix2, nme;
   ILI_OP opc;
   int rhs_ili, lhs_ili, sptr;
-  int bih, bihprev, bihcurr, bihnext, li;
+  int bih, bihprev, bihcurr, bihnext;
   int concurBih = 0;
   bool made_return;
   bool merge_next_block;
@@ -1574,7 +1521,7 @@ restartConcur:
   if (ISNVVMCODEGEN) {
     /* for now, we generate two ll_function one for host one device. */
     /* it is kernel function in gpu module */
-    LL_Function *llfunc;
+    LL_Function *llfunc = nullptr;
     if (OMPACCFUNCKERNELG(func_sptr)) {
       llfunc = ll_create_device_function_from_type(current_module, func_type,
                                                    &(SNAME(func_sptr)[1]), 1, 0,
@@ -1721,13 +1668,7 @@ restartConcur:
     else if (XBIT(19, 0x400))
       BIH_SIMD(bih) = true;
     if ((!XBIT(69, 0x100000)) && BIH_NODEPCHK(bih) &&
-        (!ignore_simd_block(bih))) {
-      fix_nodepchk_flag(bih);
-      mark_rw_nodepchk(bih);
-    } else {
-      clear_rw_nodepchk();
-    }
-    if (XBIT(191, 0x4)) {
+        (!ignore_simd_block(bih)) || XBIT(191, 0x4)) {
       fix_nodepchk_flag(bih);
       mark_rw_access_grp(bih);
     } else {
@@ -1786,15 +1727,39 @@ restartConcur:
             next_bih_label = t_next_bih_label;
         }
         make_stmt(STMT_BR, ilix, false, next_bih_label, ilt);
+
+        int branch_nops = ilis[opc].oprs;
+        int branch_target = ILI_OPND(ilix, branch_nops);
+        int branch_target_bih = ILIBLKG(branch_target);
+        int start_line = BIH_LINENO(branch_target_bih);
+        int end_line = ILT_LINENO(ilt);
+        bool is_loop_backedge = BIH_HEAD(branch_target_bih) && start_line <= end_line;
+
+        LL_MDRef loop_md = ll_get_md_null();
+
+        bool emitting_debug = !ISNVVMCODEGEN && (flg.debug || XBIT(120, 0x1000));
+        if (emitting_debug && is_loop_backedge) {
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          lldbg_emit_line(current_module->debug_info, start_line);
+          LL_MDRef loop_line_start = lldbg_get_line(current_module->debug_info);
+          lldbg_emit_line(current_module->debug_info, end_line);
+          LL_MDRef loop_line_end = lldbg_get_line(current_module->debug_info);
+
+          ll_extend_md_node(cpu_llvm_module, loop_md, loop_line_start);
+          ll_extend_md_node(cpu_llvm_module, loop_md, loop_line_end);
+        }
+
         if ((!XBIT(69, 0x100000)) &&
             (BIH_NODEPCHK(bih) && (!BIH_NODEPCHK2(bih)) &&
             (!ignore_simd_block(bih))) || BIH_SIMD(bih)) {
-          LL_MDRef loop_md = cons_no_depchk_metadata();
-          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
-          if (i) {
-            i->flags |= LOOP_BACKEDGE_FLAG;
-            i->misc_metadata = loop_md;
-          }
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+
+          // cons_vec_always_metadata is different from the others because it
+          // arranges that llvm.loop.vectorize is only added to the loop
+          // metadata once.
+          (void)cons_vec_always_metadata();
         }
         if ((check_for_loop_directive(ILT_LINENO(ilt), 191, 0x4))) {
           LL_MDRef loop_md = cons_vec_always_metadata();
@@ -1804,32 +1769,33 @@ restartConcur:
             i->misc_metadata = loop_md;
           }
         }
-        if (BIH_UNROLL(bih)) {
-          LL_MDRef loop_md = cons_unroll_metadata();
-          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
-          if (i) {
-            i->flags |= LOOP_BACKEDGE_FLAG;
-            i->misc_metadata = loop_md;
-          }
+        if (BIH_UNROLL(bih)) { // Set on open_pragma() -> if(XBIT(11,0X3))
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          ll_extend_md_node(cpu_llvm_module, loop_md, cons_unroll_metadata());
         } else if (BIH_UNROLL_COUNT(bih)) {
-          LL_MDRef loop_md = cons_unroll_count_metadata(unroll_factor);
-          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
-          if (i) {
-            i->flags |= LOOP_BACKEDGE_FLAG;
-            i->misc_metadata = loop_md;
-          }
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          ll_extend_md_node(cpu_llvm_module, loop_md, 
+              cons_unroll_count_metadata(unroll_factor));
         } else if (BIH_NOUNROLL(bih)) {
-          LL_MDRef loop_md = cons_nounroll_metadata();
-          INSTR_LIST *i = find_last_executable(llvm_info.last_instr);
-          if (i) {
-            i->flags |= LOOP_BACKEDGE_FLAG;
-            i->misc_metadata = loop_md;
-          }
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          ll_extend_md_node(cpu_llvm_module, loop_md, cons_nounroll_metadata());
         }
         if (ignore_simd_block(bih)) {
-          LL_MDRef loop_md = cons_novectorize_metadata();
-          llvm_info.last_instr->flags |= LOOP_BACKEDGE_FLAG;
-          llvm_info.last_instr->misc_metadata = loop_md;
+          if (LL_MDREF_IS_NULL(loop_md))
+            loop_md = cons_loop_id_md();
+          ll_extend_md_node(cpu_llvm_module, loop_md, cons_novectorize_metadata());
+        }
+
+        if (!LL_MDREF_IS_NULL(loop_md)) {
+          // If any loop metadata is present, mark the last executable
+          // instruction as a backedge.
+          if (INSTR_LIST *i = find_last_executable(llvm_info.last_instr)) {
+            i->flags |= LOOP_BACKEDGE_FLAG;
+            i->misc_metadata = loop_md;
+          }
         }
       } else if ((ILT_ST(ilt) || ILT_DELETE(ilt)) &&
                  (IL_TYPE(opc) == ILTY_STORE)) {
@@ -1857,6 +1823,9 @@ restartConcur:
         switch (opc) {
         case IL_DFRSP:
         case IL_DFRDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+        case IL_DFRQP:
+#endif
         case IL_DFRCS:
 #ifdef LONG_DOUBLE_FLOAT128
         case IL_FLOAT128RESULT:
@@ -2063,6 +2032,12 @@ restartConcur:
       ((flg.inliner && !XBIT(14, 0x10000)) || flg.autoinline)) {
       GBL_CURRFUNC = SPTR_NULL;
   }
+
+  if (LL_DebugInfo *di = current_module->debug_info) {
+    if (lldbg_get_di_routine_idx(di) > 0)
+      lldbg_emit_lv_list(di);
+  }
+
   gcTempMap();
   CG_cpu_compile = false;
 } /* schedule */
@@ -2118,7 +2093,6 @@ gen_llvm_atomic_intrinsic_for_builtin(int pdnum, int sptr, int ilix,
   int arg_ili = ILI_OPND(ilix, 2);
   DTYPE call_dtype = DTYPEG(call_sptr);
   DTYPE return_dtype = DTyReturnType(call_dtype);
-  int params = DTyParamList(call_dtype);
 
   switch (pdnum) {
   default:
@@ -2472,11 +2446,10 @@ write_I_CALL(INSTR_LIST *curr_instr, bool emit_func_signature_for_call)
   bool dbg_line_op_written = false;
   bool routine_label_written = false;
   /* Start with default calling conventions */
-  enum calling_conventions c_conv = cc_default;
   bool callRequiresTrunc = false;
   bool simple_callee = true;
   LL_Type *callee_type = call_op->ll_type;
-  int sptr, call_dtype, param, param_dtype;
+  int sptr;
   char callRequiresTruncName[32];
 
   /* operand pattern:
@@ -2777,7 +2750,6 @@ get_tbaa_metadata(LL_Module *module, int ilix, OPERAND *opnd, bool isVol)
 
   myPtr = locset_to_tbaa_info(module, omniPtr, ilix);
 
-cons_indirect:
   if (!myPtr)
     return myPtr;
 
@@ -2885,28 +2857,15 @@ write_memory_order_and_alignment(INSTR_LIST *instrs)
 }
 
 INLINE static void
-write_no_depcheck_metadata(LL_Module *module, INSTR_LIST *insn)
+write_llaccgroup_metadata(LL_Module *module, INSTR_LIST *insn,
+                          LL_InstrListFlags flag_check, unsigned int val)
 {
-  if (insn->flags & LDST_HAS_METADATA) {
-    char buf[64];
-    int n;
-    DEBUG_ASSERT(insn->misc_metadata, "missing metadata");
-    n = snprintf(buf, 64, ", !llvm.mem.parallel_loop_access !%u",
-                 LL_MDREF_value(insn->misc_metadata));
-    DEBUG_ASSERT(n < 64, "buffer overrun");
-    print_token(buf);
-  }
-}
-
-INLINE static void
-write_llaccgroup_metadata(LL_Module *module, INSTR_LIST *insn)
-{
-  if (insn->flags & LDST_HAS_ACCESSGRP_METADATA) {
+  if (insn->flags & flag_check) {
     char buf[64];
     int n;
     DEBUG_ASSERT(insn->misc_metadata, "missing metadata");
     n = snprintf(buf, 64, ", !llvm.access.group !%u",
-                 LL_MDREF_value(cached_access_group_metadata));
+                 LL_MDREF_value(val));
     DEBUG_ASSERT(n < 64, "buffer overrun");
     print_token(buf);
   }
@@ -2961,15 +2920,11 @@ static void
 write_instructions(LL_Module *module)
 {
   INSTR_LIST *instrs;
-  OPERAND *p, *call_op, *p1;
-  DTYPE call_dtype, param_dtype;
+  OPERAND *p, *p1;
   LL_InstrName i_name;
-  int align;
   SPTR sptr;
-  int param;
   bool forceLabel = true;
   bool dbg_line_op_written;
-  bool routine_label_written;
   bool ret_scalar;
   int entry;
 
@@ -3326,8 +3281,8 @@ write_instructions(LL_Module *module)
 
         assert(p->next == NULL, "write_instructions(), bad next ptr", 0,
                ERR_Fatal);
-        write_no_depcheck_metadata(module, instrs);
-        write_llaccgroup_metadata(module, instrs);
+        write_llaccgroup_metadata(module, instrs, LDST_HAS_ACCESSGRP_METADATA,
+                                  cached_access_group_metadata);
         write_tbaa_metadata(module, instrs->ilix, instrs->operands,
                             instrs->flags);
         break;
@@ -3347,8 +3302,8 @@ write_instructions(LL_Module *module)
         write_operand(p, "", 0);
 
         write_memory_order_and_alignment(instrs);
-        write_no_depcheck_metadata(module, instrs);
-        write_llaccgroup_metadata(module, instrs);
+        write_llaccgroup_metadata(module, instrs, LDST_HAS_ACCESSGRP_METADATA,
+                                  cached_access_group_metadata);
         write_tbaa_metadata(module, instrs->ilix, instrs->operands->next,
                             instrs->flags & VOLATILE_FLAG);
         break;
@@ -3416,7 +3371,8 @@ write_instructions(LL_Module *module)
         print_tmp_name(instrs->tmps);
         print_token(" = ");
         print_token(llvm_instr_names[i_name]);
-        if ((i_name == I_FCMP) && ((!flg.ieee) || XBIT(216, 1)))
+        if ((i_name == I_FCMP) && ((!flg.ieee) || XBIT(216, 1)) &&
+            (instrs->operands->ll_type->data_type != LL_FP128))
           print_token(" fast");
         print_space(1);
         p = instrs->operands;
@@ -3560,10 +3516,6 @@ mk_store_instr(OPERAND *val, OPERAND *addr)
   INSTR_LIST *insn;
   val->next = addr;
   insn = gen_instr(I_STORE, NULL, NULL, val);
-  if (rw_nodepcheck) {
-    insn->flags |= LDST_HAS_METADATA;
-    insn->misc_metadata = cons_no_depchk_metadata();
-  }
   if (rw_access_group) {
     insn->flags |= LDST_HAS_ACCESSGRP_METADATA;
     insn->misc_metadata = cons_vec_always_metadata();
@@ -3812,10 +3764,6 @@ ad_csed_instr(LL_InstrName instr_name, int ilix, LL_Type *ll_type,
   }
   operand = make_tmp_op(ll_type, make_tmps());
   instr = gen_instr(instr_name, operand->tmps, ll_type, operands);
-  if ((instr_name == I_LOAD) && rw_nodepcheck) {
-    flags |= LDST_HAS_METADATA;
-    instr->misc_metadata = cons_no_depchk_metadata();
-  }
   if ((instr_name == I_LOAD) && rw_access_group) {
     flags |= LDST_HAS_ACCESSGRP_METADATA;
     instr->misc_metadata = cons_vec_always_metadata();
@@ -3985,21 +3933,17 @@ static void
 make_stmt(STMT_Type stmt_type, int ilix, bool deletable, SPTR next_bih_label,
           int ilt)
 {
-  int lhs_ili, rhs_ili, sc, nme, i, size1, size2;
+  int lhs_ili, rhs_ili, nme;
   SPTR sptr, sptr_lab;
-  int offset_to, offset_from, stype, ts;
+  int ts;
   SPTR sym, pd_sym;
   DTYPE dtype;
   int to_ili, from_ili, length_ili, opnd, bytes, from_nme, cc;
   ILI_OP opc;
-  char *name, *lname, *tmp_name, *retc;
-  TMPS *tmps, *last_tmps, *new_tmps;
-  LL_Type *llt, *op_type, *last_type, *ty1, *ty2, *load_type, *switch_type;
-  INSTR_LIST *instr;
-  OPERAND *ret_op, *store_op, *operand1, *operand2, *op_tmp, *op1, *op2;
-  OPERAND *load_op, *dst_op, *src_op, *first_label, *second_label;
-  int match, conversion_instr, d1, d2;
-  bool mark_daddr, sta, has_entries;
+  TMPS *tmps;
+  OPERAND *ret_op, *store_op, *op1;
+  OPERAND *dst_op, *src_op, *first_label, *second_label;
+  bool has_entries;
   MSZ msz;
   LL_Type *llt_expected;
   int alignment;
@@ -4086,7 +4030,7 @@ make_stmt(STMT_Type stmt_type, int ilix, bool deletable, SPTR next_bih_label,
     }
     gen_call_expr(ilix, DT_NONE, NULL, sym);
     break;
-  continue_call:
+
     /* Add instruction if it hasn't been added already by gen_call_expr(). */
     if (!Instructions || !Curr_Instr->prev)
       ad_instr(ilix, Curr_Instr);
@@ -4120,6 +4064,10 @@ make_stmt(STMT_Type stmt_type, int ilix, bool deletable, SPTR next_bih_label,
       case IL_FCJMPZ:
       case IL_DCJMP:
       case IL_DCJMPZ:
+#ifdef TARGET_SUPPORTS_QUADFP
+      case IL_QCJMP:
+      case IL_QCJMPZ:
+#endif
         ad_instr(ilix, gen_instr(I_FCMP, tmps, Curr_Instr->operands->ll_type,
                                  gen_llvm_expr(ilix, NULL)));
         break;
@@ -4446,7 +4394,6 @@ gen_va_arg(int ilix)
    * store argtype* %next, %ap_cast
    * return argtype %ptr
    */
-  SPTR tmp;
   OPERAND *addr_op, *result_op, *next_op;
   const int ap_ili = ILI_OPND(ilix, 1);
   const DTYPE arg_dtype = ILI_DTyOPND(ilix, 2);
@@ -4512,7 +4459,7 @@ gen_va_arg(int ilix)
     OPERAND *tmp_op, *cmplx_op, *val_op;
 
     /* Pointer to temp real */
-    tmp = make_arg_tmp(ilix, arg_dtype);
+    SPTR tmp = make_arg_tmp(ilix, arg_dtype);
     cmplx_op = tmp_op = make_var_op(tmp); /* points to {float,float} */
     tmp_op = make_bitcast(tmp_op, llt_cptr);
     tmp_op = gen_gep_index(tmp_op, llt_cptr, 0);
@@ -4602,9 +4549,8 @@ gen_call_to_builtin(int ilix, char *fname, OPERAND *params,
                     LL_Type *return_ll_type, INSTR_LIST *Call_Instr,
                     LL_InstrName i_name, unsigned flags)
 {
-  OPERAND *call_op, *operand = NULL;
-  char *intrinsic_name, *gname;
-  static char buf[MAXIDLEN];
+  OPERAND *operand = NULL;
+  char *intrinsic_name;
   INSTR_LIST *Curr_Instr;
 
   DBGTRACEIN1(" for ilix %d\n", ilix)
@@ -4986,6 +4932,12 @@ gen_const_expr(int ilix, LL_Type *expected_type)
     operand->ll_type = make_lltype_from_dtype(DT_DBLE);
     operand->val.sptr = sptr;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCON:
+    operand->ll_type = make_lltype_from_dtype(DT_QUAD);
+    operand->val.sptr = sptr;
+    break;
+#endif
   case IL_VCON:
     operand->ll_type = make_lltype_from_sptr(sptr);
     operand->val.sptr = sptr;
@@ -5014,7 +4966,6 @@ gen_unary_expr(int ilix, LL_InstrName itype)
   ILI_OP opc = ILI_OPC(ilix);
   OPERAND *operand;
   LL_Type *opc_type, *instr_type;
-  TMPS *new_tmps;
 
   DBGTRACEIN2(" ilix: %d(%s) \n", ilix, IL_NAME(opc))
 
@@ -5030,9 +4981,17 @@ gen_unary_expr(int ilix, LL_InstrName itype)
   case IL_DFIX:
   case IL_DFIXK:
   case IL_SNGL:
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* convert double to quad precision */
+  case IL_DQUAD:
+#endif
     opc_type = make_lltype_from_dtype(DT_DBLE);
     break;
   case IL_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* convert float to quad precision */
+  case IL_RQUAD:
+#endif
   case IL_UFIX:
   case IL_FIX:
   case IL_FIXK:
@@ -5043,6 +5002,9 @@ gen_unary_expr(int ilix, LL_InstrName itype)
   case IL_FLOATU:
   case IL_DFLOATU:
   case IL_DFLOAT:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFLOAT:
+#endif
   case IL_ALLOC:
     opc_type = make_lltype_from_dtype(DT_INT);
     break;
@@ -5050,8 +5012,23 @@ gen_unary_expr(int ilix, LL_InstrName itype)
   case IL_FLOATUK:
   case IL_DFLOATUK:
   case IL_DFLOATK:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFLOATK:
+#endif
     opc_type = make_lltype_from_dtype(DT_INT8);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* convert quad to integer */
+  case IL_QFIX:
+  /* convert quad to 64 bit integer */
+  case IL_QFIXK:
+  /* convert quad to single precision */
+  case IL_SNGQ:
+  /* convert quad to double precision */
+  case IL_DBLEQ:
+    opc_type = make_lltype_from_dtype(DT_QUAD);
+    break;
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128FROM:
     opc_type = make_lltype_from_dtype(DT_DBLE);
@@ -5213,6 +5190,9 @@ gen_minmax_expr(int ilix, OPERAND *op1, OPERAND *op2)
     break;
   case IL_FMIN:
   case IL_DMIN:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QMIN:
+#endif
     cc_itype = I_FCMP;
     cc_val = convert_to_llvm_fltcc(CC_NOTGE);
     break;
@@ -5228,6 +5208,9 @@ gen_minmax_expr(int ilix, OPERAND *op1, OPERAND *op2)
     break;
   case IL_FMAX:
   case IL_DMAX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QMAX:
+#endif
     cc_itype = I_FCMP;
     cc_val = convert_to_llvm_fltcc(CC_NOTLE);
     break;
@@ -5431,7 +5414,7 @@ gen_extract_vector(OPERAND *vop, int idx)
 static OPERAND *
 gen_resized_vect(OPERAND *vop, int new_size, int start)
 {
-  OPERAND *operand, *undefop;
+  OPERAND *operand;
   LL_Type *llt;
   INSTR_LIST *Curr_Instr;
   INT v[TY_VECT_MAXLEN];
@@ -5626,7 +5609,6 @@ make_store(OPERAND *sop, OPERAND *address_op, LL_InstrListFlags flags)
 static OPERAND *
 gen_convert_vector(int ilix)
 {
-  int itype;
   LL_Type *ll_src, *ll_dst;
   OPERAND *operand;
   DTYPE dtype_dst = ILI_DTyOPND(ilix, 2);
@@ -6040,7 +6022,6 @@ maybe_generate_fma(int ilix, INSTR_LIST *insn)
 #endif
 #if defined(TARGET_LLVM_X8664)
   LL_Type *vTy;
-  INSTR_LIST *mulPrev, *mulNext;
 #endif
 
   last = llvm_info.last_instr;
@@ -6148,21 +6129,14 @@ undo_recip_div(INSTR_LIST *isns)
 static OPERAND *
 gen_binary_expr(int ilix, int itype)
 {
-  int lhs_ili, rhs_ili, ret_match, size1, size2;
+  int lhs_ili, rhs_ili;
   int vect_type;
   DTYPE vect_dtype = DT_NONE;
   LL_InstrListFlags flags = InstrListFlagsNull;
   ILI_OP opc = ILI_OPC(ilix);
-  OPERAND *operand, *binops, *load_op;
-  LL_Type *opc_type, *instr_type, *ll_tmp, *load_type;
-  TMPS *new_tmps;
+  OPERAND *operand, *binops;
+  LL_Type *instr_type;
   INT val[2];
-  union {
-    double d;
-    INT tmp[2];
-  } dtmp;
-  float f;
-  double d;
 
   DBGTRACEIN2(" ilix: %d(%s)", ilix, IL_NAME(opc))
 
@@ -6204,7 +6178,7 @@ gen_binary_expr(int ilix, int itype)
     LL_Type *bit_type, *mask_type;
     OPERAND *bit_mask_of_ones;
     DTYPE vdt, ones_dtype;
-    SPTR vcon1_sptr;
+    SPTR vcon1_sptr = SPTR_NULL;
     vect_dtype = ili_get_vect_dtype(lhs_ili);
     num_elem = DTyVecLength(vect_dtype);
     switch (DTySeqTyElement(vect_dtype)) {
@@ -6287,6 +6261,11 @@ gen_binary_expr(int ilix, int itype)
     case IL_DNEG:
       lhs_ili = ad1ili(IL_DCON, stb.dblm0);
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case IL_QNEG:
+      lhs_ili = ad1ili(IL_QCON, stb.quad0);
+      break;
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
     case IL_FLOAT128CHS:
       lhs_ili = ad1ili(IL_FLOAT128CON, stb.float128_0);
@@ -6516,11 +6495,10 @@ static OPERAND *
 convert_int_size(int ilix, OPERAND *convert_op, LL_Type *rslt_type)
 {
   LL_Type *ty1, *ty2, *ll_type;
-  int size1, size2, flags1, flags2, conversion_instr;
+  int size1, size2, flags1, conversion_instr;
   enum LL_BaseDataType kind1, kind2;
   OPERAND *op_tmp;
   TMPS *new_tmps;
-  INSTR_LIST *Curr_Instr;
 
   DBGTRACEIN1(" convert op %p", convert_op)
   DBGDUMPLLTYPE("result type ", rslt_type)
@@ -6611,7 +6589,6 @@ static OPERAND *
 convert_int_to_ptr(OPERAND *convert_op, LL_Type *rslt_type)
 {
   const LL_Type *llt = convert_op->ll_type;
-  OPERAND* operand;
   assert(llt,"convert_int_to_ptr(): missing incoming type",0,ERR_Fatal);
   assert(ll_type_int_bits(llt) == BITS_IN_BYTE * size_of(DT_CPTR),
          "Unsafe type for inttoptr", ll_type_int_bits(llt), ERR_Fatal);
@@ -6840,10 +6817,9 @@ static OPERAND *
 make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
           unsigned flags)
 {
-  OPERAND *operand, *fptrs_op, *cse_op;
+  OPERAND *operand, *cse_op;
   TMPS *new_tmps;
   LL_Type *load_type;
-  int array_var, array_dtype, dtype;
   INSTR_LIST *Curr_Instr;
 
   assert(((int)msz) != -1, "make_load():adding a load because of a matchmem ?",
@@ -6893,10 +6869,6 @@ make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
          "make_load(): types don't match", 0, ERR_Fatal);
   new_tmps = make_tmps();
   Curr_Instr = gen_instr(I_LOAD, new_tmps, rslt_type, load_op);
-  if (rw_nodepcheck) {
-    flags |= LDST_HAS_METADATA;
-    Curr_Instr->misc_metadata = cons_no_depchk_metadata();
-  }
   if (rw_access_group) {
     flags |= LDST_HAS_ACCESSGRP_METADATA;
     Curr_Instr->misc_metadata = cons_vec_always_metadata();
@@ -6967,7 +6939,7 @@ find_pointer_to_function(int ilix)
 static SPTR
 get_call_sptr(int ilix)
 {
-  SPTR sptr;
+  SPTR sptr = SPTR_NULL;
   int addr;
   SPTR addr_acon_ptr;
   ILI_OP opc = ILI_OPC(ilix);
@@ -7043,6 +7015,11 @@ update_return_type_for_ccfunc(int ilix, ILI_OP opc)
   case IL_DFRDP:
     new_dtype = cg_get_type(3, DTY(dtype), DT_DBLE);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_DFRQP:
+    new_dtype = cg_get_type(3, DTY(dtype), DT_QUAD);
+    break;
+#endif
   case IL_DFRIR:
     new_dtype = cg_get_type(3, DTY(dtype), DT_INT);
     break;
@@ -7278,6 +7255,9 @@ get_next_arg(int arg_ili)
   switch (ILI_OPC(arg_ili)) {
   case IL_ARGAR:
   case IL_ARGDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_ARGQP:
+#endif
   case IL_ARGIR:
   case IL_ARGKR:
   case IL_ARGSP:
@@ -7290,6 +7270,9 @@ get_next_arg(int arg_ili)
 
   case IL_DAAR:
   case IL_DADP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_DAQP:
+#endif
   case IL_DAIR:
   case IL_DAKR:
   case IL_DASP:
@@ -7310,7 +7293,6 @@ get_next_arg(int arg_ili)
 static OPERAND *
 gen_arg_operand_list(LL_ABI_Info *abi, int arg_ili)
 {
-  bool fastcall;
   unsigned abi_arg, max_abi_arg = ~0u;
   OPERAND *first_arg_op = NULL, *arg_op = NULL;
 
@@ -7735,8 +7717,6 @@ have_masked_intrinsic(int ilix)
 }
 #endif
 
-static INSTR_LIST *Void_Call_Instr = NULL;
-
 /* LLVM extractvalue instruction:
  * Given an aggregate and index return the value at that index.
  *
@@ -7765,7 +7745,6 @@ static OPERAND *
 gen_eval_cmplx_value(int ilix, DTYPE dtype)
 {
   OPERAND *c1;
-  INSTR_LIST *Curr_Instr;
   LL_Type *cmplx_type = make_lltype_from_dtype(dtype);
 
   c1 = gen_llvm_expr(ilix, cmplx_type);
@@ -7892,7 +7871,6 @@ gen_cmplx_mul(int ilix, DTYPE dtype)
 static OPERAND *
 gen_llvm_atomicrmw_expr(int ilix)
 {
-  MEMORY_ORDER mo;
   OPERAND *result;
   ATOMIC_INFO info = atomic_info(ilix);
   LL_Type *instr_type = make_type_from_msz((MSZ)info.msz);
@@ -7927,7 +7905,6 @@ gen_llvm_cmpxchg(int ilix)
   LL_InstrListFlags flags;
   OPERAND *op1, *op2, *op3;
   LL_Type *elements[2];
-  TMPS *tmps;
   CMPXCHG_MEMORY_ORDER order;
 
   /* Construct aggregate type for result of cmpxchg. */
@@ -8188,7 +8165,7 @@ gen_comp_operand(OPERAND *operand, ILI_OP opc, int lhs_ili, int rhs_ili,
 OPERAND *
 gen_llvm_expr(int ilix, LL_Type *expected_type)
 {
-  int nme_ili, ld_ili, flags;
+  int nme_ili, ld_ili;
   SPTR sptr;
   MSZ msz;
   int lhs_ili, rhs_ili;
@@ -8208,12 +8185,19 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   OPERAND *cc_op1, *cc_op2, *c1, *cse1;
   INT tmp[2];
   const char *intrinsic_name;
+  float f;
   union {
     double d;
     INT tmp[2];
   } dtmp;
-  float f;
   double d;
+#ifdef TARGET_SUPPORTS_QUADFP
+  union {
+    long double q;
+    INT tmp[QTMP_SIZE];
+  } qtmp;
+  long double q;
+#endif
 
   switch (ILI_OPC(ilix)) {
   case IL_JSR:
@@ -8480,6 +8464,10 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_LDQ:
   case IL_LD256:
 #endif
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* to support quad precision load */
+  case IL_LDQP:
+#endif
     ld_ili = ILI_OPND(ilix, 1);
     nme_ili = ILI_OPND(ilix, 2);
     msz = MSZ_ILI_OPND(ilix, 3);
@@ -8537,6 +8525,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_ICON:
   case IL_FCON:
   case IL_DCON:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCON:
+#endif
   case IL_SCMPLXCON:
   case IL_DCMPLXCON:
 #ifdef LONG_DOUBLE_FLOAT128
@@ -8546,10 +8537,16 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FIX:
   case IL_DFIX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFIX:
+#endif
     operand = gen_unary_expr(ilix, I_FPTOSI);
     break;
   case IL_FIXK:
   case IL_DFIXK:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFIXK:
+#endif
     operand = gen_unary_expr(ilix, I_FPTOSI);
     break;
   case IL_FIXUK:
@@ -8568,12 +8565,26 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_DFLOAT:
   case IL_DFLOATK:
   case IL_FLOATK:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFLOAT:
+  case IL_QFLOATK:
+#endif
     operand = gen_unary_expr(ilix, I_SITOFP);
     break;
   case IL_SNGL:
+#ifdef TARGET_SUPPORTS_QUADFP
+  /* convert the quad precision to single precision */
+  case IL_SNGQ:
+  /* convert the quad precision to double precision */
+  case IL_DBLEQ:
+#endif
     operand = gen_unary_expr(ilix, I_FPTRUNC);
     break;
   case IL_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_RQUAD:
+  case IL_DQUAD:
+#endif
     operand = gen_unary_expr(ilix, I_FPEXT);
     break;
 #ifdef LONG_DOUBLE_FLOAT128
@@ -8600,6 +8611,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FADD:
   case IL_DADD:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QADD:
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128ADD:
 #endif
@@ -8622,6 +8636,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FSUB:
   case IL_DSUB:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QSUB:
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128SUB:
 #endif
@@ -8648,6 +8665,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FMUL:
   case IL_DMUL:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QMUL:
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128MUL:
 #endif
@@ -8672,6 +8692,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FDIV:
   case IL_DDIV:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QDIV:
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128DIV:
 #endif
@@ -8799,6 +8822,26 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     operand->ll_type = make_type_from_opc(opc);
     goto process_cc;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMPZ:
+    if (!zero_ili) {
+      q = 0.0;
+      xmqtoq(q, qtmp.tmp);
+      zero_ili = ad1ili(IL_QCON, getcon(qtmp.tmp, DT_QUAD));
+      comp_exp_type = make_lltype_from_dtype(DT_QUAD);
+    }
+    operand->ot_type = OT_CC;
+    first_ili = ILI_OPND(ilix, 1);
+    second_ili = zero_ili;
+    ili_cc = ILI_ccOPND(ilix, 2);
+    if (IEEE_CMP)
+      float_jmp = true;
+    operand->val.cc = convert_to_llvm_fltcc(ili_cc);
+    float_jmp = false;
+    operand->ll_type = make_type_from_opc(opc);
+    goto process_cc;
+    break;
+#endif
   case IL_UKCJMPZ:
     zero_ili = ad_kconi(0);
     operand->ot_type = OT_CC;
@@ -8854,6 +8897,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   /* jumps with cc and expression */
   case IL_FCJMP:
   case IL_DCJMP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMP:
+#endif
     operand->ot_type = OT_CC;
     first_ili = ILI_OPND(ilix, 1);
     second_ili = ILI_OPND(ilix, 2);
@@ -8895,6 +8941,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_FCMP:
   case IL_DCMP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCMP:
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128CMP:
 #endif
@@ -9102,6 +9151,12 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype(DT_DBLE);
     goto _process_define_ili;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_DFRQP:
+    if (expected_type == NULL)
+      expected_type = make_lltype_from_dtype(DT_QUAD);
+    goto _process_define_ili;
+#endif
   case IL_DFR128:
     if (expected_type == NULL)
       expected_type = make_lltype_from_dtype(DT_128);
@@ -9242,6 +9297,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_UKNEG:
     operand = gen_binary_expr(ilix, I_SUB);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QNEG:
+#endif
   case IL_DNEG:
   case IL_FNEG:
 #ifdef LONG_DOUBLE_FLOAT128
@@ -9252,7 +9310,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_SCMPLXNEG:
   case IL_DCMPLXNEG: {
     OPERAND *res, *op_rneg, *op_ineg, *c1, *cse1;
-    LL_Type *cmplx_ty, *cmpnt_ty;
+    LL_Type *cmpnt_ty;
     const DTYPE dt = opc == IL_SCMPLXNEG ? DT_CMPLX : DT_DCMPLX;
     const DTYPE et = opc == IL_SCMPLXNEG ? DT_FLOAT : DT_DBLE;
 
@@ -9262,13 +9320,15 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     cse1 = gen_copy_operand(c1);
 
     /* real = 0 - real */
-    op_rneg = make_constval_op(cmpnt_ty, 0, 0);
+    op_rneg = (et == DT_QUAD) ? make_constval_opL(cmpnt_ty, 0, 0, 0, 0) :
+	    make_constval_op(cmpnt_ty, 0, 0);
     op_rneg->next = gen_extract_value(c1, dt, et, 0);
     op_rneg =
         ad_csed_instr(I_FSUB, 0, cmpnt_ty, op_rneg, InstrListFlagsNull, true);
 
     /* imag = 0 - imag */
-    op_ineg = make_constval_op(cmpnt_ty, 0, 0);
+    op_ineg = (et == DT_QUAD) ? make_constval_opL(cmpnt_ty, 0, 0, 0, 0) :
+	    make_constval_op(cmpnt_ty, 0, 0);
     op_ineg->next = gen_extract_value(cse1, dt, et, 1);
     op_ineg =
         ad_csed_instr(I_FSUB, 0, cmpnt_ty, op_ineg, InstrListFlagsNull, true);
@@ -9283,6 +9343,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_CSEIR:
   case IL_CSESP:
   case IL_CSEDP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_CSEQP:
+#endif
   case IL_CSEAR:
   case IL_CSECS:
   case IL_CSECD:
@@ -9597,12 +9660,19 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_UKMIN:
   case IL_FMIN:
   case IL_DMIN:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QMIN:
+#endif
   case IL_IMAX:
   case IL_UIMAX:
   case IL_KMAX:
   case IL_UKMAX:
   case IL_FMAX:
-  case IL_DMAX: {
+  case IL_DMAX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QMAX:
+#endif
+  {
     LL_Type *llTy;
     lhs_ili = ILI_OPND(ilix, 2);
     rhs_ili = ILI_OPND(ilix, 1);
@@ -9818,9 +9888,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_VPERMUTE: {
     OPERAND *op1;
     OPERAND *mask_op;
-    LL_Type *vect_lltype, *int_type, *op_lltype;
+    LL_Type *vect_lltype, *op_lltype;
     DTYPE vect_dtype = ili_get_vect_dtype(ilix);
-    int mask_ili, num_elem;
+    int mask_ili;
     int edtype;
     unsigned long long undef_mask = 0;
 
@@ -9905,7 +9975,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         INT val[2];
         enum LL_BaseDataType bdt = expected_type->sub_types[0]->data_type;
         OPERAND *opm;
-        SPTR vcon1_sptr, constant;
+        SPTR vcon1_sptr = SPTR_NULL, constant;
         DTYPE vdt;
         switch (bdt) {
         case LL_FLOAT:
@@ -10129,9 +10199,9 @@ gen_vect_compare_operand(int mask_ili)
 {
   int num_elem;
   CC_RELATION incoming_cc_code;
-  int lhs_ili, rhs_ili, cmp_type;
+  int lhs_ili, rhs_ili, cmp_type = 0;
   LL_Type *int_type, *instr_type, *compare_ll_type;
-  LL_InstrName cmp_inst_name;
+  LL_InstrName cmp_inst_name = I_NONE;
   DTYPE vect_dtype, elem_dtype;
   OPERAND *operand, *op1;
   ILI_OP mask_opc = ILI_OPC(mask_ili);
@@ -10180,10 +10250,10 @@ gen_vect_compare_operand(int mask_ili)
 static char *
 vect_llvm_intrinsic_name(int ilix)
 {
-  int type, n, fsize;
+  int type, n, fsize = 0;
   DTYPE dtype;
   ILI_OP opc = ILI_OPC(ilix);
-  const char *basename;
+  const char *basename = NULL;
   char *retc;
   assert(IL_VECT(opc), "vect_llvm_intrinsic_name(): not vect ili", ilix,
          ERR_Fatal);
@@ -10457,7 +10527,6 @@ get_csed_operand(int ilix)
       OPERAND *p = csed->operand;
 
       if (p != NULL) {
-        int sptr = p->val.sptr;
         DBGTRACE3(
             "#get_csed_operand for ilix %d, operand found %p, with type (%s)",
             ilix, p, OTNAMEG(p))
@@ -10545,8 +10614,6 @@ check_global_define(GBL_LIST *cgl)
 static void
 add_global_define(GBL_LIST *gitem)
 {
-  GBL_LIST *gl;
-
   DBGTRACEIN2(": '%s', (sptr %d)", gitem->global_def, gitem->sptr);
 
   /* make sure the global def for this sptr has not already been added;
@@ -10634,7 +10701,7 @@ get_intrinsic(const char *name, LL_Type *func_type, unsigned flags)
   op = make_operand();
   op->ot_type = OT_CALL;
   op->ll_type = make_ptr_lltype(func_type);
-  op->string = (char *)name;
+  op->string = name;
   return op;
 }
 
@@ -10827,10 +10894,10 @@ process_string(char *name, int pad, int string_length)
     \param dtype  dtype index
     \return string containing dtype name
  */
-char *
+const char *
 dtype_struct_name(DTYPE dtype)
 {
-  char *dtype_str = process_dtype_struct(dtype);
+  const char *dtype_str = process_dtype_struct(dtype);
   return dtype_str;
 }
 
@@ -10839,12 +10906,13 @@ dtype_struct_name(DTYPE dtype)
  * This is appropriate for external identifiers and internal identifiers with a
  * module-unique name.
  */
-static char *
+static const char *
 set_global_sname(int sptr, const char *name)
 {
   name = map_to_llvm_name(name);
-  SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 2);
-  sprintf(SNAME(sptr), "@%s", name);
+  char *buf = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 2);
+  sprintf(buf, "@%s", name);
+  SNAME(sptr) = buf;
   return SNAME(sptr);
 }
 
@@ -10853,11 +10921,12 @@ set_global_sname(int sptr, const char *name)
  * This is appropriate for internal globals that don't have a unique name
  * because they belong to some scope. The sptr suffix makes the name unique.
  */
-static char *
+static const char *
 set_numbered_global_sname(int sptr, const char *name)
 {
-  SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 12);
-  sprintf(SNAME(sptr), "@%s.%d", name, sptr);
+  char *buf = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 12);
+  sprintf(buf, "@%s.%d", name, sptr);
+  SNAME(sptr) = buf;
   return SNAME(sptr);
 }
 
@@ -10865,11 +10934,12 @@ set_numbered_global_sname(int sptr, const char *name)
  *
  * This is appropriate for function-local identifiers.
  */
-static char *
+static const char *
 set_local_sname(int sptr, const char *name)
 {
-  SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 2);
-  sprintf(SNAME(sptr), "%%%s", name);
+  char *buf = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 2);
+  sprintf(buf, "%%%s", name);
+  SNAME(sptr) = buf;
   return SNAME(sptr);
 }
 
@@ -10923,6 +10993,22 @@ create_global_initializer(GBL_LIST *gitem, const char *flag_str,
 }
 
 /**
+   \brief Check if sptr is the midnum of a scalar and scalar has POINTER/ALLOCATABLE attribute
+   \param sptr  A symbol
+ */
+bool
+pointer_scalar_need_debug_info(SPTR sptr)
+{
+  if ((sptr > NOSYM) && REVMIDLNKG(sptr)) {
+    SPTR scalar_sptr = (SPTR)REVMIDLNKG(sptr);
+    if ((POINTERG(scalar_sptr) || ALLOCATTRG(scalar_sptr)) &&
+        ((STYPEG(scalar_sptr) == ST_VAR) || (STYPEG(scalar_sptr) == ST_STRUCT)))
+      return true;
+  }
+  return false;
+}
+
+/**
    \brief Check if sptr is the midnum of an array and the array has descriptor 
    \param sptr  A symbol
  */
@@ -10949,7 +11035,9 @@ needDebugInfoFilt(SPTR sptr)
     return true;
   /* Fortran case needs to be revisited when we start to support debug, for now
    * just the obvious case */
-  return (!CCSYMG(sptr) || DCLDG(sptr) || ftn_array_need_debug_info(sptr));
+  return (!CCSYMG(sptr) || DCLDG(sptr) ||
+          is_procedure_ptr((SPTR)REVMIDLNKG(sptr)) ||
+          ftn_array_need_debug_info(sptr));
 }
 #ifdef OMP_OFFLOAD_LLVM
 INLINE static bool
@@ -11122,7 +11210,7 @@ process_blockaddr_sptr(int sptr, int label)
     LL_Type *ttype;
     char *sname, *gname;
     const char *retc;
-    char *labelName;
+    const char *labelName;
     GBL_LIST *gitem = (GBL_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(GBL_LIST));
     memset(gitem, 0, sizeof(GBL_LIST));
     gitem->sptr = gl_sptr;
@@ -11158,7 +11246,8 @@ process_extern_function_sptr(SPTR sptr)
   DTYPE dtype = DTYPEG(sptr);
   DTYPE return_dtype;
   EXFUNC_LIST *exfunc;
-  char *name, *gname;
+  char *gname;
+  const char *name;
   const char *extend_prefix;
   LL_Type *ll_ttype;
 
@@ -11264,7 +11353,7 @@ externVarMustInitialize(SPTR sptr)
 static void
 process_extern_variable_sptr(SPTR sptr, ISZ_T off)
 {
-  char *name;
+  const char *name;
   const char *retc;
   const char *flag_str;
   GBL_LIST *gitem;
@@ -11304,7 +11393,7 @@ process_extern_variable_sptr(SPTR sptr, ISZ_T off)
 INLINE static void
 addDebugForLocalVar(SPTR sptr, LL_Type *type)
 {
-  if (need_debug_info(sptr)) {
+  if (need_debug_info(sptr) || pointer_scalar_need_debug_info(sptr)) {
     /* Dummy sptrs are treated as local (see above) */
     if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir) &&
         ftn_array_need_debug_info(sptr)) {
@@ -11339,7 +11428,7 @@ process_local_sptr(SPTR sptr)
   sym_is_refd(sptr);
 
   if (REFG(sptr) && DINITG(sptr)) {
-    char *name = get_llvm_name(sptr);
+    const char *name = get_llvm_name(sptr);
     if (SCOPEG(sptr) == 0) {
       name = set_global_sname(sptr, name);
     } else {
@@ -11347,7 +11436,7 @@ process_local_sptr(SPTR sptr)
     }
     DBGTRACE2("#variable #%d(%s) is data initialized", sptr, SYMNAME(sptr))
   } else if (DINITG(sptr) || SAVEG(sptr)) {
-    char *name = get_llvm_name(sptr);
+    const char *name = get_llvm_name(sptr);
     GBL_LIST *gitem = (GBL_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(GBL_LIST));
     memset(gitem, 0, sizeof(GBL_LIST));
     gitem->sptr = sptr;
@@ -11381,7 +11470,7 @@ process_local_sptr(SPTR sptr)
     local =
         ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
                                "%s", get_llvm_name(sptr));
-    SNAME(sptr) = (char *)local->address.data;
+    SNAME(sptr) = local->address.data;
   }
 
   addDebugForLocalVar(sptr, type);
@@ -11406,7 +11495,7 @@ gen_name_private_sptr(SPTR sptr)
    */
   local = ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
                                  "%s", get_llvm_name(sptr));
-  SNAME(sptr) = (char *)local->address.data;
+  SNAME(sptr) = local->address.data;
   addDebugForLocalVar(sptr, type);
 }
 /* May need to be revisited */
@@ -11492,7 +11581,7 @@ process_auto_sptr(SPTR sptr)
    * emit an LLVM IR sret argument which is just a constant pointer.
    */
   if (ret_info.emit_sret && is_special_return_symbol(sptr)) {
-    SNAME(sptr) = (char *)ll_create_local_name(llvm_info.curr_func, "sretaddr");
+    SNAME(sptr) = ll_create_local_name(llvm_info.curr_func, "sretaddr");
     return;
   }
 
@@ -11505,7 +11594,7 @@ process_auto_sptr(SPTR sptr)
    * address of the local, name it "%foo.addr". */
   local = ll_create_local_object(llvm_info.curr_func, type, align_of_var(sptr),
                                  "%s.addr", SYMNAME(sptr));
-  SNAME(sptr) = (char *)local->address.data;
+  SNAME(sptr) = local->address.data;
 
   addDebugForLocalVar(sptr, type);
 }
@@ -11514,8 +11603,9 @@ static void
 process_label_sptr_c(SPTR sptr)
 {
   const char *name = get_llvm_name(sptr);
-  SNAME(sptr) = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 1);
-  strcpy(SNAME(sptr), name);
+  char *buf = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 1);
+  strcpy(buf, name);
+  SNAME(sptr) = buf;
 }
 
 /**
@@ -11546,7 +11636,6 @@ static void
 process_sptr_offset(SPTR sptr, ISZ_T off)
 {
   SC_KIND sc;
-  DTYPE dtype;
   int midnum;
   LL_Type *ttype;
 
@@ -11735,7 +11824,7 @@ static MATCH_Kind
 match_types(LL_Type *ty1, LL_Type *ty2)
 {
   MATCH_Kind ret_type;
-  int base_ty1, base_ty2, ct1, ct2;
+  int ct1, ct2;
   LL_Type *llt1, *llt2;
 
   assert(ty1 && ty2, "match_types(): missing argument", 0, ERR_Fatal);
@@ -11870,6 +11959,9 @@ make_type_from_opc(ILI_OP opc)
   case IL_UINEG:
   case IL_DFIX:
   case IL_DFIXU:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFIX:
+#endif
   case IL_ICMP:
   case IL_ICMPZ:
   case IL_ISELECT:
@@ -11918,6 +12010,9 @@ make_type_from_opc(ILI_OP opc)
   case IL_UKCMP:
   case IL_DFIXK:
   case IL_DFIXUK:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QFIXK:
+#endif
   case IL_UKCJMP:
   case IL_UKADD:
   case IL_UKSUB:
@@ -11944,6 +12039,9 @@ make_type_from_opc(ILI_OP opc)
   case IL_FLOATUK:
   case IL_FMOD:
   case IL_SNGL:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_SNGQ:
+#endif
   case IL_FSUB:
   case IL_FMUL:
   case IL_FDIV:
@@ -11968,6 +12066,9 @@ make_type_from_opc(ILI_OP opc)
   case IL_DFLOATUK:
   case IL_DMOD:
   case IL_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_DBLEQ:
+#endif
   case IL_DADD:
   case IL_DSUB:
   case IL_DNEG:
@@ -11981,6 +12082,24 @@ make_type_from_opc(ILI_OP opc)
   case IL_DABS:
     llt = make_lltype_from_dtype(DT_DBLE);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_RQUAD:
+  case IL_DQUAD:
+  case IL_QFLOATK:
+  case IL_QFLOAT:
+  case IL_QCJMP:
+  case IL_QCJMPZ:
+  case IL_QADD:
+  case IL_QSUB:
+  case IL_QMUL:
+  case IL_QDIV:
+  case IL_QMAX:
+  case IL_QMIN:
+  case IL_QNEG:
+  case IL_QCMP:
+    llt = make_lltype_from_dtype(DT_QUAD);
+    break;
+#endif
   case IL_CSSELECT:
   case IL_SCMPLXADD:
     llt = make_lltype_from_dtype(DT_CMPLX);
@@ -12034,7 +12153,6 @@ make_type_from_msz(MSZ msz)
 static LL_Type *
 make_vtype(DTYPE dtype, int sz)
 {
-  LL_Type *llt;
   DTYPE vect_dtype;
   vect_dtype = get_vector_dtype(dtype, sz);
   return make_lltype_from_dtype(vect_dtype);
@@ -12091,8 +12209,7 @@ static OPERAND *
 gen_sptr(SPTR sptr)
 {
   SC_KIND sc;
-  DTYPE dtype;
-  OPERAND *sptr_operand, *operand2;
+  OPERAND *sptr_operand;
 
   DBGTRACEIN2(" sptr %d (%s)", sptr, SYMNAME(sptr))
 
@@ -12416,11 +12533,10 @@ maybe_do_gep_folding(int aadd, int idxOp, LL_Type *ty)
 static OPERAND *
 gen_base_addr_operand(int ilix, LL_Type *expected_type)
 {
-  OPERAND *operand = NULL, *base_op, *index_op, *cast_op;
+  OPERAND *operand = NULL, *base_op, *index_op;
   OPERAND **csed_operand;
   LL_Type *ty1, *ty2;
   int opnd = 0;
-  int nme;
 
   DBGTRACEIN2(" for ilix: %d(%s), expected_type ", ilix, IL_NAME(ILI_OPC(ilix)))
   DBGDUMPLLTYPE("expected type ", expected_type)
@@ -12642,7 +12758,7 @@ gen_vconstant(const char *ctype, int sptr, DTYPE tdtype, int flags)
   int i;
   int edtype;
   static char tmp_vcon_buf[2000];
-  char *vctype, *constant;
+  char *constant;
 
   vdtype = DTySeqTyElement(tdtype);
   vsize = DTyVecLength(tdtype);
@@ -12697,7 +12813,7 @@ gen_constant(SPTR sptr, DTYPE tdtype, INT conval0, INT conval1, int flags)
     double d;
     INT tmp[2];
   } dtmp, dtmp2;
-  char *constant, *constant1, *constant2;
+  char *constant = NULL, *constant1, *constant2;
   const char *ctype = "";
   int size = 0;
 
@@ -13214,7 +13330,7 @@ process_formal_arguments(LL_ABI_Info *abi)
 
     /* Make a name for the real LLVM IR argument. This will also be used by
      * build_routine_and_parameter_entries(). */
-    arg_op->string = (char *)ll_create_local_name(
+    arg_op->string = ll_create_local_name(
         llvm_info.curr_func, "%s%s", SYMNAME(arg->sptr), suffix);
 
     /* Emit code in the entry block that saves the argument into the local
@@ -13269,7 +13385,7 @@ process_formal_arguments(LL_ABI_Info *abi)
 
             // Repurpose store_addr to the bigger storage
             store_addr->ll_type = ll_get_pointer_type(arg->type);
-            store_addr->string = (char *)bigger_local->address.data;
+            store_addr->string = bigger_local->address.data;
 
             // Replace last local in the list with the bigger one
             if (prev_object == NULL) {
@@ -13318,7 +13434,16 @@ process_formal_arguments(LL_ABI_Info *abi)
     assert(llTy->data_type == LL_PTR, "expected a pointer type",
            llTy->data_type, ERR_Fatal);
     /* Emit an @llvm.dbg.declare right after the store. */
-    formalsAddDebug(arg->sptr, i, llTy, true);
+    /* if arg->sptr is the compiler created symbol which represents the length
+     * of assumed length string type, then make the first metadata argument type
+     * of this symbol as address instead of value in the llvm.dbg.declare
+     * intrinsic.
+     */
+    if ((arg->kind == LL_ARG_DIRECT) && CCSYMG(arg->sptr) &&
+            PASSBYVALG(arg->sptr) && clen_parent_is_param(arg->sptr))
+      formalsAddDebug(arg->sptr, i, llTy, false);
+    else
+      formalsAddDebug(arg->sptr, i, llTy, true);
   }
 }
 
@@ -13367,7 +13492,6 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
                          bool print_arg_names)
 {
   unsigned i;
-  const char *param;
   bool need_comma = false;
 
   /* Fortran treats functions with unknown prototypes as varargs,
@@ -13422,7 +13546,7 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
 
     if (print_arg_names && arg->sptr) {
       int key;
-      OPERAND *coerce_op = NULL;
+      const OPERAND *coerce_op = NULL;
       print_space(1);
       key = arg->sptr;
       if (SCG(arg->sptr) == SC_BASED && MIDNUMG(arg->sptr))
@@ -13506,8 +13630,8 @@ build_routine_and_parameter_entries(SPTR func_sptr, LL_ABI_Info *abi,
                                     LL_Module *module)
 {
   const char *linkage = NULL;
-  int reductionsize = 0;
 #ifdef OMP_OFFLOAD_LLVM
+  int reductionsize = 0;
   if (OMPACCFUNCKERNELG(func_sptr)) {
     OMPACCEL_TINFO *tinfo = ompaccel_tinfo_get(func_sptr);
     if (tinfo->n_reduction_symbols == 0) {
@@ -13585,6 +13709,9 @@ exprjump(ILI_OP opc)
   case IL_ICJMP:
   case IL_FCJMP:
   case IL_DCJMP:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMP:
+#endif
   case IL_ACJMP:
   case IL_UICJMP:
     return true;
@@ -13602,6 +13729,9 @@ zerojump(ILI_OP opc)
   case IL_ICJMPZ:
   case IL_FCJMPZ:
   case IL_DCJMPZ:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCJMPZ:
+#endif
   case IL_ACJMPZ:
   case IL_UICJMPZ:
     return true;
@@ -13639,7 +13769,6 @@ char_type(DTYPE dtype, SPTR sptr)
 static void
 update_llvm_sym_arrays(void)
 {
-  const int new_size = stb.stg_avail + MEM_EXTRA;
   if ((flg.debug || XBIT(120, 0x1000)) && cpu_llvm_module) {
     lldbg_update_arrays(cpu_llvm_module->debug_info, llvm_info.last_dtype_avail,
                         stb.dt.stg_avail + MEM_EXTRA);
@@ -13649,7 +13778,7 @@ update_llvm_sym_arrays(void)
 void
 cg_llvm_init(void)
 {
-  int i, dtype, return_dtype;
+  int i;
   const char *triple = "";
   enum LL_IRVersion ir_version;
 
@@ -14068,18 +14197,46 @@ cg_fetch_clen_parampos(SPTR *len, int *param, SPTR sptr)
   *param = -1; /* param not found */
 }
 
+/**
+   \brief Helper function: test if the param length exists as compiler created
+          symbol which represents length of any assumed length string argument
+          in the arg list
+   \param length is the compiler created symbol which represents length of
+          assumed length string argument
+ */
+bool
+clen_parent_is_param(SPTR length)
+{
+  int i;
+  SPTR parent;
+  for (i = 1; i <= llvm_info.abi_info->nargs; ++i) {
+    parent = llvm_info.abi_info->arg[i].sptr;
+    if ((DTY(DTYPEG(parent)) == TY_CHAR) && (DTYPEG(parent) == DT_ASSCHAR) &&
+        (CLENG(parent) == length)) return true;
+  }
+  return false;
+}
+
 void
 add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr)
 {
   static hashset_t sptr_added;
   SPTR scope, var;
   const char *debug_name;
-  char *save_ptr;
   bool has_alias = false;
 
   if (!sptr_added)
     sptr_added = hashset_alloc(hash_functions_strings);
   scope = SCOPEG(sptr);
+  for (var = CMEMFG(sptr); var > NOSYM; var = SYMLKG(var)) {
+    if ((!SNAME(var)) || strcmp(SNAME(var), SYMNAME(var))) {
+      if (gbl.rutype != RU_BDATA && NEEDMODG(scope) &&
+          lookup_modvar_alias(var)) {
+        has_alias = true;
+        break;
+      }
+    }
+  }
   for (var = CMEMFG(sptr); var > NOSYM; var = SYMLKG(var)) {
     if ((!SNAME(var)) || strcmp(SNAME(var), SYMNAME(var))) {
       if (CCSYMG(sptr)) {
@@ -14088,17 +14245,20 @@ add_debug_cmnblk_variables(LL_DebugInfo *db, SPTR sptr)
         debug_name = new_debug_name(SYMNAME(scope), SYMNAME(sptr),
                                     SYMNAME(var));
       }
-      if (gbl.rutype != RU_BDATA && 
-          NEEDMODG(scope) && lookup_modvar_alias(var)) {
+      if (gbl.rutype != RU_BDATA && NEEDMODG(scope) &&
+          (lookup_modvar_alias(var) ||
+           (has_alias && !RESTRICTEDG(sptr)))) {
         /* This is a DECLARATION to be imported to a subroutine
-         * later in lldbg_emit_subprogram(). */
-        has_alias = true;
+         * later in lldbg_emit_subprogram().
+         * Case 1: Aliased members of restricted / non-restricted modules.
+         * Case 2: All members of non-restricted module if it has atlease one
+         *         aliased member. */
         lldbg_add_pending_import_entity(db, var, IMPORTED_DECLARATION);
       }
       if (hashset_lookup(sptr_added, debug_name))
         continue;
       hashset_insert(sptr_added, debug_name);
-      save_ptr = SNAME(var);
+      const char *save_ptr = SNAME(var);
       SNAME(var) = SYMNAME(var);
       addDebugForGlobalVar(var, variable_offset_in_aggregate(var, 0));
       SNAME(var) = save_ptr;

@@ -104,7 +104,6 @@ __CLEN_T
 __fort_par_read(int fd, char *adr, __CLEN_T cnt, int str, int typ,
                 __CLEN_T ilen, int own)
 {
-  long l;
   int s;
 
   if (fds[fd].flags & I_WRITE) {

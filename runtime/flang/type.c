@@ -20,12 +20,17 @@ static struct type_desc *I8(__f03_ty_to_id)[];
 void ENTF90(SET_INTRIN_TYPE, set_intrin_type)(F90_Desc *dd,
                                               __INT_T intrin_type);
 
-static TYPE_DESC * get_parent_pointer(TYPE_DESC *src_td, __INT_T level);
+static TYPE_DESC *get_parent_pointer(TYPE_DESC *src_td, __INT_T level);
 
-static void sourced_alloc_and_assign_array(int extent, char *ab, char *bb, TYPE_DESC *td);
-static void sourced_alloc_and_assign_array_from_scalar(int extent, char *ab, char *bb, TYPE_DESC *td);
+static void sourced_alloc_and_assign_array(int extent, char *ab, char *bb,
+                                           TYPE_DESC *td);
+static void sourced_alloc_and_assign_array_from_scalar(int extent, char *ab,
+                                                       char *bb, TYPE_DESC *td);
 
-static void get_source_and_dest_sizes(F90_Desc *ad, F90_Desc *bd, int *dest_sz, int *src_sz, int *dest_is_array, int *src_is_array, TYPE_DESC **tad, TYPE_DESC **tbd, __INT_T flag);
+static void get_source_and_dest_sizes(F90_Desc *ad, F90_Desc *bd, int *dest_sz,
+                                      int *src_sz, int *dest_is_array,
+                                      int *src_is_array, TYPE_DESC **tad,
+                                      TYPE_DESC **tbd, __INT_T flag);
 static int has_intrin_type(F90_Desc *dd);
 
 #define ARG1_PTR 0x1
@@ -35,8 +40,8 @@ static int has_intrin_type(F90_Desc *dd);
 #define ARG2_INTRIN 0x10
 
 __LOG_T
-ENTF90(SAME_TYPE_AS, same_type_as)
-(void *ab, OBJECT_DESC *ad, void *bb, OBJECT_DESC *bd, __INT_T flag, ...)
+ENTF90(SAME_TYPE_AS, same_type_as)(void *ab, OBJECT_DESC *ad, void *bb,
+                                   OBJECT_DESC *bd, __INT_T flag, ...)
 {
   OBJECT_DESC *t1 = ad, *t2 = bd;
   TYPE_DESC *atd, *btd;
@@ -54,7 +59,7 @@ ENTF90(SAME_TYPE_AS, same_type_as)
             ENTFTN(ASSOCIATED, associated)(ab, (F90_Desc *)ad, 0, 0)) &&
           !I8(__fort_allocated)(ab)) {
         t1 = vatd;
-        is_unl_poly |= t1->tag ==  __POLY && t1->baseTag == __POLY;
+        is_unl_poly |= t1->tag == __POLY && t1->baseTag == __POLY;
       }
     }
     if (flag & (ARG2_PTR | ARG2_ALLOC)) {
@@ -63,7 +68,7 @@ ENTF90(SAME_TYPE_AS, same_type_as)
             ENTFTN(ASSOCIATED, associated)(bb, (F90_Desc *)bd, 0, 0)) &&
           !I8(__fort_allocated)(bb)) {
         t2 = vatd;
-        is_unl_poly |= t2->tag ==  __POLY && t2->baseTag == __POLY;
+        is_unl_poly |= t2->tag == __POLY && t2->baseTag == __POLY;
       }
     }
     va_end(va);
@@ -77,8 +82,8 @@ ENTF90(SAME_TYPE_AS, same_type_as)
 }
 
 __LOG_T
-ENTF90(EXTENDS_TYPE_OF, extends_type_of)
-(void *ab, OBJECT_DESC *ad, void *bb, OBJECT_DESC *bd, __INT_T flag, ...)
+ENTF90(EXTENDS_TYPE_OF, extends_type_of)(void *ab, OBJECT_DESC *ad, void *bb,
+                                         OBJECT_DESC *bd, __INT_T flag, ...)
 {
   OBJECT_DESC *t1 = ad, *t2 = bd;
   TYPE_DESC *atd, *btd;
@@ -97,7 +102,7 @@ ENTF90(EXTENDS_TYPE_OF, extends_type_of)
             ENTFTN(ASSOCIATED, associated)(ab, (F90_Desc *)ad, 0, 0)) &&
           !I8(__fort_allocated)(ab)) {
         t1 = vatd;
-        is_unl_poly_arg1 = t1->tag ==  __POLY && t1->baseTag == __POLY;
+        is_unl_poly_arg1 = t1->tag == __POLY && t1->baseTag == __POLY;
       }
     }
     if (flag & (ARG2_PTR | ARG2_ALLOC)) {
@@ -106,7 +111,7 @@ ENTF90(EXTENDS_TYPE_OF, extends_type_of)
             ENTFTN(ASSOCIATED, associated)(bb, (F90_Desc *)bd, 0, 0)) &&
           !I8(__fort_allocated)(bb)) {
         t2 = vatd;
-        is_unl_poly_arg2 = t2->tag ==  __POLY && t2->baseTag == __POLY;
+        is_unl_poly_arg2 = t2->tag == __POLY && t2->baseTag == __POLY;
       }
     }
     va_end(va);
@@ -133,7 +138,7 @@ ENTF90(EXTENDS_TYPE_OF, extends_type_of)
     return GET_DIST_TRUE_LOG;
 
   if (atd->obj.level > btd->obj.level) {
-    TYPE_DESC *parent = get_parent_pointer(atd, btd->obj.level+1);
+    TYPE_DESC *parent = get_parent_pointer(atd, btd->obj.level + 1);
     if (btd == parent)
       return GET_DIST_TRUE_LOG;
   }
@@ -143,8 +148,8 @@ ENTF90(EXTENDS_TYPE_OF, extends_type_of)
 
 /* Identical to same_type_as() above apart from name and result type. */
 __LOG8_T
-ENTF90(KSAME_TYPE_AS, ksame_type_as)
-(void *ab, OBJECT_DESC *ad, void *bb, OBJECT_DESC *bd, __INT_T flag, ...)
+ENTF90(KSAME_TYPE_AS, ksame_type_as)(void *ab, OBJECT_DESC *ad, void *bb,
+                                     OBJECT_DESC *bd, __INT_T flag, ...)
 {
   OBJECT_DESC *t1 = ad, *t2 = bd;
   TYPE_DESC *atd, *btd;
@@ -162,7 +167,7 @@ ENTF90(KSAME_TYPE_AS, ksame_type_as)
             ENTFTN(ASSOCIATED, associated)(ab, (F90_Desc *)ad, 0, 0)) &&
           !I8(__fort_allocated)(ab)) {
         t1 = vatd;
-        is_unl_poly |= t1->tag ==  __POLY && t1->baseTag == __POLY;
+        is_unl_poly |= t1->tag == __POLY && t1->baseTag == __POLY;
       }
     }
     if (flag & (ARG2_PTR | ARG2_ALLOC)) {
@@ -171,7 +176,7 @@ ENTF90(KSAME_TYPE_AS, ksame_type_as)
             ENTFTN(ASSOCIATED, associated)(bb, (F90_Desc *)bd, 0, 0)) &&
           !I8(__fort_allocated)(bb)) {
         t2 = vatd;
-        is_unl_poly |= t2->tag ==  __POLY && t2->baseTag == __POLY;
+        is_unl_poly |= t2->tag == __POLY && t2->baseTag == __POLY;
       }
     }
     va_end(va);
@@ -186,8 +191,8 @@ ENTF90(KSAME_TYPE_AS, ksame_type_as)
 
 /* Identical to extends_type_of() above apart from name and result type. */
 __LOG8_T
-ENTF90(KEXTENDS_TYPE_OF, kextends_type_of)
-(void *ab, OBJECT_DESC *ad, void *bb, OBJECT_DESC *bd, __INT_T flag, ...)
+ENTF90(KEXTENDS_TYPE_OF, kextends_type_of)(void *ab, OBJECT_DESC *ad, void *bb,
+                                           OBJECT_DESC *bd, __INT_T flag, ...)
 {
   OBJECT_DESC *t1 = ad, *t2 = bd;
   TYPE_DESC *atd, *btd;
@@ -206,7 +211,7 @@ ENTF90(KEXTENDS_TYPE_OF, kextends_type_of)
             ENTFTN(ASSOCIATED, associated)(ab, (F90_Desc *)ad, 0, 0)) &&
           !I8(__fort_allocated)(ab)) {
         t1 = vatd;
-        is_unl_poly_arg1 = t1->tag ==  __POLY && t1->baseTag == __POLY;
+        is_unl_poly_arg1 = t1->tag == __POLY && t1->baseTag == __POLY;
       }
     }
     if (flag & (ARG2_PTR | ARG2_ALLOC)) {
@@ -215,7 +220,7 @@ ENTF90(KEXTENDS_TYPE_OF, kextends_type_of)
             ENTFTN(ASSOCIATED, associated)(bb, (F90_Desc *)bd, 0, 0)) &&
           !I8(__fort_allocated)(bb)) {
         t2 = vatd;
-        is_unl_poly_arg2 = t2->tag ==  __POLY && t2->baseTag == __POLY;
+        is_unl_poly_arg2 = t2->tag == __POLY && t2->baseTag == __POLY;
       }
     }
     va_end(va);
@@ -242,7 +247,7 @@ ENTF90(KEXTENDS_TYPE_OF, kextends_type_of)
     return GET_DIST_TRUE_LOG;
 
   if (atd->obj.level > btd->obj.level) {
-    TYPE_DESC *parent = get_parent_pointer(atd, btd->obj.level+1);
+    TYPE_DESC *parent = get_parent_pointer(atd, btd->obj.level + 1);
     if (btd == parent)
       return GET_DIST_TRUE_LOG;
   }
@@ -250,7 +255,8 @@ ENTF90(KEXTENDS_TYPE_OF, kextends_type_of)
   return 0;
 }
 
-void ENTF90(SET_TYPE, set_type)(F90_Desc *dd, OBJECT_DESC *td)
+void
+ENTF90(SET_TYPE, set_type)(F90_Desc *dd, OBJECT_DESC *td)
 {
   OBJECT_DESC *td2 = (OBJECT_DESC *)dd;
   TYPE_DESC *type = td->type;
@@ -284,18 +290,17 @@ void ENTF90(SET_TYPE, set_type)(F90_Desc *dd, OBJECT_DESC *td)
  *          \param ab is big enough to hold \param bd; -1 if \param ab is not
  *          conformable, not big enough, or not allocated.
  */
-int ENTF90(POLY_CONFORM_TYPES, poly_conform_types)(char *ab, F90_Desc *ad, 
-                                                   F90_Desc *bd, __INT_T flag)
+int
+ENTF90(POLY_CONFORM_TYPES, poly_conform_types)(char *ab, F90_Desc *ad,
+                                               F90_Desc *bd, __INT_T flag)
 {
   /* Possible return values. Do not change the integer values */
-  typedef enum {
+  enum {
     NOT_BIG_ENOUGH = -1, /* not conformable, not big enough */
     BIG_ENOUGH = 0,      /* not conformable but big enough */
     CONFORMABLE = 1      /* conformable */
-  } CONFORM_TYPES;
+  };
 
-  OBJECT_DESC *src = (OBJECT_DESC *)bd;
-  OBJECT_DESC *dest = (OBJECT_DESC *)ad;
   TYPE_DESC *src_td, *dest_td;
   int src_sz, dest_sz;
   int src_is_array = 0, dest_is_array = 0;
@@ -304,7 +309,7 @@ int ENTF90(POLY_CONFORM_TYPES, poly_conform_types)(char *ab, F90_Desc *ad,
     return NOT_BIG_ENOUGH;
   }
 
-  get_source_and_dest_sizes(ad, bd, &dest_sz, &src_sz, &dest_is_array, 
+  get_source_and_dest_sizes(ad, bd, &dest_sz, &src_sz, &dest_is_array,
                             &src_is_array, &dest_td, &src_td, flag);
 
   if (dest_td != 0 && src_td != 0) {
@@ -312,12 +317,13 @@ int ENTF90(POLY_CONFORM_TYPES, poly_conform_types)(char *ab, F90_Desc *ad,
       return CONFORMABLE;
     } else if (dest_sz >= src_sz) {
       return BIG_ENOUGH;
-    } 
-  } 
+    }
+  }
   return NOT_BIG_ENOUGH;
-}  
-    
-void ENTF90(TEST_AND_SET_TYPE, test_and_set_type)(F90_Desc *dd, OBJECT_DESC *td)
+}
+
+void
+ENTF90(TEST_AND_SET_TYPE, test_and_set_type)(F90_Desc *dd, OBJECT_DESC *td)
 {
   OBJECT_DESC *td2 = (OBJECT_DESC *)dd;
   TYPE_DESC *type = td->type;
@@ -355,8 +361,8 @@ ENTF90(KGET_OBJECT_SIZE, kget_object_size)(F90_Desc *d)
     return 0;
 
   td = od->type;
-  return (__INT8_T)(td && td != I8(__f03_ty_to_id)[__STR] ? td->obj.size : 
-                    od->size);
+  return (__INT8_T)(td && td != I8(__f03_ty_to_id)[__STR] ? td->obj.size
+                                                          : od->size);
 }
 
 /** \brief Compute address of an element in a polymorphic array.
@@ -371,11 +377,11 @@ ENTF90(KGET_OBJECT_SIZE, kget_object_size)(F90_Desc *d)
  * \param variable arguments include an __INT_T* for each index of the array
  *        element that we are computing.
  */
-void 
-ENTF90(POLY_ELEMENT_ADDR, poly_element_addr)(char *ab, F90_Desc *ad, 
+void
+ENTF90(POLY_ELEMENT_ADDR, poly_element_addr)(char *ab, F90_Desc *ad,
                                              char **result, ...)
 
-{ 
+{
   va_list va;
   __INT_T sz;
   int i, numdims;
@@ -388,18 +394,18 @@ ENTF90(POLY_ELEMENT_ADDR, poly_element_addr)(char *ab, F90_Desc *ad,
   sz = ENTF90(GET_OBJECT_SIZE, get_object_size)(ad);
   numdims = F90_RANK_G(ad);
 
-  for(i=0; i < numdims; ++i) {
+  for (i = 0; i < numdims; ++i) {
     SET_DIM_PTRS(add, ad, i);
     index[i] = *va_arg(va, __INT_T *) - F90_DPTR_LBOUND_G(add);
   }
 
-  i = numdims-1;
+  i = numdims - 1;
   offset = index[i];
-  for(--i; i >= 0; --i) {
+  for (--i; i >= 0; --i) {
     SET_DIM_PTRS(add, ad, i);
-    offset = index[i] + (F90_DPTR_EXTENT_G(add)*offset);
+    offset = index[i] + (F90_DPTR_EXTENT_G(add) * offset);
   }
-  *result = ab + sz*offset;
+  *result = ab + sz * offset;
   va_end(va);
 }
 
@@ -415,11 +421,11 @@ ENTF90(POLY_ELEMENT_ADDR, poly_element_addr)(char *ab, F90_Desc *ad,
  * \param variable arguments include an __INT_T* for each index of the array
  *        element that we are computing.
  */
-void 
-ENTF90(KPOLY_ELEMENT_ADDR, kpoly_element_addr)(char *ab, F90_Desc *ad, 
+void
+ENTF90(KPOLY_ELEMENT_ADDR, kpoly_element_addr)(char *ab, F90_Desc *ad,
                                                char **result, ...)
 
-{ 
+{
   va_list va;
   __INT8_T sz;
   int i, numdims;
@@ -432,22 +438,21 @@ ENTF90(KPOLY_ELEMENT_ADDR, kpoly_element_addr)(char *ab, F90_Desc *ad,
   sz = ENTF90(KGET_OBJECT_SIZE, kget_object_size)(ad);
   numdims = F90_RANK_G(ad);
 
-  for(i=0; i < numdims; ++i) {
+  for (i = 0; i < numdims; ++i) {
     SET_DIM_PTRS(add, ad, i);
     index[i] = *va_arg(va, __INT_T *) - F90_DPTR_LBOUND_G(add);
   }
 
-  i = numdims-1;
+  i = numdims - 1;
   offset = index[i];
-  for(--i; i >= 0; --i) {
+  for (--i; i >= 0; --i) {
     SET_DIM_PTRS(add, ad, i);
-    offset = index[i] + (F90_DPTR_EXTENT_G(add)*offset);
+    offset = index[i] + (F90_DPTR_EXTENT_G(add) * offset);
   }
-  *result = ab + sz*offset;
+  *result = ab + sz * offset;
   va_end(va);
 }
 
-
 /** \brief Compute address of an element in a 1-dimensional polymorphic array.
  *
  * \param ab is the base address of the array.
@@ -455,17 +460,17 @@ ENTF90(KPOLY_ELEMENT_ADDR, kpoly_element_addr)(char *ab, F90_Desc *ad,
  * \param result is the address of the pointer that will hold the result.
  * \param ele1 is the first dimension index of the array element.
  */
-void 
-ENTF90(POLY_ELEMENT_ADDR1, poly_element_addr1)(char *ab, F90_Desc *ad, 
-                                             char **result, __INT_T *ele1)
+void
+ENTF90(POLY_ELEMENT_ADDR1, poly_element_addr1)(char *ab, F90_Desc *ad,
+                                               char **result,
+                                               __INT_T *ele1)
 {
-
-   __INT_T sz;
+  __INT_T sz;
   DECL_DIM_PTRS(add);
 
   sz = ENTF90(GET_OBJECT_SIZE, get_object_size)(ad);
   SET_DIM_PTRS(add, ad, 0);
-  *result = ab + ((*ele1-F90_DPTR_LBOUND_G(add)) * sz);
+  *result = ab + ((*ele1 - F90_DPTR_LBOUND_G(add)) * sz);
 }
 
 /** \brief Compute address of an element in a 2-dimensional polymorphic array.
@@ -476,22 +481,21 @@ ENTF90(POLY_ELEMENT_ADDR1, poly_element_addr1)(char *ab, F90_Desc *ad,
  * \param ele1 is the first dimension index of the array element.
  * \param ele2 is the second dimension index of the array element.
  */
-void 
-ENTF90(POLY_ELEMENT_ADDR2, poly_element_addr2)(char *ab, F90_Desc *ad, 
-                                             char **result, __INT_T *ele1,
-                                             __INT_T *ele2)
+void
+ENTF90(POLY_ELEMENT_ADDR2, poly_element_addr2)(char *ab, F90_Desc *ad,
+                                               char **result, __INT_T *ele1,
+                                               __INT_T *ele2)
 {
-
   __INT_T sz;
   __INT_T offset;
   DECL_DIM_PTRS(add);
 
   sz = ENTF90(GET_OBJECT_SIZE, get_object_size)(ad);
   SET_DIM_PTRS(add, ad, 1);
-  offset = (*ele2-F90_DPTR_LBOUND_G(add));
+  offset = (*ele2 - F90_DPTR_LBOUND_G(add));
   SET_DIM_PTRS(add, ad, 0);
-  offset = (*ele1-F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add)*offset);
-  *result = ab + sz*offset;
+  offset = (*ele1 - F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add) * offset);
+  *result = ab + sz * offset;
 }
 
 /** \brief Compute address of an element in a 3-dimensional polymorphic array.
@@ -503,24 +507,23 @@ ENTF90(POLY_ELEMENT_ADDR2, poly_element_addr2)(char *ab, F90_Desc *ad,
  * \param ele2 is the second dimension index of the array element.
  * \param ele3 is the third dimension index of the array element.
  */
-void 
-ENTF90(POLY_ELEMENT_ADDR3, poly_element_addr3)(char *ab, F90_Desc *ad, 
+void
+ENTF90(POLY_ELEMENT_ADDR3, poly_element_addr3)(char *ab, F90_Desc *ad,
                                                char **result, __INT_T *ele1,
                                                __INT_T *ele2, __INT_T *ele3)
 {
-
   __INT_T sz;
   __INT_T offset;
   DECL_DIM_PTRS(add);
 
   sz = ENTF90(GET_OBJECT_SIZE, get_object_size)(ad);
   SET_DIM_PTRS(add, ad, 2);
-  offset = (*ele3-F90_DPTR_LBOUND_G(add));
+  offset = (*ele3 - F90_DPTR_LBOUND_G(add));
   SET_DIM_PTRS(add, ad, 1);
-  offset = (*ele2-F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add)*offset);
+  offset = (*ele2 - F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add) * offset);
   SET_DIM_PTRS(add, ad, 0);
-  offset = (*ele1-F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add)*offset);
-  *result = ab + sz*offset;
+  offset = (*ele1 - F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add) * offset);
+  *result = ab + sz * offset;
 }
 
 /** \brief Compute address of an element in a 1-dimensional polymorphic array.
@@ -531,17 +534,16 @@ ENTF90(POLY_ELEMENT_ADDR3, poly_element_addr3)(char *ab, F90_Desc *ad,
  * \param result is the address of the pointer that will hold the result.
  * \param ele1 is the first dimension index of the array element.
  */
-void 
-ENTF90(KPOLY_ELEMENT_ADDR1, kpoly_element_addr1)(char *ab, F90_Desc *ad, 
+void
+ENTF90(KPOLY_ELEMENT_ADDR1, kpoly_element_addr1)(char *ab, F90_Desc *ad,
                                                  char **result, __INT_T *ele1)
 {
-
-   __INT8_T sz;
+  __INT8_T sz;
   DECL_DIM_PTRS(add);
 
   sz = ENTF90(KGET_OBJECT_SIZE, kget_object_size)(ad);
   SET_DIM_PTRS(add, ad, 0);
-  *result = ab + ((*ele1-F90_DPTR_LBOUND_G(add)) * sz);
+  *result = ab + ((*ele1 - F90_DPTR_LBOUND_G(add)) * sz);
 }
 
 /** \brief Compute address of an element in a 2-dimensional polymorphic array.
@@ -553,22 +555,21 @@ ENTF90(KPOLY_ELEMENT_ADDR1, kpoly_element_addr1)(char *ab, F90_Desc *ad,
  * \param ele1 is the first dimension index of the array element.
  * \param ele2 is the second dimension index of the array element.
  */
-void 
-ENTF90(KPOLY_ELEMENT_ADDR2, kpoly_element_addr2)(char *ab, F90_Desc *ad, 
+void
+ENTF90(KPOLY_ELEMENT_ADDR2, kpoly_element_addr2)(char *ab, F90_Desc *ad,
                                                  char **result, __INT_T *ele1,
                                                  __INT_T *ele2)
 {
-
   __INT8_T sz;
   __INT_T offset;
   DECL_DIM_PTRS(add);
 
   sz = ENTF90(KGET_OBJECT_SIZE, kget_object_size)(ad);
   SET_DIM_PTRS(add, ad, 1);
-  offset = (*ele2-F90_DPTR_LBOUND_G(add));
+  offset = (*ele2 - F90_DPTR_LBOUND_G(add));
   SET_DIM_PTRS(add, ad, 0);
-  offset = (*ele1-F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add)*offset);
-  *result = ab + sz*offset;
+  offset = (*ele1 - F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add) * offset);
+  *result = ab + sz * offset;
 }
 
 /** \brief Compute address of an element in a 3-dimensional polymorphic array.
@@ -581,28 +582,26 @@ ENTF90(KPOLY_ELEMENT_ADDR2, kpoly_element_addr2)(char *ab, F90_Desc *ad,
  * \param ele2 is the second dimension index of the array element.
  * \param ele3 is the third dimension index of the array element.
  */
-void 
-ENTF90(KPOLY_ELEMENT_ADDR3, kpoly_element_addr3)(char *ab, F90_Desc *ad, 
+void
+ENTF90(KPOLY_ELEMENT_ADDR3, kpoly_element_addr3)(char *ab, F90_Desc *ad,
                                                  char **result, __INT_T *ele1,
-                                                 __INT_T *ele2, 
-                                                 __INT_T *ele3)
+                                                 __INT_T *ele2, __INT_T *ele3)
 {
-
   __INT8_T sz;
   __INT_T offset;
   DECL_DIM_PTRS(add);
 
   sz = ENTF90(KGET_OBJECT_SIZE, kget_object_size)(ad);
   SET_DIM_PTRS(add, ad, 2);
-  offset = (*ele3-F90_DPTR_LBOUND_G(add));
+  offset = (*ele3 - F90_DPTR_LBOUND_G(add));
   SET_DIM_PTRS(add, ad, 1);
-  offset = (*ele2-F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add)*offset);
+  offset = (*ele2 - F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add) * offset);
   SET_DIM_PTRS(add, ad, 0);
-  offset = (*ele1-F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add)*offset);
-  *result = ab + sz*offset;
+  offset = (*ele1 - F90_DPTR_LBOUND_G(add)) + (F90_DPTR_EXTENT_G(add) * offset);
+  *result = ab + sz * offset;
 }
 
-/** \brief Returns a type descriptor pointer of a specified ancestor of 
+/** \brief Returns a type descriptor pointer of a specified ancestor of
  *         a type descriptor.
  *
  *  \param src_td is the type descriptor used to locate the ancestor type
@@ -617,17 +616,16 @@ ENTF90(KPOLY_ELEMENT_ADDR3, kpoly_element_addr3)(char *ab, F90_Desc *ad,
 static TYPE_DESC *
 get_parent_pointer(TYPE_DESC *src_td, __INT_T level)
 {
-
   __INT_T offset, src_td_level;
   TYPE_DESC *parent;
 
   if (level <= 0 || src_td == NULL)
     return NULL;
-  
+
   src_td_level = src_td->obj.level;
   if (src_td_level < 0 || level > src_td_level)
     return NULL;
-  
+
   if (src_td->parents != NULL) {
     /* The parents field is filled in, so use it to get the desired parent */
     offset = (src_td_level - level) * sizeof(__POINT_T);
@@ -642,10 +640,10 @@ get_parent_pointer(TYPE_DESC *src_td, __INT_T level)
     offset = level * sizeof(__POINT_T);
     parent = *((TYPE_DESC **)(((char *)src_td) - offset));
   }
-  
-  return parent;    
 
+  return parent;
 }
+
 static void
 process_final_procedures(char *area, F90_Desc *sd)
 {
@@ -675,7 +673,6 @@ process_final_procedures(char *area, F90_Desc *sd)
     return;
 
   if (src_td->finals) {
-
     finals = src_td->finals;
     rank = (sd->tag == __DESC) ? F90_RANK_G(sd) : 0;
 
@@ -701,9 +698,8 @@ process_final_procedures(char *area, F90_Desc *sd)
   if (src_td->layout) {
     LAYOUT_DESC *ld = src_td->layout;
     F90_Desc *fd;
-    char *ptr1[1] = {0};
     char *ptr2[1] = {0};
-    char *cb, *db;
+    char *cb;
     __LOG_T g1;
     for (; ld->tag != 0; ld++) {
       if ((ld->tag != 'T' && ld->tag != 'D' && ld->tag != 'P' &&
@@ -717,8 +713,9 @@ process_final_procedures(char *area, F90_Desc *sd)
         if (cb && !fd && ld->declType) {
           process_final_procedures(cb, (F90_Desc *)ld->declType);
         }
-      } else if (fd && (fd->tag == __POLY || (fd->tag == __DESC && 
-                       (fd->kind == __DERIVED || fd->kind == __POLY)))) {
+      } else if (fd && (fd->tag == __POLY ||
+                        (fd->tag == __DESC &&
+                         (fd->kind == __DERIVED || fd->kind == __POLY)))) {
         if (rank == 0) {
           __fort_bcopy((char *)ptr2, area + ld->offset, sizeof(char *));
           cb = ptr2[0];
@@ -747,8 +744,6 @@ process_final_procedures(char *area, F90_Desc *sd)
     /* process parent finals */
     TYPE_DESC *parent = get_parent_pointer(src_td, src_td->obj.level);
 
-    
-
     if (rank > 0) {
       int i;
       int src_sz = sd->lsize * (size_t)src_td->obj.size;
@@ -761,7 +756,8 @@ process_final_procedures(char *area, F90_Desc *sd)
   }
 }
 
-void ENTF90(FINALIZE, finalize)(char *area, F90_Desc *sd)
+void
+ENTF90(FINALIZE, finalize)(char *area, F90_Desc *sd)
 {
   /* See also Cuda Fortran version in rte/cudafor/hammer/src/dev_allo.c
    * call DEV_FINALIZE().
@@ -770,11 +766,11 @@ void ENTF90(FINALIZE, finalize)(char *area, F90_Desc *sd)
   process_final_procedures(area, sd);
 }
 
-void ENTF90(DEALLOC_POLY_MBR03A,
-             dealloc_poly_mbr03a)(F90_Desc *sd, __STAT_T *stat, char *area,
-                                  __INT_T *firsttime, DCHAR(errmsg) DCLEN64(errmsg))
+void
+ENTF90(DEALLOC_POLY_MBR03A, dealloc_poly_mbr03a)(F90_Desc *sd, __STAT_T *stat,
+                                                 char *area, __INT_T *firsttime,
+                                                 DCHAR(errmsg) DCLEN64(errmsg))
 {
-
   OBJECT_DESC *src = (OBJECT_DESC *)sd;
   TYPE_DESC *src_td;
 
@@ -790,12 +786,10 @@ void ENTF90(DEALLOC_POLY_MBR03A,
   process_final_procedures(area, sd);
 
   if (src_td && src_td->layout) {
-
     LAYOUT_DESC *ld = src_td->layout;
     F90_Desc *fd;
-    char *ptr1[1] = {0};
     char *ptr2[1] = {0};
-    char *cb, *db;
+    char *cb;
     __LOG_T g1;
 
     for (; ld->tag != 0; ld++) {
@@ -833,16 +827,19 @@ void ENTF90(DEALLOC_POLY_MBR03A,
 }
 
 /* 32 bit CLEN version */
-void ENTF90(DEALLOC_POLY_MBR03,
-            dealloc_poly_mbr03)(F90_Desc *sd, __STAT_T *stat, char *area,
-                                __INT_T *firsttime, DCHAR(errmsg) DCLEN(errmsg))
+void
+ENTF90(DEALLOC_POLY_MBR03, dealloc_poly_mbr03)(F90_Desc *sd, __STAT_T *stat,
+                                               char *area, __INT_T *firsttime,
+                                               DCHAR(errmsg) DCLEN(errmsg))
 {
-  ENTF90(DEALLOC_POLY_MBR03A, dealloc_poly_mbr03a)(sd, stat, area, firsttime, CADR(errmsg), (__CLEN_T)CLEN(errmsg));
+  ENTF90(DEALLOC_POLY_MBR03A, dealloc_poly_mbr03a)
+  (sd, stat, area, firsttime, CADR(errmsg), (__CLEN_T)CLEN(errmsg));
 }
 
-void ENTF90(DEALLOC_POLY03A, dealloc_poly03a)(F90_Desc *sd, __STAT_T *stat,
-                                            char *area, __INT_T *firsttime,
-                                            DCHAR(errmsg) DCLEN64(errmsg))
+void
+ENTF90(DEALLOC_POLY03A, dealloc_poly03a)(F90_Desc *sd, __STAT_T *stat,
+                                         char *area, __INT_T *firsttime,
+                                         DCHAR(errmsg) DCLEN64(errmsg))
 {
   OBJECT_DESC *src = (OBJECT_DESC *)sd;
   TYPE_DESC *src_td;
@@ -859,10 +856,8 @@ void ENTF90(DEALLOC_POLY03A, dealloc_poly03a)(F90_Desc *sd, __STAT_T *stat,
   process_final_procedures(area, sd);
 
   if (src_td && src_td->layout) {
-
     LAYOUT_DESC *ld = src_td->layout;
     F90_Desc *fd;
-    char *ptr1[1] = {0};
     char *ptr2[1] = {0};
     char *cb;
     __LOG_T g1;
@@ -875,7 +870,7 @@ void ENTF90(DEALLOC_POLY03A, dealloc_poly03a)(F90_Desc *sd, __STAT_T *stat,
       }
       fd = (ld->desc_offset >= 0) ? (F90_Desc *)(area + ld->desc_offset) : 0;
       if (ld->tag == 'F') {
-          continue;
+        continue;
       } else {
         __fort_bcopy((char *)ptr2, area + ld->offset, sizeof(char *));
         cb = ptr2[0];
@@ -890,10 +885,10 @@ void ENTF90(DEALLOC_POLY03A, dealloc_poly03a)(F90_Desc *sd, __STAT_T *stat,
         continue;
       }
       if (fd) {
-        if (ld->tag == 'T' && src_td->obj.tag == __POLY
-            && (fd->tag == __DESC || fd->tag == __POLY)) {
-            ENTF90(DEALLOC_POLY_MBR03A, dealloc_poly_mbr03a)
-            (fd, stat, cb, firsttime, CADR(errmsg), CLEN(errmsg));
+        if (ld->tag == 'T' && src_td->obj.tag == __POLY &&
+            (fd->tag == __DESC || fd->tag == __POLY)) {
+          ENTF90(DEALLOC_POLY_MBR03A, dealloc_poly_mbr03a)
+          (fd, stat, cb, firsttime, CADR(errmsg), CLEN(errmsg));
         }
       }
     }
@@ -901,15 +896,16 @@ void ENTF90(DEALLOC_POLY03A, dealloc_poly03a)(F90_Desc *sd, __STAT_T *stat,
   ENTF90(DEALLOC03A, dealloc03a)
   (stat, area, firsttime, CADR(errmsg), CLEN(errmsg));
 }
-/* 32 bit CLEN version */
-void ENTF90(DEALLOC_POLY03, dealloc_poly03)(F90_Desc *sd, __STAT_T *stat,
-                                            char *area, __INT_T *firsttime,
-                                            DCHAR(errmsg) DCLEN(errmsg))
-{
-  ENTF90(DEALLOC_POLY03A, dealloc_poly03a)(sd, stat, area, firsttime,
-         CADR(errmsg), (__CLEN_T)CLEN(errmsg));
-}
 
+/* 32 bit CLEN version */
+void
+ENTF90(DEALLOC_POLY03, dealloc_poly03)(F90_Desc *sd, __STAT_T *stat,
+                                       char *area, __INT_T *firsttime,
+                                       DCHAR(errmsg) DCLEN(errmsg))
+{
+  ENTF90(DEALLOC_POLY03A, dealloc_poly03a)
+  (sd, stat, area, firsttime, CADR(errmsg), (__CLEN_T)CLEN(errmsg));
+}
 
 /* Used with F2003 sourced allocation. Allocate and assign
  * components of a derived type. This function assumes
@@ -922,7 +918,7 @@ sourced_alloc_and_assign(char *ab, char *bb, TYPE_DESC *td)
   char *cb, *db;
   __INT_T one = 1;
   __INT_T zero = 0;
-  __INT_T len, i;
+  __INT_T len;
   __INT_T kind = __NONE;
   char *errmsg = "sourced_alloc_and_assign: malloc error";
 
@@ -943,7 +939,7 @@ sourced_alloc_and_assign(char *ab, char *bb, TYPE_DESC *td)
       continue;
     }
     cb = *(char **)(bb + ld->offset);
-     
+
     if (ld->desc_offset > 0) {
       F90_Desc *fd = (F90_Desc *)(ab + ld->desc_offset);
       if (!ENTFTN(ASSOCIATED, associated)(cb, fd, 0, 0) &&
@@ -955,10 +951,10 @@ sourced_alloc_and_assign(char *ab, char *bb, TYPE_DESC *td)
       } else {
         len = ENTF90(GET_OBJECT_SIZE, get_object_size)(fd);
       }
-     
+
       ENTF90(PTR_SRC_ALLOC03, ptr_src_alloc03)
-        (fd, &one, &kind, &len, (__STAT_T *)(ENTCOMN(0, 0)), &db,
-          (__POINT_T *)(ENTCOMN(0, 0)), &zero, errmsg, strlen(errmsg));
+      (fd, &one, &kind, &len, (__STAT_T *)(ENTCOMN(0, 0)), &db,
+       (__POINT_T *)(ENTCOMN(0, 0)), &zero, errmsg, strlen(errmsg));
       *(char **)(ab + ld->offset) = db;
       __fort_bcopy(db, cb, len);
       if (ld->tag == 'T') {
@@ -971,8 +967,8 @@ sourced_alloc_and_assign(char *ab, char *bb, TYPE_DESC *td)
       }
     } else if ((len = ld->length) > 0) {
       ENTF90(PTR_ALLOC03, ptr_alloc03)
-        (&one, &kind, &len, (__STAT_T *)(ENTCOMN(0, 0)), &db,
-          (__POINT_T *)(ENTCOMN(0, 0)), &zero, errmsg, strlen(errmsg));
+      (&one, &kind, &len, (__STAT_T *)(ENTCOMN(0, 0)), &db,
+       (__POINT_T *)(ENTCOMN(0, 0)), &zero, errmsg, strlen(errmsg));
       *(char **)(ab + ld->offset) = db;
       if (I8(__fort_allocated)(cb)) {
         __fort_bcopy(db, cb, len);
@@ -984,7 +980,7 @@ sourced_alloc_and_assign(char *ab, char *bb, TYPE_DESC *td)
   }
 }
 
-/** \brief Perform sourced allocation and assign on each element of an array. 
+/** \brief Perform sourced allocation and assign on each element of an array.
  *
  *  \param extent is the number of elements to allocate and assign.
  *  \param ab is a pointer to the destination array.
@@ -1004,7 +1000,7 @@ sourced_alloc_and_assign_array(int extent, char *ab, char *bb, TYPE_DESC *td)
   }
 }
 
-/** \brief Same as sourced_alloc_and_assign_array() except the source 
+/** \brief Same as sourced_alloc_and_assign_array() except the source
  *         argument is a scalar; not an array.
  *
  *  \param extent is the number of elements to allocate and assign.
@@ -1013,7 +1009,7 @@ sourced_alloc_and_assign_array(int extent, char *ab, char *bb, TYPE_DESC *td)
  *  \param td is the destination array's type descriptor.
  */
 static void
-sourced_alloc_and_assign_array_from_scalar(int extent, char *ab, char *bb, 
+sourced_alloc_and_assign_array_from_scalar(int extent, char *ab, char *bb,
                                            TYPE_DESC *td)
 {
   if (td != 0) {
@@ -1026,7 +1022,7 @@ sourced_alloc_and_assign_array_from_scalar(int extent, char *ab, char *bb,
   }
 }
 
-/** \brief Computes destination/first object and source/second object  sizes 
+/** \brief Computes destination/first object and source/second object  sizes
  *         and other variables used by the poly_asn() and poly_conform_types()
  *         routines.
  *
@@ -1036,19 +1032,17 @@ sourced_alloc_and_assign_array_from_scalar(int extent, char *ab, char *bb,
  *         polymorphic type conformance test.
  *  \param dest_sz is used to return the destination/first object's size.
  *  \param src_sz is used to return the source/second object's size.
- *  \param dest_is_array stores whether the destination/first object is an 
+ *  \param dest_is_array stores whether the destination/first object is an
  *         array.
  *  \param src_is_array stores whether the source/second object is an array.
  *  \param tad is used to return the destination/first object's type descriptor.
  *  \param tbd is used to return the source/second object's type descriptor.
  *  \param flag can be 0, 1, 2.  See flag's description for poly_asn().
- */ 
+ */
 static void
-get_source_and_dest_sizes(F90_Desc *ad, F90_Desc *bd,
-                          int *dest_sz, int *src_sz, 
+get_source_and_dest_sizes(F90_Desc *ad, F90_Desc *bd, int *dest_sz, int *src_sz,
                           int *dest_is_array, int *src_is_array,
-                          TYPE_DESC **tad, TYPE_DESC **tbd,
-                          __INT_T flag)
+                          TYPE_DESC **tad, TYPE_DESC **tbd, __INT_T flag)
 {
   OBJECT_DESC *src = (OBJECT_DESC *)bd;
   OBJECT_DESC *dest = (OBJECT_DESC *)ad;
@@ -1073,7 +1067,7 @@ get_source_and_dest_sizes(F90_Desc *ad, F90_Desc *bd,
       *src_sz = bd->lsize * (size_t)src_td->obj.size;
       *src_is_array = 1;
     } else if (src_td->obj.baseTag == __STR) {
-      *src_sz = (size_t)(ad->len * ad->lsize); 
+      *src_sz = (size_t)(ad->len * ad->lsize);
       *src_is_array = 1;
     } else if (bd && (flag || bd->tag == __POLY || bd->tag == __DESC)) {
       *src_sz = (size_t)src_td->obj.size;
@@ -1090,7 +1084,7 @@ get_source_and_dest_sizes(F90_Desc *ad, F90_Desc *bd,
   } else {
     *src_sz = 0;
   }
-  
+
   if (dest_td) {
     if (ad && ad->tag == __DESC && ad->rank > 0) {
       *dest_sz = ad->lsize * (size_t)dest_td->obj.size;
@@ -1100,9 +1094,10 @@ get_source_and_dest_sizes(F90_Desc *ad, F90_Desc *bd,
                !ad->gsize && ad->kind > 0 && ad->kind < __NTYPES) {
       *dest_sz = (size_t)dest_td->obj.size * ad->len;
     } else if (!*src_sz || ((flag == 1 || (ad && ad->tag == __DESC)) &&
-                           dest_td->obj.tag == __POLY)) { 
-      *dest_sz = dest_td != I8(__f03_ty_to_id)[__STR] ? 
-                 (size_t)dest_td->obj.size : ad->len;
+                            dest_td->obj.tag == __POLY)) {
+      *dest_sz = dest_td != I8(__f03_ty_to_id)[__STR]
+                     ? (size_t)dest_td->obj.size
+                     : ad->len;
     } else {
       *dest_sz = 0;
     }
@@ -1112,11 +1107,11 @@ get_source_and_dest_sizes(F90_Desc *ad, F90_Desc *bd,
 
   *tad = dest_td;
   *tbd = src_td;
-
 }
 
-void ENTF90(POLY_ASN, poly_asn)(char *ab, F90_Desc *ad, char *bb, F90_Desc *bd,
-                                __INT_T flag)
+void
+ENTF90(POLY_ASN, poly_asn)(char *ab, F90_Desc *ad, char *bb, F90_Desc *bd,
+                           __INT_T flag)
 {
   /* Copy the contents of object bb to object ab
    * Assumes destination descriptor, ad, is a full descriptor.
@@ -1126,7 +1121,6 @@ void ENTF90(POLY_ASN, poly_asn)(char *ab, F90_Desc *ad, char *bb, F90_Desc *bd,
    */
 
   OBJECT_DESC *src = (OBJECT_DESC *)bd;
-  OBJECT_DESC *dest = (OBJECT_DESC *)ad;
   TYPE_DESC *src_td, *dest_td;
   int src_sz, dest_sz, sz;
   int dest_is_array, src_is_array, i;
@@ -1153,22 +1147,23 @@ void ENTF90(POLY_ASN, poly_asn)(char *ab, F90_Desc *ad, char *bb, F90_Desc *bd,
     for (i = 0; i < sz; i += src_sz) {
       __fort_bcopy(ab + i, bb, src_sz);
     }
-  } else { 
+  } else {
     __fort_bcopy(ab, bb, sz);
   }
 
   if (flag && ad && bd && ad != bd && F90_TAG_G(bd) == __DESC &&
       (F90_TAG_G(ad) == __DESC || flag == 2)) {
-    __fort_bcopy((char *)ad, (char *)bd, SIZE_OF_RANK_n_ARRAY_DESC(F90_RANK_G(bd)));
+    __fort_bcopy((char *)ad, (char *)bd,
+                 SIZE_OF_RANK_n_ARRAY_DESC(F90_RANK_G(bd)));
     SET_F90_DIST_DESC_PTR(ad, F90_RANK_G(ad));
     /* check for align-target to self */
     if (DIST_ALIGN_TARGET_G(ad) == ad) {
       DIST_ALIGN_TARGET_P(ad, ad);
     }
-  }else if (flag > 0 && src_td) {
-    ENTF90(SET_TYPE,set_type)(ad, src);
+  } else if (flag > 0 && src_td) {
+    ENTF90(SET_TYPE, set_type)(ad, src);
     dest_td = src_td;
-  } 
+  }
 
   if (flag) {
     if (src_td && (src_td->obj.tag > 0 && src_td->obj.tag < __NTYPES) &&
@@ -1177,12 +1172,14 @@ void ENTF90(POLY_ASN, poly_asn)(char *ab, F90_Desc *ad, char *bb, F90_Desc *bd,
     } else if (dest_is_array && src_is_array) {
       sourced_alloc_and_assign_array(ad->lsize, ab, bb, dest_td->obj.type);
     } else if (dest_is_array) {
-      sourced_alloc_and_assign_array_from_scalar(ad->lsize, ab, bb, dest_td->obj.type);
+      sourced_alloc_and_assign_array_from_scalar(ad->lsize, ab, bb,
+                                                 dest_td->obj.type);
     }
   }
 }
 
-void I8(__fort_dump_type)(TYPE_DESC *d)
+void
+I8(__fort_dump_type)(TYPE_DESC *d)
 {
   fprintf(__io_stderr(), "Polymorphic variable type '");
   switch (d->obj.baseTag) {
@@ -1242,6 +1239,7 @@ void I8(__fort_dump_type)(TYPE_DESC *d)
     break;
   case __LOG4:
     fprintf(__io_stderr(), "__LOG4'\n");
+    break;
   case __LOG8:
     fprintf(__io_stderr(), "__LOG8'\n");
     break;
@@ -1325,12 +1323,12 @@ void I8(__fort_dump_type)(TYPE_DESC *d)
   fprintf(__io_stderr(), "Size: %d\n", d->obj.size);
   fprintf(__io_stderr(), "Type Descriptor:\n\t'%s'\n", d->name);
   if (d->obj.level > 0) {
-    __INT_T offset, level;
+    __INT_T level;
     fprintf(__io_stderr(), "(Child Type)\n");
     fprintf(__io_stderr(), "Parent Descriptor%s\n",
             (d->obj.level == 1) ? ":" : "s:");
     for (level = d->obj.level - 1; level >= 0; --level) {
-      TYPE_DESC *parent = get_parent_pointer(d, level+1);
+      TYPE_DESC *parent = get_parent_pointer(d, level + 1);
       fprintf(__io_stderr(), "\t'%s'\n", parent->name);
     }
 
@@ -1349,8 +1347,8 @@ void I8(__fort_dump_type)(TYPE_DESC *d)
         continue;
       }
       fprintf(__io_stderr(),
-        "  tag=%c offset=%d desc_offset=%d length=%d declType=%p\n",
-        ld->tag, ld->offset, ld->desc_offset, ld->length, ld->declType);
+              "  tag=%c offset=%d desc_offset=%d length=%d declType=%p\n",
+              ld->tag, ld->offset, ld->desc_offset, ld->length, ld->declType);
     }
   }
 }
@@ -1671,7 +1669,8 @@ static struct type_desc *I8(__f03_ty_to_id)[__NTYPES] = {
     0,
     0};
 
-void ENTF90(SET_INTRIN_TYPE, set_intrin_type)(F90_Desc *dd, __INT_T intrin_type)
+void
+ENTF90(SET_INTRIN_TYPE, set_intrin_type)(F90_Desc *dd, __INT_T intrin_type)
 {
   OBJECT_DESC *od = (OBJECT_DESC *)dd;
 
@@ -1687,19 +1686,18 @@ void ENTF90(SET_INTRIN_TYPE, set_intrin_type)(F90_Desc *dd, __INT_T intrin_type)
     __fort_abort("set_intrin_type: Illegal intrinsic type");
   }
 #else
-    od->type = I8(__f03_ty_to_id)[intrin_type];
+  od->type = I8(__f03_ty_to_id)[intrin_type];
 #endif
 }
 
 __LOG_T
-ENTF90(SAME_INTRIN_TYPE_AS, same_intrin_type_as)
-(void *ab, OBJECT_DESC *ad, void *bb, __INT_T intrin_type, __INT_T flag, ...)
-
+ENTF90(SAME_INTRIN_TYPE_AS, same_intrin_type_as)(void *ab, OBJECT_DESC *ad,
+                                                 void *bb, __INT_T intrin_type,
+                                                 __INT_T flag, ...)
 {
-  TYPE_DESC *atd;
   TYPE_DESC *btd;
   OBJECT_DESC *t1, *t2;
-  __LOG_T g1, g2;
+  __LOG_T g1;
   va_list va;
 
   if (!ad)
@@ -1738,14 +1736,14 @@ ENTF90(SAME_INTRIN_TYPE_AS, same_intrin_type_as)
 }
 
 __LOG8_T
-ENTF90(KSAME_INTRIN_TYPE_AS, ksame_intrin_type_as)
-(void *ab, OBJECT_DESC *ad, void *bb, __INT_T intrin_type, __INT_T flag, ...)
-
+ENTF90(KSAME_INTRIN_TYPE_AS, ksame_intrin_type_as)(void *ab, OBJECT_DESC *ad,
+                                                   void *bb,
+                                                   __INT_T intrin_type,
+                                                   __INT_T flag, ...)
 {
-  TYPE_DESC *atd;
   TYPE_DESC *btd;
   OBJECT_DESC *t1, *t2;
-  __LOG_T g1, g2;
+  __LOG_T g1;
   va_list va;
 
   if (!ad)
@@ -1784,11 +1782,11 @@ ENTF90(KSAME_INTRIN_TYPE_AS, ksame_intrin_type_as)
   return ENTF90(KSAME_TYPE_AS, ksame_type_as)(ab, t1, bb, t2, 0);
 }
 
-void ENTF90(POLY_ASN_SRC_INTRIN,
-            poly_asn_src_intrin)(char *ab, F90_Desc *ad, char *bb,
-                                 __INT_T intrin_type, __INT_T flag)
+void
+ENTF90(POLY_ASN_SRC_INTRIN, poly_asn_src_intrin)(char *ab, F90_Desc *ad,
+                                                 char *bb, __INT_T intrin_type,
+                                                 __INT_T flag)
 {
-
   F90_Desc *bd;
   TYPE_DESC *td;
 
@@ -1803,11 +1801,12 @@ void ENTF90(POLY_ASN_SRC_INTRIN,
   ENTF90(POLY_ASN, poly_asn)(ab, ad, bb, bd, flag);
 }
 
-void ENTF90(POLY_ASN_DEST_INTRIN,
-            poly_asn_dest_intrin)(char *ab, __INT_T intrin_type, char *bb,
-                                  F90_Desc *bd, __INT_T flag)
+void
+ENTF90(POLY_ASN_DEST_INTRIN, poly_asn_dest_intrin)(char *ab,
+                                                   __INT_T intrin_type,
+                                                   char *bb, F90_Desc *bd,
+                                                   __INT_T flag)
 {
-
   F90_Desc *ad;
   TYPE_DESC *td;
 
@@ -1829,16 +1828,16 @@ void ENTF90(POLY_ASN_DEST_INTRIN,
  *
  *  \return 1 if \param dd is associated with an intinsinc type, else 0.
  */
-static int has_intrin_type(F90_Desc *dd)
+static int
+has_intrin_type(F90_Desc *dd)
 {
   int i;
-  OBJECT_DESC *td = (OBJECT_DESC *)dd; 
-  int is_intrin_type = 0;
+  OBJECT_DESC *td = (OBJECT_DESC *)dd;
 
   if (td->type == NULL)
     return 0;
-  
-  for(i=0; i < __NTYPES; ++i) {
+
+  for (i = 0; i < __NTYPES; ++i) {
     if (td->type == I8(__f03_ty_to_id)[i]) {
       return 1;
     }
@@ -1847,39 +1846,38 @@ static int has_intrin_type(F90_Desc *dd)
   return 0;
 }
 
-void ENTF90(INIT_UNL_POLY_DESC, init_unl_poly_desc)(F90_Desc *dd, F90_Desc *sd,
-                                                    __INT_T kind)
+void
+ENTF90(INIT_UNL_POLY_DESC, init_unl_poly_desc)(F90_Desc *dd, F90_Desc *sd,
+                                               __INT_T kind)
 {
-  OBJECT_DESC *od = (OBJECT_DESC *)sd;
-    if (sd && F90_TAG_G(sd) == __DESC) {
-      __fort_bcopy((char *)dd, (char *)sd, SIZE_OF_RANK_n_ARRAY_DESC(F90_RANK_G(sd)));
-      SET_F90_DIST_DESC_PTR(dd, F90_RANK_G(dd));
-      /* check for align-target to self */
-      if (DIST_ALIGN_TARGET_G(dd) == dd) {
-        DIST_ALIGN_TARGET_P(dd, dd);
-      }
-      dd->kind = kind;
-    } else {
-      dd->len = (sd && (sd->tag == __DESC || sd->tag == __POLY)) ? sd->len : 0;
-      dd->tag = __POLY;
-      dd->rank = 0;
-      dd->lsize = 0;
-      dd->gsize = 0;
-      dd->kind = kind;
-      if (sd && (sd->tag == __DESC || sd->tag == __POLY || 
-          has_intrin_type(sd))) {
-        ENTF90(SET_TYPE, set_type)(dd, sd);
-      }
+  if (sd && F90_TAG_G(sd) == __DESC) {
+    __fort_bcopy((char *)dd, (char *)sd,
+                 SIZE_OF_RANK_n_ARRAY_DESC(F90_RANK_G(sd)));
+    SET_F90_DIST_DESC_PTR(dd, F90_RANK_G(dd));
+    /* check for align-target to self */
+    if (DIST_ALIGN_TARGET_G(dd) == dd) {
+      DIST_ALIGN_TARGET_P(dd, dd);
     }
+    dd->kind = kind;
+  } else {
+    dd->len = (sd && (sd->tag == __DESC || sd->tag == __POLY)) ? sd->len : 0;
+    dd->tag = __POLY;
+    dd->rank = 0;
+    dd->lsize = 0;
+    dd->gsize = 0;
+    dd->kind = kind;
+    if (sd && (sd->tag == __DESC || sd->tag == __POLY || has_intrin_type(sd))) {
+      ENTF90(SET_TYPE, set_type)(dd, sd);
+    }
+  }
 }
 
-void ENTF90(INIT_FROM_DESC, init_from_desc)(void *object,
-                                            const F90_Desc *desc,
-                                            int rank)
+void
+ENTF90(INIT_FROM_DESC, init_from_desc)(void *object, const F90_Desc *desc,
+                                       int rank)
 {
   if (object && desc) {
-
-    OBJECT_DESC *obj_desc = (OBJECT_DESC *) desc;
+    OBJECT_DESC *obj_desc = (OBJECT_DESC *)desc;
     size_t items = 1;
     size_t index[MAXDIMS];
     TYPE_DESC *type_desc = obj_desc->type;
@@ -1901,7 +1899,7 @@ void ENTF90(INIT_FROM_DESC, init_from_desc)(void *object,
     if (type_desc)
       obj_desc = &type_desc->obj;
     else
-      type_desc = (TYPE_DESC *) obj_desc;
+      type_desc = (TYPE_DESC *)obj_desc;
     element_bytes = obj_desc->size;
     prototype = obj_desc->prototype;
 
@@ -1918,7 +1916,7 @@ void ENTF90(INIT_FROM_DESC, init_from_desc)(void *object,
             do_increment = 0;
         }
       }
-      element = (char *) object + element_bytes * offset;
+      element = (char *)object + element_bytes * offset;
       if (prototype)
         memcpy(element, prototype, element_bytes);
       else
@@ -1927,20 +1925,16 @@ void ENTF90(INIT_FROM_DESC, init_from_desc)(void *object,
   }
 }
 
-void 
-ENTF90(ASN_CLOSURE, asn_closure) 
-      (PROC_DESC * pdesc, void * closure)
-{
-   pdesc->tag = __PROCPTR;
-   pdesc->closure = closure;
-} 
-
-
 void
-ENTF90(COPY_PROC_DESC, copy_proc_desc)
-      (PROC_DESC *dd, PROC_DESC *sd)
+ENTF90(ASN_CLOSURE, asn_closure)(PROC_DESC *pdesc, void *closure)
 {
-   dd->tag = __PROCPTR;
-   dd->closure = sd->closure;
+  pdesc->tag = __PROCPTR;
+  pdesc->closure = closure;
 }
 
+void
+ENTF90(COPY_PROC_DESC, copy_proc_desc)(PROC_DESC *dd, PROC_DESC *sd)
+{
+  dd->tag = __PROCPTR;
+  dd->closure = sd->closure;
+}

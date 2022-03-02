@@ -30,6 +30,7 @@
 #include "semant.h"
 #include "llmputil.h"
 #include "rtlRtns.h"
+#include "rte.h" /* for get_all_descriptors, get_static_descriptor */
 #include <stdarg.h>
 
 
@@ -57,7 +58,6 @@ static DTIMPL *save_dtimplicit = NULL;
 static int dtimplicitstack = 0;
 
 static void cng_inttyp(int, int);
-static void cng_specific(int, int);
 static void generate_type_mismatch_errors(SPTR s1, SPTR s2);
 static void update_arrdsc(SPTR s, DEC_DEF_MAP *smap, int num_dummies);
 /* entry hack? */
@@ -73,8 +73,7 @@ sym_init(void)
 {
   int i;
   INT tmp[2], res[2];
-  int dtype;
-  static char *npname = "hpf_np$";
+  static const char *npname = "hpf_np$";
   int sptr;
 
   /* allocate symbol table and name table space:  */
@@ -314,17 +313,6 @@ cng_inttyp(int ss, int dt)
   INTTYPP(ss, dt);
 }
 
-static void
-cng_specific(int os, int ns)
-{
-
-#if DEBUG
-  assert(STYPEG(os) == ST_INTRIN, "cng_specific not intr", os, 3);
-  assert(STYPEG(ns) == ST_INTRIN, "cng_specific not intr", ns, 3);
-#endif
-  dup_sym(os, &stb.stg_base[ns]);
-}
-
 /**
  * Set up initial implicit types.  All are real except for the letters i
  * thru n:
@@ -333,7 +321,6 @@ void
 init_implicit(void)
 {
   int i;
-  int default_real;
   int default_int;
 
   for (i = 0; i < 54; i++) {
@@ -438,7 +425,7 @@ iso_c_lib_stat(int *firstp, int *lastp, int stype)
 }
 
 extern int
-get_ieee_arith_intrin(char *nm)
+get_ieee_arith_intrin(const char *nm)
 {
   int i;
 
@@ -687,7 +674,6 @@ INT
 get_int_cval(int con)
 {
   INT res;
-  DBLINT64 inum;
 
 #if DEBUG
   assert(STYPEG(con) == ST_CONST, "get_int_cval-not ST_CONST", con, 0);
@@ -740,7 +726,7 @@ getstring(const char *value, int length)
   int sptr;    /* symbol table pointer */
   int hashval; /* index into hashtb */
   char *np;    /* pointer to string characters */
-  char *p;
+  const char *p;
   int i, clen;
   int dtype;
   /*
@@ -902,11 +888,11 @@ was_implicit(int sptr)
 /** \brief Return ptr to printable representation of the indicated PARAMETER.
     \param sptr symbol table pointer
  */
-char *
+const char *
 parmprint(int sptr)
 {
   int dtype;
-  char *buf;
+  const char *buf;
   INT save;
 
   if (STYPEG(sptr) != ST_PARAM)
@@ -943,7 +929,7 @@ parmprint(int sptr)
  * symbols which are not constants, the name of the symbol is used.
  * Constants are converted into the appropriate character representation.
  */
-static char *
+static const char *
 __log_print(INT val)
 {
   if (val == 0)
@@ -954,7 +940,7 @@ __log_print(INT val)
 /**
    \param sptr  symbol table pointer
  */
-char *
+const char *
 getprint(int sptr)
 {
   int len; /* length of character string */
@@ -1741,7 +1727,7 @@ getccsym(int letter, int n, SYMTYPE stype)
 {
   char name[32];
   int sptr, i;
-  char *suffix = IPA_RECOMPILATION_SUFFIX;
+  const char *suffix = IPA_RECOMPILATION_SUFFIX;
 
   sprintf(name, ".%c%04d%s", letter, n, suffix); /* at least 4, could be more */
   i = 0;
@@ -1808,7 +1794,6 @@ getnewccsymf(int stype, const char *fmt, ...)
 {
   char buffer[MAXIDLEN + 1];
   va_list ap;
-  int sptr;
 
   va_start(ap, fmt);
   vsnprintf(buffer, sizeof buffer, fmt, ap);
@@ -1833,7 +1818,7 @@ getccsym_sc(int letter, int n, int stype, int sc)
   else {
     char name[32];
     int i;
-    char *suffix = IPA_RECOMPILATION_SUFFIX;
+    const char *suffix = IPA_RECOMPILATION_SUFFIX;
     sprintf(name, ".%c%04dp%s", letter, n,
             suffix); /* at least 4, could be more */
     i = 0;
@@ -1868,7 +1853,7 @@ getccssym(const char *pfx, int n, int stype)
 {
   char name[32];
   int sptr, i;
-  char *suffix = IPA_RECOMPILATION_SUFFIX;
+  const char *suffix = IPA_RECOMPILATION_SUFFIX;
 
   sprintf(name, ".%s%04d%s", pfx, n, suffix); /* at least 4, could be more */
   i = 0;
@@ -2034,7 +2019,7 @@ insert_sym(int first)
 int
 insert_sym_first(int first)
 {
-  int sptr, i, j;
+  int sptr, i;
   INT hashval;
   char *np;
 
@@ -2184,10 +2169,9 @@ mkfunc(const char *nmptr)
 /**
    \brief create a coercion function based on the data type.
  */
-char *
+const char *
 mk_coercion_func_name(int dtype)
 {
-  SPTR sptr;
   FtnRtlEnum rtlRtn;
 
   switch (DTY(dtype)) {
@@ -2671,7 +2655,7 @@ bool
 cmp_interfaces_strict(SPTR sym1, SPTR sym2, cmp_interface_flags flag)
 {
   int i, paramct, paramct2, dpdsc, dpdsc2, psptr, psptr2;
-  int iface1, iface2, chk_stype, j;
+  int iface1, iface2, j;
   bool relax1, relax2; 
 
   iface1 = iface2 = paramct = paramct2 = dpdsc = dpdsc2 = 0;
@@ -2900,7 +2884,7 @@ SPTR
 instantiate_interface(SPTR iface)
 {
   int dummies;
-  SPTR fval, hashlk_sptr, proc;
+  SPTR fval, proc;
   DEC_DEF_MAP *dec_def_map;
   proc = insert_dup_sym(iface);
   gbl.currsub = proc;
@@ -2934,7 +2918,7 @@ instantiate_interface(SPTR iface)
   if (dummies > 0 || fval > NOSYM) {
     int iface_dpdsc = DPDSCG(iface);
     int proc_dpdsc = aux.dpdsc_avl;
-    int j, newdsc;
+    int j;
 
     aux.dpdsc_avl += dummies;
     NEED(aux.dpdsc_avl, aux.dpdsc_base, int, aux.dpdsc_size,
@@ -3041,7 +3025,7 @@ reinit_sym(int sptr)
 } /* reinit_sym */
 
 char *
-sym_strsave(char *s)
+sym_strsave(const char *s)
 {
   int i;
   char *p;
@@ -3058,7 +3042,7 @@ static int manglecount = 0;
  * create a distinct mangled name
  */
 char *
-mangle_name(char *basename, char *purpose)
+mangle_name(const char *basename, const char *purpose)
 {
   int length, i, j;
   int sptr, hashval;
@@ -3121,7 +3105,7 @@ mangle_name(char *basename, char *purpose)
    same as mangle_name, except only clash for members of the same derived type
  */
 char *
-mangle_name_dt(char *basename, char *purpose, int encldtype)
+mangle_name_dt(const char *basename, const char *purpose, int encldtype)
 {
   int length, i, j;
   int sptr, hashval;

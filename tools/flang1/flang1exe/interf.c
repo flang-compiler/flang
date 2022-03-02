@@ -52,7 +52,7 @@ static int import_errno = 0;
 static int import_osym = 0;
 
 static void put_dinit_record(int, INT);
-static void put_data_statement(int, int, int, lzhandle *, char *, int);
+static void put_data_statement(int, int, int, lzhandle *, const char *, int);
 static int import_mk_newsym(char *name, int stype);
 
 static int BASEsym, BASEast, BASEdty, BASEmod, ADJmod;
@@ -297,7 +297,6 @@ static char *import_sourcename = NULL;
 static int import_sourcename_len = 0;
 static LOGICAL ignore_private = FALSE;
 static int curr_import_findex = 0;
-static int top_import_findex = 0;
 
 static char *read_line(FILE *);
 static ISZ_T get_num(int);
@@ -332,16 +331,16 @@ static LOGICAL common_mem_eq(int, int);
 static int new_installed_dtype(int old_dt);
 static DITEM * finddthash(int old_dt);
 
-static char *import_file_name;
+static const char *import_file_name;
 static void import_constant(SYMITEM *ps);
 static void import_symbol(SYMITEM *ps);
 static void import_ptr_constant(SYMITEM *ps);
 static void import(lzhandle *fdlz, WantPrivates, int ivsn);
 static int import_skip_use_stmts(lzhandle *fdlz);
 static void import_done(lzhandle *, int nested);
-static lzhandle *import_header_only(FILE *fd, char *file_name,
+static lzhandle *import_header_only(FILE *fd, const char *file_name,
                                     int import_which, int* ivsn_return);
-static void get_component_init(lzhandle *, char *, char *, int);
+static void get_component_init(lzhandle *, const char *, char *, int);
 
 struct imported_modules_struct imported_modules = {NULL, 0, 0, 0, 0};
 
@@ -387,9 +386,9 @@ add_imported(int modulesym)
 #define READ_LINE p = read_line(fd)
 #define READ_LZLINE currp = p = ulz(fdlz)
 
-static char *import_corrupt_msg;
-static char *import_oldfile_msg;
-static char *import_incompatible_msg;
+static const char *import_corrupt_msg;
+static const char *import_oldfile_msg;
+static const char *import_incompatible_msg;
 
 #define IMPORT_WHICH_PRELINK -1
 #define IMPORT_WHICH_IPA -2
@@ -398,7 +397,7 @@ static char *import_incompatible_msg;
 #define IMPORT_WHICH_NESTED -5
 
 static void
-set_message(int import_which, char *file_name)
+set_message(int import_which, const char *file_name)
 {
   import_file_name = file_name;
   switch (import_which) {
@@ -473,10 +472,10 @@ static TOBE_IMPORTED_LIST *to_be_used_list_order_head,
 static USES_LIST *use_tree = NULL, /* this list is the root of the use_tree */
     *use_tree_end = NULL;
 
-static int import_use_stmts(lzhandle *fdlz, TOBE_IMPORTED_LIST *, char *, int,
+static int import_use_stmts(lzhandle *fdlz, TOBE_IMPORTED_LIST *, const char *, int,
                             int);
 static int get_module_file_name_from_user(TOBE_IMPORTED_LIST *il,
-                                          char *from_file_name);
+                                          const char *from_file_name);
 
 static void
 dump_list_node(USES_LIST *node, int indent)
@@ -514,6 +513,21 @@ void
 init_use_tree(void)
 {
   use_tree = use_tree_end = 0;
+}
+
+void remove_from_use_tree(char *module)
+{
+  USES_LIST *prev = use_tree;
+  for (USES_LIST *n = use_tree; n; n = n->next) {
+    if (strcmp(n->use_module->modulename, module) == 0) {
+      if (n == use_tree) {
+        use_tree = use_tree->next;
+      } else {
+        prev->next = n->next;
+      }
+    }
+    prev = n;
+  }
 }
 
 static TOBE_IMPORTED_LIST *
@@ -692,7 +706,7 @@ add_use_tree_uses(USES_LIST **curr_use_list, TOBE_IMPORTED_LIST *il)
 
 static TOBE_IMPORTED_LIST *
 add_to_be_used_list(char *modulename, int public, int except,
-                    TOBE_IMPORTED_LIST *ilfrom, char *from_file_name)
+                    TOBE_IMPORTED_LIST *ilfrom, const char *from_file_name)
 {
   TOBE_IMPORTED_LIST *il;
   il = already_to_be_used(modulename, public, except);
@@ -812,13 +826,14 @@ update_use_tree_exceptions(void)
 }
 
 static int
-get_module_file_name_from_user(TOBE_IMPORTED_LIST *il, char *from_file_name)
+get_module_file_name_from_user(TOBE_IMPORTED_LIST *il, const char *from_file_name)
 {
-  char *chfrom, *slash, saveslash;
+  char *chfrom, *chfromdup, *slash, saveslash;
+  chfromdup = strdup(from_file_name);
 
   /* try the directory from from_file_name */
   slash = NULL;
-  for (chfrom = from_file_name; *chfrom; ++chfrom) {
+  for (chfrom = chfromdup; *chfrom; ++chfrom) {
     if (*chfrom == '/')
       slash = chfrom;
 #ifdef HOST_WIN
@@ -832,10 +847,12 @@ get_module_file_name_from_user(TOBE_IMPORTED_LIST *il, char *from_file_name)
     if (fndpath(il->modulefilename, il->fullfilename, MAX_FNAME_LEN,
                 from_file_name) == 0) {
       *slash = saveslash;
+      FREE(chfromdup);
       return 1;
     }
     *slash = saveslash;
   }
+  FREE(chfromdup);
   return 0;
 } /* get_module_file_name_from_user */
 
@@ -1286,7 +1303,7 @@ do_nested_uses(WantPrivates wantPrivates)
 } /* do_nested_uses */
 
 static lzhandle *
-import_header_only(FILE *fd, char *file_name, int import_which, int* ivsn_return)
+import_header_only(FILE *fd, const char *file_name, int import_which, int* ivsn_return)
 {
   int j, compress;
   char *p;
@@ -1455,7 +1472,7 @@ import_header_only(FILE *fd, char *file_name, int import_which, int* ivsn_return
  * where the module in which the use appears is itself private */
 static int
 import_use_stmts(lzhandle *fdlz, TOBE_IMPORTED_LIST *ilfrom,
-                 char *from_file_name, int import_which, int nested_public)
+                 const char *from_file_name, int import_which, int nested_public)
 {
   char *p;
   TOBE_IMPORTED_LIST *il;
@@ -1558,7 +1575,7 @@ import_skip_use_stmts(lzhandle *fdlz)
 
 /** \brief Add .mod file to list of .mod files used */
 static void
-addmodfile(char *filename)
+addmodfile(const char *filename)
 {
   int m;
   for (m = 0; m < modinclistavl; ++m) {
@@ -1574,7 +1591,7 @@ addmodfile(char *filename)
 } /* addmodfile */
 
 static lzhandle *
-import_header(FILE *fd, char *file_name, int import_which, int* ivsn_return)
+import_header(FILE *fd, const char *file_name, int import_which, int* ivsn_return)
 {
   lzhandle *fdlz;
   int i;
@@ -1948,7 +1965,6 @@ import(lzhandle *fdlz, WantPrivates wantPrivates, int ivsn)
   int module_sym, scope_sym, rename_sym, offset, scope_stype;
   int hash;
   int first_ast;
-  int currrout = 0;
 
   save_dtype_ivsn = dtype_ivsn;
   dtype_ivsn = ivsn;
@@ -2274,7 +2290,6 @@ import(lzhandle *fdlz, WantPrivates wantPrivates, int ivsn)
       if (sem.interface == 0) {
         j = get_num(10); /* is it private */
         if (!ignore_private || wantPrivates == INCLUDE_PRIVATES || j == 0) {
-          ITEM *lastitemp;
           int ss, numss, ess;
           evp = sem.eqv_avail;
           ++sem.eqv_avail;
@@ -3141,7 +3156,7 @@ SPTR
 import_module(FILE *fd, char *file_name, SPTR modsym, WantPrivates wantPrivates,
               int scope_level)
 {
-  SPTR modulesym;
+  SPTR modulesym = SPTR_NULL;
   lzhandle *fdlz;
   int savescope = stb.curr_scope, ivsn;
   ADJmod = 0;
@@ -3241,7 +3256,7 @@ import_module_print(void)
  * subprograms.
  */
 void
-import_host(FILE *fd, char *file_name, int oldsymavl, int oldastavl,
+import_host(FILE *fd, const char *file_name, int oldsymavl, int oldastavl,
             int olddtyavl, int modbase, int moddiff, int oldscope, int newscope)
 {
   lzhandle *fdlz;
@@ -3271,7 +3286,7 @@ extern void export_fix_host_append_list(int (*)(int));
  * subprograms.
  */
 void
-import_host_subprogram(FILE *fd, char *file_name, int oldsymavl, int oldastavl,
+import_host_subprogram(FILE *fd, const char *file_name, int oldsymavl, int oldastavl,
                        int olddtyavl, int modbase, int moddiff)
 {
   lzhandle *fdlz;
@@ -3354,7 +3369,7 @@ static char *
 getlstring(int area)
 {
   char *p;
-  int len, i;
+  int len;
   char *s;
   len = get_num(10);
   p = currp;
@@ -3378,9 +3393,6 @@ getlstring(int area)
 static int ipa_ast(int a);
 static int dindex(int dtype);
 static int get_symbolxref(int sptr);
-
-static int dsize;
-static int *dtindex;
 
 /** \brief Change symbol number, if necessary, and write record to data init
   * file
@@ -3445,7 +3457,7 @@ put_dinit_record(int ptype, INT pcon)
 } /* put_dinit_record */
 
 static VAR *
-getivl(lzhandle *fdlz, char *file_name, int ipa)
+getivl(lzhandle *fdlz, const char *file_name, int ipa)
 {
   char *p;
   VAR *first = NULL;
@@ -3563,7 +3575,7 @@ getivl(lzhandle *fdlz, char *file_name, int ipa)
 } /* getivl */
 
 static ACL *
-getict(lzhandle *fdlz, char *file_name, int ipa)
+getict(lzhandle *fdlz, const char *file_name, int ipa)
 {
   char *p;
   ACL *first = NULL;
@@ -3891,7 +3903,7 @@ getict(lzhandle *fdlz, char *file_name, int ipa)
 
 static void
 put_data_statement(int lineno, int anyivl, int anyict, lzhandle *fdlz,
-                   char *file_name, int ipa)
+                   const char *file_name, int ipa)
 {
   int nw;
   char *ptr;
@@ -3955,7 +3967,7 @@ put_data_statement(int lineno, int anyivl, int anyict, lzhandle *fdlz,
 } /* put_data_statement */
 
 static void
-get_component_init(lzhandle *fdlz, char *file_name, char *p, int ipa)
+get_component_init(lzhandle *fdlz, const char *file_name, char *p, int ipa)
 {
   ACL *ict;
   int sptr;
@@ -4102,7 +4114,6 @@ static int
 new_dtype(int old_dt)
 {
   DITEM *pd;
-  int j;
 
   pd = finddthash(old_dt);
   if (pd == NULL) {
@@ -4120,7 +4131,7 @@ static int
 new_installed_dtype(int old_dt)
 {
   DITEM *pd;
-  int j, dtype;
+  int dtype;
 
   pd = finddthash(old_dt);
   if (pd == NULL) {
@@ -4177,7 +4188,7 @@ fill_ast(ASTITEM *pa)
   int lop, rop, left, right;
   int stride;
   int optype;
-  int dtype;
+  int dtype = 0;
   int count;
   int argt;
   int shape;
@@ -4975,7 +4986,6 @@ new_asd(int offset)
 static int
 new_astli(int offset, int atype)
 {
-  int j;
   int astli;
   int ast;
   int sptr;
@@ -5018,7 +5028,6 @@ new_astli(int offset, int atype)
 static int
 new_shape(int offset)
 {
-  int i;
   SHDITEM *p_shd;
   int j;
   int cnt;
@@ -5404,7 +5413,7 @@ static void
 import_constant(SYMITEM *ps)
 {
   INT val[4];
-  int sptr;
+  int sptr = 0;
   int dtype;
 
   Trace(("import_constant(%d)", ps->sptr));

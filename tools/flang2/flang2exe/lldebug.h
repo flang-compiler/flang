@@ -62,6 +62,9 @@ void write_metadata_defs(LL_DebugInfo *db);
  */
 char *lldbg_alloc(INT size);
 
+/// \brief Return debuginfo routine index
+int lldbg_get_di_routine_idx(const LL_DebugInfo *db);
+
 /// \brief Encode an argument to lldbg_emit_expression_mdnode()
 int lldbg_encode_expression_arg(LL_DW_OP_t op, int value);
 
@@ -275,6 +278,9 @@ void lldbg_reset_module(LL_DebugInfo *db);
 
 /// \brief Get the debug location mdnode of the current procedure.
 LL_MDRef lldbg_get_subprogram_line(LL_DebugInfo *db);
+
+/// \brief Return TRUE if SPTR is pointer to procedure.
+LOGICAL is_procedure_ptr(SPTR sptr);
 
 /// \brief Get parameter mdnode for SPTR
 LL_MDRef get_param_mdnode(LL_DebugInfo *db, int sptr);

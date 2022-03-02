@@ -19,6 +19,10 @@ endif ()
 # flang* executables
 SET(CMAKE_Fortran_FLAGS "-B ${LLVM_RUNTIME_OUTPUT_INTDIR} ${CMAKE_Fortran_FLAGS}")
 
+include(CheckSymbolExists)
+check_symbol_exists(clock_settime "time.h" HAVE_CLOCK_SETTIME)
+configure_file(libflang_config.h.in libflang_config.h)
+
 SET(FTN_INTRINSICS_DESC_INDEP
   abort3f.c
   access3f.c
@@ -508,10 +512,12 @@ add_dependencies(flang_shared flang_static)
 
 target_link_libraries(flang_shared flangrti_shared)
 # Resolve symbols against libm and librt
-if (NOT MSVC)
-  target_link_libraries(flang_shared m rt)
-else()
+if (MSVC)
   set_target_properties(flang_shared PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+elseif (APPLE)
+  target_link_libraries(flang_shared m)
+else()
+  target_link_libraries(flang_shared m rt)
 endif()
 
 set(SHARED_LIBRARY FALSE)
@@ -560,12 +566,21 @@ set_property(
  PG_PIC
  )
 
-set_source_files_properties(
-  ${I8_FILES_DIR}/red_norm2_stride1.c
-  red_norm2_stride1.c
-  PROPERTIES
-  COMPILE_FLAGS "-ffast-math"
-  )
+if (NOT MSVC  OR "${CMAKE_C_COMPILER_FRONTEND_VARIANT}" STREQUAL "GNU")
+  set_source_files_properties(
+    ${I8_FILES_DIR}/red_norm2_stride1.c
+    red_norm2_stride1.c
+    PROPERTIES
+    COMPILE_FLAGS "-ffast-math"
+    )
+else()
+  set_source_files_properties(
+    ${I8_FILES_DIR}/red_norm2_stride1.c
+    red_norm2_stride1.c
+    PROPERTIES
+    COMPILE_FLAGS "/fp:fast"
+    )
+endif()
 
 ## CMake does not handle module dependencies between Fortran files,
 ## unless using the Ninja generator, we need to help it

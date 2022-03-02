@@ -212,7 +212,6 @@ void ENTFTN(SPREAD_DESCRIPTOR,
                                __INT_T *dimb,     /* dimension */
                                __INT_T *ncopiesb) /* ncopies base */
 {
-  DECL_DIM_PTRS(rdd);
   DECL_DIM_PTRS(sdd);
   DECL_HDR_PTRS(td);
   __INT_T dim, extent, m, ncopies, offset, rx, sx, tx;

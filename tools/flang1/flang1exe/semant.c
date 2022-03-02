@@ -30,6 +30,7 @@
 #include "interf.h"
 #include "fdirect.h"
 #include "fih.h"
+#include "ccffinfo.h" /* for setfile */
 
 #include "atomic_common.h"
 
@@ -57,13 +58,12 @@ static void get_param_alias_const(SST *, int, int);
 static void set_string_type_from_init(int, ACL *);
 static void fixup_param_vars(SST *, SST *);
 static void save_typedef_init(int, int);
-static void symatterr(int, int, char *);
+static void symatterr(int, int, const char *);
 static void fixup_function_return_type(int, int);
 static void get_retval_KIND_value();
 static void get_retval_LEN_value();
 static void get_retval_derived_type();
 static void init_allocatable_typedef_components(int);
-static int mystrcasecmp(char *, char *);
 
 static int chk_kind_parm(SST *);
 static int get_kind_parm(int, int);
@@ -121,8 +121,6 @@ static LOGICAL is_entry;
 static LOGICAL is_exe_stmt;
 static LOGICAL entry_seen;
 static LOGICAL seen_options;
-static int adjlen;   /* ast of adjustable length specifier */
-static int assumlen; /* non-zero if '*' present */
 static struct {
   int kind;
   INT len;
@@ -150,7 +148,6 @@ static struct subp_prefix_t {
 static void clear_subp_prefix_settings(struct subp_prefix_t *);
 static void check_module_prefix();
 
-static int generic_rutype;
 static int mscall;
 static int cref;
 static int nomixedstrlen;
@@ -237,7 +234,7 @@ static struct {
 } entity_attr;
 
 static struct {
-  char *name;
+  const char *name;
   int no; /* bit vector of attributes which do not coexist */
 } et[ET_MAX] = {
     {"access",
@@ -398,7 +395,7 @@ static struct dec_attr_t dec_attr;
 static struct dec_attr_t bind_attr;
 
 static struct {
-  char *name;
+  const char *name;
   int no; /* bit vector of attributes which do not coexist */
           /* unlike the et[...].no values, it's easier to explicitly
            * specify those which do not coexist as opposed to the
@@ -664,15 +661,11 @@ static void
 reloc_byvalue_parameters()
 {
   INT dpdsc;
-  INT psptr, sptr1;
+  INT psptr;
   INT iarg;
   INT newsptr;
-  INT vv;
   ITEM *itemp; /* Pointers to items */
-  char *name;
-  int name_len;
   int byval_default = 0;
-  int tmp_nmptr;
   int thesub;
 
   if (STYPEG(gbl.currsub) == ST_MODULE)
@@ -803,7 +796,6 @@ semant1(int rednum, SST *top)
   ADSC *ad;
   char *np, *np2; /* char ptrs to symbol names area */
   int name_prefix_char;
-  char *nmptr;
   VAR *ivl;        /* Initializer Variable List */
   ACL *ict, *ict1; /* Initializer Constant Tree */
   int ast, alias;
@@ -812,14 +804,11 @@ semant1(int rednum, SST *top)
   LOGICAL no_init; /* init not allowed for entity decl */
   int func_result; /* sptr of ident in result ( ident ) */
   ACL *aclp;
-  ACL *tmpaclp;
   ACCL *accessp;
   int gnr;
   LOGICAL is_array;
   LOGICAL is_member;
   INT val[2];
-  int mndsc;
-  LOGICAL is_first;
   int constarraysize; /* set to 1 if array bounds are constant */
   ISZ_T arraysize;    /* the actual array size; check for < 0 */
   static int da_type; /* one of DA_...; '<msattr>::=' passes up */
@@ -827,16 +816,9 @@ semant1(int rednum, SST *top)
   INT id_name;
   INT result_name;
   int construct_name;
-  int dpdsc;
   SST *e1;
   static int proc_interf_sptr; /* <proc interf ::= <id> passed up */
   /* for deepcopy */
-  bool is_duplicate_decl;
-  int bfind;
-  int newpolicymemid;
-  int newpolicyidx;
-  int newshapeid;
-  int idptemp, newsubidx;
   int symi;
 
   switch (rednum) {
@@ -930,7 +912,7 @@ semant1(int rednum, SST *top)
       if (stt == TK_NAMED_CONSTRUCT)
         stt = get_named_stmtyp();
       if (stt != TK_DO) {
-        char *p;
+        const char *p;
         switch (DI_ID(sem.doif_depth)) {
         case DI_ACCDO:
           sem.doif_depth--; /* remove from stack */
@@ -3690,7 +3672,7 @@ semant1(int rednum, SST *top)
       if (gbl.internal <= 1)
         get_static_type_descriptor(sptr);
       if (0 && size_of(dtype) == 0 && DTY(dtype + 1) <= NOSYM) {
-        int mem, oldsptr, tag;
+        int oldsptr, tag;
         tag = DTY(DTYPEG(sptr) + 3);
         if (!UNLPOLYG(tag)) {
           /* Create "empty" typedef. */
@@ -4837,7 +4819,7 @@ semant1(int rednum, SST *top)
 
     else if (DTY(DTYPEG(sptr) + 1) <= NOSYM &&
              (!INSIDE_STRUCT || STSK_ENT(0).type != 'd')) {
-      int mem, oldsptr, tag;
+      int tag;
       tag = DTY(DTYPEG(sptr) + 3);
     } else if (!sem.class && ABSTRACTG(sptr)) {
       error(155, 3, gbl.lineno, "illegal use of abstract type", SYMNAME(sptr));
@@ -5683,7 +5665,7 @@ semant1(int rednum, SST *top)
         }
         if (AD_ASSUMSZ(ad) || AD_ADJARR(ad) || AD_DEFER(ad)) {
           if (!ALLOCG(sptr) && AD_ADJARR(ad)) {
-            int bndast, bnd_sptr, badArray, offset;
+            int bndast, badArray;
             int numdim = AD_NUMDIM(ad);
             for (badArray = i = 0; i < numdim; i++) {
               bndast = AD_LWAST(ad, i);
@@ -6202,7 +6184,7 @@ semant1(int rednum, SST *top)
         sem.bounds[sem.arrdim.ndim].lwast = ast;
       }
     }
-    if (constarraysize && arraysize <= 0) {
+    if (constarraysize && arraysize < 0) {
       error(435, 2, gbl.lineno, "", CNULL);
       if (arraysize < 0) {
         /*
@@ -7671,8 +7653,6 @@ semant1(int rednum, SST *top)
     if (SAVEG(sptr1))
       error(39, 2, gbl.lineno, SYMNAME(sptr1), CNULL);
     if (STYPEG(sptr1) == ST_ARRAY) {
-      int dtype;
-      ADSC *ad;
       if (ADJARRG(sptr1) || RUNTIMEG(sptr1)) {
         if (entry_seen)
           AFTENTP(sptr1, 1);
@@ -9418,7 +9398,7 @@ semant1(int rednum, SST *top)
               entity_attr.exist |= ET_B(ET_POINTER);
             } else if (AD_ASSUMSZ(ad) || AD_ADJARR(ad)) {
               if (AD_ADJARR(ad)) {
-                int bndast, bnd_sptr, badArray, offset;
+                int bndast, badArray;
                 int numdim = AD_NUMDIM(ad);
                 for (badArray = i = 0; i < numdim; i++) {
                   bndast = AD_LWAST(ad, i);
@@ -10022,7 +10002,7 @@ semant1(int rednum, SST *top)
     SST_IDP(LHS, 1);
     SST_LSYMP(LHS, sptr);
     if (scn.stmtyp == TK_INTERFACE) {
-      char *anm;
+      const char *anm;
       anm = NULL;
       if (strcmp(SYMNAME(sptr), "x") == 0)
         anm = ".x.";
@@ -10574,6 +10554,35 @@ procedure_stmt:
       add_use_rename(0, sptr, 1);
     } else
       error(34, 3, gbl.lineno, np, CNULL);
+    break;
+  /*
+   *   <only> ::= <id name> ( <only operator> ) '=>' <id name> ( <only operator
+   *   > )
+   */
+  case ONLY5:
+    np = scn.id.name + SST_CVALG(RHS(1));
+    if (sem_strcmp(np, "operator") == 0) {
+      np = scn.id.name + SST_CVALG(RHS(6));
+      if (sem_strcmp(np, "operator")) {
+        error(34, 3, gbl.lineno, np, CNULL);
+        break;
+      }
+    } else {
+      error(34, 3, gbl.lineno, np, CNULL);
+      break;
+    }
+    sptr = SST_SYMG(RHS(3));
+    if (STYPEG(sptr) == ST_OPERATOR && INKINDG(sptr)) {
+      error(34, 3, gbl.lineno, SYMNAME(sptr), CNULL);
+      break;
+    }
+    sptr = SST_SYMG(RHS(8));
+    if (STYPEG(sptr) == ST_OPERATOR && INKINDG(sptr)) {
+      error(34, 3, gbl.lineno, SYMNAME(sptr), CNULL);
+      break;
+    }
+    /* local (RHS(3)) => global (RHS(8)) */
+    (void)add_use_rename(SST_SYMG(RHS(3)), SST_SYMG(RHS(8)), 1);
     break;
 
   /* ------------------------------------------------------------------ */
@@ -11720,7 +11729,6 @@ proc_dcl_init:
     DTYPE parent;
     SPTR sym;
     int vtoff, len;
-    int stype;
 
     if (strcmp(SYMNAME(SST_SYMG(RHS(1))), SYMNAME(SST_SYMG(RHS(3)))) == 0) {
       rhstop = 1;
@@ -12358,7 +12366,6 @@ proc_dcl_init:
             CNULL);
     }
     for (itemp = SST_BEGG(RHS(3)); itemp != ITEM_END; itemp = itemp->next) {
-      int tag;
       dtype = stsk->dtype;
       sptr = itemp->t.sptr;
       queue_tbp(sptr, 0, 0, dtype, TBP_ADD_FINAL);
@@ -13181,7 +13188,6 @@ get_param_alias_const(SST *stkp, int param_sptr, int dtype)
   int ast;
   int alias;
   INT conval;
-  SST s;
   ACL *aclp;
 
   if (SST_IDG(stkp) == S_EXPR) {
@@ -13393,7 +13399,7 @@ fixup_param_vars(SST *var, SST *init)
 static void
 save_typedef_init(int sptr, int dtype)
 {
-  ACL *ict;
+  ACL *ict = NULL;
 
   if (!stsk->ict_beg) {
     DCLDP(DTY(dtype + 3), TRUE); /* "complete" tag declaration */
@@ -13523,7 +13529,7 @@ init_allocatable_typedef_components(SPTR td_sptr)
 }
 
 static void
-symatterr(int sev, int sptr, char *att)
+symatterr(int sev, int sptr, const char *att)
 {
   char buf[100];
   snprintf(buf, sizeof buf, "Attribute '%s' cannot be applied to symbol", att);
@@ -13559,7 +13565,6 @@ fixup_KIND_expr(int ast)
   int argt;
   int i;
   int changed;
-  float f;
 
   switch (A_TYPEG(ast)) {
   case A_CNST:
@@ -13646,8 +13651,6 @@ eval_KIND_expr(int ast, int *val, int *dtyp)
   int val1;
   int val2;
   int tmp_ast1;
-  int tmp_ast2;
-  int sptr;
   int success = 0;
 
   if (!ast)
@@ -13754,9 +13757,7 @@ exit:
 static void
 get_retval_LEN_value()
 {
-  int sptr;
   int sav_gbl_lineno = gbl.lineno;
-  int val = -1;
   int dtyp = 0;
   int l_ast1;
 
@@ -13781,7 +13782,6 @@ get_retval_LEN_value()
     }
   }
 
-exit:
   gbl.lineno = sav_gbl_lineno;
   sem.deferred_func_len = 0;
   sem.deferred_kind_len_lineno = 0;
@@ -13815,7 +13815,6 @@ get_retval_derived_type()
           SYMNAME(sem.deferred_dertype));
   }
 
-exit:
   sem.deferred_dertype = 0;
   sem.deferred_kind_len_lineno = 0;
 }
@@ -13827,8 +13826,6 @@ process_bind(int sptr)
   int b_bitv;
   int need_altname = 0;
   char *np;
-  char *w32_name;
-  int wsptr;
 
   /* A module routine without an explicit C name uses the routine name. */
   if (!XBIT(58,0x200000)) {
@@ -14103,7 +14100,7 @@ fixup_reqgs_ident(int sptr)
 static void
 defer_iface(int iface, int dtype, int proc, int mem)
 {
-  int pass, len, tag;
+  int pass, len;
   iface_avail++;
   NEED(iface_avail, iface_base, IFACE, iface_size, iface_avail + 50);
   iface_base[iface_avail - 1].iface = iface;
@@ -14151,7 +14148,7 @@ defer_iface(int iface, int dtype, int proc, int mem)
 static void
 fix_iface0()
 {
-  int i, iface, proc, mem;
+  int i, iface, mem;
   char *name;
 
   if (sem.which_pass)
@@ -14375,10 +14372,9 @@ static void
 _do_iface(int iface_state, int i)
 {
   SPTR sptr, orig, fval;
-  int dpdsc, paramct;
+  int dpdsc, paramct = 0;
   LOGICAL pass_notfound;
   SPTR passed_object; /* passed-object dummy argument */
-  int j;
   SPTR iface = iface_base[i].iface;
   SPTR ptr_scope = iface_base[i].scope;
   const char *name = iface_base[i].iface_name;
@@ -14629,7 +14625,7 @@ queue_type_param(int sptr, int dtype, int offset, int flag)
   static TP *tp_queue = 0;
   TP *prev, *curr, *new_tp;
   char *c;
-  int tag, parent, mem, i, j, mem2, pmem, pmem2;
+  int tag, parent, mem, i;
   int prevmem, firstuse, parentuse;
 
   if (flag == 0) {
@@ -14686,7 +14682,6 @@ queue_type_param(int sptr, int dtype, int offset, int flag)
      * check to make sure defined params have corresponding components
      * in the the dtype, and reorder (if necessary) params.
      */
-    int mem1, prev, prev1;
     for (curr = tp_queue; curr; curr = curr->next) {
       if (curr->dtype == 0)
         curr->dtype = dtype;
@@ -14873,7 +14868,7 @@ chk_kind_parm(SST *stkp)
 static int
 get_kind_parm(int sptr, int dtype)
 {
-  int rslt, tag, parent, mem;
+  int rslt, mem;
 
   if (DTY(dtype) != TY_DERIVED)
     return 0;
@@ -14895,7 +14890,7 @@ get_kind_parm(int sptr, int dtype)
 static int
 get_kind_parm_strict(int sptr, int dtype)
 {
-  int rslt, tag, parent, mem;
+  int rslt, mem;
 
   if (DTY(dtype) != TY_DERIVED)
     return 0;
@@ -15184,7 +15179,7 @@ chk_asz_deferlen(int ast, int dtype)
 static int
 get_len_parm(int sptr, int dtype)
 {
-  int rslt, tag, parent, mem;
+  int rslt, mem;
 
   if (DTY(dtype) != TY_DERIVED)
     return 0;
@@ -15251,7 +15246,7 @@ chk_len_parm_expr(int ast, int dtype, int flag)
 static int
 fix_kind_parm_expr(int ast, int dtype, int offset, int value)
 {
-  int sptr, rslt, newast, i;
+  int sptr, newast;
 
   switch (A_TYPEG(ast)) {
 
@@ -15282,7 +15277,7 @@ fix_kind_parm_expr(int ast, int dtype, int offset, int value)
 int
 get_len_set_parm_by_name(char *np, int dtype, int *val)
 {
-  int rslt, tag, parent, mem;
+  int rslt, mem;
 
   if (DTY(dtype) != TY_DERIVED)
     return 0;
@@ -16089,7 +16084,7 @@ get_vtoff(int vtoff, DTYPE dtype)
 int
 get_unl_poly_sym(int mem_dtype)
 {
-  int mem, dtype, i;
+  int mem, dtype;
   int sptr = getsymf("_f03_unl_poly$%d", mem_dtype);
 
   if (STYPEG(sptr) == ST_UNKNOWN) {
@@ -16141,7 +16136,7 @@ has_type_parameter2(int dtype, int visit_flag)
 
   int rslt;
   int dty = dtype;
-  int member, dty2;
+  int member;
 
   if (DTY(dty) == TY_ARRAY)
     dty = DTY(dty + 1);
@@ -16434,21 +16429,6 @@ is_parameter_context()
   return (entity_attr.exist & ET_B(ET_PARAMETER));
 }
 
-static int
-mystrcasecmp(char *a, char *b)
-{
-  while (*a && *b) {
-    char aa = *a++, bb = *b++;
-    if (aa >= 'A' && aa <= 'Z')
-      aa = aa - 'A' + 'a';
-    if (bb >= 'A' && bb <= 'Z')
-      bb = bb - 'A' + 'a';
-    if (aa != bb)
-      return aa - bb;
-  }
-  return 0;
-} /* mystrcasecmp */
-
 static LOGICAL
 ignore_common_decl(void)
 {
@@ -16594,11 +16574,8 @@ decl_procedure_sym(int sptr, int proc_interf_sptr, int attr)
 static int
 setup_procedure_sym(int sptr, int proc_interf_sptr, int attr, char access)
 {
-  int ast;
   int stype;
   int dtype;
-  ACL *ict;
-  VAR *ivl;
 
   /* ********** Determine symbol type ********** */
   stype = get_procedure_stype(attr);

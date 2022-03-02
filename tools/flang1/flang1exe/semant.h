@@ -28,6 +28,15 @@
 #define S_SCONST 14  /* structure constant */
 #define S_DERIVED 15 /* derived type object */
 
+/* max pow is 10, num[] has 4 elements and 128 bits   */
+#define POW1 1
+#define POW2 2
+
+#define RADIX2 2 /* Binary */
+#define NOT_GET_VAL 0 /* 0 is default, This should be ruled out */
+#define NO_REAL -5 /* if the processor supports no real type with radix RADIX  */
+#define KEYWD_ARGS2 2
+
 /* macros for checking to see if a derived type has a defined I/O
  * routine associated with it. DT_HAS_IO_FREAD true if derived type
  * has a formatted read associated with it. DT_HAS_IO_UREAD true
@@ -898,6 +907,7 @@ int add_parent_to_bounds(int parent, int ast);
 int fix_mem_bounds2(int, int);
 int fix_mem_bounds(int parent, int mem);
 int init_sdsc(int, DTYPE, int, int);
+int init_sdsc_bounds(SPTR, DTYPE, int, SPTR, int, int);
 void save_module_state1(void);
 void save_module_state2(void);
 void restore_module_state(void);
@@ -953,7 +963,7 @@ SPTR get_adjlr_arr_temp(DTYPE);
 int get_shape_arr_temp(int);
 SPTR get_ch_temp(DTYPE);
 int need_alloc_ch_temp(DTYPE);
-int sem_strcmp(char *, char *);
+int sem_strcmp(const char *, const char *);
 LOGICAL sem_eq_str(int, const char *);
 void add_case_range(int, int, int);
 int _i4_cmp(int, int);
@@ -976,10 +986,10 @@ void add_auto_dealloc(int);
 int enter_lexical_block(int);
 void exit_lexical_block(int);
 void dmp_doif(FILE *f);
-LOGICAL not_in_forall(char *);
-LOGICAL cuda_enabled(char *);
+LOGICAL not_in_forall(const char *);
+LOGICAL cuda_enabled(const char *);
 LOGICAL in_device_code(int);
-void sem_err104(int, int, char *);
+void sem_err104(int, int, const char *);
 void sem_err105(int);
 VAR *gen_varref_var(int, DTYPE);
 void sem_fini(void);
@@ -1485,6 +1495,7 @@ int collapse_add(DOINFO *);
 void link_parents(STSK *, int);
 void link_members(STSK *, int);
 int ref_object(int);
+LOGICAL ast_isparam(int ast);
 int mk_component_ast(int, int, int);
 int chk_pointer_intent(int, int);
 int any_pointer_source(int);
@@ -1502,7 +1513,7 @@ void resolve_fwd_refs(void);
 bool in_save_scope(SPTR);
 DOINFO *get_doinfo(int);
 LOGICAL is_protected(int);
-void err_protected(int, char *);
+void err_protected(int, const char *);
 void set_assn(int);
 
 /* semfin.c */
@@ -1565,8 +1576,8 @@ int ref_entry(int);
 int select_gsame(int);
 char *make_kwd_str(int);
 char *make_keyword_str(int, int);
-LOGICAL get_kwd_args(ITEM *, int, char *);
-LOGICAL evl_kwd_args(ITEM *, int, char *);
+LOGICAL get_kwd_args(ITEM *, int, const char *);
+LOGICAL evl_kwd_args(ITEM *, int, const char *);
 LOGICAL sum_scatter_args(ITEM *, int);
 LOGICAL check_arguments(int, int, ITEM *, char *);
 LOGICAL chk_arguments(int, int, ITEM *, char *, int, int, int, int *);
@@ -1598,7 +1609,7 @@ void check_doconcurrent(int doif);
 int has_poly_mbr(int sptr, int flag);
 void push_tbp_arg(ITEM *item);
 ITEM *pop_tbp_arg(void);
-void err307(char *, int, int);
+void err307(const char *, int, int);
 void gen_init_unl_poly_desc(int dest_sdsc_ast, int src_sdsc_ast, int std);
 
 /* xref.c */

@@ -15,6 +15,9 @@
 #include "cgllvm.h"
 #include "ll_structure.h"
 
+#define FFAST_MATH_IS_PRESENT() XBIT(216, 1)
+#define QTMP_SIZE 4 /* tmp[] of union qtmp has 4 elements and 128 bits  */
+
 /**
    \brief ...
  */
@@ -38,7 +41,7 @@ bool strict_match(LL_Type *ty1, LL_Type *ty2);
 /**
    \brief ...
  */
-char *dtype_struct_name(DTYPE dtype);
+const char *dtype_struct_name(DTYPE dtype);
 
 /**
    \brief ...
@@ -48,7 +51,7 @@ char *gen_llvm_vconstant(const char *ctype, int sptr, DTYPE tdtype, int flags);
 /**
    \brief ...
  */
-char *get_label_name(int sptr);
+const char *get_label_name(int sptr);
 
 /**
    \brief ...
@@ -147,6 +150,11 @@ void build_routine_and_parameter_entries(SPTR func_sptr, LL_ABI_Info *abi,
    \brief ...
  */
 void cg_fetch_clen_parampos(SPTR *len, int *param, SPTR sptr);
+
+/**
+   \brief ...
+ */
+bool clen_parent_is_param(SPTR length);
 
 /**
    \brief ...
@@ -286,6 +294,12 @@ void insert_llvm_dbg_declare(LL_MDRef mdnode, SPTR sptr, LL_Type *llTy,
 void insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode, SPTR sptr,
                            LL_Type *type);
 
+
+/**
+   \brief Check if sptr is the midnum of a scalar and scalar has POINTER/ALLOCATABLE attribute
+   \param sptr  A symbol
+ */
+bool pointer_scalar_need_debug_info(SPTR sptr);
 
 int get_parnum(SPTR sptr);
 #endif

@@ -126,15 +126,16 @@ static G *gbl_head = &static_gbl[0];
 static int gbl_avl = 0;
 static int gbl_size = GBL_SIZE;
 
-#define WRITE_UNF_LEN (unf_fwrite((char *)&unf_rec.u.s.bytecnt, RCWSZ, 1, Fcb) != TRUE)
-#define WRITE_UNF_REC \
+#define WRITE_UNF_LEN                                                          \
+  (unf_fwrite((char *)&unf_rec.u.s.bytecnt, RCWSZ, 1, Fcb) != TRUE)
+#define WRITE_UNF_REC                                                          \
   (unf_fwrite((char *)&unf_rec.u.s.bytecnt, rw_size + RCWSZ, 1, Fcb) != TRUE)
 #define WRITE_UNF_BUF write_unf_buf()
 
 static int
 adjust_fpos(FIO_FCB *cur_file, long offset, int whence)
 {
-  int retval;
+  int retval = 0;
 
   if (cur_file->asy_rw) {
     Fio_asy_fseek(cur_file->asyptr, offset, whence);
@@ -438,7 +439,6 @@ __f90io_unf_read(int type,    /* Type of data */
                  char *item,  /* where to xfer data */
                  __CLEN_T item_length)
 {
-  int i;         /* loop index */
   size_t nbytes; /* number of bytes to read from current record */
   size_t resid;  /* number of bytes to read from following records */
   int offset;    /* offset into item */
@@ -608,8 +608,8 @@ ENTF90IO(UNF_READ, unf_read)
  DCHAR(item)      /* where to xfer data */
  DCLEN(item))
 {
-  return ENTF90IO(UNF_READA, unf_reada) (type, count, stride, CADR(item),
-                                         (__CLEN_T)CLEN(item));
+  return ENTF90IO(UNF_READA, unf_reada)(type, count, stride, CADR(item),
+                                        (__CLEN_T)CLEN(item));
 }
 
 /** \brief same as unf_read, but item may be array - for unf_read, the compiler
@@ -650,8 +650,8 @@ ENTF90IO(UNF_READ_A, unf_read_a)
  DCHAR(item)      /* where to xfer data */
  DCLEN(item))
 {
-  return ENTF90IO(UNF_READ_AA, unf_read_aa) (type, count, stride, CADR(item),
-                                             (__CLEN_T)CLEN(item));
+  return ENTF90IO(UNF_READ_AA, unf_read_aa)(type, count, stride, CADR(item),
+                                            (__CLEN_T)CLEN(item));
 }
 
 __INT_T
@@ -689,8 +689,8 @@ ENTF90IO(UNF_READ64_A, unf_read64_a)
  DCHAR(item)      /* where to xfer data */
  DCLEN(item))
 {
-  return ENTF90IO(UNF_READ64_AA, unf_read64_aa) (type, count, stride,
-                                 CADR(item), (__CLEN_T)CLEN(item));
+  return ENTF90IO(UNF_READ64_AA, unf_read64_aa)(type, count, stride, CADR(item),
+                                                (__CLEN_T)CLEN(item));
 }
 
 /* Read/copy bytes from an unformatted record file; used when the item
@@ -698,10 +698,10 @@ ENTF90IO(UNF_READ64_A, unf_read64_a)
 
 __INT_T
 ENTF90IO(BYTE_READA, byte_reada)
-(__INT_T *count,       /* number of items of specified type
-                        * to read.  May be <= 0 */
- __INT_T *stride,      /* distance in bytes between items */
- char *item,           /* where to xfer data */
+(__INT_T *count,        /* number of items of specified type
+                         * to read.  May be <= 0 */
+ __INT_T *stride,       /* distance in bytes between items */
+ char *item,            /* where to xfer data */
  __CLEN_T *item_length) /* number of bytes */
 {
   int ioproc;
@@ -723,16 +723,16 @@ ENTF90IO(BYTE_READ, byte_read)
  char *item,           /* where to xfer data */
  __INT_T *item_length) /* number of bytes */
 {
-  return ENTF90IO(BYTE_READA, byte_reada) (count, stride, item,
-                                           (__CLEN_T *)item_length);
+  return ENTF90IO(BYTE_READA, byte_reada)(count, stride, item,
+                                          (__CLEN_T *)item_length);
 }
 
 __INT_T
 ENTF90IO(BYTE_READ64A, byte_read64a)
-(__INT8_T *count,      /* number of items of specified type
-                        * to read.  May be <= 0 */
- __INT_T *stride,      /* distance in bytes between items */
- char *item,           /* where to xfer data */
+(__INT8_T *count,       /* number of items of specified type
+                         * to read.  May be <= 0 */
+ __INT_T *stride,       /* distance in bytes between items */
+ char *item,            /* where to xfer data */
  __CLEN_T *item_length) /* number of bytes */
 {
   int ioproc;
@@ -758,8 +758,8 @@ ENTF90IO(BYTE_READ64, byte_read64)
  char *item,           /* where to xfer data */
  __INT_T *item_length) /* number of bytes */
 {
-  return ENTF90IO(BYTE_READ64A, byte_read64a) (count, stride, item,
-                                               (__CLEN_T *)item_length);
+  return ENTF90IO(BYTE_READ64A, byte_read64a)(count, stride, item,
+                                              (__CLEN_T *)item_length);
 }
 
 /* ----------------------------------------------------------------- */
@@ -795,7 +795,8 @@ __f90io_unf_write(int type,   /* data type of data (see above). */
   io_transfer = TRUE;
 
   nbytes = (size_t)count * item_length;
-  if (Fcb->acc == FIO_DIRECT && unf_rec.u.s.bytecnt + nbytes > (size_t)rec_len) {
+  if (Fcb->acc == FIO_DIRECT &&
+      unf_rec.u.s.bytecnt + nbytes > (size_t)rec_len) {
     ret_val = __fortio_error(FIO_ETOOBIG);
     goto unf_write_err;
   }
@@ -814,8 +815,9 @@ __f90io_unf_write(int type,   /* data type of data (see above). */
     unf_rec.u.s.bytecnt += nbytes;
     if (rw_size + nbytes > IOBUFSIZE || resid > 0) {
       if (DBGBIT(0x4))
-        __io_printf(("unit stride flush, rw_size=%" GBL_SIZE_T_FORMAT ", in_buf:%d\n"), rw_size,
-                     rec_in_buf);
+        __io_printf(
+            ("unit stride flush, rw_size=%" GBL_SIZE_T_FORMAT ", in_buf:%d\n"),
+            rw_size, rec_in_buf);
       if (rec_in_buf) {
         if (!Fcb->binary) {
           if (WRITE_UNF_REC) {
@@ -837,7 +839,8 @@ __f90io_unf_write(int type,   /* data type of data (see above). */
         }
       }
       if (DBGBIT(0x4))
-        __io_printf("unit stride write, nbytes=%" GBL_SIZE_T_FORMAT "\n", nbytes);
+        __io_printf("unit stride write, nbytes=%" GBL_SIZE_T_FORMAT "\n",
+                    nbytes);
       if (unf_fwrite(item, nbytes, 1, Fcb) != TRUE) {
         ret_val = __fortio_error(__io_errno());
         goto unf_write_err;
@@ -859,9 +862,10 @@ __f90io_unf_write(int type,   /* data type of data (see above). */
       return 0;
     }
     if (DBGBIT(0x4))
-      __io_printf("unit stride copy, nbytes=%" GBL_SIZE_T_FORMAT ", rw_size=%" GBL_SIZE_T_FORMAT ", in_buf:%d\n",
-                   nbytes, rw_size, rec_in_buf);
-    (void) memcpy(buf_ptr, item, nbytes);
+      __io_printf("unit stride copy, nbytes=%" GBL_SIZE_T_FORMAT
+                  ", rw_size=%" GBL_SIZE_T_FORMAT ", in_buf:%d\n",
+                  nbytes, rw_size, rec_in_buf);
+    (void)memcpy(buf_ptr, item, nbytes);
     buf_ptr += nbytes;
     rw_size += nbytes;
     return 0;
@@ -888,8 +892,9 @@ __f90io_unf_write(int type,   /* data type of data (see above). */
     }
     if ((rw_size + item_length) >= IOBUFSIZE || rec_full) {
       if (DBGBIT(0x4))
-        __io_printf("non-unit stride flush, nbytes=%" GBL_SIZE_T_FORMAT ", in_buf:%d\n", rw_size,
-                     rec_in_buf);
+        __io_printf("non-unit stride flush, nbytes=%" GBL_SIZE_T_FORMAT
+                    ", in_buf:%d\n",
+                    rw_size, rec_in_buf);
       if (rec_in_buf) {
         if (!Fcb->binary) {
           if (WRITE_UNF_REC) {
@@ -981,8 +986,8 @@ ENTF90IO(UNF_WRITE, unf_write)
  DCHAR(item)      /* where to get data from */
  DCLEN(item))
 {
-  return ENTF90IO(UNF_WRITEA, unf_writea) (type, count, stride, CADR(item),
-                                           (__CLEN_T)CLEN(item));
+  return ENTF90IO(UNF_WRITEA, unf_writea)(type, count, stride, CADR(item),
+                                          (__CLEN_T)CLEN(item));
 }
 
 /** \brief same as unf_write, but item may be array - for unf_write, the
@@ -1019,8 +1024,8 @@ ENTF90IO(UNF_WRITE_A, unf_write_a)
  DCHAR(item)      /* where to get data from */
  DCLEN(item))
 {
-  return ENTF90IO(UNF_WRITE_AA, unf_write_aa) (type, count, stride, CADR(item),
-                                               (__CLEN_T)CLEN(item));
+  return ENTF90IO(UNF_WRITE_AA, unf_write_aa)(type, count, stride, CADR(item),
+                                              (__CLEN_T)CLEN(item));
 }
 
 __INT_T
@@ -1054,8 +1059,8 @@ ENTF90IO(UNF_WRITE64_A, unf_write64_a)
  DCHAR(item)      /* where to get data from */
  DCLEN(item))
 {
-  return ENTF90IO(UNF_WRITE64_AA, unf_write64_aa) (type, count, stride,
-                                  CADR(item), (__CLEN_T)CLEN(item));
+  return ENTF90IO(UNF_WRITE64_AA, unf_write64_aa)(
+      type, count, stride, CADR(item), (__CLEN_T)CLEN(item));
 }
 
 /** \brief Write bytes to an unformatted record file; used when the item is an
@@ -1063,10 +1068,10 @@ ENTF90IO(UNF_WRITE64_A, unf_write64_a)
 
 __INT_T
 ENTF90IO(BYTE_WRITEA, byte_writea)
-(__INT_T *count,       /* number of items of specified type
-                        * to write.  May be <= 0 */
- __INT_T *stride,      /* distance in bytes between items */
- char *item,           /* where to get data from */
+(__INT_T *count,        /* number of items of specified type
+                         * to write.  May be <= 0 */
+ __INT_T *stride,       /* distance in bytes between items */
+ char *item,            /* where to get data from */
  __CLEN_T *item_length) /* number of bytes */
 {
   int s = 0;
@@ -1084,16 +1089,16 @@ ENTF90IO(BYTE_WRITE, byte_write)
  char *item,           /* where to get data from */
  __INT_T *item_length) /* number of bytes */
 {
-  return ENTF90IO(BYTE_WRITEA, byte_writea) (count, stride, item,
-                                             (__CLEN_T *)item_length);
+  return ENTF90IO(BYTE_WRITEA, byte_writea)(count, stride, item,
+                                            (__CLEN_T *)item_length);
 }
 
 __INT_T
 ENTF90IO(BYTE_WRITE64A, byte_write64a)
-(__INT8_T *count,      /* number of items of specified type
-                        * to write.  May be <= 0 */
- __INT_T *stride,      /* distance in bytes between items */
- char *item,           /* where to get data from */
+(__INT8_T *count,       /* number of items of specified type
+                         * to write.  May be <= 0 */
+ __INT_T *stride,       /* distance in bytes between items */
+ char *item,            /* where to get data from */
  __CLEN_T *item_length) /* number of bytes */
 {
   int s = 0;
@@ -1120,8 +1125,8 @@ ENTF90IO(BYTE_WRITE64, byte_write64)
  char *item,           /* where to get data from */
  __INT_T *item_length) /* number of bytes */
 {
-  return ENTF90IO(BYTE_WRITE64A, byte_write64a) (count, stride, item,
-                                                 (__CLEN_T *)item_length);
+  return ENTF90IO(BYTE_WRITE64A, byte_write64a)(count, stride, item,
+                                                (__CLEN_T *)item_length);
 }
 
 /* -------------------------------------------------------------------- */
@@ -1151,9 +1156,9 @@ __unf_end(bool to_be_continued)
 {
   int ret_err;
 
-/* if read and direct (variable length) then seek past the trailing
- * 4-byte integer that indicates the record's size so the next read/write
- * will be at the next record: */
+  /* if read and direct (variable length) then seek past the trailing
+   * 4-byte integer that indicates the record's size so the next read/write
+   * will be at the next record: */
 
   /* From this point on, async i/o has been disabled, so use "normal" fseek
    * calls.
@@ -1311,7 +1316,7 @@ skip_to_nextrec(void)
   } else if (unf_rec.u.s.bytecnt < rec_len) {
     Fcb->coherent = 0;
     if (__io_fseek(Fcb->fp, (seekoffx_t)(rec_len - unf_rec.u.s.bytecnt),
-                    SEEK_CUR) != 0)
+                   SEEK_CUR) != 0)
       return (__io_errno());
   }
   return 0;
@@ -1425,7 +1430,6 @@ __f90io_usw_read(int type,   /* Type of data */
                  char *item, /* where to xfer data */
                  __CLEN_T item_length)
 {
-  long i;        /* loop index */
   size_t nbytes; /* number of bytes to read from current record */
   size_t resid;  /* number of bytes to read from following records */
   int offset;    /* offset into item */
@@ -1497,7 +1501,7 @@ usw_read_do_resid:
       io_transfer = TRUE;
       goto usw_read_do_resid;
     }
-      __fortio_swap_bytes(item, type, count);
+    __fortio_swap_bytes(item, type, count);
     return 0;
   }
 
@@ -1530,7 +1534,7 @@ usw_read_do_resid:
     nbytes -= read_length;
     offset += read_length;
     if ((__CLEN_T)offset == item_length) {
-        __fortio_swap_bytes(item_ptr, type, 1);
+      __fortio_swap_bytes(item_ptr, type, 1);
       item += stride;
       offset = 0;
     }
@@ -1563,7 +1567,7 @@ ENTF90IO(USW_READA, usw_reada)
                    * to read.  May be <= 0 */
  __INT_T *stride, /* distance in bytes between items */
  DCHAR(item)      /* where to xfer data */
- DCLEN64(item))     /* length for character item */
+ DCLEN64(item))   /* length for character item */
 {
   int s = 0;
   int ioproc;
@@ -1591,8 +1595,8 @@ ENTF90IO(USW_READ, usw_read)
  DCHAR(item)      /* where to xfer data */
  DCLEN(item))     /* length for character item */
 {
-  return
-ENTF90IO(USW_READA, usw_reada) (type, count, stride, CADR(item), (__CLEN_T)CLEN(item));
+  return ENTF90IO(USW_READA, usw_reada)(type, count, stride, CADR(item),
+                                        (__CLEN_T)CLEN(item));
 }
 
 /* same as usw_read, but item may be array - for usw_read, the compiler
@@ -1605,7 +1609,7 @@ ENTF90IO(USW_READ_AA, usw_read_aa)
                    * to read.  May be <= 0 */
  __INT_T *stride, /* distance in bytes between items */
  DCHAR(item)      /* where to xfer data */
- DCLEN64(item))     /* length for character item */
+ DCLEN64(item))   /* length for character item */
 {
   int s = 0;
   int ioproc;
@@ -1633,8 +1637,8 @@ ENTF90IO(USW_READ_A, usw_read_a)
  DCHAR(item)      /* where to xfer data */
  DCLEN(item))     /* length for character item */
 {
-  return ENTF90IO(USW_READ_AA, usw_read_aa) (type, count, stride, CADR(item),
-                                             (__CLEN_T)CLEN(item));
+  return ENTF90IO(USW_READ_AA, usw_read_aa)(type, count, stride, CADR(item),
+                                            (__CLEN_T)CLEN(item));
 }
 
 __INT_T
@@ -1644,7 +1648,7 @@ ENTF90IO(USW_READ64_AA, usw_read64_aa)
                    * to read.  May be <= 0 */
  __INT_T *stride, /* distance in bytes between items */
  DCHAR(item)      /* where to xfer data */
- DCLEN64(item))     /* length for character item */
+ DCLEN64(item))   /* length for character item */
 {
   int s = 0;
   int ioproc;
@@ -1672,8 +1676,8 @@ ENTF90IO(USW_READ64_A, usw_read64_a)
  DCHAR(item)      /* where to xfer data */
  DCLEN(item))     /* length for character item */
 {
-  return ENTF90IO(USW_READ64_AA, usw_read64_aa) (type, count, stride,
-                                 CADR(item), (__CLEN_T)CLEN(item));
+  return ENTF90IO(USW_READ64_AA, usw_read64_aa)(type, count, stride, CADR(item),
+                                                (__CLEN_T)CLEN(item));
 }
 
 /* ----------------------------------------------------------------- */
@@ -1710,7 +1714,8 @@ __f90io_usw_write(int type,   /* data type of data (see above). */
 
   nbytes = (size_t)count * item_length;
 
-  if (Fcb->acc == FIO_DIRECT && unf_rec.u.s.bytecnt + nbytes > (size_t)rec_len) {
+  if (Fcb->acc == FIO_DIRECT &&
+      unf_rec.u.s.bytecnt + nbytes > (size_t)rec_len) {
     ret_val = __fortio_error(FIO_ETOOBIG);
     goto unf_write_err;
   }
@@ -1727,8 +1732,9 @@ __f90io_usw_write(int type,   /* data type of data (see above). */
       resid = 0;
     if (rw_size + nbytes > IOBUFSIZE || resid > 0) {
       if (DBGBIT(0x4))
-        __io_printf("unit stride flush, rw_size=%" GBL_SIZE_T_FORMAT ", in_buf:%d\n", rw_size,
-                     rec_in_buf);
+        __io_printf("unit stride flush, rw_size=%" GBL_SIZE_T_FORMAT
+                    ", in_buf:%d\n",
+                    rw_size, rec_in_buf);
       if (rec_in_buf) {
         if (!Fcb->binary) {
           bs_tmp = unf_rec.u.s.bytecnt + nbytes;
@@ -1751,23 +1757,25 @@ __f90io_usw_write(int type,   /* data type of data (see above). */
         }
       }
       if (DBGBIT(0x4))
-        __io_printf("to nonunit stride copy, nbytes=%" GBL_SIZE_T_FORMAT "\n", nbytes);
+        __io_printf("to nonunit stride copy, nbytes=%" GBL_SIZE_T_FORMAT "\n",
+                    nbytes);
       rw_size = 0;
       buf_ptr = unf_rec.buf;
       goto nonunit_cp;
     }
     if (DBGBIT(0x4))
-      __io_printf("unit stride copy, nbytes=%" GBL_SIZE_T_FORMAT ", rw_size=%" GBL_SIZE_T_FORMAT ", in_buf:%d\n",
-                   nbytes, rw_size, rec_in_buf);
-    (void) memcpy(buf_ptr, item, nbytes);
-      __fortio_swap_bytes(buf_ptr, type, count);
+      __io_printf("unit stride copy, nbytes=%" GBL_SIZE_T_FORMAT
+                  ", rw_size=%" GBL_SIZE_T_FORMAT ", in_buf:%d\n",
+                  nbytes, rw_size, rec_in_buf);
+    (void)memcpy(buf_ptr, item, nbytes);
+    __fortio_swap_bytes(buf_ptr, type, count);
     unf_rec.u.s.bytecnt += nbytes;
     buf_ptr += nbytes;
     rw_size += nbytes;
     return 0;
   }
 
-/* copy 'count' items from 'item' into buffer, skipping by stride  */
+  /* copy 'count' items from 'item' into buffer, skipping by stride  */
 
 nonunit_cp:
   for (i = 0; i < count; i++, item += (stride - item_length)) {
@@ -1781,8 +1789,9 @@ nonunit_cp:
     }
     if ((rw_size + item_length) >= IOBUFSIZE || rec_full) {
       if (DBGBIT(0x4))
-        __io_printf("non-unit stride flush, nbytes=%" GBL_SIZE_T_FORMAT ", in_buf:%d\n", rw_size,
-                     rec_in_buf);
+        __io_printf("non-unit stride flush, nbytes=%" GBL_SIZE_T_FORMAT
+                    ", in_buf:%d\n",
+                    rw_size, rec_in_buf);
       if (rec_in_buf) {
         if (!Fcb->binary) {
           bs_tmp = unf_rec.u.s.bytecnt;
@@ -1830,7 +1839,7 @@ nonunit_cp:
           pp = malloc(item_length);
           if (pp == NULL)
             return __fortio_error(FIO_ENOMEM);
-          (void) memcpy(pp, item, item_length);
+          (void)memcpy(pp, item, item_length);
           __fortio_swap_bytes(pp, type, item_length >> 1);
           if ((FWRITE(pp, item_length, 1, Fcb->fp)) != 1) {
             ret_val = __fortio_error(__io_errno());
@@ -1845,8 +1854,8 @@ nonunit_cp:
     /* ??? one copy per byte.  Maybe optimize later */
     for (j = 0; j < item_length; j++)
       *buf_ptr++ = *item++;
-      __fortio_swap_bytes(buf_ptr - item_length, type, 1);
 
+    __fortio_swap_bytes(buf_ptr - item_length, type, 1);
     rw_size += item_length;
   }
 
@@ -1866,7 +1875,7 @@ ENTF90IO(USW_WRITEA, usw_writea)
                    * to write.  May be <= 0 */
  __INT_T *stride, /* distance in bytes between items. */
  DCHAR(item)      /* where to get data from */
- DCLEN64(item))     /* length for character item */
+ DCLEN64(item))   /* length for character item */
 {
   int s = 0;
   __CLEN_T len;
@@ -1890,8 +1899,8 @@ ENTF90IO(USW_WRITE, usw_write)
  DCHAR(item)      /* where to get data from */
  DCLEN(item))     /* length for character item */
 {
-  return ENTF90IO(USW_WRITEA, usw_writea) (type, count, stride, CADR(item),
-                                           (__CLEN_T)CLEN(item));
+  return ENTF90IO(USW_WRITEA, usw_writea)(type, count, stride, CADR(item),
+                                          (__CLEN_T)CLEN(item));
 }
 
 /** \brief same as usw_write, but item may be array - for usw_write, the
@@ -1904,7 +1913,7 @@ ENTF90IO(USW_WRITE_AA, usw_write_aa)
                    * to write.  May be <= 0 */
  __INT_T *stride, /* distance in bytes between items. */
  DCHAR(item)      /* where to get data from */
- DCLEN64(item))     /* length for character item */
+ DCLEN64(item))   /* length for character item */
 {
   int s = 0;
   __CLEN_T len;
@@ -1928,8 +1937,8 @@ ENTF90IO(USW_WRITE_A, usw_write_a)
  DCHAR(item)      /* where to get data from */
  DCLEN(item))     /* length for character item */
 {
-  return ENTF90IO(USW_WRITE_AA, usw_write_aa) (type, count, stride, CADR(item),
-                                               (__CLEN_T)CLEN(item));
+  return ENTF90IO(USW_WRITE_AA, usw_write_aa)(type, count, stride, CADR(item),
+                                              (__CLEN_T)CLEN(item));
 }
 
 /** \brief same as usw_write, but item may be array - for usw_write, the
@@ -1942,7 +1951,7 @@ ENTF90IO(USW_WRITE64_AA, usw_write64_aa)
                    * to write.  May be <= 0 */
  __INT_T *stride, /* distance in bytes between items. */
  DCHAR(item)      /* where to get data from */
- DCLEN64(item))     /* length for character item */
+ DCLEN64(item))   /* length for character item */
 {
   int s = 0;
   __CLEN_T len;
@@ -1966,8 +1975,8 @@ ENTF90IO(USW_WRITE64_A, usw_write64_a)
  DCHAR(item)      /* where to get data from */
  DCLEN(item))     /* length for character item */
 {
-  return ENTF90IO(USW_WRITE64_AA, usw_write64_aa) (type, count, stride,
-                                  CADR(item), (__CLEN_T)CLEN(item));
+  return ENTF90IO(USW_WRITE64_AA, usw_write64_aa)(
+      type, count, stride, CADR(item), (__CLEN_T)CLEN(item));
 }
 /* -------------------------------------------------------------------- */
 
@@ -2099,8 +2108,8 @@ __usw_end(bool to_be_continued)
     if (unf_rec.u.s.bcnt != unf_rec.u.s.bytecnt || to_be_continued) {
       /* seek to record's beginning length word */
       if (__io_fseek(Fcb->fp,
-                      (seekoffx_t)(-unf_rec.u.s.bytecnt) - (seekoffx_t)(RCWSZ),
-                      SEEK_CUR) != 0)
+                     (seekoffx_t)(-unf_rec.u.s.bytecnt) - (seekoffx_t)(RCWSZ),
+                     SEEK_CUR) != 0)
         UNF_ERR(__io_errno());
       /* write record length at beginning of record */
       if ((FWRITE(&bs_tmp, RCWSZ, 1, Fcb->fp)) != 1)

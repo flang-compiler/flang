@@ -78,8 +78,10 @@ lw(1n) lfCW | l | c.
 %TM_AUTOINC_FP%auto increment when addressing single/double%yes
 %TM_FCMPZ%single precision compare with zero%yes
 %TM_DCMPZ%double precision compare with zero%yes
+%TM_QCMPZ%quad precision compare with zero%yes
 %TM_FCJMPZ%single precision compare with zero and jump%yes
 %TM_DCJMPZ%double precision compare with zero and jump%yes
+%TM_QCJMPZ%quad precision compare with zero and jump%yes
 %TM_REAL8%default real size is 8%no
 .TE
 .lp
@@ -257,7 +259,7 @@ lw(1n) lfCW | l | l | l | l | l | l | l | l.
 %TY_HALF%2%1%16%0%reg1%Floating Point Half%real%2%
 %TY_REAL%8%7%64%0%reg1%Floating Point Real%real%8%
 %TY_DBLE%8%7%64%0%reg2%Double Precision Real%real%8%
-%TY_QUAD%16%15%128%0%reg2%Quad Precision Real%double precision%16%
+%TY_QUAD%16%15%128%0%reg2%Quad Precision Real%real%16%
 %TY_HCMPLX%4%1%32%0%reg2%Half Complex%half complex%2%
 %TY_CMPLX%16%7%64%0%reg3%Complex%complex%8%
 %TY_DCMPLX%16%7%128%0%reg3%Double Precision Complex%complex%8%

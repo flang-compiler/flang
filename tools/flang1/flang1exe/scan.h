@@ -9,6 +9,10 @@
     \brief  data declarations for those items which are set by
             the scanner for use by the parser or semantic analyzer.
 */
+/* check radix format  */
+#define RADIX2_FMT_ERR(r, n) (r == 2 && (n > 64))
+#define RADIX8_FMT_ERR(r, n, cp) (r == 8 && (n > 22 || (n == 22 && (*cp - '0' > 1))))
+#define RADIX16_FMT_ERR(r, n) (r == 16 && (n > 16))
 
 typedef struct {
   int stmtyp;

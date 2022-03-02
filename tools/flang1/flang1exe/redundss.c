@@ -1086,7 +1086,7 @@ mulcomponents(int lop, int rop, int l)
 static void
 findmulcomponents(int ast, int l, int *pinv, int *pvar)
 {
-  int linv, lvar, rinv, rvar, optype;
+  int linv, lvar, rinv, rvar;
   if (ast == 0) {
     *pvar = 0;
     *pinv = 0;
@@ -1275,7 +1275,7 @@ distribute(int factor, int sum, int l)
 static int
 MakeReplacement(int ast, int l)
 {
-  int optype, rast;
+  int optype, rast = 0;
   int lop, linv, lvar, rop, rinv, rvar, subscr[MAXSUBS], numdim, asd, s, any;
   switch (A_TYPEG(ast)) {
   case A_PAREN:
@@ -1466,7 +1466,7 @@ rewritefg(int fg)
 static void
 reassociate(void)
 {
-  int loop, oldstdavl, par;
+  int loop, oldstdavl;
   oldstdavl = astb.std.stg_avail;
   for (loop = 1; loop <= opt.nloops; ++loop) {
     int l, ast, any;
@@ -1581,7 +1581,7 @@ basic_block_redundant(void)
   int fg;
   Trace(("basic_block_redundant()"));
   for (fg = FG_LNEXT(0); fg > 0; fg = FG_LNEXT(fg)) {
-    int any, ast, stdfirst, atype;
+    int any, stdfirst, atype;
     Trace(("basic block node %d", fg));
     OnlyFG = fg;
     stdfirst = FG_STDFIRST(fg);

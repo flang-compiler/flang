@@ -166,6 +166,7 @@ extern char *zm_reg[MAX_N_XMM_REGS + 1]; /* ZMM_REG_NAMES */
 #define FR_RETVAL XR_XMM0
 #define SP_RETVAL XR_XMM0
 #define DP_RETVAL XR_XMM0
+#define QP_RETVAL XR_XMM0
 #define CS_RETVAL XR_XMM0
 #define CD_RETVAL XR_XMM0
 
@@ -197,6 +198,7 @@ extern int mr_res_xr[MR_MAX_XREG_RES + 1];
 #define IR(i) ARG_IR(i)
 #define SP(i) ARG_XR(i)
 #define DP(i) ARG_XR(i)
+#define QP(i) ARG_XR(i)
 #define ISP(i) (i + 100) /* not used? */
 #define IDP(i) (i + 100)
 

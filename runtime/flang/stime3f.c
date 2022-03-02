@@ -9,11 +9,12 @@
 
 /*	stime3f.c - Implements LIB3F stime subprogram.  */
 
-#ifndef WINNT
-
+#include "libflang_config.h"
 #include <time.h>
 #include "io3f.h"
 #include "ent3f.h"
+
+#ifdef HAVE_CLOCK_SETTIME
 
 int ENT3F(STIME, stime)(int *tp)
 {
@@ -27,4 +28,4 @@ int ENT3F(STIME, stime)(int *tp)
   return i;
 }
 
-#endif /* !WINNT */
+#endif /* HAVE_CLOCK_SETTIME */

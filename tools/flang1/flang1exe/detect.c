@@ -262,7 +262,7 @@ dumpsubinfo(int subinfo, int ndim)
   for (i = 0; i < ndim; ++i) {
     int s, idx, base, stride, sub, dstt, ldim, sptr;
     int commt, commv, cnst, diff, dupl, nop, pop;
-    char *class;
+    const char *class;
     s = subinfo + i;
     idx = SUBI_IDX(s);
     base = SUBI_BASE(s);
@@ -382,7 +382,7 @@ void
 dumparref(int arref)
 {
   int ndim, subinfo, sptr, ast, i;
-  char *class;
+  const char *class;
   FILE *outfile;
   if (gbl.dbgfil == NULL) {
     outfile = stderr;
@@ -600,7 +600,6 @@ overlap_class(int a)
   int align;
   int count;
   int diff;
-  int c1, lowShift, hiShift;
   int shdw;
 
   asd = A_ASDG(a);
@@ -653,19 +652,14 @@ no_comm_class(int a)
 {
   int sptr;
   int asd, ndim;
-  int asd1, ndim1;
-  int target_ndim;
   int subinfo;
-  int i, j;
+  int i;
   int arref;
   int align;
   int no_comm;
-  int diff;
-  int c1;
   int zero = astb.bnd.zero;
   int forall, lhs;
   int align1, sptr1;
-  int axis, axis1;
   LOGICAL single_ok[7];
 
   asd = A_ASDG(a);
@@ -769,13 +763,9 @@ gather_class(int rhs, int std)
   int forall;
   int asn;
   int lhs;
-  int ndim;
-  int i;
-  int asd;
   int arref;
   int array;
   int mask;
-  int sub;
   int list;
 
   arref = A_RFPTRG(rhs);
@@ -1337,12 +1327,10 @@ is_dist_array_in_expr(int ast)
 static void
 matched_dim(int a)
 {
-  int ndim1;
-  int asd, ndim, sptr, commsptr;
+  int asd, ndim;
   int subinfo;
-  int aldim, aldim1, i, j;
+  int i;
   int arref;
-  int align, align_lhs;
 
   asd = A_ASDG(a);
   ndim = ASD_NDIM(asd);

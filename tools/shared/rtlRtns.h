@@ -115,6 +115,8 @@ typedef enum {
   RTE_exit,
   RTE_expon,
   RTE_expond,
+  RTE_exponq,
+  RTE_exponqx,
   RTE_expondx,
   RTE_exponx,
   RTE_extends_type_of,
@@ -303,6 +305,7 @@ typedef enum {
   RTE_real16,
   RTE_real4,
   RTE_real8,
+  RTE_realloc_arr_in_impiled_do,
   RTE_repeata,
   RTE_rrspacing,
   RTE_rrspacingd,
@@ -330,6 +333,8 @@ typedef enum {
   RTE_set_type,
   RTE_setexp,
   RTE_setexpd,
+  RTE_setexpq,
+  RTE_setexpqx,
   RTE_setexpdx,
   RTE_setexpx,
   RTE_shape,
@@ -774,7 +779,7 @@ typedef enum {
 /**
    \brief ...
  */
-char *mkRteRtnNm(FtnRtlEnum rteRtn);
+const char *mkRteRtnNm(FtnRtlEnum rteRtn);
 
 /** \brief Returns an integer bitfield contain information about a RTL routine
  *  that creates or modifies an array descriptor.  If the routine does not

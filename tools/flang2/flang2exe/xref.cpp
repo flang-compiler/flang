@@ -72,8 +72,7 @@ static void
 putentry(int elem)
 {
   char buf[200];
-  char *ptr;
-  const char *sc_p;
+  const char *ptr, *sc_p;
   int stype;
   DTYPE dtype;
   char hyp;
@@ -419,7 +418,7 @@ add_to_list(int *list, int index)
 }
 
 static void
-par_body(char *hdr, int *list)
+par_body(const char *hdr, int *list)
 {
   char *nm;
   char buf[200];
@@ -452,10 +451,7 @@ static void
 print_par_xref(void)
 {
   int i;
-  int s;
-  char *nm;
   char buf[200];
-  int cnt;
 
   for (i = rgn_base[0].next; i; i = rgn_base[i].next) {
     sprintf(buf, "Parallel region beginning at line number %d:",
@@ -475,7 +471,6 @@ par_xref(void)
   SPTR sptr;
   int index;
   int i;
-  int nsyms;
 
   if (!xrefcnt)
     return;

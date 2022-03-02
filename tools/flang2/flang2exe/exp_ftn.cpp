@@ -68,7 +68,6 @@ static int entry_sptr; /* entry (primary or secondary) sptr processed
                         * by begin_entry() -- IM_ENLAB needs the
                         * sptr.
                         */
-static int arglist = 0;
 static int accreduct_op;
 
 #define mk_prototype mk_prototype_llvm
@@ -85,35 +84,6 @@ forceK(int ili)
     ilix = ikmove(ilix);
   }
   return ilix;
-}
-
-static int
-double_is_small_int(int ilix)
-{
-  int sptr;
-  int i;
-  double d;
-  INT con[2];
-  int ret_ili = 0; /* false */
-
-  assert(ILI_OPC(ilix) == IL_DCON, "double_is_small_int expects dcon", ilix,
-         ERR_Severe);
-
-  sptr = ILI_OPND(ilix, 1);
-  if (sptr == stb.dbl2) {
-    ret_ili = ad_icon(2);
-  } else {
-    /* probably a better way to do this */
-    for (i = 3; i < 7; i++) {
-      d = (double)i;
-      xmdtod(d, con);
-      if (con[0] == CONVAL1G(sptr) && con[1] == CONVAL2G(sptr)) {
-        ret_ili = ad_icon(i);
-        break;
-      }
-    }
-  }
-  return ret_ili;
 }
 
 /**
@@ -151,7 +121,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
   int tmp;
   int nme;
   SPTR nmsym;
-  INT val[2];
+  INT val[4];
   int ilix, ilixi, ilixr;
   int op1, op2, op3;
   /*
@@ -754,6 +724,7 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
       tmp = exp_mac(opc, ilmp, curilm);
     }
     return;
+
   case IM_CONJG:
     if (XBIT(70, 0x40000000)) {
       /* convert to xorps signbit*/
@@ -1188,6 +1159,11 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_DCMP:
     ILM_NME(curilm) = IL_DCMP;
     return;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IM_QCMP:
+    ILM_NME(curilm) = IL_QCMP;
+    return;
+#endif
   case IM_UICMP:
     ILM_NME(curilm) = IL_UICMP;
     return;
@@ -1435,19 +1411,11 @@ static struct {
 static void
 compute_subscr(ILM *ilmp, bool bigobj)
 {
-  ADSC *adp;  /* array descriptor */
   DTYPE dtype;  /* array data type */
   int arrilm; /* ilm for array */
-  int zbase;  /* zbase sym/ili ptr */
   int i;
   SPTR sym;
   ILM *ilmp1;
-  int sub;
-  int mplyr;
-  int offset;
-  int ili2;
-  ISZ_T coffset;
-  int sub_1;
   int subs[7];
 
   subscr.nsubs = ILM_OPND(ilmp, 1);
@@ -1508,7 +1476,7 @@ compute_nme(SPTR sptr, int constant, int basenm)
   /* build up the array nme from the sdsc - should be
    * exactly a 1-dimensional array (since it's the sdsc).
    */
-  int i, nme, sub;
+  int nme, sub;
   bool inl_flg = false;
   if (STYPEG(sptr) == ST_MEMBER)
     nme = addnme(NT_MEM, sptr, basenm, 0);
@@ -1535,7 +1503,7 @@ compute_sdsc_subscr(ILM *ilmp, bool bigobj)
 {
   int i, fi;
   SPTR sdsc;
-  int nme, ili1, ili2, ili3, ili4;
+  int ili1, ili2, ili3;
   int base = 0;
   int basenm = 0, basesym;
   DTYPE dtype;  /* array data type */
@@ -2139,13 +2107,12 @@ create_sdsc_subscr(int nmex, SPTR sptr, int nsubs, int *subs, DTYPE dtype,
 {
   int i, fi;
   SPTR sdsc;
-  int nme, ili1, ili2, ili3, ili4, ili5;
+  int ili1, ili2, ili3, ili4, ili5;
   int base = 0;
   int basenm = 0, basesym;
   ADSC *adp; /* array descriptor */
   SPTR sym = SPTR_NULL;
   int sub;
-  ILM *ilmp1;
   int any_kr;
   int ptrexpand = 0;
 
@@ -2489,7 +2456,6 @@ inlarr(int curilm, DTYPE odtype, bool bigobj)
   int offset;
   int ili2;
   ISZ_T coffset;
-  int nme;
   int tmp;
   bool any_kr;
   SPTR sdsc;
@@ -3053,7 +3019,6 @@ create_array_subscr(int nmex, SPTR sym, DTYPE dtype, int nsubs, int *subs,
   ADSC *adp; /* array descriptor */
   int zbase; /* zbase sym/ili ptr */
   int i;
-  ILM *ilmp1;
   int sub;
   int mplyr;
   int offset;
@@ -3304,7 +3269,6 @@ create_array_ref(int nmex, SPTR sptr, DTYPE dtype, int nsubs, int *subs,
   int base;
   int ili1;
   int ili2;
-  int ili3;
   int nme;
   int i;
   int sub;
@@ -3419,7 +3383,7 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
     ILI_OP subop;  /* subtract op */
     ILI_OP cjmpop; /* compare and jump op */
     short msz;    /* msz for load/store */
-  } aif[5] = {
+  } aif[6] = {
       {IL_ICJMPZ, IL_CSEIR, DT_INT, IL_ST, IL_LD, IL_ICMPZ, IL_ISUB, IL_ICJMP,
        MSZ_WORD},
       {IL_FCJMPZ, IL_CSESP, DT_REAL, IL_STSP, IL_LDSP, IL_FCMPZ, IL_FSUB,
@@ -3430,6 +3394,10 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
        IL_HFCJMP, MSZ_F2},
       {IL_KCJMPZ, IL_CSEKR, DT_INT8, IL_STKR, IL_LDKR, IL_KCMPZ, IL_KSUB,
        IL_KCJMP, MSZ_I8},
+#ifdef TARGET_SUPPORTS_QUADFP
+      {IL_QCJMPZ, IL_CSEQP, DT_QUAD, IL_STQP, IL_LDQP, IL_QCMPZ, IL_QSUB,
+       IL_QCJMP, MSZ_F16},
+#endif
   };
   int i;    /* temp */
   int ilix; /* ILI index */
@@ -3467,6 +3435,11 @@ exp_bran(ILM_OP opc, ILM *ilmp, int curilm)
     goto comaif;
   case IM_HFAIF: /* half precision arithmetic IF */
     type = 3;
+#ifdef TARGET_SUPPORTS_QUADFP
+    goto comaif;
+  case IM_QAIF: /* quad precision arithmetic IF */
+    type = 5;
+#endif
   comaif:
     /* arithmetic if processing */
     ilix = ILM_RESULT(ILM_OPND(ilmp, 1));
@@ -3644,18 +3617,16 @@ void
 exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
 {
   int tmp;
-  int ilix, listilix;
+  int ilix;
   int nme;
   int lpcnt;
   SPTR sym;
   char lbl[32];
   SPTR s;
-  int i;
   int pragmatype, pragmascope, pragmanargs, pragmaarg, pragmasym, devarg,
       argili;
   int parentnmex, parentilix;
   static int hostsptr = 0, devsptr = 0;
-  static int blocknest, gridnest, kernelnest;
   int ilmx;
   ILM *ilmpx;
 
@@ -3873,6 +3844,10 @@ exp_misc(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_DOEND:
     /* for address of count variable */
     sym = ILM_SymOPND(ilmp, 2);
+
+    /* operand 1 of DOEND is head of a loop */
+    BIH_HEAD(ILIBLKG(ILM_OPND(ilmp, 1))) = 1;
+
     ilix = mk_address(sym);
     nme = addnme(NT_VAR, sym, 0, 0);
     /*
@@ -4466,8 +4441,7 @@ int
 exp_get_sdsc_len(int s, int base, int basenm)
 {
   SPTR sdsc;
-  int len, scale, elmsz;
-  int ili, acon;
+  int len;
   sdsc = SDSCG(s);
   PTRSAFEP(sdsc, 1);
 #if DEBUG

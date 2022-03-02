@@ -31,8 +31,6 @@ extern int auto_reinlinedepth; /* For bottom-up auto-inlining */
 #ifndef FE90
 #include "lz.h"
 #include "cgraph.h"
-static int fihlevel = 0;
-static int curr_ifihx = 0;
 extern bool in_auto_reinline;
 #endif
 
@@ -42,26 +40,30 @@ extern bool in_auto_reinline;
 
 int bu_auto_inline(void);
 
+#ifndef FE90
 static int anyunits = 0;
+#endif
 static int prevnest = -1;
 static int prevchildnest = -1;
+#ifndef FE90
 static int prevlineno = 0;
 static bool anymessages;
+#endif
 
 #define BUILD_VENDOR "flang-compiler"
 
-FIHB fihb = {(FIH *)0, 0, 0, 0, 0, 0, 0};
-FIHB ifihb = {(FIH *)0, 0, 0, 0, 0, 0, 0}; /* bottom-up auto-inliner */
+FIHB fihb = {(FIH *)0, 0, 0, 0, 0, 0, 0, 0};
+FIHB ifihb = {(FIH *)0, 0, 0, 0, 0, 0, 0, 0}; /* bottom-up auto-inliner */
 
 #define CCFFAREA 24
 #define ICCFFAREA 27
-#define COPYSTRING(string) \
+#define COPYSTRING(string)                                                     \
   strcpy(GETITEMS(CCFFAREA, char, strlen(string) + 1), string)
-#define ICOPYSTRING(string) \
+#define ICOPYSTRING(string)                                                    \
   strcpy(GETITEMS(ICCFFAREA, char, strlen(string) + 1), string)
-#define COPYNSTRING(string, len) \
+#define COPYNSTRING(string, len)                                               \
   strncpy(GETITEMS(CCFFAREA, char, (len) + 1), string, len)
-#define ICOPYNSTRING(string, len) \
+#define ICOPYNSTRING(string, len)                                              \
   strncpy(GETITEMS(ICCFFAREA, char, (len) + 1), string, len)
 
 static char *formatbuffer = NULL;
@@ -294,7 +296,8 @@ xmlintentity(const char *entity, const char *shortentity, int value)
  * output <entity>value1 value2</entity>
  */
 static void
-xmlintentity2(const char *entity, const char *shortentity, int value1, int value2)
+xmlintentity2(const char *entity, const char *shortentity, int value1,
+              int value2)
 {
   if (!ccff_file)
     return;
@@ -316,7 +319,7 @@ xmlintentity2(const char *entity, const char *shortentity, int value1, int value
 void
 ccff_open(const char *ccff_filename, const char *srcfile)
 {
-  char *cwd, ch;
+  char *cwd;
   int cwdlen;
   int i, slash;
   ccff_file = fopen(ccff_filename, "wb");
@@ -463,7 +466,6 @@ ccff_open_unit()
 void
 ccff_open_unit_deferred(void)
 {
-  char *abiname;
   formatbuffer = NULL;
   formatbuffersize = 0;
   if ((!ccff_file && flg.x[161] == 0 && flg.x[162] == 0))
@@ -526,10 +528,11 @@ static int messagelistsize;
 static int strngsize = 0;
 static char *strng = NULL;
 
+#if DEBUG
 /*
  * dump a message
  */
-static void
+void
 dumpmessage(MESSAGE *m)
 {
   FILE *dfile = gbl.dbgfil ? gbl.dbgfil : stderr;
@@ -551,12 +554,13 @@ dumpmessage(MESSAGE *m)
 /*
  * dump list of messages
  */
-static void
+void
 dumpmsglist(MESSAGE *m)
 {
   for (; m; m = m->next)
     dumpmessage(m);
 } /* dumpmsglist */
+#endif
 
 void
 dumpmessagelist(int nmessages)
@@ -600,6 +604,7 @@ _childsort(int l, int h)
   }
 } /* _childsort */
 
+#ifndef FE90
 /*
  *  * heap sort by line number
  *   */
@@ -633,6 +638,7 @@ _ichildsort(int l, int h)
     }
   }
 } /* _ichildsort */
+#endif
 
 /*
  * all children of fihx appear in FIH_CHILD/FIH_NEXT linked list.
@@ -675,6 +681,7 @@ fih_sort_children(int fihx)
   FIH_NEXT(childlist[nchildren - 1]) = 0;
 } /* fih_sort_children */
 
+#ifndef FE90
 /* all children of ifihx appear in IFIH_CHILD/IFIH_NEXT linked list.
  * sort them by line number */
 static void
@@ -713,6 +720,7 @@ ifih_sort_children(int ifihx)
   }
   IFIH_NEXT(childlist[nchildren - 1]) = 0;
 } /* ifih_sort_children */
+#endif
 
 /*
  * return TRUE if the string is numeric
@@ -880,7 +888,7 @@ sort_message_list(MESSAGE *msglist)
     return msglist;
   if (nmessages > messagelistsize) {
     messagelistsize = nmessages + 100;
-      messagelist = GETITEMS(CCFFAREA, MESSAGE *, messagelistsize);
+    messagelist = GETITEMS(CCFFAREA, MESSAGE *, messagelistsize);
   }
   nmessages = 0;
   for (mptr = msglist; mptr; mptr = mptr->next)
@@ -899,8 +907,6 @@ sort_message_list(MESSAGE *msglist)
   for (n = 1; n < nmessages; ++n) {
     /* look for duplicate messages, with the same arguments, on the same line */
     MESSAGE *mmptr;
-    int nn;
-
     mptr = messagelist[n];
     mmptr = messagelist[n - 1];
     if (_messagecmp(mptr, mmptr, 0) != 0) {
@@ -959,6 +965,7 @@ fih_sort_messages(int fihx)
   }
 } /* fih_sort_messages */
 
+#ifndef FE90
 static void
 ifih_sort_messages(int ifihx)
 {
@@ -972,7 +979,9 @@ ifih_sort_messages(int ifihx)
     }
   }
 } /* ifih_sort_messages */
+#endif
 
+#ifndef FE90
 /*
  * Does the next message have the same message ID and the same
  * arguments as this one, except for arguments named '*list='
@@ -1019,6 +1028,7 @@ combine_message(MESSAGE *mptr1, MESSAGE *mptr2)
   mptr2->combine = 1;
   return true;
 } /* combine_message */
+#endif
 
 /*
  * print one message to the output file
@@ -1029,7 +1039,7 @@ __fih_message(FILE *ofile, MESSAGE *mptr, bool dolist)
 {
   char *message;
   char *chp;
-  int strnglen, n;
+  int strnglen;
   ARGUMENT *aptr, *aptr3;
   MESSAGE *mptr2, *mptr3;
   message = mptr->message;
@@ -1048,7 +1058,7 @@ __fih_message(FILE *ofile, MESSAGE *mptr, bool dolist)
             char *nstrng;
             strng[strnglen] = '\0';
             strngsize *= 2;
-              nstrng = (char *)getitem(CCFFAREA, strngsize);
+            nstrng = (char *)getitem(CCFFAREA, strngsize);
             strcpy(nstrng, strng);
             strng = nstrng;
           }
@@ -1181,6 +1191,7 @@ fih_message(MESSAGE *mptr)
 #define INDENT 5
 #define CINDENT 2
 
+#ifndef FE90
 static void
 print_func(FILE *ofile)
 {
@@ -1190,7 +1201,9 @@ print_func(FILE *ofile)
     fprintf(ofile, "%s:\n", funcname);
   }
 } /* print_func */
+#endif
 
+#ifndef FE90
 /*
  * Format and print message to log file
  */
@@ -1335,6 +1348,7 @@ fih_message_ofile(FILE *ofile, int nest, int lineno, int childnest,
     }
   }
 } /* fih_message_ofile */
+#endif
 
 #ifdef FLANG_CCFFINFO_UNUSED
 /*
@@ -1486,7 +1500,7 @@ static void
 fih_messages(int fihx, FILE *ofile, int nest)
 {
 #ifndef FE90
-  int child, c;
+  int child;
   MESSAGE *mptr, *firstmptr, *nextmptr;
 
   if (ccff_file && fihx > 1) {
@@ -1603,7 +1617,7 @@ static void
 ifih_messages(int ifihx, FILE *ofile, int nest)
 {
 #ifndef FE90
-  int child, c;
+  int child;
   MESSAGE *mptr, *firstmptr;
 
   if (ccff_file && ifihx > 0) {
@@ -1737,6 +1751,7 @@ fih_rminc_children(int fihx)
   }
 }
 
+#ifndef FE90
 /* Remove child include files if there is no message. */
 
 static void
@@ -1766,6 +1781,7 @@ ifih_rminc_children(int ifihx)
     prev_ifihx = ifihx;
   }
 }
+#endif
 
 static bool
 save_any_messages(int fihx)
@@ -1925,6 +1941,7 @@ ccff_set_children()
   strng = (char *)getitem(CCFFAREA, strngsize);
 } /* ccff_set_children */
 
+#ifndef FE90
 /* set up childlist, messagelist, set IFIH_CHILD, IFIH_PARENT */
 static void
 ccff_set_children_deferred()
@@ -1962,6 +1979,7 @@ ccff_set_children_deferred()
   strngsize = 100;
   strng = (char *)getitem(ICCFFAREA, strngsize);
 } /* ccff_set_children_deferred */
+#endif
 
 /*
  * free up allocated space
@@ -2072,7 +2090,7 @@ fillformat(const char *format, int len)
     } else {
       formatbuffersize = len * 2;
     }
-      formatbuffer = GETITEMS(CCFFAREA, char, formatbuffersize + 1);
+    formatbuffer = GETITEMS(CCFFAREA, char, formatbuffersize + 1);
   }
   strncpy(formatbuffer, format, len);
   formatbuffer[len] = '\0';
@@ -2089,7 +2107,7 @@ newbuff(const char *oldstring, int len, int *pl)
   l = 0;
   if (oldstring)
     l = strlen(oldstring);
-    buff = GETITEMS(CCFFAREA, char, l + len + 1);
+  buff = GETITEMS(CCFFAREA, char, l + len + 1);
   if (oldstring)
     strcpy(buff, oldstring);
   *pl = l;
@@ -2194,9 +2212,9 @@ newprintfx(const char *oldstring, const char *format, int len)
  *	"func=%s", SYMNAME(foo), "size=%d", funcsize, NULL );
  */
 void *
-_ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *varname,
-           const char *funcname, void *xparent, const char *message,
-           va_list argptr)
+_ccff_info(int msgtype, const char *msgid, int fihx, int lineno,
+           const char *varname, const char *funcname, void *xparent,
+           const char *message, va_list argptr)
 {
   MESSAGE *mptr;
   ARGUMENT *aptr, *alast;
@@ -2229,7 +2247,7 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
 
   /* keep list of messages at this FIH index */
   ++globalorder;
-    mptr = GETITEM(CCFFAREA, MESSAGE);
+  mptr = GETITEM(CCFFAREA, MESSAGE);
   BZERO(mptr, MESSAGE, 1);
   mptr->msgtype = msgtype;
   mptr->msgid = msgid;
@@ -2239,11 +2257,11 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
   mptr->funcname = NULL;
   mptr->seq = 0;
   mptr->combine = 0;
-    if (varname && varname[0] != '\0')
-      mptr->varname = COPYSTRING(varname);
-    if (funcname && funcname[0] != '\0')
-      mptr->funcname = COPYSTRING(funcname);
-    mptr->message = COPYSTRING(message);
+  if (varname && varname[0] != '\0')
+    mptr->varname = COPYSTRING(varname);
+  if (funcname && funcname[0] != '\0')
+    mptr->funcname = COPYSTRING(funcname);
+  mptr->message = COPYSTRING(message);
   mptr->args = NULL;
   mptr->order = globalorder;
   prevmessage = mptr;
@@ -2272,7 +2290,7 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
       fprintf(gbl.dbgfil, ", \"%s\"", argformat);
 #endif
 #endif
-      aptr = GETITEM(CCFFAREA, ARGUMENT);
+    aptr = GETITEM(CCFFAREA, ARGUMENT);
     BZERO(aptr, ARGUMENT, 1);
     aptr->next = NULL;
     /* find the "=" */
@@ -2283,7 +2301,7 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
       return NULL;
     }
     ll = argend - argformat;
-      aptr->argstring = COPYNSTRING(argformat, ll);
+    aptr->argstring = COPYNSTRING(argformat, ll);
     aptr->argstring[ll] = '\0';
     aptr->argvalue = NULL;
     format = argend + 1;
@@ -2384,10 +2402,10 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
     }
   }
   if (xparent == NULL) {
-/* just prepend onto the list */
-      mptr->next = (MESSAGE *)FIH_CCFFINFO(fihx);
-      FIH_CCFFINFO(fihx) = (void *)mptr;
-      FIH_SETFLAG(fihx, FIH_CCFF);
+    /* just prepend onto the list */
+    mptr->next = (MESSAGE *)FIH_CCFFINFO(fihx);
+    FIH_CCFFINFO(fihx) = (void *)mptr;
+    FIH_SETFLAG(fihx, FIH_CCFF);
   } else {
     /* append to child list of the parent */
     MESSAGE *parent, *child;
@@ -2422,8 +2440,8 @@ _ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *var
  * Save a message
  */
 void *
-ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *message,
-          ...)
+ccff_info(int msgtype, const char *msgid, int fihx, int lineno,
+          const char *message, ...)
 {
   va_list argptr;
   va_start(argptr, message);
@@ -2435,8 +2453,8 @@ ccff_info(int msgtype, const char *msgid, int fihx, int lineno, const char *mess
  * Save a message that is more detail for a previous message
  */
 void *
-subccff_info(void *xparent, int msgtype, const char *msgid, int fihx, int lineno,
-             const char *message, ...)
+subccff_info(void *xparent, int msgtype, const char *msgid, int fihx,
+             int lineno, const char *message, ...)
 {
   va_list argptr;
   va_start(argptr, message);
@@ -2448,7 +2466,8 @@ subccff_info(void *xparent, int msgtype, const char *msgid, int fihx, int lineno
  * Save information for a variable symbol
  */
 void *
-ccff_var_info(int msgtype, const char *msgid, const char *varname, const char *message, ...)
+ccff_var_info(int msgtype, const char *msgid, const char *varname,
+              const char *message, ...)
 {
   va_list argptr;
   va_start(argptr, message);
@@ -2459,8 +2478,8 @@ ccff_var_info(int msgtype, const char *msgid, const char *varname, const char *m
  * Save information for a function symbol
  */
 void *
-ccff_func_info(int msgtype, const char *msgid, const char *funcname, const char *message,
-               ...)
+ccff_func_info(int msgtype, const char *msgid, const char *funcname,
+               const char *message, ...)
 {
   va_list argptr;
   va_start(argptr, message);
@@ -2519,7 +2538,7 @@ addfile(const char *filename, const char *funcname, int tag, int flags,
 #ifdef HOST_WIN
         || *cp == '\\'
 #endif
-        ) {
+    ) {
       slash = cp;
     }
   }
@@ -2539,7 +2558,7 @@ addfile(const char *filename, const char *funcname, int tag, int flags,
     strncpy(s, pfilename, l);
     s[l] = '\0'; /* strncpy does not terminate string */
     FIH_DIRNAME(f) = s;
-    l = slash - pfilename;    /* recompute, in case we incremented l */
+    l = slash - pfilename; /* recompute, in case we incremented l */
     l = len - l;
     /* len-l = 8, but we'll split off the slash,
      * leaving room for the string terminator */
@@ -2571,8 +2590,9 @@ addfile(const char *filename, const char *funcname, int tag, int flags,
 #ifndef FE90
 #if DEBUG
   if (DBGBIT(73, 4)) {
-    fprintf(gbl.dbgfil, "addfile(%d) filename=%s  funcname=%s  tag=%d  "
-                        "flags=0x%x  lineno=%d  srcline=%d  level=%d\n",
+    fprintf(gbl.dbgfil,
+            "addfile(%d) filename=%s  funcname=%s  tag=%d  "
+            "flags=0x%x  lineno=%d  srcline=%d  level=%d\n",
             f, filename, FIH_FUNCNAME(f), tag, flags, lineno, srcline, level);
   }
 #endif
@@ -2618,7 +2638,7 @@ addinlfile(const char *filename, const char *funcname, int tag, int flags,
 #ifdef HOST_WIN
         || *cp == '\\'
 #endif
-        ) {
+    ) {
       slash = cp;
     }
   }
@@ -2638,7 +2658,7 @@ addinlfile(const char *filename, const char *funcname, int tag, int flags,
     strncpy(s, pfilename, l);
     s[l] = '\0'; /* strncpy does not terminate string */
     FIH_DIRNAME(f) = s;
-    l = slash - pfilename;    /* recompute, in case we incremented l */
+    l = slash - pfilename; /* recompute, in case we incremented l */
     l = len - l;
     /* len-l = 8, but we'll split off the slash,
      * leaving room for the string terminator */
@@ -2664,8 +2684,9 @@ addinlfile(const char *filename, const char *funcname, int tag, int flags,
 #ifndef FE90
 #if DEBUG
   if (DBGBIT(73, 4)) {
-    fprintf(gbl.dbgfil, "addinlfile(%d) filename=%s  funcname=%s  tag=%d  "
-                        "flags=0x%x  lineno=%d  srcline=%d  level=%d\n",
+    fprintf(gbl.dbgfil,
+            "addinlfile(%d) filename=%s  funcname=%s  tag=%d  "
+            "flags=0x%x  lineno=%d  srcline=%d  level=%d\n",
             f, filename, FIH_FUNCNAME(f), tag, flags, lineno, srcline,
             FIH_LEVEL(f));
   }
@@ -2713,9 +2734,11 @@ setfile(int f, const char *funcname, int tag)
     pfuncname = getitem(8, strlen(funcname) + 1);
     strcpy(pfuncname, funcname);
     FIH_FUNCNAME(f) = pfuncname;
-/*	if( f == 1 ){
-            fihb.stg_avail = 2;
-        } */
+    /*
+    if (f == 1) {
+      fihb.stg_avail = 2;
+    }
+    */
   }
   if (firsttime) {
     FIH_FLAGS(f) = 0;
@@ -2891,20 +2914,20 @@ save_ccff_msg(int msgtype, const char *msgid, int fihx, int lineno,
 
   /* keep list of messages at this FIH index */
   ++globalorder;
-    mptr = GETITEM(CCFFAREA, MESSAGE);
+  mptr = GETITEM(CCFFAREA, MESSAGE);
   BZERO(mptr, MESSAGE, 1);
   mptr->msgtype = msgtype;
-    mptr->msgid = COPYSTRING(msgid);
+  mptr->msgid = COPYSTRING(msgid);
   mptr->fihx = fihx;
   mptr->lineno = lineno;
   mptr->varname = NULL;
   mptr->funcname = NULL;
   mptr->seq = 0;
   mptr->combine = 0;
-    if (varname && varname[0] != '\0')
-      mptr->varname = COPYSTRING(varname);
-    if (funcname && funcname[0] != '\0')
-      mptr->funcname = COPYSTRING(funcname);
+  if (varname && varname[0] != '\0')
+    mptr->varname = COPYSTRING(varname);
+  if (funcname && funcname[0] != '\0')
+    mptr->funcname = COPYSTRING(funcname);
   mptr->message = NULL;
   mptr->args = NULL;
   mptr->order = globalorder;
@@ -2923,11 +2946,11 @@ void
 save_ccff_arg(const char *argname, const char *argvalue)
 {
   ARGUMENT *aptr;
-    aptr = GETITEM(CCFFAREA, ARGUMENT);
+  aptr = GETITEM(CCFFAREA, ARGUMENT);
   BZERO(aptr, ARGUMENT, 1);
   aptr->next = NULL;
-    aptr->argstring = COPYSTRING(argname);
-    aptr->argvalue = COPYSTRING(argvalue);
+  aptr->argstring = COPYSTRING(argname);
+  aptr->argvalue = COPYSTRING(argvalue);
   if (prevargument) {
     prevargument->next = aptr;
   } else if (prevmessage && prevmessage->args == NULL) {
@@ -2943,7 +2966,7 @@ void
 save_ccff_text(const char *message)
 {
   if (prevmessage && prevmessage->message == NULL)
-      prevmessage->message = COPYSTRING(message);
+    prevmessage->message = COPYSTRING(message);
 } /* save_ccff_text */
 #endif
 

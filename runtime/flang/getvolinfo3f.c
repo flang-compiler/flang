@@ -53,6 +53,7 @@ extern int ENTNAM(pgdfw_GetVolumeInformation)(
 }
 #endif
 
+#if defined(WIN64) || defined(WIN32)
 static void
 fill(LPSTR p, int ln, int sz)
 {
@@ -63,3 +64,4 @@ fill(LPSTR p, int ln, int sz)
   }
   return;
 }
+#endif

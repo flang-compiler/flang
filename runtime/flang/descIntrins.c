@@ -18,10 +18,7 @@
 #include <string.h>
 #include "fioMacros.h"
 /* macros for entries */
-#if defined(WINNT) && !defined(WIN64) && !defined(UXOBJS) && !defined(CROBJS)
-#pragma global - x 121 0x20000
-#define ENTFTN_MS(UC) WIN_EXP __attribute__((stdcall)) UC
-#elif defined(WINNT) && defined(WIN64)
+#if defined(_WIN64)
 #define ENTFTN_MS I8
 #endif
 

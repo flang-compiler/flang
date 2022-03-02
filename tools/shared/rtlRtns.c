@@ -110,6 +110,8 @@ FtnRteRtn ftnRtlRtns[] = {
     {"exit", "", false, ""},
     {"expon", "", false, "k"},
     {"expond", "", false, "k"},
+    {"exponq", "", false, "k"},
+    {"exponqx", "", false, "k"},
     {"expondx", "", false, "k"},
     {"exponx", "", false, "k"},
     {"extends_type_of", "", true, "k"},
@@ -298,6 +300,7 @@ FtnRteRtn ftnRtlRtns[] = {
     {"real16", "", false, ""},
     {"real4", "", false, ""},
     {"real8", "", false, ""},
+    {"realloc_arr_in_impiled_do", "", true, ""},
     {"repeata", "", false, ""},
     {"rrspacing", "", false, ""},
     {"rrspacingd", "", false, ""},
@@ -325,6 +328,8 @@ FtnRteRtn ftnRtlRtns[] = {
     {"set_type", "", true, ""},
     {"setexp", "", false, ""},
     {"setexpd", "", false, ""},
+    {"setexpq", "", false, ""},
+    {"setexpqx", "", false, ""},
     {"setexpdx", "", false, ""},
     {"setexpx", "", false, ""},
     {"shape", "", true, "k"},
@@ -773,7 +778,7 @@ dump_FtnRteRtn(FtnRtlEnum rteRtn)
 #endif
 
 /** \brief given a FtnRtlEnum, return the RTL routine name */
-char *
+const char *
 mkRteRtnNm(FtnRtlEnum rteRtn)
 {
   const char *prefixes[4] = {"f90_", "fort_", "", "ftn"};
@@ -821,7 +826,7 @@ mkRteRtnNm(FtnRtlEnum rteRtn)
 }
 
 static void
-stripI8DescrSuffix(char *inNm, char *outNm)
+stripI8DescrSuffix(const char *inNm, char *outNm)
 {
   int nmLen = strlen(inNm);
 
@@ -872,9 +877,8 @@ int
 getF90TmplSectRtn(char *rtnNm)
 {
   int l, h, m, r;
-  char *tmplSectNm;
+  const char *tmplSectNm;
   int retFtype = 0;
-  int compLen;
   char cpyRtnNm[MAXIDLEN];
   char cpyTmplSectNm[MAXIDLEN];
 

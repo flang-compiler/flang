@@ -83,6 +83,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname
 .IN DEXP 1 D D DEXP ftn_dexp 
 .IN CEXP 1 C C CEXP ftn_cexp 
 .IN CDEXP 1 CD CD CDEXP ftn_cdexp 
+.IN QEXP 1 Q Q QEXP ftn_qexp
 .IN .SIN 1 R R SIN ftn_sin 
 .IN DSIN 1 D D DSIN ftn_dsin 
 .IN CSIN 1 C C CSIN ftn_csin 
@@ -127,6 +128,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname
 .IN =KIABS 1 I8 I8 KABS ftn_kabs
 .IN .ABS 1 R R ABS ftn_abs
 .IN DABS 1 D D DABS ftn_dabs
+.IN QABS 1 Q Q QABS ftn_qabs
 .IN CABS 1 C R CABS ftn_cabs
 .IN CDABS 1 CD D CDABS ftn_cdabs
 .IN .INT 1 R I tc
@@ -154,16 +156,22 @@ Converts any numeric data type to short integer.
 Converts any numeric data type to integer*8.
 .IN .AINT 1 R R AINT ftn_aint
 .IN DINT 1 D D DINT ftn_dint
+.IN QINT 1 Q Q QINT ftn_qint
 .IN .ANINT 1 R R ANINT ftn_anint
+.IN QQANINT 1 Q Q QQANINT ftn_qanint
+.IN DQANINT 1 D Q DQANINT ftn_dqanint
+.IN AQANINT 1 R Q AQANINT ftn_aqanint
 .IN DNINT 1 D D DNINT ftn_dnint
 .IN .ININT 1 R SI NINT ftn_inint
 .IN .NINT 1 R I NINT ftn_nint
 .IN IDNINT 1 D I IDNINT ftn_idnint
+.IN IQNINT 1 Q I IQNINT ftn_iqnint
 .IN IIDNNT 1 D SI IDNINT ftn_iidnnt
 .IN .JNINT 1 R I NINT ftn_inint
 .IN JIDNNT 1 D I IDNINT ftn_idnint
 .IN =.KNINT 1 R I8 KNINT ftn_knint
 .IN =KIDNNT 1 D I8 KDNINT ftn_kidnnt
+.IN =KIQNNT 1 Q I8 KQNINT ftn_kiqnnt
 .IN FLOATI 1 SI R tc
 Converts integer*2 to real.
 .IN FLOATJ 1 I R tc
@@ -195,6 +203,7 @@ Convert any numeric data type to double complex.
 .IN DIMAG 1 CD D DIMAG ftn_dimag
 .IN .CONJG 1 C C CONJG ftn_conjg
 .IN DCONJG 1 CD CD DCONJG ftn_dconjg
+.IN QCONJG 1 CQ CQ QCONJG ftn_qconjg
 .IN DPROD 2 R D DPROD ftn_dprod
 .IN IMAX0 12 SI SI IMAX -
 .IN MAX0 12 I I IMAX -
@@ -334,21 +343,21 @@ sptr	name	siname	iname	rname	dname	cname	cdname	i8name
 .GN CMPLX .2C .2C .2C .2C .2C .2C .2C 
 .GN DCMPLX .2CD .2CD .2CD .2CD .2CD .2CD .2CD 
 .GN AIMAG - - - - .AIMAG DIMAG - 
-.GN CONJG - - - - .CONJG DCONJG -
-.GN AINT - - .AINT DINT - - -
-.GN ANINT - - .ANINT DNINT - - -
+.GN CONJG - - - - .CONJG DCONJG QCONJG -
+.GN AINT - - .AINT DINT - - - QINT
+.GN ANINT - - .ANINT DNINT - - - QANINT
 .GN ININT - - .ININT IIDNNT - - -
 .GN JNINT - - .JNINT JIDNNT - - -
-.GN NINT - - .NINT IDNINT - - -
-.GN =KNINT - - .KNINT KIDNNT - - -
-.GN ABS IIABS IABS .ABS DABS CABS CDABS KIABS 
+.GN NINT - - .NINT IDNINT - - - IQNINT
+.GN =KNINT - - .KNINT KIDNNT - - - KIQNNT
+.GN ABS IIABS IABS .ABS DABS CABS CDABS KIABS - QABS
 .GN MOD IMOD .MOD AMOD DMOD - - KMOD 
 .GN SIGN IISIGN ISIGN .SIGN DSIGN - - KISIGN 
 .GN DIM IIDIM IDIM .DIM DDIM - - KIDIM 
 .GN MAX IMAX0 MAX0 AMAX1 DMAX1 - - .KMAX0 
 .GN MIN IMIN0 MIN0 AMIN1 DMIN1 - - .KMIN0 
 .GN SQRT - - .SQRT DSQRT CSQRT CDSQRT -
-.GN EXP - - .EXP DEXP CEXP CDEXP -
+.GN EXP - - .EXP DEXP CEXP CDEXP - - - QEXP -
 .GN LOG - - ALOG DLOG CLOG CDLOG -
 .GN LOG10 - - ALOG10 DLOG10 - - -
 .GN SIN - - .SIN DSIN CSIN CDSIN -

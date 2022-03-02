@@ -64,7 +64,7 @@ static void do_llvm_sym_is_refd(void);
 #endif
 static void build_agoto(void);
 static void free_modvar_alias_list(void);
-static void save_modvar_alias(SPTR sptr, const char *alias_name);
+static void save_modvar_alias(SPTR sptr, char *alias_name);
 
 static void init_upper(void);
 static void read_fileentries(void);
@@ -108,9 +108,6 @@ typedef struct CGR_LIST {
   SPTR func_sptr;
 } CGR_LIST;
 
-static CGR_LIST *deferred_cgr_func = NULL;
-static CGR_LIST *deferred_cgr_list = NULL;
-
 /* type of descriptor elements */
 #define DESC_ELM_DT (XBIT(68, 1) ? DT_INT8 : DT_INT)
 
@@ -122,59 +119,59 @@ typedef struct {
 
 /* clang-format off */
 static const namelist IPAtypes[] = {
-    "pstride",  "p", 1,  "sstride",     "s",  2,   "Target", "T", 3,
-    "target",   "t", 4,  "allcallsafe", "a",  5,   "safe",   "f", 6,
-    "callsafe", "c", 7,  NULL,          NULL, -1,
+  { "pstride",  "p",  1 }, { "sstride",     "s",   2 }, { "Target", "T",  3 },
+  { "target",   "t",  4 }, { "allcallsafe", "a",   5 }, { "safe",   "f",  6 },
+  { "callsafe", "c",  7 }, { NULL,          NULL, -1 },
 };
 
 /* list of datatype keywords */
 static const namelist Datatypes[] = {
-    "Array",     "A",   TY_ARRAY,  "Complex8",   "C8", TY_CMPLX,
-    "Complex16", "C16", TY_DCMPLX, "Derived",    "D",  TY_STRUCT,
-    "Hollerith", "H",   TY_HOLL,   "Integer1",   "I1", TY_BINT,
-    "Integer2",  "I2",  TY_SINT,   "Integer4",   "I4", TY_INT,
-    "Integer8",  "I8",  TY_INT8,   "Logical1",   "L1", TY_BLOG,
-    "Logical2",  "L2",  TY_SLOG,   "Logical4",   "L4", TY_LOG,
-    "Logical8",  "L8",  TY_LOG8,   "Numeric",    "N",  TY_NUMERIC,
-    "Pointer",   "P",   TY_PTR,    "proc",       "p",  TY_PROC,
-    "Real2",     "R2",  TY_HALF,  
-    "Real4",     "R4",  TY_REAL,   "Real8",      "R8", TY_DBLE,
-    "Real16",    "R16", TY_QUAD,   "Struct",     "S",  TY_STRUCT,
-    "Word4",     "W4",  TY_WORD,   "Word8",      "W8", TY_DWORD,
-    "Union",     "U",   TY_UNION,  "any",        "a",  TY_ANY,
-    "character", "c",   TY_CHAR,   "kcharacter", "k",  TY_NCHAR,
-    "none",      "n",   TY_NONE,   NULL,         NULL, -1,
+  { "Array",     "A",   TY_ARRAY },  { "Complex8",   "C8", TY_CMPLX },
+  { "Complex16", "C16", TY_DCMPLX }, { "Derived",    "D",  TY_STRUCT },
+  { "Hollerith", "H",   TY_HOLL },   { "Integer1",   "I1", TY_BINT },
+  { "Integer2",  "I2",  TY_SINT },   { "Integer4",   "I4", TY_INT },
+  { "Integer8",  "I8",  TY_INT8 },   { "Logical1",   "L1", TY_BLOG },
+  { "Logical2",  "L2",  TY_SLOG },   { "Logical4",   "L4", TY_LOG },
+  { "Logical8",  "L8",  TY_LOG8 },   { "Numeric",    "N",  TY_NUMERIC },
+  { "Pointer",   "P",   TY_PTR },    { "proc",       "p",  TY_PROC },
+  { "Real2",     "R2",  TY_HALF },
+  { "Real4",     "R4",  TY_REAL },   { "Real8",      "R8", TY_DBLE },
+  { "Real16",    "R16", TY_QUAD },   { "Struct",     "S",  TY_STRUCT },
+  { "Word4",     "W4",  TY_WORD },   { "Word8",      "W8", TY_DWORD },
+  { "Union",     "U",   TY_UNION },  { "any",        "a",  TY_ANY },
+  { "character", "c",   TY_CHAR },   { "kcharacter", "k",  TY_NCHAR },
+  { "none",      "n",   TY_NONE },   { NULL,         NULL, -1 },
 };
 
 /* list of symbol type keywords */
 static const namelist Symboltypes[] = {
-    "Array",     "A", ST_ARRAY,   "Block",     "B",  ST_BLOCK,
-    "Common",    "C", ST_CMBLK,   "Derived",   "D",  ST_STRUCT,
-    "Entry",     "E", ST_ENTRY,   "Generic",   "G",  ST_GENERIC,
-    "Intrinsic", "I", ST_INTRIN,  "Known",     "K",  ST_PD,
-    "Label",     "L", ST_LABEL,   "Member",    "M",  ST_MEMBER,
-    "Namelist",  "N", ST_NML,     "Procedure", "P",  ST_PROC,
-    "Struct",    "S", ST_STRUCT,  "Tag",       "T",  ST_STAG,
-    "Union",     "U", ST_UNION,   "Variable",  "V",  ST_VAR,
-    "constant",  "c", ST_CONST,   "dpname",    "d",  ST_DPNAME,
-    "list",      "l",  ST_PLIST,
-    "module",    "m", -99,        "parameter", "p",  ST_PARAM,
-    "typedef",   "t", ST_TYPEDEF, NULL,        NULL, -1,
+  { "Array",     "A",  ST_ARRAY },   { "Block",     "B",  ST_BLOCK },
+  { "Common",    "C",  ST_CMBLK },   { "Derived",   "D",  ST_STRUCT },
+  { "Entry",     "E",  ST_ENTRY },   { "Generic",   "G",  ST_GENERIC },
+  { "Intrinsic", "I",  ST_INTRIN },  { "Known",     "K",  ST_PD },
+  { "Label",     "L",  ST_LABEL },   { "Member",    "M",  ST_MEMBER },
+  { "Namelist",  "N",  ST_NML },     { "Procedure", "P",  ST_PROC },
+  { "Struct",    "S",  ST_STRUCT },  { "Tag",       "T",  ST_STAG },
+  { "Union",     "U",  ST_UNION },   { "Variable",  "V",  ST_VAR },
+  { "constant",  "c",  ST_CONST },   { "dpname",    "d",  ST_DPNAME },
+  { "list",      "l",  ST_PLIST },
+  { "module",    "m",  -99 },        { "parameter", "p",  ST_PARAM },
+  { "typedef",   "t",  ST_TYPEDEF }, { NULL,        NULL, -1 },
 };
 /* list of symbol class keywords */
 static const namelist Symbolclasses[] = {
-    "Based",  "B",  SC_BASED,  "Common",   "C",    SC_CMBLK,
-    "Dummy",  "D",  SC_DUMMY,  "Extern",   "E",    SC_EXTERN,
-    "Local",  "L",  SC_LOCAL,  "Private",  "P",    SC_PRIVATE,
-    "Static", "S",  SC_STATIC, "none",     "n",    SC_NONE,
-    NULL,     NULL,  -1,
+  { "Based",  "B",  SC_BASED },  { "Common",  "C",  SC_CMBLK },
+  { "Dummy",  "D",  SC_DUMMY },  { "Extern",  "E",  SC_EXTERN },
+  { "Local",  "L",  SC_LOCAL },  { "Private", "P",  SC_PRIVATE },
+  { "Static", "S",  SC_STATIC }, { "none",    "n",  SC_NONE },
+  { NULL,     NULL, -1 },
 };
 
 /* list of subprogram type keywords */
 static const namelist Subprogramtypes[] = {
-    "Blockdata", "B", RU_BDATA,  "Function",   "F", RU_FUNC,
-    "Program",   "P", RU_PROG,   "Subroutine", "S", RU_SUBR,
-    NULL,        NULL, -1,
+  { "Blockdata", "B",  RU_BDATA }, { "Function",   "F",  RU_FUNC },
+  { "Program",   "P",  RU_PROG },  { "Subroutine", "S",  RU_SUBR },
+  { NULL,        NULL, -1 },
 };
 /* clang-format on */
 
@@ -305,7 +302,7 @@ TraceOutput(const char *fmt, ...)
 
 typedef struct alias_syminfo {
   SPTR sptr;
-  const char *alias;
+  char *alias;
   struct alias_syminfo *next;
 } alias_syminfo;
 static alias_syminfo *modvar_alias_list;
@@ -432,7 +429,6 @@ upper(int stb_processing)
   ISZ_T size;
   SPTR first;
   int firstinternal, gstaticbase;
-  static long ilmpos;
   extern void set_private_size(ISZ_T);
 
   llvm_stb_processing = stb_processing;
@@ -760,7 +756,7 @@ do_pastilm:
    * get a temp for the character length */
 do_dchar:
   if (XBIT(14, 0x20000) || !XBIT(14, 0x10000)) {
-    int e, dpdsc, paramct, i, param;
+    int e, dpdsc, paramct, i;
     for (e = gbl.entries; e > NOSYM; e = SYMLKG(e)) {
       dpdsc = DPDSCG(e);
       paramct = PARAMCTG(e);
@@ -930,7 +926,6 @@ restore_saved_syminfo(int firstinternal)
         }
       }
       if (IS_THREAD_TP(newsptr)) {
-        int ss;
         int tptr;
         int psptr;
 
@@ -1036,8 +1031,7 @@ restore_saved_syminfo(int firstinternal)
 void
 upper_save_syminfo(void)
 {
-  int s, sptr, sc, ref;
-  ISZ_T address;
+  int s, sptr;
 
   if (gbl.internal != 1)
     return;
@@ -1182,7 +1176,6 @@ upper_init(void)
 static int
 read_line(void)
 {
-  char *ret;
   int i, ch;
   i = 0;
   pos = 0;
@@ -1626,7 +1619,6 @@ read_datatype(void)
 {
   DTYPE dtype, dt;
   TY_KIND dval;
-  int ty;
   SPTR member;
   int align;
   DTYPE subtype;
@@ -1975,7 +1967,7 @@ gethexchar(FILE *file)
   return val;
 } /* gethexchar */
 
-#if defined(TARGET_WIN_X86) && defined(PGFTN)
+#if defined(TARGET_WIN) && defined(PGFTN)
 /*
  * convert to upper case
  */
@@ -2012,9 +2004,9 @@ read_symbol(void)
   int val[4], namelen, i, dpdsc, inmod;
   /* flags: */
   int addrtkn, adjustable, afterentry, altname, altreturn, aret, argument,
-      assigned, assumedrank, assumedshape, assumedsize, autoarray, blank, Cfunc,
+      assigned, assumedrank, assumedshape, assumedsize, autoarray, Cfunc,
       ccsym, clen, cmode, common, constant, count, currsub, decl;
-  SPTR descriptor;
+  SPTR descriptor = SPTR_NULL;
   int intentin, texture, device, dll, dllexportmod, enclfunc, end, endlab,
     format, func, gsame, gdesc, hccsym, hollerith, init, isdesc, linenum;
   SPTR link;
@@ -2024,21 +2016,20 @@ read_symbol(void)
       plist, pointer, Private, ptrsafe, pure, pdaln, recursive, ref, refs,
       returnval, routx = 0, save, sdscs1, sdsccontig, contigattr, sdscsafe, seq,
                  shared, startlab, startline, stdcall, decorate, cref,
-                 nomixedstrlen, sym, target, param, thread, task, tqaln, typed,
+                 nomixedstrlen, target, param, thread, task, tqaln, typed,
     uplevel, vararg, Volatile, fromMod, modcmn, elemental;
   SPTR parent;
-  int internref,
-                 Class, denorm, Scope, vtable, iface, vtoff, tbplnk, invobj,
-                 invobjinc, reref, libm, libc, tls, etls;
+  int internref, Class, denorm, Scope, restricted, vtable, iface, vtoff, tbplnk,
+      invobj, invobjinc, reref, libm, libc, tls, etls;
   int reflected, mirrored, create, copyin, resident, acclink, devicecopy,
       devicesd, devcopy;
-  int unlpoly, allocattr, f90pointer, final, finalized, kindparm;
-  int lenparm, isoctype;
+  int unlpoly = 0, allocattr, f90pointer, final, finalized, kindparm;
+  int lenparm, isoctype = 0;
   int inmodproc, cudamodule, datacnst, fwdref;
   int agoto, parref, parsyms, parsymsct, paruplevel, is_interface;
   int typedef_init;
-  int alldefaultinit;
-  int tpalloc, procdummy, procdesc, has_opts;
+  int alldefaultinit = 0;
+  int tpalloc, procdesc, has_opts;
   SPTR assocptr, ptrtarget;
   int prociface;
   ISZ_T address, size;
@@ -2390,6 +2381,7 @@ read_symbol(void)
     fromMod = getbit("frommod");
     modcmn = getbit("modcmn");
     Scope = getval("scope");
+    restricted = getbit("restricted");
     if (cudaflags) {
       device = getbit("device");
       constant = getbit("constant");
@@ -2429,6 +2421,7 @@ read_symbol(void)
     FROMMODP(newsptr, fromMod);
     MODCMNP(newsptr, modcmn);
     SCOPEP(newsptr, Scope);
+    RESTRICTEDP(newsptr, restricted);
 
     CMEMFP(newsptr, member);
     SIZEP(newsptr, size);
@@ -3337,7 +3330,6 @@ read_overlap(void)
 static void
 read_program(void)
 {
-  int progtype;
   if (!checkname("procedure")) {
     fprintf(stderr,
             "ILM file line %d: expecting value for procedure\n"
@@ -3416,7 +3408,7 @@ addsafe(int sptr, int safetype, int val)
 static void
 read_ipainfo(void)
 {
-  int sptr, itype, targettype, targetid, func, smax;
+  int sptr, itype, targettype, targetid, func;
   long stride;
   sptr = getval("info");
   sptr = symbolxref[sptr];
@@ -3500,19 +3492,17 @@ read_ipainfo(void)
 static void
 fix_symbol(void)
 {
-  int s;
   SPTR sptr;
   int i, fval, smax;
   int altname;
   DTYPE dtype;
-  int parsyms, parsymsct, paruplevel;
-  int clen, common, count, dpdsc;
+  int parsyms, paruplevel;
+  int clen, common, dpdsc;
   SPTR desc;
   int enclfunc, inmod, scope;
   SPTR lab, link;
   int midnum, member, nml, paramcount, plist, val, origdum;
   int typedef_init;
-  int func_count;
 
   threadprivate_dtype = DT_NONE;
   tpcount = 0;
@@ -3983,8 +3973,7 @@ fix_symbol(void)
         ;
       CMEMLP(common, member);
       if (IS_THREAD_TP(common)) {
-        char *np;
-        int len, hashid, tptr;
+        int tptr;
         /* mark all members as thread-private */
         for (member = CMEMFG(common); member > NOSYM; member = SYMLKG(member)) {
           THREADP(member, 1);
@@ -5675,7 +5664,7 @@ newinfo(void)
 static int
 findindex(int sptr)
 {
-  int l, h, i, j;
+  int l, h, i;
   l = 0;
   h = ipab.indexavl - 1;
   while (l <= h) {
@@ -6081,7 +6070,7 @@ F90_struct_mbr_nme_conflict(int nme1, int nme2)
 int
 IPA_pointer_safe(int nme)
 {
-  int vnme, sym, n, subnme, nme2;
+  int vnme, sym, n, nme2;
   /* both -x 89 0x20000000 and -x 89 0x100 must be set */
   if (XBIT(89, 0x20000100) != 0x20000100 || XBIT(89, 0x80))
     return 0;
@@ -6479,7 +6468,6 @@ static void
 build_agoto(void)
 {
   extern void exp_build_agoto(int *, int); /* exp_rte.c */
-  int i;
   if (agotosz == 0)
     return;
   exp_build_agoto(agototab, agotomax);
@@ -6507,7 +6495,7 @@ SPTR get_symbol_start(void) { return (SPTR)(oldsymbolcount + 1); }
    and add it to the linked list for later lookup.
  */
 static void
-save_modvar_alias(SPTR sptr, const char *alias_name)
+save_modvar_alias(SPTR sptr, char *alias_name)
 {
   alias_syminfo *new_alias_info;
   if (!alias_name || lookup_modvar_alias(sptr))

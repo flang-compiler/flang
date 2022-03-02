@@ -16,6 +16,14 @@
 #include "universal.h"
 #include <stdio.h>
 
+#define ARGS_NUMBER 2
+#define VECTLEN1 1
+#define NUMI_SIZE 4
+#define NUMU_SIZE 4
+#define POW0 0
+#define POW1 1
+#define POW2 2
+
 /* An index into the symbol table. */
 typedef enum SPTR {
   NME_NULL = -1,
@@ -50,7 +58,7 @@ typedef struct {
   FILE *asmfil;    /* file pointer for output assembly file */
   FILE *stbfil;    /* file pointer for symbols and datatype for llvm compiler */
   int eof_flag;
-  char *ompaccfilename;	/** pointer to the device file name for openmp gpu offload */
+  const char *ompaccfilename;	/** pointer to the device file name for openmp gpu offload */
   FILE *ompaccfile;	/** file pointer for device code */
   SPTR ompoutlinedfunc;
   SPTR currsub;    /* symtab ptr to current subprogram */
@@ -209,6 +217,7 @@ typedef struct {
   int tpcount;
   int tpvalue[TPNVERSION]; /* target processor(s), for unified binary */
   const char *cmdline; /* contains compiler command line */
+  bool qp; /* Enable quad-precision REAL and quad-precision COMPLEX. */
 } FLG;
 
 extern FLG flg;

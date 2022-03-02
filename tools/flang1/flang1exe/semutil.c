@@ -43,8 +43,6 @@
 #define TY_OF(s) (DTYG(TYPE_OF(s)))
 #define PT_OF(s) (DDTG(TYPE_OF(s))) /* pointer to data type */
 
-static void resolve_proc_pointer(SST *);
-
 static int ref_array(SST *, ITEM *);
 static INT clog_to_log(INT);
 static int mkunion(int, int, int);
@@ -239,7 +237,7 @@ chk_scalartyp(SST *stkptr, int dtype, LOGICAL warnflg)
    logical).
  */
 INT
-chk_scalar_inttyp(SST *stkptr, int dtype, char *msg)
+chk_scalar_inttyp(SST *stkptr, int dtype, const char *msg)
 {
   int oldtyp;
 
@@ -256,7 +254,7 @@ chk_scalar_inttyp(SST *stkptr, int dtype, char *msg)
 /** \brief Restrict the expression to be suitable for an array extent.
  */
 INT
-chk_arr_extent(SST *stkptr, char *msg)
+chk_arr_extent(SST *stkptr, const char *msg)
 {
   if (flg.standard)
     return chk_scalar_inttyp(stkptr, astb.bnd.dtype, msg);
@@ -486,11 +484,15 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
       FLANG_FALLTHROUGH;
     case TY_DBLE:
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      break;
+#endif
     case TY_CHAR:
     case TY_NCHAR:
     case TY_STRUCT:
     case TY_DERIVED:
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     default:
       goto type_error;
     }
@@ -520,11 +522,15 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
       FLANG_FALLTHROUGH;
     case TY_DBLE:
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      break;
+#endif
     case TY_CHAR:
     case TY_NCHAR:
     case TY_STRUCT:
     case TY_DERIVED:
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     default:
       goto type_error;
     }
@@ -550,11 +556,15 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
       FLANG_FALLTHROUGH;
     case TY_DBLE:
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      break;
+#endif
     case TY_CHAR:
     case TY_NCHAR:
     case TY_STRUCT:
     case TY_DERIVED:
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     default:
       goto type_error;
     }
@@ -581,15 +591,55 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
       FLANG_FALLTHROUGH;
     case TY_REAL:
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      break;
+#endif
     case TY_CHAR:
     case TY_NCHAR:
     case TY_STRUCT:
     case TY_DERIVED:
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
     default:
       goto type_error;
     }
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    switch (from) {
+    case TY_BLOG:
+    case TY_BINT:
+    case TY_SLOG:
+    case TY_SINT:
+      cngtyp(old, DT_INT);
+      SST_DTYPEP(old, DT_INT);
+      FLANG_FALLTHROUGH;
+    case TY_LOG:
+    case TY_INT:
+    case TY_LOG8:
+    case TY_INT8:
+      break;
+    case TY_DCMPLX:
+      mkexpr1(old);
+      FLANG_FALLTHROUGH;
+    case TY_DBLE:
+      break;
+    case TY_CMPLX:
+      mkexpr1(old);
+      FLANG_FALLTHROUGH;
+    case TY_REAL:
+      break;
+    case TY_CHAR:
+    case TY_NCHAR:
+    case TY_STRUCT:
+    case TY_DERIVED:
+      FLANG_FALLTHROUGH;
+    default:
+      goto type_error;
+    }
+    break;
+#endif
 
   case TY_CMPLX:
     switch (from) {
@@ -601,6 +651,9 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
       SST_DTYPEP(old, DT_INT);
       FLANG_FALLTHROUGH;
     case TY_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+#endif
     case TY_LOG:
     case TY_INT:
     case TY_LOG8:
@@ -624,7 +677,7 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_NCHAR:
     case TY_STRUCT:
     case TY_DERIVED:
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
 
     default:
       goto type_error;
@@ -640,6 +693,9 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
       SST_DTYPEP(old, DT_INT);
       FLANG_FALLTHROUGH;
     case TY_REAL:
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+#endif
     case TY_LOG:
     case TY_INT:
     case TY_LOG8:
@@ -663,7 +719,7 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_NCHAR:
     case TY_STRUCT:
     case TY_DERIVED:
-    /* fall thru ... */
+      FLANG_FALLTHROUGH;
 
     default:
       goto type_error;
@@ -747,12 +803,18 @@ done:
         (from == TY_BINT || from == TY_SINT || from == TY_INT ||
          from == TY_INT8 || from == TY_REAL || from == TY_DCMPLX ||
          from == TY_DBLE || from == TY_CMPLX
+#ifdef TARGET_SUPPORTS_QUADFP
+         || from == TY_QUAD
+#endif
          ))
       goto type_error;
     if ((from == TY_BLOG || from == TY_SLOG || from == TY_LOG ||
          from == TY_LOG8) &&
         (to == TY_BINT || to == TY_SINT || to == TY_INT || to == TY_INT8 ||
          to == TY_REAL || to == TY_DCMPLX || to == TY_DBLE || to == TY_CMPLX
+#ifdef TARGET_SUPPORTS_QUADFP
+         || to == TY_QUAD
+#endif
          ))
       goto type_error;
   }
@@ -890,7 +952,7 @@ cngshape(SST *old, SST *new)
 LOGICAL
 chkshape(SST *old, SST *new, LOGICAL promote)
 {
-  int from, to;
+  int from;
 
   from = SST_DTYPEG(old);
   if (DTY(from) == TY_ARRAY)
@@ -985,7 +1047,6 @@ mkexpr1(SST *stkptr)
   INT num[2];
   int shape;
   extern int dont_issue_assumedsize_error;
-  int psptr, msptr, new_ast;
 
 again:
   switch (SST_IDG(stkptr)) {
@@ -1023,6 +1084,10 @@ again:
       break;
     case TY_DBLE:
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      break;
+#endif
     case TY_CMPLX:
       break;
     case TY_DCMPLX:
@@ -1091,7 +1156,7 @@ again:
       if (sptr == intast_sym[I_N_PES])
         return ref_pd(stkptr, ITEM_END);
 #endif
-    /*  fall thru  */
+      FLANG_FALLTHROUGH;
     case ST_INTRIN:
     case ST_GENERIC:
       if (sem.dinit_data) {
@@ -1413,8 +1478,8 @@ mklvalue(SST *stkptr, int stmt_type)
         else
           setimplicit(sptr);
       }
-      // fall through
       FLANG_FALLTHROUGH;
+
     case ST_PROC: /* Function/intrinsic reference used as an lvalue */
       if (stmt_type == 3) {
         SST_ASTP(stkptr, mk_id(sptr));
@@ -1634,7 +1699,6 @@ mklvalue(SST *stkptr, int stmt_type)
 
         asd = A_ASDG(ast);
         for (i = 0; i < (int)(ASD_NDIM(asd)); ++i) {
-          int ss = ASD_SUBS(asd, i);
           if (A_TYPEG(ASD_SUBS(asd, i)) == A_TRIPLE) {
             subs[i] = A_LBDG(ASD_SUBS(asd, i));
             array_section = TRUE;
@@ -1839,7 +1903,7 @@ link_members(STSK *stsk, int sptr)
 {
   int dtype;
   int sptr1, sptr2, sptr_end;
-  int count, last;
+  int count;
   int member_access;
   int entity_access;
 
@@ -1932,7 +1996,6 @@ mkvarref(SST *stktop, ITEM *list)
 {
   int sptr, dtype, entry;
   int ast;
-  ITEM *list_tmp, *list2;
 
   switch (SST_IDG(stktop)) {
 
@@ -2464,15 +2527,10 @@ ref_object(int sptr)
 LOGICAL
 ast_isparam(int ast)
 {
-  int sptr;
   INT val;
-  int lop, rop;
-  INT lv, rv;
-  int count;
-  int sign, ndim;
+  int ndim;
   int i, asd;
   int argt;
-  LOGICAL is_const = TRUE;
 
   if (ast == 0)
     return FALSE;
@@ -3088,7 +3146,7 @@ ch_substring(SST *stktop, SST *lb_sp, SST *ub_sp)
     }
     cvlen = ub_ast - lb_ast + 1;
     if (cvlen < 1) {
-      char *str = "";
+      const char *str = "";
       cnst_sptr = getstring(str, strlen(str));
       if (DTY(dtype) == TY_NCHAR) {
         dtype = get_type(2, TY_NCHAR, mk_cval(strlen(str), DT_INT4));
@@ -3300,7 +3358,6 @@ assign(SST *newtop, SST *stktop)
 {
   int dtype;
   int shape;
-  int stype;
   int ast;
 
   if (mklvalue(newtop, 1) == 0)
@@ -3601,7 +3658,6 @@ static void
 update_proc_ptr_dtype_from_interface(int func_sptr)
 {
   if (is_procedure_ptr(func_sptr)) {
-    int func_dtype = DTYPEG(func_sptr);
     int paramct, dpdsc, iface_sptr;
     proc_arginfo(func_sptr, &paramct, &dpdsc, &iface_sptr);
     if (iface_sptr > NOSYM) {
@@ -3728,9 +3784,6 @@ valid_assign_pointer_types(SST *newtop, SST *stktop)
 static int
 assign_intrinsic_to_pointer(SST *newtop, SST *stktop)
 {
-  int dtype;
-  int shape;
-  int ast;
   int dest, source;
   int pvar;
 
@@ -3779,7 +3832,6 @@ assign_pointer(SST *newtop, SST *stktop)
   int ast;
   int dest, source, call;
   int pvar;
-  int d1, d2;
 
   ast = 0;
 
@@ -4172,7 +4224,7 @@ inline_contig_check(int src, SPTR src_sptr, SPTR sdsc, int std)
   int flagsast = get_header_member_with_parent(src, sdsc, DESC_HDR_FLAGS);
   int lenast = get_header_member_with_parent(src, sdsc, DESC_HDR_BYTE_LEN);
   int sizeast = size_ast(src_sptr, DDTG(DTYPEG(src_sptr)));
-  int cmp, astnew, seqast, newargt;
+  int cmp, astnew, seqast;
 
   /* Step 1: Add insertion point in AST */
   astnew = mk_stmt(A_CONTINUE, 0);
@@ -4552,7 +4604,7 @@ is_protected(int sptr)
 }
 
 void
-err_protected(int sptr, char *context)
+err_protected(int sptr, const char *context)
 {
   char bf[128];
   sprintf(bf, "%s %s -",
@@ -4808,7 +4860,7 @@ chkopnds(SST *lop, SST *operator, SST *rop)
     } else if (!XBIT(124, 0x40000) && SST_IDG(rop) == S_CONST) {
       int pw, is_int;
       INT conval;
-      INT num[2];
+      INT num[4];
       switch (TY_OF(rop)) {
       case TY_CMPLX:
         conval = SST_CVALG(rop);
@@ -4850,6 +4902,24 @@ chkopnds(SST *lop, SST *operator, SST *rop)
           return;
         }
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QUAD:
+        conval = SST_CVALG(rop);
+        num[0] = CONVAL1G(conval);
+        num[1] = CONVAL2G(conval);
+        num[2] = CONVAL3G(conval);
+        num[3] = CONVAL4G(conval);
+        is_int = xqisint(num, &pw);
+        if ((!flg.ieee || pw == POW1 || pw == POW2) && is_int) {
+          if (TY_OF(lop) < TY_OF(rop))
+            cngtyp(lop, (int)SST_DTYPEG(rop)); /* Normal rule */
+          SST_CVALP(rop, pw);
+          SST_DTYPEP(rop, DT_INT4);
+          SST_ASTP(rop, mk_cval1(pw, DT_INT4));
+          return;
+        }
+        break;
+#endif
       default:
         break;
       }
@@ -4909,7 +4979,7 @@ unop(SST *rslt, SST *operator, SST *rop)
   int rdtype;         /* data type */
   int lbtype;         /* basic data type (INT, LOG, etc) */
   int opc;            /* operation code */
-  int dltype, drtype; /* data type */
+  int drtype;         /* data type */
 
   opc = SST_OPTYPEG(operator);
   if (opc != OP_ADD && opc != OP_SUB) {
@@ -4955,12 +5025,11 @@ binop(SST *rslt, SST *lop, SST *operator, SST *rop)
 
   char *carea; /* temporary area for concatenation */
   int count, condition;
-  INT term, conval;
+  INT conval;
   LOGICAL is_array;
-  ADSC *ad, *ad1;
-  int i, numdim;
+  ADSC *ad1;
+  int numdim;
   INT val1[2], val2[2], res[2], val[4];
-  int c;
   int cvlen;
 
   /*
@@ -5526,7 +5595,7 @@ mod_type(int dtype, int ty, int kind, int len, int propagated, int sptr)
 
 /** \brief Return the printable representation of a semantic stack entry
  */
-char *
+const char *
 prtsst(SST *stkptr)
 {
   static char symbuf[132];
@@ -5691,7 +5760,6 @@ tempify_ast(int src)
 {
   int argtyp;
   int tmpsym;
-  int assn;
   int ast;
 
   argtyp = A_DTYPEG(src);
@@ -5705,8 +5773,7 @@ tempify_ast(int src)
 static void
 add_taskloopreg(DOINFO *doinfo)
 {
-  int ast, savesc;
-  int lb, ub, st;
+  int ast;
 
   ast = mk_stmt(A_MP_TASKLOOPREG, 0);
   A_M1P(ast, doinfo->init_expr);
@@ -5718,7 +5785,7 @@ add_taskloopreg(DOINFO *doinfo)
 int
 do_parbegin(DOINFO *doinfo)
 {
-  int iv, di_id;
+  int iv;
   int ast, dovar;
 
   iv = doinfo->index_var;
@@ -5786,14 +5853,6 @@ do_parbegin(DOINFO *doinfo)
   return ast;
 }
 
-static struct {
-  int upper;
-  int lower;
-  int tmplower; /* different if lower is lastprivate */
-  int stride;
-  //  struct mp_for_init_info MPF;
-} distlp_info;
-
 void
 save_distloop_info(int lower, int upper, int stride)
 {
@@ -5807,7 +5866,7 @@ restore_distloop_info()
 int
 do_simdbegin(DOINFO *doinfo)
 {
-  int iv, di_id;
+  int iv;
   int ast, dovar;
 
   iv = doinfo->index_var;
@@ -5857,8 +5916,8 @@ static struct {
   int tmp_var;
 } coll_st;
 
-static int get_collapse_temp(int, char *);
-static int collapse_expr(int, int, char *);
+static int get_collapse_temp(int, const char *);
+static int collapse_expr(int, int, const char *);
 static void collapse_index(DOINFO *);
 
 /** \brief Begin processing loop collapse.
@@ -6060,7 +6119,6 @@ collapse_add(DOINFO *doinfo)
 
   if (doinfo->collapse == 1) {
     DOINFO *dinf;
-    int t1, t2;
     int sv;
     int i;
     /*
@@ -6115,7 +6173,7 @@ collapse_add(DOINFO *doinfo)
 }
 
 static int
-get_collapse_temp(int dtype, char *pfx)
+get_collapse_temp(int dtype, const char *pfx)
 {
   int sptr;
   sptr = getccssym_sc(pfx, coll_st.itemp, ST_VAR, sem.sc);
@@ -6124,7 +6182,7 @@ get_collapse_temp(int dtype, char *pfx)
 }
 
 static int
-collapse_expr(int ast, int dtype, char *pfx)
+collapse_expr(int ast, int dtype, const char *pfx)
 {
   int sptr, dest_ast;
   if (A_ALIASG(ast))
@@ -6483,7 +6541,6 @@ mkmember(int structd, int base, int nmx)
 {
   int sptr; /* next member of structure to search */
   int dtype;
-  int tmp;
   for (sptr = DTY(structd + 1); sptr > NOSYM; sptr = SYMLKG(sptr)) {
     dtype = DTYPEG(sptr);
     /*
@@ -6590,13 +6647,13 @@ _xtok(INT conval1, BIGINT64 count, int dtype)
   INT conval;
   INT one;
   int isneg;
-  IEEE128 qtemp, qresult, qnum1;
-  IEEE128 qreal1, qrealrs, qimag1, qimagrs;
-  IEEE128 qrealpv, qtemp1;
+#ifdef TARGET_SUPPORTS_QUADFP
+  IEEE128 qnum1, qresult;
+#endif
   DBLE dtemp, dresult, num1;
   DBLE dreal1, drealrs, dimag1, dimagrs;
   DBLE drealpv, dtemp1;
-  SNGL temp, result;
+  SNGL temp;
   SNGL real1, realrs, imag1, imagrs;
   SNGL realpv, temp1;
   DBLINT64 inum1, ires;
@@ -6702,6 +6759,22 @@ _xtok(INT conval1, BIGINT64 count, int dtype)
     num1[1] = imagrs;
     conval = getcon(num1, DT_CMPLX8);
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    qnum1[0] = CONVAL1G(conval1);
+    qnum1[1] = CONVAL2G(conval1);
+    qnum1[2] = CONVAL3G(conval1);
+    qnum1[3] = CONVAL4G(conval1);
+    qresult[0] = CONVAL1G(stb.quad1);
+    qresult[1] = CONVAL2G(stb.quad1);
+    qresult[2] = CONVAL3G(stb.quad1);
+    qresult[3] = CONVAL4G(stb.quad1);
+    while (count--)
+      xqmul(qnum1, qresult, qresult);
+    conval = getcon(qresult, DT_QUAD);
+    break;
+#endif
 
   case TY_DCMPLX:
     dreal1[0] = CONVAL1G(CONVAL1G(conval1));

@@ -326,6 +326,7 @@ verify_ili(int ilix, VERIFY_LEVEL level)
   end_walk(level);
 }
 
+#ifdef FLANG2_VERIFY_UNUSED
 /** Check if iltx is store of first result of a pair of results returned by a
    JSR.  This is a helper for verify_ilt, and assumes that iltx is index of
    ILT of type ILTY_STORE and ili_throw_label(iltx)!=0. */
@@ -352,6 +353,7 @@ is_first_store_of_pair(int iltx1)
   }
   return false;
 }
+#endif
 
 void
 verify_ilt(int iltx, VERIFY_LEVEL level)

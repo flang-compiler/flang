@@ -61,7 +61,6 @@ sym_init(void)
   INT tmp[2];
   DTYPE default_int;
   DTYPE default_real;
-  DTYPE dtype;
   extern void chkstruct();
 
   /* allocate symbol table and name table space:  */
@@ -346,7 +345,11 @@ getcon(INT *value, DTYPE dtype)
   if (hashval < 0)
     hashval = -hashval;
   for (sptr = stb.hashtb[hashval]; sptr != 0; sptr = HASHLKG(sptr)) {
-    if (DTY(dtype) == TY_128) {
+    if (DTY(dtype) == TY_128
+#ifdef TARGET_SUPPORTS_QUADFP
+        || DTY(dtype) == TY_QUAD
+#endif
+       ) {
       if (DTYPEG(sptr) != dtype || STYPEG(sptr) != ST_CONST ||
           CONVAL1G(sptr) != value[0] || CONVAL2G(sptr) != value[1] ||
           CONVAL3G(sptr) != value[2] || CONVAL4G(sptr) != value[3])
@@ -369,7 +372,11 @@ getcon(INT *value, DTYPE dtype)
   ADDSYM(sptr, hashval);
   CONVAL1P(sptr, value[0]);
   CONVAL2P(sptr, value[1]);
-  if (DTY(dtype) == TY_128) {
+  if (DTY(dtype) == TY_128
+#ifdef TARGET_SUPPORTS_QUADFP
+      || DTY(dtype) == TY_QUAD
+#endif
+     ) {
     CONVAL3P(sptr, value[2]);
     CONVAL4P(sptr, value[3]);
   }
@@ -1594,7 +1601,7 @@ set_ccflags(int sptr, SYMTYPE stype)
 }
 
 SPTR
-getccsym(int letter, int n, SYMTYPE stype)
+getccsym(char letter, int n, SYMTYPE stype)
 {
   char name[16];
   SPTR sptr;
@@ -1606,7 +1613,7 @@ getccsym(int letter, int n, SYMTYPE stype)
 }
 
 SPTR
-getnewccsym(int letter, int n, SYMTYPE stype)
+getnewccsym(char letter, int n, SYMTYPE stype)
 {
   char name[32];
   SPTR sptr;
@@ -1619,7 +1626,7 @@ getnewccsym(int letter, int n, SYMTYPE stype)
 }
 
 SPTR
-getccsym_sc(int letter, int n, SYMTYPE stype, SC_KIND sc)
+getccsym_sc(char letter, int n, SYMTYPE stype, SC_KIND sc)
 {
   SPTR sptr;
 
@@ -1638,7 +1645,7 @@ getccsym_sc(int letter, int n, SYMTYPE stype, SC_KIND sc)
 }
 
 SPTR
-getcctemp_sc(char *name, SYMTYPE stype, SC_KIND sc)
+getcctemp_sc(const char *name, SYMTYPE stype, SC_KIND sc)
 {
   SPTR sym;
 

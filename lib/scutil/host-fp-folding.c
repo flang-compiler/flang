@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN64
+#if defined(_WIN64) && !defined(_M_ARM64)
 #include <mmintrin.h>
 #endif
 

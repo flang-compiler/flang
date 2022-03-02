@@ -88,11 +88,20 @@ static int add_gargl_closure(SPTR sdsc);
 
 #define mk_prototype mk_prototype_llvm
 
+#ifdef TARGET_SUPPORTS_QUADFP
+#define IS_INTERNAL_PROC_CALL(opc)                                  \
+  (opc == IM_PCALLA || opc == IM_PCHFUNCA || opc == IM_PNCHFUNCA || \
+   opc == IM_PKFUNCA || opc == IM_PLFUNCA || opc == IM_PIFUNCA ||   \
+   opc == IM_PRFUNCA || opc == IM_PDFUNCA || opc == IM_PCFUNCA ||   \
+   opc == IM_PQFUNCA || opc == IM_PCDFUNCA || \
+   opc == IM_PPFUNCA)
+#else
 #define IS_INTERNAL_PROC_CALL(opc)                                  \
   (opc == IM_PCALLA || opc == IM_PCHFUNCA || opc == IM_PNCHFUNCA || \
    opc == IM_PKFUNCA || opc == IM_PLFUNCA || opc == IM_PIFUNCA ||   \
    opc == IM_PRFUNCA || opc == IM_PDFUNCA || opc == IM_PCFUNCA ||   \
    opc == IM_PCDFUNCA || opc == IM_PPFUNCA)
+#endif
 
 static SPTR exp_call_sym; /**< sptr subprogram being called */
 static SPTR fptr_iface;   /**< sptr of function pointer's interface */
@@ -270,7 +279,6 @@ static void
 create_llvm_display_temp(void)
 {
   DTYPE dtype;
-  int size;
   SPTR display_temp, asym;
 
   if (!gbl.internal)
@@ -320,9 +328,6 @@ create_llvm_display_temp(void)
 void
 exp_header(SPTR sym)
 {
-  int tmp;
-  SPTR sptr;
-
   if (sym == SPTR_NULL) {
     smove_flag = 0;
     mscall_flag = 0;
@@ -530,7 +535,6 @@ pp_entries(void)
   int nargs;
   int *dpdscp;
   int sym;
-  int dtype;
   int curpos;
   int pos;
   int lenpos;
@@ -709,7 +713,7 @@ pp_entries(void)
         if (DTY(dt) == TY_DBLE || DTY(dt) == TY_INT8 || DTY(dt) == TY_LOG8 ||
             DTY(dt) == TY_CMPLX)
           total_words++;
-        else if (DTY(dt) == TY_DCMPLX)
+        else if (DTY(dt) == TY_DCMPLX || DTY(dt) == TY_QUAD)
           total_words += 3;
         else if (DTY(dt) == TY_STRUCT && (size_of(DTYPEG(osym)) > 4))
           total_words += size_of(DTYPEG(osym)) / 4 - 1;
@@ -731,7 +735,7 @@ pp_entries(void)
      * for the first time are moved up to follow the arguments.
      */
     while (savlenpos < lenpos) {
-      int lsym, osym;
+      int osym;
 
       savlenpos++;
       curpos++;
@@ -1009,7 +1013,7 @@ pp_entries_mixedstrlen(void)
         if (DTY(dt) == TY_DBLE || DTY(dt) == TY_INT8 || DTY(dt) == TY_LOG8 ||
             DTY(dt) == TY_CMPLX)
           total_words++;
-        else if (DTY(dt) == TY_DCMPLX)
+        else if (DTY(dt) == TY_DCMPLX || DTY(dt) == TY_QUAD)
           total_words += 3;
         else if (DTY(dt) == TY_STRUCT && (size_of(DTYPEG(osym)) > 4))
           total_words += size_of(DTYPEG(osym)) / 4 - 1;
@@ -1126,9 +1130,8 @@ exp_type_bound_proc_call(int arg, SPTR descno, int vtoff, int arglnk)
 {
 
   SPTR sym;
-  int ili, acon, con;
+  int ili;
   int type_offset, vft_offset, func_offset, sz;
-  INT v[2];
   int jsra_mscall_flag;
 
   sym = descno;
@@ -1441,12 +1444,9 @@ process_end_of_list(SPTR func, SPTR osym, int *nlens, DTYPE argdtype)
 static void
 pp_params(SPTR func)
 {
-  int tmp;
-  int op1;
   SPTR argsym;
   int asym;
   DTYPE argdtype;
-  int al;
   int nargs;
   int *dpdscp;
   int nlens;
@@ -1584,7 +1584,7 @@ scan_args:
       if (argdtype == DT_DBLE || argdtype == DT_INT8 || argdtype == DT_LOG8 ||
           argdtype == DT_CMPLX)
         pf->mem_off += 8;
-      else if (argdtype == DT_DCMPLX)
+      else if (argdtype == DT_DCMPLX || argdtype == DT_QUAD)
         pf->mem_off += 16;
       else if (DTY(argdtype) == TY_STRUCT)
         pf->mem_off += size_of(argdtype);
@@ -1666,12 +1666,9 @@ scan_args:
 static void
 pp_params_mixedstrlen(int func)
 {
-  int tmp;
-  int op1;
   SPTR argsym;
   int asym;
   DTYPE argdtype;
-  int al;
   int nargs;
   int *dpdscp;
   int nlens;
@@ -1802,7 +1799,7 @@ scan_args:
       if (argdtype == DT_DBLE || argdtype == DT_INT8 || argdtype == DT_LOG8 ||
           argdtype == DT_CMPLX)
         pf->mem_off += 8;
-      else if (argdtype == DT_DCMPLX)
+      else if (argdtype == DT_DCMPLX || argdtype == DT_QUAD)
         pf->mem_off += 16;
       else if (DTY(argdtype) == TY_STRUCT)
         pf->mem_off += size_of(argdtype);
@@ -1902,13 +1899,23 @@ ldst_size(DTYPE dtype, ILI_OP *ldo, ILI_OP *sto, int *siz)
     *ldo = IL_LDKR;
     *sto = IL_STKR;
     break;
+#ifndef TARGET_SUPPORTS_QUADFP
   case TY_QUAD:
+#endif
   case TY_DBLE:
   case TY_DCMPLX:
     *siz = MSZ_F8;
     *ldo = IL_LDDP;
     *sto = IL_STDP;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+
+    *siz = MSZ_F16;
+    *ldo = IL_LDQP;
+    *sto = IL_STQP;
+    break;
+#endif
   case TY_PTR:
     *siz = MSZ_WORD;
     *ldo = IL_LDA;
@@ -2035,9 +2042,7 @@ cp_byval_mem_arg(SPTR argsptr)
 static void
 cp_memarg(int sym, INT off, int dtype)
 {
-  int ili;
   int asym;
-  int msz;
 
   HOMEDP(sym, 1);
   MEMARGP(sym, 0);
@@ -2107,8 +2112,6 @@ void
 exp_end(ILM *ilmp, int curilm, bool is_func)
 {
   int tmp;
-  int op1;
-  int i;
   int func;
   int sym;
   finfo_t *pf;
@@ -2341,7 +2344,6 @@ static void
 gen_bindC_retval(finfo_t *fp)
 {
   const SPTR fval = fp->fval;
-  const int fvaldtyp = DTY(DTYPEG(fval));
   const int retv = ad_acon(fval, 0);
   const int nme = addnme(NT_VAR, fval, 0, 0);
   int ilix = retv;
@@ -2408,7 +2410,7 @@ gen_funcret(finfo_t *fp)
 {
   int addr;
   int nme;
-  int ili1, ili2;
+  int ili1;
   int move;
   SPTR fval = fp->fval;
   int fvaltyp = DTY(DTYPEG(fval));
@@ -2449,6 +2451,12 @@ gen_funcret(finfo_t *fp)
     ili1 = ad3ili(IL_LDDP, addr, nme, MSZ_F8);
     move = ad2ili(IL_MVDP, ili1, FR_RETVAL);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    ili1 = ad3ili(IL_LDQP, addr, nme, MSZ_F16);
+    move = ad2ili(IL_MVQ, ili1, FR_RETVAL);
+    break;
+#endif
   case TY_BINT:
   case TY_BLOG:
     ili1 = ad3ili(IL_LD, addr, nme, MSZ_SBYTE);
@@ -2496,7 +2504,6 @@ void
 exp_cgoto(ILM *ilmp, int curilm)
 {
   INT i;
-  int ilix;
   INT n; /* # of cases */
   INT cval;
 
@@ -2796,9 +2803,11 @@ static void from_addr_and_length(STRDESC *s, ainfo_t *ainfo_ptr);
 static void arg_ir(int, ainfo_t *);
 static void arg_kr(int, ainfo_t *);
 static void arg_ar(int, ainfo_t *, int);
-static void arg_hp(int, ainfo_t *);
 static void arg_sp(int, ainfo_t *);
 static void arg_dp(int, ainfo_t *);
+#ifdef TARGET_SUPPORTS_QUADFP
+static void arg_qp(int, ainfo_t *);
+#endif
 static void arg_charlen(int, ainfo_t *);
 static void arg_length(STRDESC *, ainfo_t *);
 
@@ -2876,6 +2885,11 @@ add_arg_ili(int ilix, int nme, int dtype)
   case ILIA_DP:
     add_to_args(IL_ARGDP, ilix);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case ILIA_QP:
+    add_to_args(IL_ARGQP, ilix);
+    break;
+#endif
   case ILIA_AR:
     add_to_args(IL_ARGAR, ilix);
     break;
@@ -2911,6 +2925,11 @@ put_arg_ili(int i, ainfo_t *ainfo)
   case IL_ARGDP:
     arg_dp(arg_ili[i].ili_arg, ainfo);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_ARGQP:
+    arg_qp(arg_ili[i].ili_arg, ainfo);
+    break;
+#endif
   default:
     interr("exp_call: ili arg type not cased", arg_ili[i].ili_arg, ERR_Severe);
     break;
@@ -3262,7 +3281,6 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   DTYPE dtype;
   int val_flag;
   int arglnk;
-  int retval;
   int func_addr;
   int vtoff;
   int descno = 0;
@@ -3293,6 +3311,9 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_IFUNC:
   case IM_RFUNC:
   case IM_DFUNC:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IM_QFUNC:
+#endif
   case IM_CFUNC:
   case IM_CDFUNC:
   case IM_PFUNC:
@@ -3315,6 +3336,9 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_PRFUNCA:
   case IM_DFUNCA:
   case IM_PDFUNCA:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IM_PQFUNCA:
+#endif
   case IM_CFUNCA:
   case IM_PCFUNCA:
   case IM_CDFUNCA:
@@ -3370,6 +3394,11 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_DVFUNCA:
     descno = 5;
     goto vcalla_common;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IM_QVFUNCA:
+    descno = 5;
+    goto vcalla_common;
+#endif
   case IM_CVFUNCA:
     descno = 5;
     goto vcalla_common;
@@ -3554,6 +3583,9 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_LVFUNCA:
   case IM_IVFUNCA:
   case IM_RVFUNCA:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IM_QVFUNCA:
+#endif
   case IM_DVFUNCA:
   case IM_PVFUNCA:
     i = 6;
@@ -3596,6 +3628,9 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_PIFUNCA:
   case IM_PRFUNCA:
   case IM_PDFUNCA:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IM_PQFUNCA:
+#endif
   case IM_PLFUNCA:
   case IM_PPFUNCA:
   case IM_PKFUNCA:
@@ -3879,6 +3914,12 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
         add_to_args(IL_ARGDP, argili);
         dtype = DT_DBLE;
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case ILIA_QP:
+        add_to_args(IL_ARGQP, argili);
+        dtype = DT_QUAD;
+        break;
+#endif
       case ILIA_AR:
         add_to_args(IL_ARGAR, argili);
         dtype = DT_ADDR;
@@ -4033,6 +4074,11 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
           case ILIA_DP:
             ilix = ad4ili(IL_STDP, ilix, argili, basenm, MSZ_F8);
             break;
+#ifdef TARGET_SUPPORTS_QUADFP
+          case ILIA_QP:
+            ilix = ad4ili(IL_STQP, ilix, argili, basenm, MSZ_F16);
+            break;
+#endif
           case ILIA_CS:
             ilix = ad4ili(IL_STSCMPLX, ilix, argili, basenm, MSZ_F8);
             break;
@@ -4329,6 +4375,14 @@ exp_call(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_DVFUNCA:
     ILI_OF(curilm) = ad2ili(IL_DFRDP, ililnk, FR_RETVAL);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IM_QFUNC:
+  case IM_QFUNCA:
+  case IM_PQFUNCA:
+  case IM_QVFUNCA:
+    ILI_OF(curilm) = ad2ili(IL_DFRQP, ililnk, FR_RETVAL);
+    break;
+#endif
   case IM_CFUNC:
   case IM_CFUNCA:
   case IM_PCFUNCA:
@@ -4426,12 +4480,9 @@ exp_qjsr(const char *ext, DTYPE res_dtype, ILM *ilmp, int curilm)
 {
   int nargs;
   int ililnk;  /* ili link */
-  int argili;  /* ili for arg */
   int ilix;    /* ili pointer */
   ILM *ilmlnk; /* current ILM operand */
   int ilm1;
-  int sym;    /* symbol pointers */
-  int basenm; /* base nm entry */
   int i;      /* temps */
   static ainfo_t ainfo;
   SPTR res; /* sptr of function result temporary */
@@ -4558,12 +4609,9 @@ exp_zqjsr(char *ext, DTYPE res_dtype, ILM *ilmp, int curilm)
 {
   int nargs;
   int ililnk;  /* ili link */
-  int argili;  /* ili for arg */
   int ilix;    /* ili pointer */
   ILM *ilmlnk; /* current ILM operand */
   int ilm1;
-  int sym;    /* symbol pointers */
-  int basenm; /* base nm entry */
   int i;      /* temps */
   static ainfo_t ainfo;
   SPTR res; /* sptr of function result temporary */
@@ -4704,6 +4752,13 @@ arg_dp(int ilix, ainfo_t *ap)
   ap->lnk = ad2ili(IL_ARGDP, ilix, ap->lnk);
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
+static void arg_qp(int ilix, ainfo_t *ap)
+{
+  ap->lnk = ad2ili(IL_ARGQP, ilix, ap->lnk);
+}
+#endif
+
 static void
 arg_charlen(int ilix, ainfo_t *ap)
 {
@@ -4736,9 +4791,6 @@ expand_smove(int destilm, int srcilm, DTYPE dtype)
   int src_nme;   /* names entry				*/
   int dest_addr; /* pointer to ili for destination addr	*/
   int src_addr;  /* pointer to ili for source addr	*/
-  UINT n;        /* number of bytes left to copy		*/
-  int i;
-  INT offset; /* number of bytes from begin addr 	*/
 
   dest_nme = NME_OF(destilm);
   src_nme = NME_OF(srcilm);
@@ -4883,8 +4935,7 @@ void
 exp_szero(ILM *ilmp, int curilm, int to, int from, int dtype)
 {
   int nme;   /* names entry				*/
-  int store, /* store ili generated			*/
-      addr,  /* address ili where value stored	*/
+  int addr,  /* address ili where value stored	*/
       expr,  /* ili of value being stored		*/
       sym;   /* ST item				*/
   int tmp;
@@ -5199,10 +5250,10 @@ exp_strx(int opc, STRDESC *str1, STRDESC *str2)
 {
   int sym;
   int ili1;
-  char *str_index_nm;
-  char *nstr_index_nm;
-  char *strcmp_nm;
-  char *nstrcmp_nm;
+  const char *str_index_nm;
+  const char *nstr_index_nm;
+  const char *strcmp_nm;
+  const char *nstrcmp_nm;
   const char *ftn_str_kindex_nm;
 
   if (CHARLEN_64BIT) {
@@ -5259,12 +5310,11 @@ static int
 exp_strcpy(STRDESC *str1, STRDESC *str2)
 {
   int sym;
-  STRDESC *s;
   int n;
   int ili1;
   static ainfo_t ainfo;
-  char *str_copy_nm;
-  char *nstr_copy_nm;
+  const char *str_copy_nm;
+  const char *nstr_copy_nm;
   if (CHARLEN_64BIT) {
     str_copy_nm = mkRteRtnNm(RTE_str_copy_klen);
     nstr_copy_nm = mkRteRtnNm(RTE_nstr_copy_klen);
@@ -5621,10 +5671,9 @@ allochartmp(int lenili)
 {
   SPTR sym;
   int sptr1;
-  int dtype;
   int ili;
   ainfo_t ainfo;
-  char *str_malloc_nm;
+  const char *str_malloc_nm;
   if (CHARLEN_64BIT) {
     str_malloc_nm = mkRteRtnNm(RTE_str_malloc_klen);
   } else {
@@ -5637,7 +5686,6 @@ allochartmp(int lenili)
      * will be initialized in each entry and the list of allocated areas
      * will be freed at the end of each subprogram.
      */
-    int ili;
     allocharhdr = getccsym('T', expb.chartmps++, ST_VAR);
     SCP(allocharhdr, SC_LOCAL);
     DTYPEP(allocharhdr, DT_ADDR);
@@ -5801,9 +5849,7 @@ storechartmp(STRDESC *str, int mxlenili, int clenili)
 int
 charlen(SPTR sym)
 {
-  int iliptr;
   SPTR lensym;
-  int nme;
   int addr;
 
   lensym = CLENG(sym);

@@ -105,6 +105,8 @@ typedef enum MTH_FN {
 #define MTH_I_KNINT "__mth_i_knint"
 #define MTH_I_IDNINT "__mth_i_idnint"
 #define MTH_I_KIDNINT "__mth_i_kidnnt"
+#define MTH_I_IQNINT "__mth_i_iqnint"
+#define MTH_I_KIQNNT "__mth_i_kiqnint"
 
 #define MTH_I_FLOATU "__mth_i_floatu"
 #define MTH_I_DFLOATU "__mth_i_dfloatu"
@@ -129,6 +131,7 @@ typedef enum MTH_FN {
 #define MTH_I_DSIGN "__mth_i_dsign"
 #define MTH_I_EXP "__mth_i_exp"
 #define MTH_I_DEXP "__mth_i_dexp"
+#define MTH_I_QEXP "__mth_i_qexp"
 #define MTH_I_ALOG "__mth_i_alog"
 #define MTH_I_DLOG "__mth_i_dlog"
 #define MTH_I_ALOG10 "__mth_i_alog10"
@@ -147,6 +150,10 @@ typedef enum MTH_FN {
 #define MTH_I_DCEIL "__mth_i_dceil"
 #define MTH_I_AINT "__mth_i_aint"
 #define MTH_I_DINT "__mth_i_dint"
+#define MTH_I_QINT "__mth_i_qint"
+#define MTH_I_QANINT "__mth_i_qanint"
+#define MTH_I_DQANINT "__mth_i_dqanint"
+#define MTH_I_AQANINT "__mth_i_aqanint"
 
 #define MTH_I_JN "__mth_i_bessel_jn"
 #define MTH_I_DJN "__mth_i_dbessel_jn"

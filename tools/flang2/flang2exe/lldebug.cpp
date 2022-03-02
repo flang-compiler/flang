@@ -169,10 +169,12 @@ struct LL_DebugInfo {
 };
 
 static LL_MDRef lldbg_emit_modified_type(LL_DebugInfo *, DTYPE, SPTR, int);
+#ifdef FLANG_DEBUGINFO_UNUSED
 static LL_MDRef lldbg_create_module_flag_mdnode(LL_DebugInfo *db, int severity,
-                                                char *name, int value);
+                                                const char *name, int value);
+#endif
 static LL_MDRef lldbg_create_outlined_parameters_node(LL_DebugInfo *db);
-static LL_MDRef lldbg_create_file_mdnode(LL_DebugInfo *db, char *filename,
+static LL_MDRef lldbg_create_file_mdnode(LL_DebugInfo *db, const char *filename,
                                          char *sourcedir, LL_MDRef context,
                                          int index);
 static LL_MDRef lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr,
@@ -229,6 +231,12 @@ lldbg_alloc(INT size)
   assert(p, "lldbg_alloc(), out of memory", 0, ERR_Fatal);
   memset(p, 0, size);
   return p;
+}
+
+int
+lldbg_get_di_routine_idx(const LL_DebugInfo *db)
+{
+  return db->routine_idx;
 }
 
 static ISZ_T
@@ -290,9 +298,10 @@ get_filedesc_mdnode(LL_DebugInfo *db, int index)
 }
 
 static LL_MDRef
-lldbg_create_compile_unit_mdnode(LL_DebugInfo *db, int lang_tag, char *filename,
-                                 char *sourcedir, char *producer, int main,
-                                 bool optimized, const char *compflags, int vruntime,
+lldbg_create_compile_unit_mdnode(LL_DebugInfo *db, int lang_tag,
+                                 const char *filename, char *sourcedir,
+                                 char *producer, int main, bool optimized,
+                                 const char *compflags, int vruntime,
                                  LL_MDRef *enum_types_list,
                                  LL_MDRef *retained_types_list,
                                  LL_MDRef *subprograms_list, LL_MDRef *gv_list,
@@ -409,8 +418,8 @@ lldbg_create_module_mdnode(LL_DebugInfo *db, LL_MDRef _, char *name,
 }
 
 static LL_MDRef
-lldbg_create_file_mdnode(LL_DebugInfo *db, char *filename, char *sourcedir,
-                         LL_MDRef context, int index)
+lldbg_create_file_mdnode(LL_DebugInfo *db, const char *filename,
+                         char *sourcedir, LL_MDRef context, int index)
 {
   LLMD_Builder mdb = llmd_init(db->module);
   LL_MDRef cur_mdnode;
@@ -507,7 +516,8 @@ lldbg_create_subprogram_mdnode(
           ll_get_md_node(db->module, LL_PlainMDNode, &lv_list_mdnode, 1));
     else
       llmd_add_md(mdb, lv_list_mdnode);
-  }
+  } else if (ll_feature_debug_info_ver13(&db->module->ir))
+    llmd_add_md(mdb, lv_list_mdnode);
   llmd_add_i32(mdb, scope);
 
   /* Request a distinct mdnode so that it can be updated with a function pointer
@@ -930,11 +940,9 @@ lldbg_create_aggregate_members_type(LL_DebugInfo *db, SPTR first, int findex,
   SPTR element, member;
   DTYPE elem_dtype;
   hash_data_t val;
-  int skip_elem_num = 0;
   bool is_desc_member = false;
   bool contains_allocatable = false;
   SPTR base_sptr = SPTR_NULL;
-  char* prefix = NULL;
 
   if (!ll_feature_debug_info_pre34(&db->module->ir))
     file_mdnode = get_filedesc_mdnode(db, findex);
@@ -1828,13 +1836,39 @@ lldbg_emit_file(LL_DebugInfo *db, int findex)
   return get_file_mdnode(db, findex);
 }
 
+static LOGICAL
+is_procedure_dtype(DTYPE dtype) {
+  return dtype > DT_NONE && DTY(dtype) == TY_PROC;
+}
+
+static LOGICAL
+is_procedure_ptr_dtype(DTYPE dtype) {
+  return ((dtype > DT_NONE) && (DTY(dtype) == TY_PTR) &&
+          is_procedure_dtype(DTySeqTyElement(dtype)));
+}
+
+LOGICAL
+is_procedure_ptr(SPTR sptr) {
+  if (sptr > NOSYM && (POINTERG(sptr))) {
+    switch (STYPEG(sptr)) {
+    case ST_PROC:
+    case ST_ENTRY:
+      /* subprograms aren't considered to be procedure pointers */
+      break;
+    default:
+      return is_procedure_ptr_dtype(DTYPEG(sptr));
+    }
+  }
+  return FALSE;
+}
+
 static LL_MDRef
 lldbg_emit_parameter_list(LL_DebugInfo *db, DTYPE dtype, DTYPE ret_dtype,
                           SPTR sptr, int findex)
 {
   LLMD_Builder mdb = llmd_init(db->module);
   LL_MDRef parameter_mdnode, retval_mdnode;
-  int params, param_dtype, num_args, param_sptr;
+  int num_args;
   DTYPE call_dtype = dtype;
   int dpdsc, paramct, i;
   SPTR fval;
@@ -1856,8 +1890,10 @@ lldbg_emit_parameter_list(LL_DebugInfo *db, DTYPE dtype, DTYPE ret_dtype,
           lldbg_emit_modified_type(db, ret_dtype, SPTR_NULL, findex);
     else
 #endif
+      /* Reference is used in case of non basic type */
       retval_mdnode =
-          lldbg_emit_type(db, ret_dtype, SPTR_NULL, findex, true, false, true);
+          lldbg_emit_type(db, ret_dtype, SPTR_NULL, findex,
+                          !DT_ISBASIC(ret_dtype), false, true);
   } else {
     if (ll_feature_debug_info_pre34(&db->module->ir))
       retval_mdnode = ll_get_md_null();
@@ -2381,9 +2417,6 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
   is_def = DEFDG(sptr);
   is_def |= (STYPEG(sptr) == ST_ENTRY);
   if (INMODULEG(sptr) && ll_feature_create_dimodule(&db->module->ir)) {
-    char *modNm = SYMNAME(INMODULEG(sptr));
-    LL_MDRef fileMD = get_filedesc_mdnode(db, findex);
-    LL_MDRef unused = ll_get_md_null();
     context_mdnode = lldbg_emit_module_mdnode(db, INMODULEG(sptr));
   }
   scope = ll_feature_debug_info_pre34(&db->module->ir)
@@ -2506,6 +2539,7 @@ void
 lldbg_emit_line(LL_DebugInfo *db, int lineno)
 {
   static int last_line = 0;
+  static LL_MDRef last_subprogram_mdnode = 0U;
   int idx = 0;
   int startline, endline;
   int i, j;
@@ -2518,7 +2552,9 @@ lldbg_emit_line(LL_DebugInfo *db, int lineno)
     db->cur_line_mdnode = ll_get_md_null();
     return;
   }
-  if (last_line != lineno) {
+  if ((last_line != lineno) ||
+      ((!LL_MDREF_IS_NULL(db->cur_subprogram_mdnode)) &&
+       (db->cur_subprogram_mdnode != last_subprogram_mdnode))) {
     j = db->blk_idx - 1;
     while (j >= 0) {
       if (db->blk_tab[j].keep) {
@@ -2562,6 +2598,7 @@ lldbg_emit_line(LL_DebugInfo *db, int lineno)
       db->cur_subprogram_line_mdnode = db->cur_line_mdnode;
 
     last_line = lineno;
+    last_subprogram_mdnode = db->cur_subprogram_mdnode;
   }
 }
 
@@ -2665,7 +2702,7 @@ lldbg_emit_accel_cmblk_type(LL_DebugInfo *db, int cmblk, int findex)
   LL_MDRef cu_mdnode, file_mdnode, type_mdnode;
   LL_MDRef members_mdnode;
   ISZ_T sz;
-  DBLINT64 align, offset;
+  DBLINT64 align;
 
   cu_mdnode = lldbg_emit_compile_unit(db);
   file_mdnode = lldbg_emit_file(db, findex);
@@ -2847,12 +2884,10 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
   LL_MDRef elem_type_mdnode;
   LL_MDRef members_mdnode;
   LL_MDRef parameters_mdnode;
-  OPERAND *cur_op;
-  DBLINT64 align, offset, low, high;
+  DBLINT64 align, offset;
   ISZ_T sz, lb, ub, dim_ele;
   SPTR element;
   DTYPE elem_dtype;
-  int anum;
 
   dim_ele = 0;
   if (((DTY(dtype) == TY_ARRAY) && skip_first_dim) ||
@@ -2865,13 +2900,14 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
       type_mdnode = db->dtype_array[dtype];
   if (LL_MDREF_IS_NULL(type_mdnode)) {
     if (is_assumed_char(dtype)) {
-#if defined(FLANG_LLVM_EXTENSIONS)
-      if ((!skipDataDependentTypes) &&
-          ll_feature_has_diextensions(&db->module->ir)) {
+      /* For assumed length string type, emit !DIStringType metadata node
+       * if LLVM version is 11 and above. Here compiler created
+       * local variable holds the string length.
+       */
+      if (ll_feature_debug_info_ver11(&db->module->ir))
         type_mdnode =
             lldbg_create_assumed_len_string_type_mdnode(db, sptr, findex);
-      } else {
-#endif
+      else {
         type_mdnode =
             lldbg_emit_type(db, DT_CPTR, sptr, findex, false, false, false);
 #if defined(FLANG_LLVM_EXTENSIONS)
@@ -2880,8 +2916,8 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
           dtype_array_check_set(db, dtype, type_mdnode);
 #if defined(FLANG_LLVM_EXTENSIONS)
         }
-      }
 #endif
+      }
     } else
         if (DT_ISBASIC(dtype) && (DTY(dtype) != TY_PTR)) {
 
@@ -2958,8 +2994,11 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
             return type_mdnode;
           }
         }
-        type_mdnode = lldbg_emit_type(db, DTySeqTyElement(dtype), sptr, findex,
-                                      false, false, false);
+        type_mdnode = lldbg_emit_type(db, DTySeqTyElement(dtype),
+                                      is_procedure_ptr(sptr)
+                                          ? DTyInterface(DTySeqTyElement(dtype))
+                                          : sptr,
+                                      findex, false, false, false);
         sz = (ZSIZEOF(dtype) * 8);
         align[1] = ((alignment(dtype) + 1) * 8);
         align[0] = 0;
@@ -3060,7 +3099,20 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
                 SPTR datasptr = MIDNUMG(sptr);
                 if (datasptr == NOSYM)
                   datasptr = SYMLKG(sptr);
-                if ((SCG(datasptr) == SC_DUMMY) && !db->cur_subprogram_mdnode) {
+                if ((SCG(sptr) == SC_DUMMY) || ((SCG(datasptr) == SC_DUMMY) &&
+                                                !db->cur_subprogram_mdnode)) {
+                  const unsigned zero =
+                      lldbg_encode_expression_arg(LL_DW_OP_int, 0);
+                  const unsigned constu =
+                      lldbg_encode_expression_arg(LL_DW_OP_constu, 0);
+                  dataloc = lldbg_emit_expression_mdnode(db, 2, constu, zero);
+                  if (ll_feature_debug_info_ver90(&db->module->ir)) {
+                    is_live = lldbg_emit_expression_mdnode(db, 2, constu, zero);
+                    if (ALLOCATTRG(sptr))
+                      allocated = is_live;
+                    else
+                      associated = is_live;
+                  }
                   // If cur_subprogram_md is not yet ready, we are interested
                   // only in type. datalocation is about value than type. So
                 } else {
@@ -3357,8 +3409,10 @@ lldbg_emit_global_variable(LL_DebugInfo *db, SPTR sptr, ISZ_T off, int findex,
   SPTR new_sptr = (SPTR)REVMIDLNKG(sptr);
   get_extra_info_for_sptr(&display_name, &scope_mdnode, &type_mdnode, db, sptr);
   if (ll_feature_debug_info_ver90(&cpu_llvm_module->ir) && CCSYMG(sptr) &&
-      new_sptr && (STYPEG(new_sptr) == ST_ARRAY) &&
-      (POINTERG(new_sptr) || ALLOCATTRG(new_sptr)) && SDSCG(new_sptr)) {
+      new_sptr &&
+      (is_procedure_ptr(new_sptr) ||
+       ((STYPEG(new_sptr) == ST_ARRAY) &&
+        (POINTERG(new_sptr) || ALLOCATTRG(new_sptr)) && SDSCG(new_sptr)))) {
     type_mdnode = lldbg_emit_type(db, DTYPEG(new_sptr), new_sptr, findex, false,
                                   false, false);
     display_name = SYMNAME(new_sptr);
@@ -3429,7 +3483,9 @@ lldbg_emit_global_variable(LL_DebugInfo *db, SPTR sptr, ISZ_T off, int findex,
         llObjtodbgAddUnique(*listp, db->gbl_obj_exp_mdnode);
     }
     ll_add_global_debug(db->module, sptr, mdref);
-    if (gbl.rutype == RU_BDATA && sc == SC_CMBLK) {
+    // `RU_SUBR/RU_PROG/RU_FUNC` is set for modules imported from different
+    // CompileUnits. For same compilation unit, 'RU_BDATA' is set.
+    if (sc == SC_CMBLK) {
       const char *modvar_name;
       if (CCSYMG(MIDNUMG(sptr))) {
         modvar_name = new_debug_name(SYMNAME(ENCLFUNCG(sptr)),
@@ -3452,7 +3508,7 @@ lldbg_emit_global_variable(LL_DebugInfo *db, SPTR sptr, ISZ_T off, int findex,
 }
 
 #ifdef FLANG_ACCEL
-static char *
+static const char *
 lldbg_get_addrspace_suffix(int addrspace)
 {
   switch (addrspace) {
@@ -3580,7 +3636,29 @@ lldbg_emit_local_variable(LL_DebugInfo *db, SPTR sptr, int findex,
     file_mdnode = get_filedesc_mdnode(db, findex);
   else
     file_mdnode = lldbg_emit_file(db, findex);
-  if (ll_feature_debug_info_ver90(&db->module->ir) &&
+
+  SPTR new_sptr = (SPTR)REVMIDLNKG(sptr);
+  /* If it's an associate statement, associating another variable
+   * take the pointer to type of associated variable.*/
+  if (new_sptr && CCSYMG(sptr) && !SDSCG(new_sptr) &&
+      (ADDRTKNG(new_sptr) || is_procedure_ptr(new_sptr))) {
+    if (is_procedure_ptr(new_sptr))
+      type_mdnode =
+          lldbg_emit_type(db, DTySeqTyElement(DTYPEG(new_sptr)),
+                          DTyInterface(DTySeqTyElement(DTYPEG(new_sptr))),
+                          findex, false, false, false);
+    else
+      type_mdnode = lldbg_emit_type(db, DTYPEG(new_sptr), sptr, findex, false,
+                                    false, false);
+    DBLINT64 align = {0};
+    DBLINT64 offset = {0};
+    offset[0] = offset[1] = 0;
+    align[1] = ((alignment(DT_CPTR) + 1) * 8);
+    type_mdnode = lldbg_create_pointer_type_mdnode(
+        db, lldbg_emit_compile_unit(db), "", ll_get_md_null(), 0,
+        (ZSIZEOF(DT_CPTR) * 8), align, offset, 0, type_mdnode);
+
+  } else if (ll_feature_debug_info_ver90(&db->module->ir) &&
       (ASSUMRANKG(sptr) || ASSUMSHPG(sptr)) && SDSCG(sptr))
     type_mdnode =
         lldbg_emit_type(db, __POINT_T, sptr, findex, false, false, false);
@@ -3620,13 +3698,15 @@ lldbg_emit_local_variable(LL_DebugInfo *db, SPTR sptr, int findex,
     } else {
       fwd = ll_get_md_null();
     }
-    if (ll_feature_debug_info_ver90(&db->module->ir)) {
+    if (ll_feature_debug_info_ver90(&db->module->ir) &&
+        !pointer_scalar_need_debug_info(sptr)) {
       if (SDSCG(sptr))
         sptr = SDSCG(sptr);
-    } else if (ftn_array_need_debug_info(sptr)) {
+    } else if (ftn_array_need_debug_info(sptr) ||
+               pointer_scalar_need_debug_info(sptr)) {
       SPTR array_sptr =(SPTR)REVMIDLNKG(sptr);
-      /* Overwrite the symname and flags to represent the user defined array
-       * instead of a compiler generated symbol of array pointer.
+      /* Overwrite the symname and flags to represent the user defined array or
+       * scalar, instead of a compiler generated symbol of array or scalar pointer
        */
       symname = (char *)lldbg_alloc(strlen(SYMNAME(array_sptr)) + 1);
       strcpy(symname, SYMNAME(array_sptr));
@@ -3669,14 +3749,15 @@ LL_MDRef
 lldbg_emit_param_variable(LL_DebugInfo *db, SPTR sptr, int findex, int parnum,
                           bool unnamed)
 {
-  LL_MDRef file_mdnode, type_mdnode, var_mdnode;
+  LL_MDRef file_mdnode, type_mdnode, var_mdnode = 0;
   char *symname;
   bool is_reference;
   DTYPE dtype;
   int flags;
 
   assert(db, "Debug info not enabled", 0, ERR_Fatal);
-  if (LL_MDREF_IS_NULL(db->cur_subprogram_mdnode)) 
+  // FIXME: Initialize var_mdnode.
+  if (LL_MDREF_IS_NULL(db->cur_subprogram_mdnode))
     return var_mdnode;
   if (ll_feature_debug_info_need_file_descriptions(&db->module->ir))
     file_mdnode = get_filedesc_mdnode(db, findex);
@@ -3833,9 +3914,9 @@ lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
                              IMPORT_TYPE entity_type)
 {
   LLMD_Builder mdb;
-  LL_MDRef entity_mdnode, scope_mdnode, file_mdnode, cur_mdnode;
+  LL_MDRef entity_mdnode, scope_mdnode = 0, file_mdnode, cur_mdnode;
   unsigned tag;
- 
+
   switch (entity_type) {
   case IMPORTED_DECLARATION: {
     const char *modvar_name;
@@ -3856,10 +3937,10 @@ lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
     break;
   }
   case IMPORTED_UNIT: /* TODO: not implemented yet */
-  default:
     return ll_get_md_null();
   }
   mdb = llmd_init(db->module);
+  // FIXME: Initialize scope_mdnode properly.
   scope_mdnode = (func_sptr == gbl.currsub) ? db->cur_subprogram_mdnode : scope_mdnode;
   if (!entity_mdnode || !scope_mdnode)
     return ll_get_md_null();
@@ -3995,7 +4076,7 @@ LL_MDRef
 lldbg_emit_common_block_mdnode(LL_DebugInfo *db, SPTR sptr)
 {
   LL_MDRef scope_modnode, cmnblk_mdnode, cmnblk_gv_mdnode;
-  SPTR scope = SCOPEG(sptr), var;
+  SPTR scope = SCOPEG(sptr);
   const char *cmnblk_name = new_debug_name(SYMNAME(scope), SYMNAME(sptr), NULL);
   LL_MDNode *node;
   unsigned slot;

@@ -40,7 +40,7 @@
 #endif
 #include "symfun.h"
 
-fptr_local_t fptr_local = {0};
+fptr_local_t fptr_local;
 
 /* --- AGB local --- */
 static AGB_t agb_local;
@@ -106,7 +106,6 @@ static void put_kstr(SPTR sptr, int add_null);
 static void upcase_name(char *);
 static char *write_ftn_type(LL_Type *, char *, int);
 static void write_module_as_subroutine(void);
-static int get_ag_size(int gblsym);
 static DSRT *process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect, ISZ_T addr);
 
 static char * get_struct_from_dsrt2(SPTR sptr, DSRT *dsrtp, ISZ_T size, 
@@ -117,7 +116,7 @@ static char * get_struct_from_dsrt(SPTR sptr, DSRT *dsrtp, ISZ_T size,
                      int *align8,
                      bool stop_at_sect, ISZ_T addr);
 #if DEBUG
-static void dump_all_dinits(void);
+void dump_all_dinits(void);
 
 static hashset_t CommonBlockInits;
 #endif
@@ -156,11 +155,7 @@ inline DSRT *DSRTG(int sptr) {
  * +   IS_DWARF is true => dwarf in coff, dwarf2, or ELF object file type
  * +   otherwise, the debug format is coff.
  */
-INLINE static bool
-is_stabs(void)
-{
-  return XBIT(120, 0x20);
-}
+#define is_stabs() XBIT(120, 0x20)
 
 #define ASMFIL gbl.asmfil
 
@@ -365,7 +360,7 @@ get_ag_searchnm(SPTR sptr)
 }
 
 SPTR
-get_typedef_ag(char *ag_name, char *typeName)
+get_typedef_ag(const char *ag_name, const char *typeName)
 {
   SPTR gblsym = find_ag(ag_name);
 
@@ -1061,9 +1056,8 @@ static void
 write_libomptarget_statics(SPTR sptr, char *gname, char *typed, int gblsym,
                     DSRT *dsrtp)
 {
-  char *linkage_type;
+  const char *linkage_type = "internal";
 
-  linkage_type = "internal";
   sprintf(gname, "struct%s", getsname(sptr));
   get_typedef_ag(gname, typed);
   free(typed);
@@ -1121,7 +1115,7 @@ write_libomtparget(void)
 void
 assemble_end(void)
 {
-  int gblsym, tdefsym, align_value, cmem;
+  int gblsym, tdefsym, align_value;
   char *name, *typed, gname[MXIDLN + 50];
   const char *tls = " thread_local";
 
@@ -1275,9 +1269,7 @@ write_consts(void)
 static DSRT *
 process_dsrt(DSRT *dsrtp, ISZ_T size, char *cptr, bool stop_at_sect, ISZ_T addr)
 {
-  int al;
   DTYPE tdtype;
-  int putval;
   INT loc_base, skip_cnt;
   ISZ_T repeat_cnt;
   DREC *p;
@@ -1501,7 +1493,6 @@ write_bss(void)
    *      a segfault will ensue, as llvm will emit the section as read-only in
    *      this case: http://llvm.org/bugs/show_bug.cgi?id=17246
    */
-  int gblsym;
   const char *type_str = "internal global";
   char *bss_nm = bss_name;
 
@@ -2677,7 +2668,7 @@ write_externs(void)
       if (AG_TYPENMPTR(gblsym) == 0) {
         if (STYPEG(sptr) != ST_PROC) {
           llt = get_ftn_extern_lltype(sptr);
-          nmptr = add_ag_name((char *)llt->str);
+          nmptr = add_ag_name(llt->str);
           AG_TYPENMPTR(gblsym) = nmptr;
           continue;
         }
@@ -2700,10 +2691,10 @@ write_externs(void)
            *  llt = make_lltype_from_dtype(DTYPEG(sptr));
            *  assert(llt && llt->alt_type, "write_externs: Invalid LL_Type",
            * sptr, 4);
-           *  AG_TYPENMPTR(gblsym) = add_ag_name((char *)llt->alt_type->str);
+           *  AG_TYPENMPTR(gblsym) = add_ag_name(llt->alt_type->str);
            */
         } else {
-          nmptr = add_ag_name((char *)char_type(
+          nmptr = add_ag_name(char_type(
               get_return_dtype(DTYPEG(sptr), NULL, 0), SPTR_NULL));
           AG_TYPENMPTR(gblsym) = nmptr;
         }
@@ -2968,7 +2959,7 @@ dump_common_chain(hash_key_t key, void *_)
   dump_dinit_chain(buffer, DSRTG(sptr));
 }
 
-static void
+void
 dump_all_dinits(void)
 {
   if (!gbl.dbgfil)
@@ -3123,7 +3114,7 @@ dump_gblsym(int gblsym)
 }
 
 /* Dump the AG table, TODO: Add to coding.n for DBGBIT and gbl.dbgfil */
-static void
+void
 dump_ag(void)
 {
   int i;
@@ -3132,14 +3123,14 @@ dump_ag(void)
       dump_gblsym(i);
 }
 
-static void
+void
 dump_allag(void)
 {
   int i;
   for (i = 0; i < agb.s_avl; ++i)
     dump_gblsym(i);
 }
-#endif /* Debug */
+#endif /* DEBUG */
 
 /*
  * return ptr to assem's global symtab.
@@ -3463,7 +3454,8 @@ char *
 getextfuncname(SPTR sptr)
 {
   static char name[MXIDLN]; /* 1 for null, 3 for extra '_' , */
-  char *p, *q, ch;
+  char *p, ch;
+  const char *q;
   bool has_underscore = false;
   int stype, m;
   stype = STYPEG(sptr);
@@ -5142,7 +5134,7 @@ get_llvm_name(SPTR sptr)
 char *
 get_string_constant(int sptr)
 {
-  char *name, *to, *from;
+  char *name = NULL, *to, *from;
   int c, len, newlen;
 
   if (STYPEG(sptr) == ST_CONST) {
@@ -5217,12 +5209,6 @@ write_ftn_type(LL_Type *ll_type, char *argptr, int byval)
     break;
   }
   return argptr + strlen(argptr);
-}
-
-static int
-get_ag_size(int gblsym)
-{
-  return gblsym ? AG_SIZE(gblsym) : 0;
 }
 
 int
@@ -5340,19 +5326,19 @@ deleteag_llvm_argdtlist(int gblsym)
   AG_ARGDTLIST(gblsym) = NULL;
 }
 
-char *
+DTLIST *
 get_argdtlist(int gblsym)
 {
   if (gblsym)
-    return (char *)AG_ARGDTLIST(gblsym);
+    return AG_ARGDTLIST(gblsym);
   return NULL;
 }
 
-char *
-get_next_argdtlist(char *argdtlist)
+DTLIST *
+get_next_argdtlist(DTLIST *argdtlist)
 {
   if (argdtlist)
-    return (char *)(((DTLIST *)argdtlist)->next);
+    return argdtlist->next;
   return NULL;
 }
 
@@ -5366,7 +5352,7 @@ get_argdt(SPTR gblsym, int arg_num)
   DTLIST *arg;
 
   for (i = 0, arg = AG_ARGDTLIST(gblsym); arg && (i < arg_num);
-       ++i, arg = (DTLIST *)get_next_argdtlist((char *)arg)) {
+       ++i, arg = get_next_argdtlist(arg)) {
     ; /* Iterate */
   }
 
@@ -5415,26 +5401,26 @@ addag_llvm_argdtlist(SPTR gblsym, int arg_num, SPTR arg_sptr, LL_Type *lltype)
 }
 
 LL_Type *
-get_lltype_from_argdtlist(char *argdtlist)
+get_lltype_from_argdtlist(DTLIST *argdtlist)
 {
   if (argdtlist)
-    return ((DTLIST *)argdtlist)->lltype;
+    return argdtlist->lltype;
   return NULL;
 }
 
 bool
-get_byval_from_argdtlist(const char *argdtlist)
+get_byval_from_argdtlist(DTLIST *argdtlist)
 {
   if (argdtlist)
-    return ((DTLIST *)argdtlist)->byval;
+    return argdtlist->byval;
   return false; /* Fortran is pass by ref by default */
 }
 
 SPTR
-get_sptr_from_argdtlist(char *argdtlist)
+get_sptr_from_argdtlist(DTLIST *argdtlist)
 {
   if (argdtlist)
-    return ((DTLIST *)argdtlist)->sptr;
+    return argdtlist->sptr;
   return SPTR_NULL;
 }
 
@@ -5854,7 +5840,8 @@ _fixup_llvm_uplevel_symbol(void)
   }
 }
 
-static void
+#if DEBUG
+void
 dump_uplevel_sptr(int gblsym)
 {
   int i;
@@ -5863,6 +5850,7 @@ dump_uplevel_sptr(int gblsym)
            AG_UPLEVEL_NEW(gblsym, i), get_llvm_name(AG_UPLEVEL_NEW(gblsym, i)));
   }
 }
+#endif
 
 static int uplevelcnt = 0;
 static int *upptr = NULL;

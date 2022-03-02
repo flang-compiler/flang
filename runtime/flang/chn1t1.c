@@ -34,8 +34,6 @@ int *sstrs;                                /* destination cpu stride */
   chdr *c; /* channel structure pointer */
   int cpu;
   int lcpu;
-  int n;
-  int m;
   int nmax;
   int r;
   int di, si, ci;

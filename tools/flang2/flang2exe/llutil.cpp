@@ -29,7 +29,7 @@ typedef struct LLDEF {
   int sptr;
   int rank;
   unsigned flags;	/**< bitmask value. See LLDEF_Flags */
-  char *name;
+  const char *name;
   int printed;
   int addrspace;
   OPERAND *values;
@@ -91,15 +91,13 @@ static const char *llvm_ccfp_names[LLCCF_LAST] = {
     "none", "false", "oeq", "ogt", "oge", "olt", "ole", "one", "ord",
     "ueq",  "ugt",   "uge", "ult", "ule", "une", "uno", "true"};
 
-/* struct definition only used in CPU llvm backend 
+/* struct definition only used in CPU llvm backend
  * accel takes a different approach */
 static LLDEF *struct_def_list = NULL;
 static LLDEF *llarray_def_list = NULL;
 /* global variable declaration for GPU llvm backend
  * CPU takes another approach, please check assemble_end in llassem_c.c. */
 static LLDEF *gblvar_def_list = NULL;
-/* not used yet */
-static LLDEF *ftn_struct_def_list = NULL;
 
 FTN_LLVM_ST ftn_llvm_st;
 FILE *LLVMFIL = NULL;
@@ -287,11 +285,17 @@ ll_convert_basic_dtype_with_addrspace(LL_Module *module, DTYPE dtype, int addrsp
     break;
   case TY_DBLE:
   case TY_DCMPLX:
+#ifndef TARGET_SUPPORTS_QUADFP
   case TY_QUAD:
     /* TY_QUAD represents a long double on systems that map long
      * double to IEEE64. */
+#endif
     basetype = LL_DOUBLE;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+    /* TY_QUAD maps to an IEEE128 quad precision. */
+#endif
   case TY_FLOAT128:
   case TY_CMPLX128:
     /* TY_FLOAT128 represents a long double (or __float128) on
@@ -362,7 +366,7 @@ ll_convert_iface_sptr(LL_Module *module, SPTR iface_sptr)
   SPTR gblsym;
   LL_Type **args, *res;
   LL_Type *llt;
-  char *dtl;
+  DTLIST *dtl;
 
   if (INMODULEG(iface_sptr))
     gblsym = find_ag(get_llvm_name(iface_sptr));
@@ -379,8 +383,8 @@ ll_convert_iface_sptr(LL_Module *module, SPTR iface_sptr)
   llt = get_ag_lltype(gblsym);
   args[0] = ll_convert_dtype(module, DTYPEG(iface_sptr));
 
-  for (i = 1, dtl = (char *)get_argdtlist(gblsym); dtl;
-       dtl = (char *)get_next_argdtlist(dtl), ++i) {
+  for (i = 1, dtl = get_argdtlist(gblsym); dtl;
+       dtl = get_next_argdtlist(dtl), ++i) {
     llt = (LL_Type *)get_lltype_from_argdtlist(dtl);
     args[i] = llt;
   }
@@ -590,8 +594,7 @@ ll_convert_struct_dtype(LL_Module *module, DTYPE dtype)
 LL_Type *
 ll_convert_array_dtype(LL_Module *module, DTYPE dtype, int addrspace)
 {
-  int len;
-  ADSC *ad;
+  int len = 0;
   LL_Type *type = NULL;
 
   if (DTY(dtype) == TY_ARRAY) {
@@ -931,13 +934,9 @@ make_lltype_from_arg(int arg)
 LL_Type *
 make_lltype_from_arg_noproto(int arg)
 {
-  DTYPE sdtype, atype;
-  int anum;
   DTYPE dtype;
   LL_Type *llt, *llt2;
   int argili;
-
-  DBGTRACEIN2(" dtype %d = %s", sdtype, stb.tynames[DTY(sdtype)])
 
   argili = ILI_OPND(arg, 1);
   dtype = ILI_DTyOPND(arg, 3);
@@ -973,6 +972,11 @@ get_dtype_from_arg_opc(ILI_OP opc)
   case IL_ARGDP:
   case IL_DADP:
     return DT_DBLE;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_ARGQP:
+  case IL_DAQP:
+    return DT_QUAD;
+#endif
   case IL_ARGAR:
   case IL_DAAR:
     return DT_CPTR;
@@ -1158,6 +1162,10 @@ dtype_from_return_type(ILI_OP ret_opc)
 #endif
   case IL_DFRDP:
     return DT_DBLE;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_DFRQP:
+    return DT_QUAD;
+#endif
   case IL_DFRIR:
     return DT_INT;
   case IL_DFRKR:
@@ -1209,15 +1217,13 @@ LL_Type *
 make_lltype_from_sptr(SPTR sptr)
 {
   DTYPE sdtype, atype;
-  int anum, midtype;
+  int anum;
   SPTR iface;
-  int len;
   int stype = 0, sc = 0;
-  LL_Type *llt, *llt2;
+  LL_Type *llt;
   int addrspace = LL_AddrSp_Default;
   ADSC *ad;
   INT d;
-  int midnum = 0;
 
   if (sptr) {
     sdtype = DTYPEG(sptr);
@@ -1857,7 +1863,6 @@ write_vconstant_value(int sptr, LL_Type *type, unsigned long long undef_bitmask)
   int vsize = type->sub_elements;
   int i;
   int edtype;
-  char *vctype, *constant;
 
   edtype = CONVAL1G(sptr);
 
@@ -2075,13 +2080,19 @@ write_constant_value(int sptr, LL_Type *type, INT conval0, INT conval1,
     fprintf(LLVMFIL, "0xK%08x%08x%04x", CONVAL1G(sptr), CONVAL2G(sptr),
             (unsigned short)(CONVAL3G(sptr) >> 16));
     return;
-
+#ifdef TARGET_LLVM_ARM
+  case LL_FP128:
+    assert(sptr, "write_constant_value(): fp128 constant without sptr", 0, ERR_Fatal);
+    fprintf(LLVMFIL, "0xL%08x%08x%08x%08x", CONVAL3G(sptr), CONVAL4G(sptr),
+            CONVAL1G(sptr), CONVAL2G(sptr));
+    return;
+#else
   case LL_FP128:
     assert(sptr, "write_constant_value(): fp128 constant without sptr", 0, ERR_Fatal);
     fprintf(LLVMFIL, "0xL%08x%08x%08x%08x", CONVAL1G(sptr), CONVAL2G(sptr),
             CONVAL3G(sptr), CONVAL4G(sptr));
     return;
-
+#endif
   case LL_PPC_FP128:
     assert(sptr, "write_constant_value(): double-double constant without sptr",
            0, ERR_Fatal);
@@ -2177,7 +2188,7 @@ should_preserve_param(const DTYPE dtype)
 OPERAND *
 make_param_op(SPTR sptr)
 {
-  OPERAND *oper;
+  OPERAND *oper = nullptr;
   DTYPE dtype = DTYPEG(sptr);
 
   switch (DTY(dtype)) {
@@ -2225,10 +2236,7 @@ make_param_op(SPTR sptr)
 void
 write_operand(OPERAND *p, const char *punc_string, int flags)
 {
-  int nme, dtype, ct;
-  char cnst[MAXIDLEN];
   OPERAND *new_op;
-  LL_Type *llt;
   LL_Type *pllt;
   const bool uns = (flags & FLG_AS_UNSIGNED) != 0;
   int sptr = p->val.sptr;
@@ -2255,8 +2263,17 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
         write_type(p->ll_type);
         print_space(1);
       }
-      write_constant_value(0, p->ll_type, p->val.conval[0], p->val.conval[1],
-                           uns);
+
+      /* write_constant_value() can't handle LL_FP128 when sptr is 0.
+       * Build a sptr with getcon() before calling it. */
+      if (p->ll_type->data_type == LL_FP128) {
+        SPTR sptr = getcon(p->val.conval, DT_QUAD);
+        write_constant_value(sptr, p->ll_type, p->val.conval[0],
+                             p->val.conval[1], uns);
+      } else {
+        write_constant_value(0, p->ll_type, p->val.conval[0],
+                             p->val.conval[1], uns);
+      }
     }
     break;
   case OT_UNDEF:
@@ -2446,7 +2463,6 @@ void
 write_operands(OPERAND *operand, int flags)
 {
   OPERAND *p;
-  int i_name, sptr;
 
   DBGTRACEIN1(" starting at operand %p", operand)
 
@@ -2601,7 +2617,7 @@ get_param_equiv_dtype(DTYPE dtype)
 const char *
 llvm_fc_type(DTYPE dtype)
 {
-  const char *retc;
+  const char *retc = "";
   ISZ_T sz;
 
   switch (DTY(dtype)) {
@@ -2645,9 +2661,14 @@ llvm_fc_type(DTYPE dtype)
     retc = "float";
     break;
   case TY_DBLE:
+#ifndef TARGET_SUPPORTS_QUADFP
   case TY_QUAD:
+#endif
     retc = "double";
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+#endif
   case TY_FLOAT128:
   case TY_128:
     retc = "fp128";
@@ -2716,7 +2737,7 @@ gen_copy_list_op(OPERAND *operands)
 }
 
 static LLDEF *
-make_def(DTYPE dtype, int sptr, int rank, char *name, int flags)
+make_def(DTYPE dtype, int sptr, int rank, const char *name, int flags)
 {
   LLDEF *new_def;
 
@@ -2754,7 +2775,7 @@ write_alt_struct_def(LLDEF *def)
 {
   char buf[80];
   DTYPE dtype = def->dtype;
-  int struct_sz, field_count, field_sz;
+  int struct_sz, field_sz;
 
   print_token(def->name);
   print_token(".alt = type ");
@@ -2922,8 +2943,6 @@ write_alt_field_types(LL_Type *llty)
 static void
 write_def(LLDEF *def, int check_type_in_struct_def_type)
 {
-  char buf[80];
-  DTYPE dtype = def->dtype;
   LLDEF *lltypedef = NULL;
 
   print_token(def->name);
@@ -3138,9 +3157,8 @@ process_symlinked_sptr(int sptr, int total_init_sz, int is_union,
   OPERAND *cur_op;
   OPERAND head;
   int pad, field_sz, sptr_sz, max_sz, update_union;
-  int cur_addr, prev_addr, base_addr;
+  int cur_addr, prev_addr;
   OPERAND *union_from = NULL, *union_to = NULL;
-  int total_field_sz;
 
   if (sptr > NOSYM)
     prev_addr = ADDRESSG(sptr);
@@ -3208,10 +3226,10 @@ process_symlinked_sptr(int sptr, int total_init_sz, int is_union,
   return head.next;
 }
 
-char *
+const char *
 process_dtype_struct(DTYPE dtype)
 {
-  char *d_name;
+  const char *d_name;
   SPTR tag;
   TY_KIND dty;
   LLDEF *def;
@@ -3233,7 +3251,7 @@ process_dtype_struct(DTYPE dtype)
     return def->name;
   }
   /* Use consistent struct type names. */
-  d_name = (char *)ll_convert_struct_dtype(llvm_get_current_module(), dtype)->str;
+  d_name = ll_convert_struct_dtype(llvm_get_current_module(), dtype)->str;
   if (ZSIZEOF(dtype) == 0 && DTyAlgTyMember(dtype) == 0)
     def = make_def(dtype, 0, 0, d_name,
                    LLDEF_IS_TYPE | LLDEF_IS_EMPTY | LLDEF_IS_STRUCT);
@@ -3265,7 +3283,7 @@ process_dtype_struct(DTYPE dtype)
    printed out to the .ll output file.  If true, write_ftn_typedefs() will not
    print the type out (assuming that it has already been 'printed').
  */
-char *
+const char *
 process_ftn_dtype_struct(DTYPE dtype, char *tname, bool printed)
 {
   int tag;
@@ -3690,7 +3708,7 @@ process_ll_abi_func_ftn_mod(LL_Module *mod, SPTR func_sptr, bool update)
 {
   int i, ty;
   DTYPE ret_dtype;
-  char *param;
+  DTLIST *param;
   LL_ABI_Info *abi;
   LL_Type *llt;
   int gblsym = 0;
@@ -3920,7 +3938,6 @@ visit_flattened_dtype(dtype_visitor visitor, void *context, DTYPE dtype,
 {
   int retval = 0;
   SPTR sptr;
-  unsigned dim, i, size;
 
   if (DTY(dtype) == TY_STRUCT || DTY(dtype) == TY_UNION) {
     /* TY_STRUCT sptr tag size align. */
@@ -4169,10 +4186,11 @@ get_ftn_cbind_lltype(SPTR sptr)
 {
   DTYPE dtype = DTYPEG(sptr);
   DTYPE sdtype;
-  int tag, numdim, gblsym, d, iface, gs;
-  ISZ_T anum;
+  ISZ_T anum = 0;
+  int tag, numdim, gblsym, d;
   LL_Type *llt = NULL;
-  char *typed, *name;
+  const char *typed;
+  char *name;
   char tname[MXIDLN];
   ADSC *ad;
 
