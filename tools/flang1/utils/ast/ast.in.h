@@ -411,6 +411,8 @@ void move_stmt_before(int std, int stdbefore);
 void move_stmt_after(int std, int stdafter);
 void move_stmts_before(int std, int stdbefore);
 void move_stmts_after(int std, int stdafter);
+void move_range_before(int sstd, int estd, int stdbefore);
+void move_range_after(int sstd, int estd, int stdafter);
 void ast_to_comment (int);
 int mk_comstr (char *str);
 int mk_argt (int cnt);

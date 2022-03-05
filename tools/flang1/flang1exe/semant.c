@@ -591,7 +591,9 @@ semant_init(int noparse)
     sem.stats.nodes = 0;
     sem.modhost_proc = 0;
     sem.modhost_entry = 0;
-    sem.in_array_const = false;
+    sem.array_const_level = 0;
+    sem.ac_std_range = NULL;
+    sem.elp_stack = NULL;
     sem.parsing_operator = false;
 
     mscall = 0;
@@ -1215,6 +1217,9 @@ semant1(int rednum, SST *top)
     sem.parsing_operator = false;
     sem.equal_initializer = false;
     sem.proc_initializer = false;
+    sem.array_const_level = 0;
+    sem.ac_std_range = NULL;
+    sem.elp_stack = NULL;
     break;
 
   /* ------------------------------------------------------------------ */

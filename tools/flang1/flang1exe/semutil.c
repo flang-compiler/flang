@@ -2916,7 +2916,7 @@ ref_array(SST *stktop, ITEM *list)
     }
   }
   if (!isvec && CLASSG(sptr) && !MONOMORPHICG(sptr) && 
-      !is_selector(sptr) && !is_unl_poly(sptr) && !sem.in_array_const) {
+      !is_selector(sptr) && !is_unl_poly(sptr) && sem.array_const_level == 0) {
     /* Provide polymorphic address for the polymorphic subscripted reference.
      *
      * Note the following expressions are handled separately:

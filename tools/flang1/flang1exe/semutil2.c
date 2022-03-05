@@ -975,6 +975,11 @@ select_kind(DTYPE dtype, int ty, INT kind_val)
   return out_dtype;
 }
 
+typedef struct _ido_info {
+  DOINFO *doinfo;
+  struct _ido_info *next;
+} IDO_INFO;
+
 typedef struct {
   LOGICAL is_const;
   INT scalar_cnt;           /* # of scalar expressions */
@@ -992,6 +997,21 @@ typedef struct {
   int level;                /* implied do nesting level */
   int width;
   LOGICAL func_in_do;       /* func call found in ac-value-list */
+  IDO_INFO *ido_list;       /* track the implied-do loop encoutered */
+  int ido_level;            /* track the depth of implied-do loop encoutered */
+  struct {
+    DOINFO *doinfo;         /* the outermost implied-do loop
+                             * on which the generated loop depends.
+                             */
+    int start;              /* start std of the generated loop */
+    int end;                /* end std of the generated loop */
+    int level;              /* the depth of the outermost implied-do loop
+                             * that has generated a loop.
+                             */
+    int sumid;              /* the temp variable used to compute
+                             * size of implied-do loop.
+                             */
+  } loop_stmts;
 } _ACS;
 
 static _ACS acs;
@@ -1775,12 +1795,60 @@ compute_size(bool add_flag, ACL *aclp, DTYPE dtype)
     case AC_SCONST:
       compute_size_sconst(add_flag, aclp, dtype);
       break;
-    case AC_IDO:
+    case AC_IDO: {
+      int save_start, save_end, save_level;
+      DOINFO *save_doinfo = NULL;
+      LOGICAL saved = FALSE;
+      IDO_INFO *ido = (IDO_INFO *)getitem(0, sizeof(IDO_INFO));
+      ido->doinfo = aclp->u1.doinfo;
+      ido->next = acs.ido_list;
+      /* start processing of implied-do */
+      acs.ido_list = ido;
+      acs.ido_level++;
+      if (acs.loop_stmts.level != 0 &&
+          acs.ido_level == acs.loop_stmts.level) {
+        /* save information before computing size of implied-do */
+        save_start = acs.loop_stmts.start;
+        save_end = acs.loop_stmts.end;
+        save_level = acs.loop_stmts.level;
+        save_doinfo = acs.loop_stmts.doinfo;
+        saved = TRUE;
+        acs.loop_stmts.start = 0;
+        acs.loop_stmts.end = 0;
+        acs.loop_stmts.level = 0;
+        acs.loop_stmts.doinfo = NULL;
+      }
       compute_size_ido(add_flag, aclp, dtype);
+      if (saved) {
+        if (acs.loop_stmts.level == 0) {
+          /* restore information after computing size of implied-do */
+          acs.loop_stmts.start = save_start;
+          acs.loop_stmts.end = save_end;
+          acs.loop_stmts.level = save_level;
+          acs.loop_stmts.doinfo = save_doinfo;
+        } else {
+          move_range_before(save_start, save_end, acs.loop_stmts.start);
+          acs.loop_stmts.start = save_start;
+          /* update acs.loop_stmts.doinfo */
+          for (IDO_INFO *iter = acs.ido_list; iter; iter = iter->next) {
+            if (iter->doinfo == save_doinfo) {
+              break;
+            }
+            if (iter->doinfo == acs.loop_stmts.doinfo) {
+              acs.loop_stmts.doinfo = save_doinfo;
+              break;
+            }
+          }
+        }
+      }
+      /* finish processing of implied-do */
+      acs.ido_level--;
+      acs.ido_list = acs.ido_list->next;
       if (sem.dinit_error) {
         return;
       }
       break;
+    }
     default:
       interr("compute_size,ill.id", aclp->id, 3);
     }
@@ -1948,6 +2016,144 @@ compute_size_expr(bool add_flag, ACL *aclp, DTYPE dtype)
   return specified_dtype ? dtype : DT_NONE;
 }
 
+/* Check dependencies and find the outermost implied-do loop
+ * on which the array size depends.
+ */
+static void
+check_dependence_ido(ACL *aclp)
+{
+  DOINFO *cur_ido = aclp->u1.doinfo;
+  STD_RANGE *range = aclp->u2.std_range;
+  int level = acs.ido_level - 1;
+
+  for (IDO_INFO *ido = acs.ido_list->next; ido; ido = ido->next) {
+    int dovar_id = mk_id(ido->doinfo->index_var);
+    LOGICAL depend = FALSE;
+    if (contains_ast(acs.aggr_cnt, dovar_id) ||
+        contains_ast(cur_ido->init_expr, dovar_id) ||
+        contains_ast(cur_ido->limit_expr, dovar_id) ||
+        contains_ast(cur_ido->step_expr, dovar_id)) {
+      /* direct dependence */
+      depend = TRUE;
+    }
+
+    if (!depend && range != NULL && range->mid != range->end) {
+      for (int std = STD_NEXT(range->mid); std; std = STD_NEXT(std)) {
+        if (contains_ast(STD_AST(std), dovar_id)) {
+          /* indirect dependence */
+          depend = TRUE;
+          break;
+        }
+        if (std == range->end)
+          break;
+      }
+    }
+    /* update information about the loop on which current implied-do depends */
+    if (depend && (acs.loop_stmts.level == 0 ||
+                   acs.loop_stmts.level > level)) {
+      acs.loop_stmts.doinfo = ido->doinfo;
+    }
+    level--;
+  }
+}
+
+/* When computing the size of AC_IDO, clone the stmts on which the bounds of
+ * the current implied-do loop depend, and generate loop to compute size.
+ */
+static void
+handle_dependence_ido(ACL *aclp)
+{
+  int sumid;
+  int prev_std;
+  STD_RANGE *range = aclp->u2.std_range;
+  DOINFO *doinfo = aclp->u1.doinfo;
+
+  if (acs.loop_stmts.start == 0 && acs.loop_stmts.end == 0) {
+    prev_std = STD_LAST;
+  } else {
+    prev_std = STD_PREV(acs.loop_stmts.start);
+  }
+
+  /* create temp for size at the beginning and initialize it with zero */
+  if (acs.loop_stmts.sumid == 0) {
+    acs.loop_stmts.sumid = mk_id(get_temp(astb.bnd.dtype));
+  }
+  sumid = acs.loop_stmts.sumid;
+  if (acs.loop_stmts.doinfo == doinfo) {
+    (void)add_stmt(mk_assn_stmt(sumid, astb.bnd.zero, astb.bnd.dtype));
+  }
+
+  /* clone stmts on which the bounds of current implied-do depend */
+  if (range != NULL && range->mid != range->end) {
+    for (int std = STD_NEXT(range->mid); std; std = STD_NEXT(std)) {
+      (void)add_stmt(STD_AST(std));
+      if (std == range->end)
+        break;
+    }
+  }
+
+  if (acs.loop_stmts.level == 0) {
+    /* current implied-do is the outermost one */
+    int st, ast;
+    st = doinfo->step_expr == 0 ? astb.bnd.one : doinfo->step_expr;
+    ast = mk_binop(OP_SUB, doinfo->limit_expr, doinfo->init_expr,
+                   astb.bnd.dtype);
+    ast = mk_binop(OP_ADD, ast, st, astb.bnd.dtype);
+    ast = mk_binop(OP_DIV, ast, st, astb.bnd.dtype);
+    ast = mk_binop(OP_MUL, ast, acs.aggr_cnt, astb.bnd.dtype);
+    ast = mk_binop(OP_ADD, sumid, ast, astb.bnd.dtype);
+    (void)add_stmt(mk_assn_stmt(sumid, ast, astb.bnd.dtype));
+  } else {
+    /* generate loop to compute size */
+    SPTR dovar, odovar;
+    int newid, ast;
+    int do_beg_std;
+
+    odovar = doinfo->index_var;
+    dovar = get_temp(DTYPEG(odovar));
+    HIDDENP(dovar, 1);
+    newid = mk_id(dovar);
+    ast = mk_stmt(A_DO, 0);
+    A_DOVARP(ast, newid);
+    A_M1P(ast, doinfo->init_expr);
+    A_M2P(ast, doinfo->limit_expr);
+    A_M3P(ast, doinfo->step_expr);
+    A_M4P(ast, 0);
+    do_beg_std = add_stmt(ast);
+
+    ast_visit(1, 1);
+    ast_replace(mk_id(odovar), newid);
+    move_range_after(acs.loop_stmts.start, acs.loop_stmts.end, do_beg_std);
+    for (int std = STD_NEXT(do_beg_std); std; std = STD_NEXT(std)) {
+      STD_AST(std) = ast_rewrite(STD_AST(std));
+    }
+
+    /* add size */
+    if (acs.aggr_cnt != astb.bnd.zero) {
+      ast = ast_rewrite(acs.aggr_cnt);
+      ast = mk_binop(OP_ADD, sumid, ast, astb.bnd.dtype);
+      (void)add_stmt(mk_assn_stmt(sumid, ast, astb.bnd.dtype));
+    }
+    ast_unvisit();
+    (void)add_stmt(mk_stmt(A_ENDDO, 0));
+  }
+
+  if (acs.loop_stmts.doinfo == aclp->u1.doinfo) {
+    /* remove information about dependence of implied-do */
+    acs.aggr_cnt = sumid;
+    acs.loop_stmts.start = 0;
+    acs.loop_stmts.end = 0;
+    acs.loop_stmts.level = 0;
+    acs.loop_stmts.sumid = 0;
+    acs.loop_stmts.doinfo = NULL;
+  } else {
+    acs.aggr_cnt = astb.bnd.zero;
+    acs.loop_stmts.start = STD_NEXT(prev_std);
+    acs.loop_stmts.end = STD_LAST;
+    acs.loop_stmts.level = acs.ido_level;
+  }
+}
+
 static void
 compute_size_ido(bool add_flag, ACL *aclp, DTYPE dtype)
 {
@@ -1994,7 +2200,9 @@ compute_size_ido(bool add_flag, ACL *aclp, DTYPE dtype)
    *  size is the 'cnt*scalar_cnt + cnt*aggr_cnt'
    */
   id = mk_id(doinfo->index_var);
-  if (add_flag && contains_ast(acs.aggr_cnt, id)) {
+  check_dependence_ido(aclp);
+  if (add_flag && (contains_ast(acs.aggr_cnt, id) ||
+                   acs.loop_stmts.doinfo != NULL)) {
     /* The size expression depends on the loop index variable.
      * This is tricky because we need the size to allocate
      * the temporary before we generate the loop.  First,
@@ -2012,7 +2220,7 @@ compute_size_ido(bool add_flag, ACL *aclp, DTYPE dtype)
      * There are two cases:
      */
     if (A_ALIASG(doinfo->init_expr) && A_ALIASG(doinfo->limit_expr) &&
-        A_ALIASG(doinfo->step_expr)) {
+        A_ALIASG(doinfo->step_expr) && acs.loop_stmts.doinfo == NULL) {
       int i;
       int ast;
 
@@ -2043,6 +2251,8 @@ compute_size_ido(bool add_flag, ACL *aclp, DTYPE dtype)
         }
       }
       acs.aggr_cnt = ast;
+    } else if (acs.loop_stmts.doinfo != NULL) {
+      handle_dependence_ido(aclp);
     } else {
       /* Non-constant loop control expression(s).
        * Must generate a run-time loop to add sizes.
@@ -3144,6 +3354,15 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
       /* Value-list must be rewritten too. */
       ast_visit(1, 1);
       ast_replace(mk_id(odovar), mk_id(dovar));
+      if (aclp->u2.std_range != NULL && aclp->u2.std_range->start != 0) {
+        /* move in stmts generated by loop body and replace dovar */
+        int do_std = STD_LAST;
+        move_range_after(aclp->u2.std_range->start, aclp->u2.std_range->mid,
+                         do_std);
+        for (int std = STD_NEXT(do_std); std; std = STD_NEXT(std)) {
+          STD_AST(std) = ast_rewrite(STD_AST(std));
+        }
+      }
       aclp->subc = acl_rewrite_asts(aclp->subc);
       ast_unvisit();
 
