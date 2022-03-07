@@ -376,6 +376,20 @@ skipbl(char *tokval, int flag)
   return toktyp;
 }
 
+static void fpp_display_macros()
+{
+  unsigned int i;
+  for (i = 1U; i < next_hash; ++i) {
+    char *name = &deftab[hashrec[i].name];
+    char *value = &deftab[hashrec[i].value];
+    if ((strncmp(name, "__LINE__", 8) == 0) ||
+        (strncmp(name, "__DATE__", 8) == 0) ||
+        (strncmp(name, "__FILE__", 8) == 0) ||
+        (strncmp(name, "__TIME__", 8) == 0)) continue;
+    fprintf(gbl.outfil, "%s : %s\n", name, value);
+  }
+}
+
 void
 fpp(void)
 {
@@ -532,6 +546,20 @@ fpp(void)
   for (cp = flg.undef; cp && *cp; ++cp) {
     /* undef it */
     delete (*cp); /* should check if IDENT */
+  }
+  
+  if (flg.list_macros) {
+    fpp_display_macros();
+
+    FREE(argbuf);
+    FREE(deftab);
+    FREE(hashrec);
+    if (incllist != NULL) {
+      FREE(incllist);
+    }
+
+    flg.es = TRUE;
+    finish();
   }
 
   idir.b_avl = 0;
