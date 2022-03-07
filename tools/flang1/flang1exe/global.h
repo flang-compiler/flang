@@ -234,6 +234,7 @@ typedef struct {
   int accmp;
   const char *cmdline; /* command line used to invoke the compiler */
   LOGICAL qp; /* Enable quad-precision REAL and quad-precision COMPLEX. */
+  bool list_macros ; /* TRUE => flang -dM option was used to display macros */
 } FLG;
 
 extern FLG flg;

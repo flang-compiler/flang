@@ -72,4 +72,5 @@ FLG flg = {
     0,     /* accmp */
     "",    /* cmdline */
     FALSE, /* qp */
+    FALSE, /* list-macros */
 };

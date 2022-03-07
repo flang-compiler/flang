@@ -701,6 +701,20 @@ print_and_check(FILE *ff, char *str, char end_c)
     fputc(end_c, ff);
 }
 
+static void acc_display_macros()
+{
+  unsigned int i;
+  for (i = 1U; i < next_hash; ++i) {
+    char *name = &deftab[hashrec[i].name];
+    char *value = &deftab[hashrec[i].value];
+    if ((strncmp(name, "__LINE__", 8) == 0) ||
+        (strncmp(name, "__DATE__", 8) == 0) ||
+        (strncmp(name, "__FILE__", 8) == 0) ||
+        (strncmp(name, "__TIME__", 8) == 0)) continue;
+    fprintf(gbl.outfil, "%s : %s\n", name, value);
+  }
+}
+
 void
 accpp(void)
 {
@@ -912,6 +926,23 @@ accpp(void)
       }
       delete(*cp); /* should check if IDENT */
     }
+  }
+
+  if (flg.list_macros) {
+    acc_display_macros();
+
+    FREE(deftab);
+    FREE(hashrec);
+    /* FREE(inclstack); Do not free this, gbl.curr_file points to it */
+    FREE(_ifs);
+    FREE(linebuf);
+
+    if (incllist != NULL) {
+      FREE(incllist);
+    }
+
+    flg.es = TRUE;
+    finish();
   }
 
   idir.b_avl = 0;
