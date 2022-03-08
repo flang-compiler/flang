@@ -366,6 +366,7 @@ struct CONST {
 #define AC_LNOT 23
 #define AC_EXPX 24
 #define AC_TRIPLE 25
+#define AC_SUBSTR 26
 
 #define AC_I_adjustl 1
 #define AC_I_adjustr 2

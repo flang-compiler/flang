@@ -75,6 +75,7 @@ static AC_INTRINSIC map_I_to_AC(int intrin);
 static AC_INTRINSIC map_PD_to_AC(int pdnum);
 static bool is_illegal_expr_in_init(SPTR, int ast, DTYPE);
 static int init_intrin_type_desc(int ast, SPTR sptr, int std);
+static SPTR get_substring(SPTR str, int lb, int rb);
 
 /*
  * semant-created temporaries which are re-used across statements.
@@ -1025,7 +1026,7 @@ static const char *_iexpr_op[] = {
     "?0?",       "ADD",      "SUB",       "MUL",  "DIV",    "EXP",  "NEG",
     "INTR_CALL", "ARRAYREF", "MEMBR_SEL", "CONV", "CAT",    "EXPK", "LEQV",
     "LNEQV",     "LOR",      "LAND",      "EQ",   "GE",     "GT",   "LE",
-    "LT",        "NE",       "LNOT",      "EXPX", "TRIPLE",
+    "LT",        "NE",       "LNOT",      "EXPX", "TRIPLE", "SUBSTR",
 };
 
 static const char *
@@ -1951,7 +1952,20 @@ compute_size_expr(bool add_flag, ACL *aclp, DTYPE dtype)
         dtype = SST_DTYPEG(stkp);
       }
     }
-    acs.eltype = dt;
+    if (sem.dinit_data && id == S_EXPR && A_TYPEG(SST_ASTG(stkp)) == A_SUBSTR) {
+      int ast, leftval, rightval, lenval, len;
+      DTYPE newdtype;
+      ast = SST_ASTG(stkp);
+      leftval = dinit_eval(A_LEFTG(ast));
+      rightval = dinit_eval(A_RIGHTG(ast));
+      lenval = rightval - leftval + 1;
+      len = lenval <= 0 ? astb.i0 : mk_cval(lenval, DT_INT4);
+      newdtype = get_type(2, DTY(dt), len);
+      acs.eltype = newdtype;
+      A_DTYPEP(ast, newdtype);
+    } else {
+      acs.eltype = dt;
+    }
     switch (DTY(acs.eltype)) {
     case TY_CHAR:
     case TY_NCHAR:
@@ -4855,7 +4869,31 @@ construct_acl_from_ast(int ast, DTYPE dtype, int parent_acltype)
       aclp->is_const = 1;
       aclp->subc = prev;
     }
+    break;
+  case A_SUBSTR:
+    aclp = GET_ACL(15);
+    aclp->id = AC_IEXPR;
+    aclp->u1.expr = (AEXPR *)getitem(15, sizeof(AEXPR));
+    aclp->u1.expr->op = AC_SUBSTR;
+    aclp->u1.expr->lop = construct_acl_from_ast(A_LOPG(ast), 0, 0);
+    if (!aclp->u1.expr->lop) {
+      return 0;
+    }
+    aclp->dtype = A_DTYPEG(ast);
+    l = GET_ACL(15);
+    l->id = AC_AST;
+    l->is_const = 1;
+    l->u1.ast = A_LEFTG(ast);
+    l->dtype = A_DTYPEG(A_LEFTG(ast));
 
+    u = GET_ACL(15);
+    u->id = AC_AST;
+    u->is_const = 1;
+    u->u1.ast = A_RIGHTG(ast);
+    u->dtype = A_DTYPEG(A_RIGHTG(ast));
+
+    l->next = u;
+    aclp->u1.expr->rop = l;
     break;
   default:
     interr("unexpected ast type in initialization expr", ast, 3);
@@ -7337,6 +7375,20 @@ add_array_init(ASTLIST *list, int ast, DTYPE dtype, int sptr)
   }
 } /* add_array_init */
 
+static void
+add_substr_init(ASTLIST *list, int ast, DTYPE dtype, int sptr)
+{
+  SPTR src, substr;
+  int lb, ub, substr_ast;
+
+  src = A_SPTRG(A_LOPG(ast));
+  lb = (int)dinit_eval(A_LEFTG(ast));
+  ub = (int)dinit_eval(A_RIGHTG(ast));
+  substr = get_substring(src, lb, ub);
+  substr_ast = mk_cval(substr, DTYPEG(substr));
+  add_init(list, substr_ast, dtype, sptr);
+}
+
 static ACL *
 dinit_fill_struct(ASTLIST *list, ACL *aclp, int sdtype, int sptr,
                   int memberlist, int init_single)
@@ -7412,6 +7464,8 @@ dinit_fill_struct(ASTLIST *list, ACL *aclp, int sdtype, int sptr,
           aa = mk_init(PARAMVALG(A_SPTRG(aast)), dtype);
           A_SPTRP(aa, sptr);
           add_init(list, aast, dtype, sptr);
+        } else if (A_TYPEG(aast) == A_SUBSTR) {
+          add_substr_init(list, aast, sdtype, sptr);
         } else {
           if (DTY(sdtype) == TY_ARRAY) {
             aast = dinit_getval1(aast, DTY(sdtype + 1));
@@ -7517,6 +7571,7 @@ dinit_fill_struct(ASTLIST *list, ACL *aclp, int sdtype, int sptr,
       save_conval1 = CONVAL1G(idx_sptr);
       if (stepval >= 0) {
         for (i = initval; i <= limitval; i += stepval) {
+          sem.dostack->currval = i;
           switch (DTY(DTYPEG(idx_sptr))) {
           case TY_INT8:
           case TY_LOG8:
@@ -7532,6 +7587,7 @@ dinit_fill_struct(ASTLIST *list, ACL *aclp, int sdtype, int sptr,
         }
       } else {
         for (i = initval; i >= limitval; i += stepval) {
+          sem.dostack->currval = i;
           switch (DTY(DTYPEG(idx_sptr))) {
           case TY_INT8:
           case TY_LOG8:
@@ -11155,6 +11211,66 @@ eval_const_array_section(ACL *lop, int ldtype)
   return sb.root;
 }
 
+static SPTR
+get_static_str(SPTR sptr)
+{
+  DREC *p = NULL;
+  SPTR cnst_sptr;
+  LOGICAL found;
+  DTYPE dtype;
+
+  cnst_sptr = 0;
+  found = FALSE;
+  dtype = DTYPEG(sptr);
+  dinit_save();
+  while((p = dinit_read())) {
+    int tdtype = p->dtype;
+    INT tconval = p->conval;
+    if (tdtype == DINIT_LOC) {
+      if (tconval == sptr) {
+        found = TRUE;
+      } else {
+        found = FALSE;
+      }
+      continue;
+    }
+    if (tdtype == DINIT_STR) {
+      if (found) {
+        cnst_sptr = tconval;
+        break;
+      }
+    }
+    found = FALSE;
+  }
+  dinit_restore();
+
+  if (cnst_sptr == 0 || STYPEG(cnst_sptr) != ST_CONST) {
+    return 0;
+  }
+  return cnst_sptr;
+}
+
+static ACL *
+eval_substr(ACL *lop, ACL *rop)
+{
+  SPTR p;
+  int lb, ub;
+  ACL *ret = NULL;
+
+  lb = rop->conval;
+  ub = rop->next->conval;
+  p = get_substring(lop->conval, lb, ub);
+
+  ret = GET_ACL(15);
+  BZERO(ret, ACL, 1);
+  ret->id = AC_CONST;
+  ret->dtype = DTYPEG(p);
+  ret->repeatc = astb.i1;
+  ret->conval = ret->sptr = p;
+  ret->u1.ast = mk_cnst(ret->conval);
+  return ret;
+}
+
 static ISZ_T
 get_ival(DTYPE dtype, INT conval)
 {
@@ -11404,6 +11520,8 @@ eval_init_op(int op, ACL *lop, DTYPE ldtype, ACL *rop, DTYPE rdtype, SPTR sptr,
 
     root = clone_init_const(c, TRUE);
     root = eval_init_expr(root);
+  } else if (op == AC_SUBSTR) {
+    root = eval_substr(lop, rop);
   } else if (op == AC_INTR_CALL) {
     AC_INTRINSIC intrin = lop->u1.i;
     switch (intrin) {
@@ -11901,6 +12019,12 @@ eval_do(ACL *ido)
   INT sav_conval1 = CONVAL1G(idx_sptr);
   int inflag = 0;
 
+  if (sem.top == &sem.dostack[MAX_DOSTACK]) {
+    errsev(34);
+    return 0;
+  }
+  ++sem.top;
+
   initval = dinit_eval(di->init_expr);
   if (sem.dinit_error) {
     interr("Non-constant implied DO initial value", di->init_expr, 3);
@@ -11921,6 +12045,7 @@ eval_do(ACL *ido)
 
   if (stepval >= 0) {
     for (i = initval; i <= limitval; i += stepval) {
+      sem.dostack->currval = i;
       switch (DTY(DTYPEG(idx_sptr))) {
       case TY_INT8:
       case TY_LOG8:
@@ -11946,6 +12071,7 @@ eval_do(ACL *ido)
     }
   } else {
     for (i = initval; i >= limitval; i += stepval) {
+      sem.dostack->currval = i;
       switch (DTY(DTYPEG(idx_sptr))) {
       case TY_INT8:
       case TY_LOG8:
@@ -11971,6 +12097,7 @@ eval_do(ACL *ido)
   }
 
   CONVAL1P(idx_sptr, sav_conval1);
+  --sem.top;
 
   return root;
 }
@@ -14835,4 +14962,34 @@ gen_set_type(int dest_ast, int src_ast, int std, LOGICAL insert_before,
   }
 
   return std;
+}
+
+static SPTR
+get_substring(SPTR src, int lb, int ub)
+{
+  char *char_cnst = NULL;
+  char *str = NULL;
+  int cvlen, len;
+  SPTR p;
+
+  if (DINITG(src) && SCG(src) == SC_STATIC) {
+    src = get_static_str(src);
+  }
+  char_cnst = stb.n_base + CONVAL1G(src);
+  cvlen = ub - lb + 1;
+  if (cvlen < 1) {
+    p = getstring("", 0);
+  } else {
+    str = getitem(0, cvlen + 1);
+    memset(str, '\0', cvlen);
+    len = strlen(char_cnst);
+    if (lb - 1 + cvlen < len) {
+      memcpy(str, char_cnst + lb - 1, sizeof(char) * cvlen);
+    } else if (lb - 1 < len ) {
+      memcpy(str, char_cnst + lb - 1, sizeof(char) * (len - lb + 1));
+    }
+    str[cvlen] = '\0';
+    p = getstring(str, cvlen);
+  }
+  return p;
 }

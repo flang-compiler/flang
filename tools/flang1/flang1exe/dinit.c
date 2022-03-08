@@ -1350,6 +1350,9 @@ ac_opname(int id)
   case AC_TRIPLE:
     strcpy(bf, "TRIPLE");
     break;
+  case AC_SUBSTR:
+    strcpy(bf, "SUBSTR");
+    break;
   default:
     sprintf(bf, "ac_opnameUNK_%d", id);
     break;

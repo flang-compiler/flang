@@ -574,6 +574,7 @@ struct _aexpr {
 #define AC_LNOT 23
 #define AC_EXPX 24
 #define AC_TRIPLE 25
+#define AC_SUBSTR 26
 
 typedef enum {
   AC_I_NONE = 0,
