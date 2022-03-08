@@ -56,6 +56,7 @@ static void df_dinit(VAR *, CONST *);
 static CONST *dinit_varref(VAR *ivl, SPTR member, CONST *ict, DTYPE dtype,
                            int *struct_bytes_initd, ISZ_T *repeat,
                            ISZ_T base_off);
+static SPTR get_substring(SPTR src, int lb, int ub);
 
 static CONST **init_const; /* list of pointers to saved COSNT lists */
 static int cur_init = 0;
@@ -5196,6 +5197,27 @@ mk_cmp(CONST *c, int op, INT l_conval, INT r_conval, DTYPE rdtype, DTYPE dt)
 }
 
 static CONST *
+eval_substr(CONST *lop, CONST *rop)
+{
+  int lb, ub;
+  SPTR src, p;
+  CONST *ret = NULL;
+
+  src = (SPTR)lop->u1.conval;
+  lb = rop->u1.conval;
+  ub = rop->next->u1.conval;
+  p = get_substring(src, lb, ub);
+
+  ret = (CONST *)getitem(4, sizeof(CONST));
+  BZERO(ret, CONST, 1);
+  ret->id = AC_CONST;
+  ret->dtype = DTYPEG(p);
+  ret->repeatc = 1;
+  ret->u1.conval = ret->sptr = p;
+  return ret;
+}
+
+static CONST *
 eval_init_op(int op, CONST *lop, DTYPE ldtype, CONST *rop, DTYPE rdtype,
              SPTR sptr, DTYPE dtype)
 {
@@ -5283,6 +5305,8 @@ eval_init_op(int op, CONST *lop, DTYPE ldtype, CONST *rop, DTYPE rdtype,
     c->repeatc = 1;
     c->u1.conval = c->sptr = getstring(s, llen + rlen);
     add_to_list(c, &root, &roottail);
+  } else if (op == AC_SUBSTR) {
+    root = eval_substr(lop, rop);
   } else if (op == AC_INTR_CALL) {
     int intrin = lop->u1.conval;
     switch (lop->u1.conval) {
@@ -5738,6 +5762,52 @@ eval_array_constructor(CONST *e)
 }
 
 static CONST *
+get_static_str(SPTR sptr)
+{
+  DREC *p = NULL;
+  SPTR cnst_sptr;
+  LOGICAL found;
+  DTYPE dtype;
+  CONST *ret = NULL;
+
+  cnst_sptr = SPTR_NULL;
+  found = FALSE;
+  dtype = DTYPEG(sptr);
+  dinit_save();
+  while((p = dinit_read())) {
+    DTYPE tdtype = p->dtype;
+    ISZ_T tconval = p->conval;
+    if (tdtype == DINIT_LOC) {
+      if (tconval == sptr) {
+        found = TRUE;
+      } else {
+        found = FALSE;
+      }
+      continue;
+    }
+    if (tdtype == dtype) {
+      if (found) {
+        cnst_sptr = (SPTR)tconval;
+        break;
+      }
+    }
+    found = FALSE;
+  }
+  dinit_restore();
+
+  if (cnst_sptr == 0 || STYPEG(cnst_sptr) != ST_CONST) {
+    return NULL;
+  }
+  ret = (CONST *)getitem(4, sizeof(CONST));
+  BZERO(ret, CONST, 1);
+  ret->id = AC_CONST;
+  ret->dtype = dtype;
+  ret->repeatc = 1;
+  ret->u1.conval = ret->sptr = cnst_sptr;
+  return ret;
+}
+
+static CONST *
 eval_init_expr_item(CONST *cur_e)
 {
   CONST *new_e = NULL, *rslt, *rslttail;
@@ -5754,6 +5824,11 @@ eval_init_expr_item(CONST *cur_e)
     }
     if (PARAMG(cur_e->sptr) || (DOVARG(cur_e->sptr) && DINITG(cur_e->sptr)) ||
         (CCSYMG(cur_e->sptr) && DINITG(cur_e->sptr))) {
+      if (!PARAMVALG(cur_e->sptr) && DTY(DTYPEG(cur_e->sptr)) == TY_CHAR
+          && SCG(cur_e->sptr) == SC_STATIC) {
+        new_e = get_static_str(cur_e->sptr);
+        break;
+      }
       new_e = clone_init_const_list(
           init_const[PARAMVALG(cur_e->sptr) - 1], true);
       if (cur_e->mbr) {
@@ -6008,4 +6083,31 @@ save_init(CONST *ict, SPTR sptr)
   }
   init_const[cur_init] = ict;
   PARAMVALP(sptr, ++cur_init); /* paramval is cardinal */
+}
+
+static SPTR
+get_substring(SPTR src, int lb, int ub)
+{
+  char *char_cnst = NULL;
+  char *str = NULL;
+  int cvlen, len;
+  SPTR p;
+
+  char_cnst = stb.n_base + CONVAL1G(src);
+  cvlen = ub - lb + 1;
+  if (cvlen < 1) {
+    p = getstring("", 0);
+  } else {
+    str = getitem(0, cvlen + 1);
+    memset(str, '\0', cvlen);
+    len = strlen(char_cnst);
+    if (lb - 1 + cvlen < len) {
+      memcpy(str, char_cnst + lb - 1, sizeof(char) * cvlen);
+    } else if (lb - 1 < len ) {
+      memcpy(str, char_cnst + lb - 1, sizeof(char) * (len - lb + 1));
+    }
+    str[cvlen] = '\0';
+    p = getstring(str, cvlen);
+  }
+  return p;
 }
