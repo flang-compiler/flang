@@ -8834,9 +8834,11 @@ eval_scale(ACL *arg, DTYPE dtype)
   INT i, conval1, conval2, conval;
   DBLINT64 inum1, inum2;
   INT e;
+#ifdef TARGET_SUPPORTS_QUADFP
   INT qnum1[4], qnum2[4];
-  DBLE dconval;
   QUAD qconval;
+#endif
+  DBLE dconval;
 
   rslt = arg = eval_init_expr(arg);
   conval1 = arg->conval;
