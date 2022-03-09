@@ -223,6 +223,7 @@ static void I8(prng_loop_d_npb)(__REAL8_T *hb, F90_Desc *harvest, __INT_T li,
   }
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
 static void I8(prng_loop_q_npb)(__REAL16_T *hb, F90_Desc *harvest, __INT_T li,
                                 int dim, __INT_T section_offset, __INT_T limit)
 {
@@ -329,6 +330,7 @@ static void I8(prng_loop_q_npb)(__REAL16_T *hb, F90_Desc *harvest, __INT_T li,
     }
   }
 }
+#endif
 
 static void I8(prng_loop_r_npb)(__REAL4_T *hb, F90_Desc *harvest, __INT_T li,
                                 int dim, __INT_T section_offset, __INT_T limit)

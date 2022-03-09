@@ -23,18 +23,26 @@ AND64	ilm	ilm
 ANINT	ilm
 ARET	ilm
 ASIN	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
 QASIN   ilm
+#endif
 ASIND	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
 QASIND  ilm
+#endif
 AST	ilm	ilm
 ATAN	ilm
 ATAN2	ilm	ilm
 ATAN2D	ilm	ilm
 ATAND	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
 QATAND  ilm
+#endif
 ERF	ilm
 DERF	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
 QERF    ilm
+#endif
 ERFC	ilm
 ERFC_SCALED	ilm
 DERFC	ilm
