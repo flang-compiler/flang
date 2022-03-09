@@ -9,7 +9,11 @@
 
 #include "fioMacros.h"
 #include "cnfg.h"
+#include "float.h"
 
+#ifdef TARGET_SUPPORTS_QUADFP
+#define MAXLONGDOUBLE (LDBL_MAX)
+#endif
 #define MAXDOUBLE ((double)1.797693134862315708e+308)
 #define MAXFLOAT ((float)3.40282346638528860e+38)
 
@@ -147,7 +151,11 @@ static __INT8_T max_int8 = 0; /* initialized */
 static __STR_T max_str = (__STR_T) 255; /* initialized */
 static __REAL4_T max_real4 = MAXFLOAT;
 static __REAL8_T max_real8 = MAXDOUBLE;
+#ifdef TARGET_SUPPORTS_QUADFP
+static __REAL16_T max_real16 = MAXLONGDOUBLE;
+#else
 static __REAL16_T max_real16 = MAXDOUBLE;
+#endif
 
 void *__fort_maxs[__NTYPES] = {
     (void *)0,          /*  0 __NONE       no type */
@@ -206,7 +214,11 @@ static __INT8_T min_int8 = 0; /* initialized */
 static __STR_T min_str = 0;   /* initialized */
 static __REAL4_T min_real4 = -MAXFLOAT;
 static __REAL8_T min_real8 = -MAXDOUBLE;
+#ifdef TARGET_SUPPORTS_QUADFP
+static __REAL16_T min_real16 = -MAXLONGDOUBLE;
+#else
 static __REAL16_T min_real16 = -MAXDOUBLE;
+#endif
 
 void *__fort_mins[__NTYPES] = {
     (void *)0,          /*  0 __NONE       no type */

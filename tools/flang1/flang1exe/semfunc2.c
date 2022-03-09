@@ -2829,6 +2829,13 @@ iface_intrinsic(int sptr)
     dtyper = DT_DBLE;
     argdtype = DT_DBLE;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QACOS: /* qacos */
+    paramct = 1;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+#endif
   case I_DASIN: /* dasin */
     paramct = 1;
     dtyper = DT_DBLE;
@@ -2844,6 +2851,13 @@ iface_intrinsic(int sptr)
     dtyper = DT_DBLE;
     argdtype = DT_DBLE;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QATAN2: /* qatan2 */
+    paramct = 2;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+#endif
   case I_DCOS: /* dcos */
     paramct = 1;
     dtyper = DT_DBLE;
@@ -2879,6 +2893,13 @@ iface_intrinsic(int sptr)
     dtyper = DT_DBLE;
     argdtype = DT_DBLE;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QLOG: /* qlog */
+    paramct = 1;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+#endif
   case I_DLOG10: /* dlog10 */
     paramct = 1;
     dtyper = DT_DBLE;
@@ -2936,6 +2957,36 @@ iface_intrinsic(int sptr)
     break;
 #ifdef TARGET_SUPPORTS_QUADFP
   case I_QEXP: /* qexp */
+    paramct = 1;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+  case I_QCOS: /* qcos */
+    paramct = 1;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+  case I_QSIN: /* qsin */
+    paramct = 1;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+  case I_QDIM: /* qdim */
+    paramct = 2;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+  case I_QATAN: /* qatan */
+    paramct = 1;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+  case I_QTAN: /* qtan */
+    paramct = 1;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+  case I_QASIN: /* qasin */
     paramct = 1;
     dtyper = DT_QUAD;
     argdtype = DT_QUAD;
@@ -3006,6 +3057,13 @@ iface_intrinsic(int sptr)
     dtyper = DT_REAL;
     argdtype = DT_REAL;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QSQRT: /* qsqrt */
+    paramct = 1;
+    dtyper = DT_QUAD;
+    argdtype = DT_QUAD;
+    break;
+#endif
   case I_TAN: /* tan */
     paramct = 1;
     dtyper = DT_REAL;

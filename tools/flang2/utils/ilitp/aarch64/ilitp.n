@@ -524,6 +524,12 @@ Double-precision square root.
 .AT arth null dp cse
 .CG "sqrtsd"
 
+.IL QSQRT qplnk
+quad-precision square root.
+.AT arth null qp cse
+.CG notCG
+
+
 .IL RCPSS splnk
 Single-precision approximation to reciprocal.
 .AT arth null sp cse
@@ -583,6 +589,21 @@ Double precision cosine.  Implemented as library call (by CG).
 .AT arth null dp cse
 .CG notAILI
 
+.IL QCOS qplnk
+quad precision cosine.  Implemented as library call (by CG).
+.AT arth null qp cse
+.CG notAILI
+
+.IL QSIN qplnk
+quad precision sine.  Implemented as a library call (by CG).
+.AT arth null qp cse
+.CG notAILI
+
+.IL QATAN qplnk
+quad-precision  arctangent.
+.AT arth null qp cse
+.CG notCG
+
 .IL FSINCOS splnk
 Used to implement SINCOS optimization (single precision).  Implemented as
 a library call (by CG).
@@ -605,6 +626,11 @@ Double-precision tangent.
 .AT arth null dp cse
 .CG notCG
 
+.IL QTAN qplnk
+quad-precision tangent.
+.AT arth null qp cse
+.CG notCG
+
 .IL FLOG splnk
 Single-precision floating-point natural logarithm.
 .AT arth null sp cse
@@ -613,6 +639,11 @@ Single-precision floating-point natural logarithm.
 .IL DLOG dplnk
 Double-precision natural logarithm.
 .AT arth null dp cse
+.CG notCG
+
+.IL QLOG qplnk
+quad-precision natural logarithm.
+.AT arth null qp cse
 .CG notCG
 
 .IL FLOG10 splnk
@@ -650,6 +681,11 @@ Double-precision  arccosine.
 .AT arth null dp cse
 .CG notCG
 
+.IL QACOS qplnk
+quad-precision  arccosine.
+.AT arth null qp cse
+.CG notCG
+
 .IL DFRQP lnk qp
 Define quad precision function result returned in xmm register 'dp'.
 .AT define null qp cse
@@ -666,6 +702,11 @@ Single-precision floating-point arcsine.
 .IL DASIN dplnk
 Double-precision  arcsine.
 .AT arth null dp cse
+.CG notCG
+
+.IL QASIN qplnk
+quad-precision  arcsine.
+.AT arth null qp cse
 .CG notCG
 
 .IL FATAN splnk
@@ -686,6 +727,11 @@ Single-precision floating-point two-argument arctangent.
 .IL DATAN2 dplnk dplnk
 Double-precision two-argument arctangent.
 .AT arth null dp cse
+.CG notCG
+
+.IL QATAN2 qplnk qplnk
+Quad-precision two-argument arctangent.
+.AT arth null qp cse
 .CG notCG
 
 .IL FSINH splnk
@@ -760,6 +806,11 @@ Double sign.
 .AT arth null dp cse
 .CG notCG
 
+.IL QSIGN qplnk qplnk
+Quad precision sign.
+.AT arth null qp cse
+.CG notCG
+
 .IL IDIM irlnk irlnk
 Integer dim intrinsic.
 .AT arth null ir cse
@@ -775,6 +826,11 @@ Double dim.
 .AT arth null dp cse
 .CG notCG
 
+.IL QDIM qplnk qplnk
+Quad dim.
+.AT arth null qp cse
+.CG notCG
+
 .IL FFLOOR splnk
 Real FLOOR.
 .AT arth null sp cse
@@ -785,6 +841,11 @@ Double FLOOR.
 .AT arth null dp cse
 .CG "roundsd" sse_avx
 
+.IL QFLOOR qplnk
+Quad FLOOR.
+.AT arth null qp cse
+.CG "roundsq" sse_avx
+
 .IL FCEIL splnk
 Real CEILING.
 .AT arth null sp cse
@@ -794,6 +855,11 @@ Real CEILING.
 Double CEILING.
 .AT arth null dp cse
 .CG "roundsd" sse_avx
+
+.IL QCEIL qplnk
+Quad CEILING
+.AT arth null qp cse
+.CG "roundsq" sse_avx
 
 .IL AINT splnk
 Single precision trunction.
@@ -1563,6 +1629,11 @@ Single-precision mod.
 .IL DMOD dplnk dplnk
 Double-precision mod.
 .AT arth null dp cse
+.CG notCG
+
+.IL QMOD qplnk qplnk
+Double-precision mod. 
+.AT arth null qp cse
 .CG notCG
 
 .IL IMAX irlnk irlnk

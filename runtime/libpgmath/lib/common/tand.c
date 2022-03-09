@@ -6,9 +6,19 @@
  */
 
 #include "mthdecls.h"
+#define MYPI 180.0
+#define HFPI 90.0
 
 float
 __mth_i_tand(float f)
 {
+  union {
+    float f;
+    unsigned int i;
+  } u;
+  if ((fmodf(fabsf(f), MYPI) - HFPI) == 0.0) {
+    u.i = 0x7f800000;
+    return u.f;
+  }
   return tanf(CNVRTDEG(f));
 }

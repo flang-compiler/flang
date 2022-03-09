@@ -29,6 +29,9 @@
 
 MTHINTRIN(ceil  , ss   , any        ,  __mth_i_ceil         ,  __mth_i_ceil         , __mth_i_ceil          ,__math_dispatch_error)
 MTHINTRIN(ceil  , ds   , any        ,  __mth_i_dceil        ,  __mth_i_dceil        , __mth_i_dceil         ,__math_dispatch_error)
+#ifdef TARGET_SUPPORTS_QUADFP
+MTHINTRIN(ceil  , qs   , any        ,  __mth_i_qceil        ,  __mth_i_qceil        , __mth_i_qceil         ,__math_dispatch_error)
+#endif
 MTHINTRIN(ceil  , sv4  , any        ,  __gs_ceil_4_f        ,  __gs_ceil_4_r        , __gs_ceil_4_p         ,__math_dispatch_error)
 MTHINTRIN(ceil  , dv2  , any        ,  __gd_ceil_2_f        ,  __gd_ceil_2_r        , __gd_ceil_2_p         ,__math_dispatch_error)
 MTHINTRIN(ceil  , sv4m , any        , __fs_ceil_4_mn        , __rs_ceil_4_mn        , __ps_ceil_4_mn        ,__math_dispatch_error)

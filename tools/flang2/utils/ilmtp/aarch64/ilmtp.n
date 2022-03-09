@@ -367,6 +367,8 @@ Square root of a single precision real number (SQRT intrinsic).
 .OP FSQRT r p1
 .IL DSQRT arth lnk
 .OP DSQRT r p1
+.IL QSQRT arth lnk
+.OP QSQRT r p1
 .IL CSQRT arth lnk
 .AT spec
 .IL CDSQRT arth lnk
@@ -414,6 +416,8 @@ EXP intrinsic for single precision floating point values.
 .OP FLOG r p1
 .IL DLOG arth lnk
 .OP DLOG r p1
+.IL QLOG arth lnk
+.OP QLOG r p1
 .IL CLOG arth lnk
 .AT spec
 .IL CDLOG arth lnk
@@ -422,6 +426,11 @@ EXP intrinsic for single precision floating point values.
 .OP FLOG10 r p1
 .IL DLOG10 arth lnk
 .OP DLOG10 r p1
+.IL QLOG10 arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qlog10 t1
+.OP DFRQP r t2 qpret
 .IL SIN arth lnk
 Sine of a single precision value
 .OP FSIN r p1
@@ -477,6 +486,8 @@ Tangent of a single precision value
 .OP FACOS r p1
 .IL DACOS arth lnk
 .OP DACOS r p1
+.IL QACOS arth lnk
+.OP QACOS r p1
 .IL ATAN arth lnk
 .OP FATAN r p1
 .IL DATAN arth lnk
@@ -485,6 +496,8 @@ Tangent of a single precision value
 .OP FATAN2 r p1 p2
 .IL DATAN2 arth lnk lnk
 .OP DATAN2 r p1 p2
+.IL QATAN2 arth lnk lnk
+.OP QATAN2 r p1 p2
 .IL SIND arth lnk
 SIN in degrees.
 .OP NULL t1 iv0
@@ -496,6 +509,12 @@ SIN in degrees.
 .OP ARGDP t1 p1 t1
 .OP QJSR t2 =e'%d%__mth_i_dsind t1
 .OP DFRDP r t2 dpret
+.IL QSIND arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qsind t1
+.OP DFRQP r t2 qpret
+
 .IL COSD arth lnk
 COS in degrees.
 .OP NULL t1 iv0
@@ -507,6 +526,11 @@ COS in degrees.
 .OP ARGDP t1 p1 t1
 .OP QJSR t2 =e'%d%__mth_i_dcosd t1
 .OP DFRDP r t2 dpret
+.IL QCOSD arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qcosd t1
+.OP DFRQP r t2 qpret
 .IL TAND arth lnk
 TAN in degrees.
 .OP NULL t1 iv0
@@ -518,6 +542,11 @@ TAN in degrees.
 .OP ARGDP t1 p1 t1
 .OP QJSR t2 =e'%d%__mth_i_dtand t1
 .OP DFRDP r t2 dpret
+.IL QTAND arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qtand t1
+.OP DFRQP r t2 qpret
 .IL ERF arth lnk
 .OP NULL t1 iv0
 .OP ARGSP t1 p1 t1
@@ -528,6 +557,11 @@ TAN in degrees.
 .OP ARGDP t1 p1 t1
 .OP QJSR t2 =e'%d%__mth_i_derf t1
 .OP DFRDP r t2 dpret
+.IL QERF arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qerf t1
+.OP DFRQP r t2 qpret
 .IL ERFC arth lnk
 .OP NULL t1 iv0
 .OP ARGSP t1 p1 t1
@@ -538,6 +572,11 @@ TAN in degrees.
 .OP ARGDP t1 p1 t1
 .OP QJSR t2 =e'%d%__mth_i_derfc t1
 .OP DFRDP r t2 dpret
+.IL QERFC arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qerfc t1
+.OP DFRQP r t2 qpret
 .IL ERFC_SCALED arth lnk
 .OP NULL t1 iv0
 .OP ARGSP t1 p1 t1
@@ -548,6 +587,11 @@ TAN in degrees.
 .OP ARGDP t1 p1 t1
 .OP QJSR t2 =e'%d%__mth_i_derfc_scaled t1
 .OP DFRDP r t2 dpret
+.IL QERFC_SCALED arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qerfc_scaled t1
+.OP DFRQP r t2 qpret
 .IL GAMMA arth lnk
 .OP NULL t1 iv0
 .OP ARGSP t1 p1 t1
@@ -558,6 +602,11 @@ TAN in degrees.
 .OP ARGDP t1 p1 t1
 .OP QJSR t2 =e'%d%__mth_i_dgamma t1
 .OP DFRDP r t2 dpret
+.IL QGAMMA arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qgamma t1
+.OP DFRQP r t2 qpret
 .IL LOG_GAMMA arth lnk
 .OP NULL t1 iv0
 .OP ARGSP t1 p1 t1
@@ -568,6 +617,11 @@ TAN in degrees.
 .OP ARGDP t1 p1 t1
 .OP QJSR t2 =e'%d%__mth_i_dlog_gamma t1
 .OP DFRDP r t2 dpret
+.IL QLOG_GAMMA arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qlog_gamma t1
+.OP DFRQP r t2 qpret
 .IL HYPOT arth lnk lnk
 .OP NULL t1 iv0
 .OP ARGSP t1 p2 t1
@@ -580,6 +634,12 @@ TAN in degrees.
 .OP ARGDP t2 p1 t1
 .OP QJSR t3 =e'%d%__mth_i_dhypot t2
 .OP DFRDP r t3 dpret
+.IL QHYPOT arth lnk lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p2 t1
+.OP ARGQP t2 p1 t1
+.OP QJSR t3 =e'%q%__mth_i_qhypot t2
+.OP DFRQP r t3 qpret
 .IL ACOSH arth lnk
 .OP NULL t1 iv0
 .OP ARGSP t1 p1 t1
@@ -590,6 +650,11 @@ TAN in degrees.
 .OP ARGDP t1 p1 t1
 .OP QJSR t2 =e'%d%__mth_i_dacosh t1
 .OP DFRDP r t2 dpret
+.IL QACOSH arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qacosh t1
+.OP DFRQP r t2 qpret
 .IL ASINH arth lnk
 .OP NULL t1 iv0
 .OP ARGSP t1 p1 t1
@@ -600,11 +665,21 @@ TAN in degrees.
 .OP ARGDP t1 p1 t1
 .OP QJSR t2 =e'%d%__mth_i_dasinh t1
 .OP DFRDP r t2 dpret
+.IL QASINH arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qasinh t1
+.OP DFRQP r t2 qpret
 .IL ATANH arth lnk
 .OP NULL t1 iv0
 .OP ARGSP t1 p1 t1
 .OP QJSR t2 =e'%s%__mth_i_atanh t1
 .OP DFRSP r t2 spret
+.IL QATANH arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qatanh t1
+.OP DFRQP r t2 qpret
 .IL DATANH arth lnk
 .OP NULL t1 iv0
 .OP ARGDP t1 p1 t1
@@ -669,6 +744,11 @@ ASIN in degrees.
 .OP ARGDP t1 p1 t1
 .OP QJSR t2 =e'%d%__mth_i_dasind t1
 .OP DFRDP r t2 dpret
+.IL QASIND arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qasind t1
+.OP DFRQP r t2 qpret
 .IL ACOSD arth lnk
 ACOS in degrees.
 .OP NULL t1 iv0
@@ -680,6 +760,11 @@ ACOS in degrees.
 .OP ARGDP t1 p1 t1
 .OP QJSR t2 =e'%d%__mth_i_dacosd t1
 .OP DFRDP r t2 dpret
+.IL QACOSD arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qacosd t1
+.OP DFRQP r t2 qpret
 .IL ATAND arth lnk
 ATAN in degrees.
 .OP NULL t1 iv0
@@ -691,6 +776,11 @@ ATAN in degrees.
 .OP ARGDP t1 p1 t1
 .OP QJSR t2 =e'%d%__mth_i_datand t1
 .OP DFRDP r t2 dpret
+.IL QATAND arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qatand t1
+.OP DFRQP r t2 qpret
 .IL ATAN2D arth lnk lnk
 ATAN2 in degrees.
 .OP NULL t1 iv0
@@ -704,18 +794,39 @@ ATAN2 in degrees.
 .OP ARGDP t2 p1 t1
 .OP QJSR t3 =e'%d%__mth_i_datan2d t2
 .OP DFRDP r t3 dpret
+.IL QATAN2D arth lnk lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p2 t1
+.OP ARGQP t2 p1 t1
+.OP QJSR t3 =e'%q%__mth_i_qatan2d t2
+.OP DFRQP r t3 qpret
 .IL SINH arth lnk
 .OP FSINH r p1
 .IL DSINH arth lnk
 .OP DSINH r p1
+.IL QSINH arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qsinh t1
+.OP DFRQP r t2 qpret
 .IL COSH arth lnk
 .OP FCOSH r p1
 .IL DCOSH arth lnk
 .OP DCOSH r p1
+.IL QCOSH arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qcosh t1
+.OP DFRQP r t2 qpret
 .IL TANH arth lnk
 .OP FTANH r p1
 .IL DTANH arth lnk
 .OP DTANH r p1
+.IL QTANH arth lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p1 t1
+.OP QJSR t2 =e'%q%__mth_i_qtanh t1
+.OP DFRQP r t2 qpret
 .IL SNGL arth lnk
 Convert double precision number to single precision (SNGL intrinsic).
 .OP SNGL r p1
@@ -1000,6 +1111,8 @@ Integer remainder (MOD intrinsic).
 .OP FMOD r p1 p2
 .IL DMOD arth lnk lnk
 .OP DMOD r p1 p2
+.IL QMOD arth lnk lnk
+.OP QMOD r p1 p2
 .IL ISIGN arth lnk lnk
 .OP ICMPZ t1 p2 lt
 .OP IABS t2 p1
@@ -1029,6 +1142,12 @@ Real valued DIM intrinsic.
 .OP ARGDP t2 p1 t1
 .OP QJSR t3 =e'%d%ftn_i_ddim t2
 .OP DFRDP r t3 dpret
+.IL QDIM arth lnk lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p2 t1
+.OP ARGQP t2 p1 t1
+.OP QJSR t3 =e'%q%ftn_i_qdim t2
+.OP DFRQP r t3 qpret
 .IL DPROD arth lnk lnk
 Multiply two single precision real values and return double
 precision value. (DPROD intrinsic).
@@ -1256,12 +1375,16 @@ FLOOR of real to real
 .IL DFLOOR arth lnk
 FLOOR of double to double
 .OP DFLOOR r p1
+.IL QFLOOR arth lnk
+.OP QFLOOR r p1
 .IL RCEIL arth lnk
 CELING of real to real
 .OP FCEIL r p1
 .IL DCEIL arth lnk
 CELING of double to double
 .OP DCEIL r p1
+.IL QCEIL arth lnk
+.OP QCEIL r p1
 .IL ICMP arth lnk lnk
 Integer comparision of two integer numbers.
 The compare ILMs are used only in the context of a relational expression
@@ -3950,6 +4073,16 @@ Convert quad precision number to double (DBLEQ intrinsic).
 .IL PQFUNCA proc n stc sym lnk lnk*
 Call quad function through procedure pointer
 .AT spec
+
+.IL QATAN arth lnk
+.OP QATAN r p1
+
+.IL QCOS arth lnk
+.OP QCOS r p1
+
+.IL QSIN arth lnk
+.OP QSIN r p1
+
 .IL QABS arth lnk
 .OP NULL t1 iv0
 .OP ARGQP t1 p1 t1
@@ -3970,3 +4103,16 @@ KIQNINT intrinsic (converts quad to integer*8).
 .OP ARGQP t1 p1 t1
 .OP QJSR t2 =e'%l%__mth_i_kiqnint t1
 .OP DFRKR r t2 krret
+
+.IL QTAN arth lnk
+.OP QTAN r p1
+
+.IL QASIN arth lnk
+.OP QASIN r p1
+
+.IL QSIGN arth lnk lnk
+.OP NULL t1 iv0
+.OP ARGQP t1 p2 t1
+.OP ARGQP t2 p1 t1
+.OP QJSR t3 =e'%q%__mth_i_qsign t2
+.OP DFRQP r t3 qpret

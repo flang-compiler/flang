@@ -9770,6 +9770,14 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
         gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_DBLE)),
         make_lltype_from_dtype(DT_DBLE), NULL, I_PICALL);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QSQRT:
+    operand = gen_call_llvm_intrinsic(
+        "sqrt.f128",
+        gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(DT_QUAD)),
+        make_lltype_from_dtype(DT_QUAD), NULL, I_PICALL);
+    break;
+#endif
   case IL_FLOG:
     operand = gen_call_llvm_intrinsic(
         "log.f32",

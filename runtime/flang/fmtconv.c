@@ -79,11 +79,13 @@ __fortio_printbigreal(__BIGREAL_T val)
   __io_printf("(%f)", val);
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
 void
 __fortio_printreal16(__REAL16_T val)
 {
   __io_printf("(%Lf)", val);
 }
+#endif
 
 /* ----------------------------------------------------------------- */
 

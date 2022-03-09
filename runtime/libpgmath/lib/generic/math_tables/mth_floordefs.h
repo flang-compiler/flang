@@ -29,6 +29,9 @@
 
 MTHINTRIN(floor  , ss   , any        ,  __mth_i_floor        ,  __mth_i_floor        , __mth_i_floor         ,__math_dispatch_error)
 MTHINTRIN(floor  , ds   , any        ,  __mth_i_dfloor       ,  __mth_i_dfloor       , __mth_i_dfloor        ,__math_dispatch_error)
+#ifdef TARGET_SUPPORTS_QUADFP
+MTHINTRIN(floor  , qs   , any        ,  __mth_i_qfloor       ,  __mth_i_qfloor       , __mth_i_qfloor        ,__math_dispatch_error)
+#endif
 MTHINTRIN(floor  , sv4  , any        ,  __gs_floor_4_f       ,  __gs_floor_4_r       , __gs_floor_4_p        ,__math_dispatch_error)
 MTHINTRIN(floor  , dv2  , any        ,  __gd_floor_2_f       ,  __gd_floor_2_r       , __gd_floor_2_p        ,__math_dispatch_error)
 MTHINTRIN(floor  , sv4m , any        , __fs_floor_4_mn       , __rs_floor_4_mn       , __ps_floor_4_mn       ,__math_dispatch_error)

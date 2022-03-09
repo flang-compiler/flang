@@ -108,6 +108,25 @@ void f90_mm_int8_str1_i8_(__INT8_T *, __INT8_T *, __INT8_T *, __INT_T *,
                           __INT_T *, __INT_T *, __INT_T *, __INT_T *, __INT_T *,
                           __INT_T *);
 
+void f90_mm_real16_str1_mxv_(__REAL16_T *, __REAL16_T *, __REAL16_T *, __INT_T *,
+                              __INT_T *, __INT_T *, __INT_T *);
+void f90_mm_real16_str1_vxm_(__REAL16_T *, __REAL16_T *, __REAL16_T *, __INT_T *,
+                              __INT_T *, __INT_T *, __INT_T *);
+void f90_mm_real16_str1_(__REAL16_T *, __REAL16_T *, __REAL16_T *, __INT_T *,
+                          __INT_T *, __INT_T *, __INT_T *, __INT_T *, __INT_T *,
+                          __INT_T *);
+void f90_mm_real16_str1_mxv_t_(__REAL16_T *, __REAL16_T *, __REAL16_T *,
+                                __INT_T *, __INT_T *, __INT_T *, __INT_T *);
+void f90_mm_real16_str1_mxv_i8_(__REAL16_T *, __REAL16_T *, __REAL16_T *, __INT_T *,
+                               __INT_T *, __INT_T *, __INT_T *);
+void f90_mm_real16_str1_vxm_i8_(__REAL16_T *, __REAL16_T *, __REAL16_T *, __INT_T *,
+                               __INT_T *, __INT_T *, __INT_T *);
+void f90_mm_real16_str1_i8_(__REAL16_T *, __REAL16_T *, __REAL16_T *, __INT_T *,
+                           __INT_T *, __INT_T *, __INT_T *, __INT_T *,
+                           __INT_T *, __INT_T *);
+void f90_mm_real16_str1_mxv_t_i8_(__REAL16_T *, __REAL16_T *, __REAL16_T *,
+                                 __INT_T *, __INT_T *, __INT_T *, __INT_T *);
+
 void f90_mm_real4_str1_mxv_(__REAL4_T *, __REAL4_T *, __REAL4_T *, __INT_T *,
                             __INT_T *, __INT_T *, __INT_T *);
 void f90_mm_real4_str1_vxm_(__REAL4_T *, __REAL4_T *, __REAL4_T *, __INT_T *,

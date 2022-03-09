@@ -29,6 +29,9 @@
 
 MTHINTRIN(mod   , ss   , any        , __mth_i_amod           , __mth_i_amod           , __mth_i_amod           ,__math_dispatch_error)
 MTHINTRIN(mod   , ds   , any        , __mth_i_dmod           , __mth_i_dmod           , __mth_i_dmod           ,__math_dispatch_error)
+#ifdef TARGET_SUPPORTS_QUADFP
+MTHINTRIN(mod   , qs   , any        , __mth_i_qmod           , __mth_i_qmod           , __mth_i_qmod           ,__math_dispatch_error)
+#endif
 MTHINTRIN(mod   , sv4  , any        , __gs_mod_4_f           , __gs_mod_4_r           , __gs_mod_4_p           ,__math_dispatch_error)
 MTHINTRIN(mod   , dv2  , any        , __gd_mod_2_f           , __gd_mod_2_r           , __gd_mod_2_p           ,__math_dispatch_error)
 MTHINTRIN(mod   , sv4m , any        , __fs_mod_4_mn          , __rs_mod_4_mn          , __ps_mod_4_mn          ,__math_dispatch_error)

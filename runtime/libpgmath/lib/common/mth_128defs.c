@@ -254,6 +254,38 @@ MTH_DISPATCH_FUNC(__pd_acos_2m)(vrd2_t x, vid2_t m)
   return (fptr(x, m));
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_acos_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_acos, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_acos][sv_qs][frp_f];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_acos_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_acos, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_acos][sv_qs][frp_r];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_acos_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_acos, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_acos][sv_qs][frp_p];
+  return (fptr(x));
+}
+#endif
+
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_asin_1)(vrs1_t x)
 {
@@ -433,6 +465,38 @@ MTH_DISPATCH_FUNC(__pd_asin_2m)(vrd2_t x, vid2_t m)
   fptr = (vrd2_t(*)())MTH_DISPATCH_TBL[func_asin][sv_dv2m][frp_p];
   return (fptr(x, m));
 }
+
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_asin_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_asin, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_asin][sv_qs][frp_f];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_asin_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_asin, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_asin][sv_qs][frp_r];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_asin_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_asin, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_asin][sv_qs][frp_p];
+  return (fptr(x));
+}
+#endif
 
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_atan_1)(vrs1_t x)
@@ -614,6 +678,38 @@ MTH_DISPATCH_FUNC(__pd_atan_2m)(vrd2_t x, vid2_t m)
   return (fptr(x, m));
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_atan_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_atan, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_atan][sv_qs][frp_f];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_atan_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_atan, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_atan][sv_qs][frp_r];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_atan_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_atan, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_atan][sv_qs][frp_p];
+  return (fptr(x));
+}
+#endif
+
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_atan2_1)(vrs1_t x, vrs1_t y)
 {
@@ -793,6 +889,38 @@ MTH_DISPATCH_FUNC(__pd_atan2_2m)(vrd2_t x, vrd2_t y, vid2_t m)
   fptr = (vrd2_t(*)(vrd2_t, vrd2_t, vid2_t))MTH_DISPATCH_TBL[func_atan2][sv_dv2m][frp_p];
   return (fptr(x, y, m));
 }
+
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_atan2_1)(vrq1_t x, vrq1_t y)
+{
+  vrq1_t (*fptr)(vrq1_t, vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_atan2, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t, vrq1_t))MTH_DISPATCH_TBL[func_atan2][sv_qs][frp_f];
+  return (fptr(x, y));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_atan2_1)(vrq1_t x, vrq1_t y)
+{
+  vrq1_t (*fptr)(vrq1_t, vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_atan2, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t, vrq1_t))MTH_DISPATCH_TBL[func_atan2][sv_qs][frp_r];
+  return (fptr(x, y));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_atan2_1)(vrq1_t x, vrq1_t y)
+{
+  vrq1_t (*fptr)(vrq1_t, vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_atan2, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t, vrq1_t))MTH_DISPATCH_TBL[func_atan2][sv_qs][frp_p];
+  return (fptr(x, y));
+}
+#endif
 
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_cos_1)(vrs1_t x)
@@ -974,6 +1102,38 @@ MTH_DISPATCH_FUNC(__pd_cos_2m)(vrd2_t x, vid2_t m)
   return (fptr(x, m));
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_cos_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_cos, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_cos][sv_qs][frp_f];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_cos_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_cos, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_cos][sv_qs][frp_r];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_cos_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_cos, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_cos][sv_qs][frp_p];
+  return (fptr(x));
+}
+#endif
+
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_sin_1)(vrs1_t x)
 {
@@ -1153,6 +1313,38 @@ MTH_DISPATCH_FUNC(__pd_sin_2m)(vrd2_t x, vid2_t m)
   fptr = (vrd2_t(*)())MTH_DISPATCH_TBL[func_sin][sv_dv2m][frp_p];
   return (fptr(x, m));
 }
+
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_sin_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_sin, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_sin][sv_qs][frp_f];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_sin_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_sin, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_sin][sv_qs][frp_r];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_sin_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_sin, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_sin][sv_qs][frp_p];
+  return (fptr(x));
+}
+#endif
 
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_tan_1)(vrs1_t x)
@@ -1334,6 +1526,38 @@ MTH_DISPATCH_FUNC(__pd_tan_2m)(vrd2_t x, vid2_t m)
   return (fptr(x, m));
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_tan_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_tan, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_tan][sv_qs][frp_f];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_tan_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_tan, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_tan][sv_qs][frp_r];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_tan_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_tan, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_tan][sv_qs][frp_p];
+  return (fptr(x));
+}
+#endif
+
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_cosh_1)(vrs1_t x)
 {
@@ -1513,6 +1737,38 @@ MTH_DISPATCH_FUNC(__pd_cosh_2m)(vrd2_t x, vid2_t m)
   fptr = (vrd2_t(*)())MTH_DISPATCH_TBL[func_cosh][sv_dv2m][frp_p];
   return (fptr(x, m));
 }
+
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_cosh_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_cosh, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_cosh][sv_qs][frp_f];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_cosh_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_cosh, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_cosh][sv_qs][frp_r];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_cosh_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_cosh, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_cosh][sv_qs][frp_p];
+  return (fptr(x));
+}
+#endif
 
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_sinh_1)(vrs1_t x)
@@ -1694,6 +1950,38 @@ MTH_DISPATCH_FUNC(__pd_sinh_2m)(vrd2_t x, vid2_t m)
   return (fptr(x, m));
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_sinh_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_sinh, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_sinh][sv_qs][frp_f];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_sinh_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_sinh, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_sinh][sv_qs][frp_r];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_sinh_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_sinh, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_sinh][sv_qs][frp_p];
+  return (fptr(x));
+}
+#endif
+
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_tanh_1)(vrs1_t x)
 {
@@ -1873,6 +2161,38 @@ MTH_DISPATCH_FUNC(__pd_tanh_2m)(vrd2_t x, vid2_t m)
   fptr = (vrd2_t(*)())MTH_DISPATCH_TBL[func_tanh][sv_dv2m][frp_p];
   return (fptr(x, m));
 }
+
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_tanh_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_tanh, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_tanh][sv_qs][frp_f];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_tanh_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_tanh, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_tanh][sv_qs][frp_r];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_tanh_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_tanh, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_tanh][sv_qs][frp_p];
+  return (fptr(x));
+}
+#endif
 
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_exp_1)(vrs1_t x)
@@ -2296,6 +2616,38 @@ MTH_DISPATCH_FUNC(__pd_log_2m)(vrd2_t x, vid2_t m)
   return (fptr(x, m));
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_log_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_log, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_log][sv_qs][frp_f];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_log_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_log, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_log][sv_qs][frp_r];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_log_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_log, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_log][sv_qs][frp_p];
+  return (fptr(x));
+}
+#endif
+
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_log10_1)(vrs1_t x)
 {
@@ -2475,6 +2827,38 @@ MTH_DISPATCH_FUNC(__pd_log10_2m)(vrd2_t x, vid2_t m)
   fptr = (vrd2_t(*)())MTH_DISPATCH_TBL[func_log10][sv_dv2m][frp_p];
   return (fptr(x, m));
 }
+
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_log10_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_log10, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_log10][sv_qs][frp_f];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_log10_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_log10, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_log10][sv_qs][frp_r];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_log10_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_log10, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_log10][sv_qs][frp_p];
+  return (fptr(x));
+}
+#endif
 
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_mod_1)(vrs1_t x, vrs1_t y)
@@ -2656,6 +3040,38 @@ MTH_DISPATCH_FUNC(__pd_mod_2m)(vrd2_t x, vrd2_t y, vid2_t m)
   return (fptr(x, y, m));
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_mod_1)(vrq1_t x, vrq1_t y)
+{
+  vrq1_t (*fptr)(vrq1_t, vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_mod, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t, vrq1_t))MTH_DISPATCH_TBL[func_mod][sv_qs][frp_f];
+  return (fptr(x, y));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_mod_1)(vrq1_t x, vrq1_t y)
+{
+  vrq1_t (*fptr)(vrq1_t, vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_mod, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t, vrq1_t))MTH_DISPATCH_TBL[func_mod][sv_qs][frp_r];
+  return (fptr(x, y));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_mod_1)(vrq1_t x, vrq1_t y)
+{
+  vrq1_t (*fptr)(vrq1_t, vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_mod, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t, vrq1_t))MTH_DISPATCH_TBL[func_mod][sv_qs][frp_p];
+  return (fptr(x, y));
+}
+#endif
+
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_pow_1)(vrs1_t x, vrs1_t y)
 {
@@ -2835,6 +3251,38 @@ MTH_DISPATCH_FUNC(__pd_pow_2m)(vrd2_t x, vrd2_t y, vid2_t m)
   fptr = (vrd2_t(*)(vrd2_t, vrd2_t, vid2_t))MTH_DISPATCH_TBL[func_pow][sv_dv2m][frp_p];
   return (fptr(x, y, m));
 }
+
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_pow_1)(vrq1_t x, vrq1_t y)
+{
+  vrq1_t (*fptr)(vrq1_t, vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_pow, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t, vrq1_t))MTH_DISPATCH_TBL[func_pow][sv_qs][frp_f];
+  return (fptr(x, y));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_pow_1)(vrq1_t x, vrq1_t y)
+{
+  vrq1_t (*fptr)(vrq1_t, vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_pow, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t, vrq1_t))MTH_DISPATCH_TBL[func_pow][sv_qs][frp_r];
+  return (fptr(x, y));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_pow_1)(vrq1_t x, vrq1_t y)
+{
+  vrq1_t (*fptr)(vrq1_t, vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_pow, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t, vrq1_t))MTH_DISPATCH_TBL[func_pow][sv_qs][frp_p];
+  return (fptr(x, y));
+}
+#endif
 
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_powi1_1)(vrs1_t x, int32_t iy)
@@ -3565,6 +4013,68 @@ MTH_DISPATCH_FUNC(__pd_powk_2m)(vrd2_t x, vid2_t iy, vid2_t mask)
   return(fptr(x, iy, mask));
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_powi_1)(vrq1_t x, vis1_t iy)
+{
+  vrq1_t (*fptr)(vrq1_t, vis1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powi, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t, vis1_t))MTH_DISPATCH_TBL[func_powi][sv_qs][frp_f];
+  return(fptr(x, iy));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_powi_1)(vrq1_t x, vis1_t iy)
+{
+  vrq1_t (*fptr)(vrq1_t, vis1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powi, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t, vis1_t))MTH_DISPATCH_TBL[func_powi][sv_qs][frp_r];
+  return(fptr(x, iy));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_powi_1)(vrq1_t x, vis1_t iy)
+{
+  vrq1_t (*fptr)(vrq1_t, vis1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powi, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t, vis1_t))MTH_DISPATCH_TBL[func_powi][sv_qs][frp_p];
+  return(fptr(x, iy));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_powk_1)(vrq1_t x, vid1_t iy)
+{
+  vrq1_t (*fptr)(vrq1_t, vid1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powk, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t, vid1_t))MTH_DISPATCH_TBL[func_powk][sv_qs][frp_f];
+  return(fptr(x, iy));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_powk_1)(vrq1_t x, vid1_t iy)
+{
+  vrq1_t (*fptr)(vrq1_t, vid1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powk, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t, vid1_t))MTH_DISPATCH_TBL[func_powk][sv_qs][frp_r];
+  return(fptr(x, iy));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_powk_1)(vrq1_t x, vid1_t iy)
+{
+  vrq1_t (*fptr)(vrq1_t, vid1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_powk, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t, vid1_t))MTH_DISPATCH_TBL[func_powk][sv_qs][frp_p];
+  return(fptr(x, iy));
+}
+#endif
+
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_sincos_1)(vrs1_t x)
 {
@@ -4137,6 +4647,38 @@ MTH_DISPATCH_FUNC(__pd_ceil_2m)(vrd2_t x, vid2_t m)
   return (fptr(x, m));
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_ceil_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_ceil, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_ceil][sv_qs][frp_f];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_ceil_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_ceil, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_ceil][sv_qs][frp_r];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_ceil_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_ceil, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_ceil][sv_qs][frp_p];
+  return (fptr(x));
+}
+#endif
+
 vrs1_t
 MTH_DISPATCH_FUNC(__fs_floor_1)(vrs1_t x)
 {
@@ -4316,6 +4858,38 @@ MTH_DISPATCH_FUNC(__pd_floor_2m)(vrd2_t x, vid2_t m)
   fptr = (vrd2_t(*)())MTH_DISPATCH_TBL[func_floor][sv_dv2m][frp_p];
   return (fptr(x, m));
 }
+
+#ifdef TARGET_SUPPORTS_QUADFP
+vrq1_t
+MTH_DISPATCH_FUNC(__fq_floor_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_floor, sv_qs, frp_f);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_floor][sv_qs][frp_f];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__rq_floor_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_floor, sv_qs, frp_r);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_floor][sv_qs][frp_r];
+  return (fptr(x));
+}
+
+vrq1_t
+MTH_DISPATCH_FUNC(__pq_floor_1)(vrq1_t x)
+{
+  vrq1_t (*fptr)(vrq1_t);
+  _MTH_I_INIT();
+  _MTH_I_STATS_INC(func_floor, sv_qs, frp_p);
+  fptr = (vrq1_t(*)(vrq1_t))MTH_DISPATCH_TBL[func_floor][sv_qs][frp_p];
+  return (fptr(x));
+}
+#endif
 
 //////////
 // EXPERIMENTAL - _Complex - start

@@ -125,3 +125,13 @@ ftn_i_ddim(double a, double b)
     return a - b;
   return 0.0;
 }
+
+#ifdef TARGET_SUPPORTS_QUADFP
+long double
+ftn_i_qdim(long double a, long double b)
+{
+  if (a > b)
+    return a - b;
+  return 0.0;
+}
+#endif

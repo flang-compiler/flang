@@ -183,7 +183,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DSQRT 1 D D none * V
 .AT elemental x
-.IN .QSQRT 1 Q Q none * V
+.IN QSQRT 1 Q Q none * V
 .AT elemental x
 .IN .CSQRT 1 C C none * V
 .AT elemental x
@@ -204,7 +204,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DLOG 1 D D none * V
 .AT elemental x
-.IN .QLOG 1 Q Q none * V
+.IN QLOG 1 Q Q none * V
 .AT elemental x
 .IN .CLOG 1 C C none * V
 .AT elemental x
@@ -225,7 +225,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DLOG10 1 D D none * V
 .AT elemental x
-.IN .QLOG10 1 Q Q none * V
+.IN QLOG10 1 Q Q none * V
 .AT elemental x
 
 .IN ..EXP 1 R R none * V
@@ -257,7 +257,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DSIN 1 D D none * V
 .AT elemental x
-.IN .QSIN 1 Q Q none * V
+.IN QSIN 1 Q Q none * V
 .AT elemental x
 .IN .CSIN 1 C C none * V
 .AT elemental x
@@ -278,7 +278,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DSIND 1 D D none * V
 .AT elemental x
-.IN .QSIND 1 Q Q none * V
+.IN QSIND 1 Q Q none * V
 .AT elemental x
 
 .IN ..COS 1 R R none * V
@@ -289,7 +289,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DCOS 1 D D none * V
 .AT elemental x
-.IN .QCOS 1 Q Q none * V
+.IN QCOS 1 Q Q none * V
 .AT elemental x
 .IN .CCOS 1 C C none * V
 .AT elemental x
@@ -310,7 +310,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DCOSD 1 D D none * V
 .AT elemental x
-.IN .QCOSD 1 Q Q none * V
+.IN QCOSD 1 Q Q none * V
 .AT elemental x
 
 .IN ..TAN 1 R R none * V
@@ -321,7 +321,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DTAN 1 D D none * V
 .AT elemental x
-.IN .QTAN 1 Q Q none * V
+.IN QTAN 1 Q Q none * V
 .AT elemental x
 
 .IN ..TAND 1 R R none * V
@@ -332,7 +332,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DTAND 1 D D none * V
 .AT elemental x
-.IN .QTAND 1 Q Q none * V
+.IN QTAND 1 Q Q none * V
 .AT elemental x
 
 .IN ..ASIN 1 R R none * V
@@ -343,7 +343,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DASIN 1 D D none * V
 .AT elemental x
-.IN .QASIN 1 Q Q none * V
+.IN QASIN 1 Q Q none * V
 .AT elemental x
 
 .IN ..ASIND 1 R R none * V
@@ -354,7 +354,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DASIND 1 D D none * V
 .AT elemental x
-.IN .QASIND 1 Q Q none * V
+.IN QASIND 1 Q Q none * V
 .AT elemental x
 
 .IN ..ACOS 1 R R none * V
@@ -365,7 +365,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DACOS 1 D D none * V
 .AT elemental x
-.IN .QACOS 1 Q Q none * V
+.IN QACOS 1 Q Q none * V
 .AT elemental x
 
 .IN ..ACOSD 1 R R none * V
@@ -376,7 +376,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DACOSD 1 D D none * V
 .AT elemental x
-.IN .QACOSD 1 Q Q none * V
+.IN QACOSD 1 Q Q none * V
 .AT elemental x
 
 .IN ..ATAN 1 R R none * V
@@ -387,7 +387,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DATAN 1 D D none * V
 .AT elemental x
-.IN .QATAN 1 Q Q none * V
+.IN QATAN 1 Q Q none * V
 .AT elemental x
 
 .IN ..ATAND 1 R R none * V
@@ -398,7 +398,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DATAND 1 D D none * V
 .AT elemental x
-.IN .QATAND 1 Q Q none * V
+.IN QATAND 1 Q Q none * V
 .AT elemental x
 
 .IN ..ATAN2 2 R R none * V
@@ -409,7 +409,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental y x
 .IN DATAN2 2 D D none * V
 .AT elemental y x
-.IN .QATAN2 2 Q Q none * V
+.IN QATAN2 2 Q Q none * V
 .AT elemental y x
 
 .IN ..ATAN2D 2 R R none * V
@@ -420,7 +420,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental y x
 .IN DATAN2D 2 D D none * V
 .AT elemental y x
-.IN .QATAN2D 2 Q Q none * V
+.IN QATAN2D 2 Q Q none * V
 .AT elemental y x
 
 .IN ..SINH 1 R R none * V
@@ -431,7 +431,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DSINH 1 D D none * V
 .AT elemental x
-.IN .QSINH 1 Q Q none * V
+.IN QSINH 1 Q Q none * V
 .AT elemental x
 
 .IN ..COSH 1 R R none * V
@@ -442,7 +442,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DCOSH 1 D D none * V
 .AT elemental x
-.IN .QCOSH 1 Q Q none * V
+.IN QCOSH 1 Q Q none * V
 .AT elemental x
 
 .IN ..TANH 1 R R none * V
@@ -453,7 +453,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN DTANH 1 D D none * V
 .AT elemental x
-.IN .QTANH 1 Q Q none * V
+.IN QTANH 1 Q Q none * V
 .AT elemental x
 
 .IN IIABS 1 SI SI IABS * V
@@ -509,6 +509,8 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental z
 .IN .QCONJG 1 CQ CQ QCONJG * V
 .AT elemental x
+.IN QCONJG 1 CQ CQ QCONJG * V
+.AT elemental z
 
 .IN DPROD 2 R D DPROD * V
 .AT elemental x y
@@ -608,7 +610,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x y
 .IN DDIM 2 D D DDIM * V
 .AT elemental x y
-.IN .QDIM 2 Q Q QDIM * V
+.IN QDIM 2 Q Q QDIM * V
 .AT elemental x y
 
 .IN IMOD 2 SI SI MOD * V
@@ -629,7 +631,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental a p
 .IN DMOD 2 D D none * V
 .AT elemental a p
-.IN .QMOD 2 Q Q none * V
+.IN QMOD 2 Q Q none * V
 .AT elemental a p
 
 .IN .IMODULO 2 SI SI none -pgf90_imodulo V
@@ -669,7 +671,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental a b
 .IN DSIGN 2 D D none * V
 .AT elemental a b
-.IN .QSIGN 2 Q Q none * V
+.IN QSIGN 2 Q Q none * V
 .AT elemental a b
 
 .IN IIAND 2 SI SI AND - V
@@ -956,57 +958,57 @@ sptr	name	siname	iname	rname	dname	cname	cdname	i8name
 .AT elemental a
 .GN ABS IIABS IABS .ABS DABS CABS CDABS KIABS QABS .CQABS
 .AT elemental a
-.GN MOD IMOD .MOD AMOD DMOD - - KMOD .QMOD -
+.GN MOD IMOD .MOD AMOD DMOD - - KMOD QMOD -
 .AT elemental a p
-.GN SIGN IISIGN ISIGN .SIGN DSIGN - - KISIGN .QSIGN -
+.GN SIGN IISIGN ISIGN .SIGN DSIGN - - KISIGN QSIGN -
 .AT elemental a b
-.GN DIM IIDIM IDIM .DIM DDIM - - KIDIM .QDIM -
+.GN DIM IIDIM IDIM .DIM DDIM - - KIDIM QDIM -
 .AT elemental x y
 .GN MAX IMAX0 MAX0 AMAX1 DMAX1 - - .KMAX QMAX -
 .AT elemental a1 a2 #2#3#a
 .GN MIN IMIN0 MIN0 AMIN1 DMIN1 - - .KMIN QMIN -
 .AT elemental a1 a2 #2#3#a
-.GN SQRT - - .SQRT DSQRT CSQRT CDSQRT - .QSQRT .CQSQRT
+.GN SQRT - - .SQRT DSQRT CSQRT CDSQRT - QSQRT .CQSQRT
 .AT elemental x
 .GN EXP - - .EXP DEXP CEXP CDEXP - QEXP .CQEXP
 .AT elemental x
-.GN LOG - - ALOG DLOG CLOG CDLOG - .QLOG .CQLOG
+.GN LOG - - ALOG DLOG CLOG CDLOG - QLOG .CQLOG
 .AT elemental x
-.GN LOG10 - - ALOG10 DLOG10 - - - .QLOG10 -
+.GN LOG10 - - ALOG10 DLOG10 - - - QLOG10 -
 .AT elemental x
-.GN SIN - - .SIN DSIN CSIN CDSIN - .QSIN .CQSIN
+.GN SIN - - .SIN DSIN CSIN CDSIN - QSIN CQSIN
 .AT elemental x
-.GN SIND - - .SIND DSIND - - - .QSIN .CQSIN
+.GN SIND - - .SIND DSIND - - - QSIND
 .AT elemental x
-.GN COS - - .COS DCOS CCOS CDCOS - .QCOS .CQCOS
+.GN COS - - .COS DCOS CCOS CDCOS - QCOS .CQCOS
 .AT elemental x
-.GN COSD - - .COSD DCOSD - - - .QCOSD -
+.GN COSD - - .COSD DCOSD - - - QCOSD -
 .AT elemental x
-.GN TAN - - .TAN DTAN - - - .QTAN -
+.GN TAN - - .TAN DTAN - - - QTAN -
 .AT elemental x
-.GN TAND - - .TAND DTAND - - - .QTAND -
+.GN TAND - - .TAND DTAND - - - QTAND -
 .AT elemental x
-.GN ASIN - - .ASIN DASIN - - - .QASIN -
+.GN ASIN - - .ASIN DASIN - - - QASIN -
 .AT elemental x
-.GN ASIND - - .ASIND DASIND - - - .QASIND -
+.GN ASIND - - .ASIND DASIND - - - QASIND -
 .AT elemental x
-.GN ACOS - - .ACOS DACOS - - - .QACOS -
+.GN ACOS - - .ACOS DACOS - - - QACOS -
 .AT elemental x
-.GN ACOSD - - .ACOSD DACOSD - - - .QACOSD -
+.GN ACOSD - - .ACOSD DACOSD - - - QACOSD -
 .AT elemental x
-.GN ATAN - - .ATAN DATAN - - - .QATAN -
+.GN ATAN - - .ATAN DATAN - - - QATAN -
 .AT elemental x
-.GN ATAND - - .ATAND DATAND - - - .QATAND -
+.GN ATAND - - .ATAND DATAND - - - QATAND -
 .AT elemental x
-.GN ATAN2 - - .ATAN2 DATAN2 - - - .QATAN2 -
+.GN ATAN2 - - .ATAN2 DATAN2 - - - QATAN2 -
 .AT elemental y x
-.GN ATAN2D - - .ATAN2D DATAN2D - - - .QATAN2D -
+.GN ATAN2D - - .ATAN2D DATAN2D - - - QATAN2D -
 .AT elemental y x
-.GN SINH - - .SINH DSINH - - - .QSINH -
+.GN SINH - - .SINH DSINH - - - QSINH -
 .AT elemental x
-.GN COSH - - .COSH DCOSH - - - .QCOSH -
+.GN COSH - - .COSH DCOSH - - - QCOSH -
 .AT elemental x
-.GN TANH - - .TANH DTANH - - - .QTANH -
+.GN TANH - - .TANH DTANH - - - QTANH -
 .AT elemental x
 .GN IBITS IIBITS JIBITS - - - - KIBITS - -
 .AT elemental i pos len
@@ -1206,7 +1208,7 @@ of its single-precision (double-precision) argument.
 .PD SELECTED_INT_KIND - -
 .AT transformational r
 .PD SELECTED_REAL_KIND - -
-.AT transformational *p *r
+.AT transformational *p *r *radix
 .PD .DLBOUND - -
 CM Fortran's version of LBOUND.
 .AT inquiry array *dim
@@ -1887,9 +1889,15 @@ sptr    name    pcnt    atyp    dtype   ILM     pname   arrayf native?
 .AT elemental n1 n2 x
 .H7 ERF - -
 .AT elemental x
+.H7 QERF - -
+.AT elemental x
 .H7 ERFC - -
 .AT elemental x
+.H7 QERFC - -
+.AT elemental x
 .H7 ERFC_SCALED - -
+.AT elemental x
+.H7 QERFC_SCALED - -
 .AT elemental x
 .H7 GAMMA - -
 .AT elemental x

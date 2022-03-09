@@ -4062,6 +4062,9 @@ map_I_to_AC(int intrin)
     return AC_I_mod;
   case I_SQRT:
   case I_DSQRT:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QSQRT:
+#endif
     return AC_I_sqrt;
   case I_EXP:
   case I_DEXP:
@@ -4072,6 +4075,9 @@ map_I_to_AC(int intrin)
   case I_LOG:
   case I_ALOG:
   case I_DLOG:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QLOG:
+#endif
     return AC_I_log;
   case I_LOG10:
   case I_ALOG10:
@@ -4079,24 +4085,45 @@ map_I_to_AC(int intrin)
     return AC_I_log10;
   case I_SIN:
   case I_DSIN:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QSIN:
+#endif
     return AC_I_sin;
   case I_COS:
   case I_DCOS:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QCOS:
+#endif
     return AC_I_cos;
   case I_TAN:
   case I_DTAN:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QTAN:
+#endif
     return AC_I_tan;
   case I_ASIN:
   case I_DASIN:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QASIN:
+#endif
     return AC_I_asin;
   case I_ACOS:
   case I_DACOS:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QACOS:
+#endif
     return AC_I_acos;
   case I_ATAN:
   case I_DATAN:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QATAN:
+#endif
     return AC_I_atan;
   case I_ATAN2:
   case I_DATAN2:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QATAN2:
+#endif
     return AC_I_atan2;
   case I_IAND:
     return AC_I_iand;
@@ -8807,7 +8834,9 @@ eval_scale(ACL *arg, DTYPE dtype)
   INT i, conval1, conval2, conval;
   DBLINT64 inum1, inum2;
   INT e;
+  INT qnum1[4], qnum2[4];
   DBLE dconval;
+  QUAD qconval;
 
   rslt = arg = eval_init_expr(arg);
   conval1 = arg->conval;
@@ -8850,6 +8879,29 @@ eval_scale(ACL *arg, DTYPE dtype)
     xdmul(inum1, inum2, dconval);
     rslt->conval = getcon(dconval, DT_REAL8);
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case 16:
+    e = 16383 + i;
+    if (e < 0)
+      e = 0;
+    else if (e > 32767)
+      e = 32767;
+
+    qnum1[0] = CONVAL1G(conval1);
+    qnum1[1] = CONVAL2G(conval1);
+    qnum1[2] = CONVAL3G(conval1);
+    qnum1[3] = CONVAL4G(conval1);
+
+    qnum2[0] = e << 16;
+    qnum2[1] = 0;
+    qnum2[2] = 0;
+    qnum2[3] = 0;
+    xqmul(qnum1, qnum2, qconval);
+    rslt->conval = getcon(qconval, DT_QUAD);
+    break;
+#endif
+
   }
 
   return rslt;
@@ -9414,6 +9466,16 @@ eval_floor(ACL *arg, DTYPE dtype)
           adjust = 1;
       }
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      conval = cngcon(con1, DT_QUAD, dtype);
+      if (const_fold(OP_CMP, con1, stb.quad0, DT_QUAD) < 0) {
+        con1 = cngcon(conval, dtype, DT_QUAD);
+        if (const_fold(OP_CMP, con1, wrkarg->conval, DT_QUAD) != 0)
+          adjust = 1;
+      }
+      break;
+#endif
     }
     if (adjust) {
       if (DT_ISWORD(dtype))
@@ -9465,6 +9527,16 @@ eval_ceiling(ACL *arg, DTYPE dtype)
           adjust = 1;
       }
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      conval = cngcon(con1, DT_QUAD, dtype);
+      if (const_fold(OP_CMP, con1, stb.quad0, DT_QUAD) > 0) {
+        con1 = cngcon(conval, dtype, DT_QUAD);
+        if (const_fold(OP_CMP, con1, wrkarg->conval, DT_QUAD) != 0)
+          adjust = 1;
+      }
+      break;
+#endif
     }
     if (adjust) {
       if (DT_ISWORD(dtype))
@@ -9797,7 +9869,7 @@ eval_selected_real_kind(ACL *arg)
     r = -1;
 
   if (arg->next) {
-    wrkarg = arg->next;
+    wrkarg = arg = arg->next;
     con = get_int_from_init_conval(wrkarg);
     if (con <= 37) {
       if (r > 0 && r < 4)
@@ -9814,6 +9886,17 @@ eval_selected_real_kind(ACL *arg)
       if (r > 0)
         r = 0;
       r -= 2;
+    }
+  }
+
+  if (arg->next) {
+    wrkarg = arg->next;
+    con = get_int_from_init_conval(wrkarg);
+    if (con != RADIX2) {
+       if (con == NOT_GET_VAL && !ARG_STK(KEYWD_ARGS2)) {}
+       else {
+        r = NO_REAL;
+       }
     }
   }
 
@@ -10528,6 +10611,16 @@ eval_sqrt(ACL *arg, DTYPE dtype)
       xdsqrt(num1, res);
       conval = getcon(res, DT_DBLE);
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      num1[0] = CONVAL1G(con1);
+      num1[1] = CONVAL2G(con1);
+      num1[2] = CONVAL3G(con1);
+      num1[3] = CONVAL4G(con1);
+      xqsqrt(num1, res);
+      conval = getcon(res, DT_QUAD);
+      break;
+#endif
     case TY_CMPLX:
     case TY_DCMPLX:
       /*

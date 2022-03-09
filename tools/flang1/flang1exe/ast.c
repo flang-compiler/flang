@@ -34,6 +34,8 @@
 #include "rtlRtns.h"
 #include "semant.h" /* for get_temp */
 
+#define HUGE_NUM2 0xffffffff
+#define HUGE_NUM3 0xffffffff
 #define BYTE_NUMBER16 16
 static int reduce_iadd(int, INT);
 static int reduce_i8add(int, int);
@@ -7298,8 +7300,8 @@ _huge(DTYPE dtype)
        Approximating 1.189731e+4932 */
     val[0] = 0x7ffeffff;
     val[1] = 0xffffffff;
-    val[2] = 0xffffffff;
-    val[3] = 0xffffffff;
+    val[2] = HUGE_NUM2;
+    val[3] = HUGE_NUM3;
     goto const_quad_val;
 #endif
   default:

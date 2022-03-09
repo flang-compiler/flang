@@ -296,8 +296,28 @@ set(SRCS
   tand.c)
 
 set(SRCS_QUADFP
+  gammaq.c
+  hypotq.c
   iqnint.c
-  kqnint.c)
+  kqnint.c
+  log_gammaq.c
+  p_qpowi.c
+  qacosd.c
+  qasind.c
+  qatan2d.c
+  qatand.c
+  qpowi.c
+  qpowk.c
+  qfloor.c
+  qceil.c
+  qmod.c
+  qsign.c
+  qsind.c
+  qtand.c
+  qcosd.c
+  qerf.c
+  qerfc.c
+  qerfc_scaled.c)
 
 if(TARGET_SUPPORTS_QUADFP)
   LIST(APPEND SRCS ${SRCS_QUADFP})

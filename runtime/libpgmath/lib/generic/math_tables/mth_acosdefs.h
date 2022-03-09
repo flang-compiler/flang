@@ -29,6 +29,9 @@
 
 MTHINTRIN(acos , ss   , any        ,  __mth_i_acos         ,  __mth_i_acos         , __mth_i_acos          ,__math_dispatch_error)
 MTHINTRIN(acos , ds   , any        ,  __mth_i_dacos        ,  __mth_i_dacos        , __mth_i_dacos         ,__math_dispatch_error)
+#ifdef TARGET_SUPPORTS_QUADFP
+MTHINTRIN(acos , qs   , any        ,  __mth_i_qacos        ,  __mth_i_qacos        , __mth_i_qacos         ,__math_dispatch_error)
+#endif
 MTHINTRIN(acos , sv4  , any        ,  __gs_acos_4_f        ,  __gs_acos_4_r        , __gs_acos_4_p         ,__math_dispatch_error)
 MTHINTRIN(acos , dv2  , any        ,  __gd_acos_2_f        ,  __gd_acos_2_r        , __gd_acos_2_p         ,__math_dispatch_error)
 MTHINTRIN(acos , sv4m , any        , __fs_acos_4_mn        , __rs_acos_4_mn        , __ps_acos_4_mn        ,__math_dispatch_error)
