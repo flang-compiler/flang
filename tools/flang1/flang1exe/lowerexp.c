@@ -1618,10 +1618,12 @@ lower_un_arith(int ast, const char *opname, int ldtype)
   case TY_INT8:
   case TY_REAL:
   case TY_DBLE:
+#ifdef TARGET_SUPPORTS_QUADFP
   case TY_QUAD:
+  case TY_QCMPLX:
+#endif
   case TY_CMPLX:
   case TY_DCMPLX:
-  case TY_QCMPLX:
   case TY_WORD:
   case TY_DWORD:
     break;
@@ -1635,10 +1637,6 @@ lower_un_arith(int ast, const char *opname, int ldtype)
   case TY_NCHAR:
     ast_error("character result for arithmetic operation", ast);
     return 0;
-#ifndef TARGET_SUPPORTS_QUADFP
-  case TY_QUAD:
-
-#endif
   default:
     ast_error("unknown result for arithmetic operation", ast);
     return 0;
@@ -1729,9 +1727,6 @@ lower_bin_comparison(int ast, const char *op)
   case TY_NCHAR:
     base = 1;
     break;
-#ifndef TARGET_SUPPORTS_QUADFP
-  case TY_QUAD:
-#endif
   default:
     ast_error("unknown operand type for comparison operation", ast);
     return 0;
@@ -2682,15 +2677,9 @@ nearest_real_type(int dtype)
 {
   switch (DTY(dtype)) {
   case TY_DWORD:
-#ifndef TARGET_SUPPORTS_QUADFP
-  case TY_QUAD:
-#endif
   case TY_INT8:
   case TY_DBLE:
   case TY_DCMPLX:
-#ifndef TARGET_SUPPORTS_QUADFP
-  case TY_QCMPLX:
-#endif
   case TY_LOG8:
     return DT_DBLE;
 #ifdef TARGET_SUPPORTS_QUADFP

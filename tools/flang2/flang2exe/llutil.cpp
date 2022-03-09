@@ -285,11 +285,6 @@ ll_convert_basic_dtype_with_addrspace(LL_Module *module, DTYPE dtype, int addrsp
     break;
   case TY_DBLE:
   case TY_DCMPLX:
-#ifndef TARGET_SUPPORTS_QUADFP
-  case TY_QUAD:
-    /* TY_QUAD represents a long double on systems that map long
-     * double to IEEE64. */
-#endif
     basetype = LL_DOUBLE;
     break;
 #ifdef TARGET_SUPPORTS_QUADFP
@@ -2661,9 +2656,6 @@ llvm_fc_type(DTYPE dtype)
     retc = "float";
     break;
   case TY_DBLE:
-#ifndef TARGET_SUPPORTS_QUADFP
-  case TY_QUAD:
-#endif
     retc = "double";
     break;
 #ifdef TARGET_SUPPORTS_QUADFP
