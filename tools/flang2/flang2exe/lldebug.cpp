@@ -2760,6 +2760,12 @@ is_assumed_char(DTYPE dtype)
   return (DTY(dtype) == TY_CHAR) && (dtype == DT_ASSCHAR);
 }
 
+INLINE static bool
+is_deferred_char(DTYPE dtype)
+{
+  return (DTY(dtype) == TY_CHAR) && (dtype == DT_DEFERCHAR);
+}
+
 INLINE static char *
 next_assumed_len_character_name(void)
 {
@@ -2790,6 +2796,66 @@ lldbg_create_assumed_len_string_type_mdnode(LL_DebugInfo *db, SPTR sptr,
   } else {
     mdLen = mdLenExp = ll_get_md_null();
   }
+  llmd_set_class(mdb, LL_DIStringType);
+  llmd_add_i32(mdb, make_dwtag(db, DW_TAG_string_type));
+  llmd_add_string(mdb, name);
+  llmd_add_i64(mdb, size);
+  llmd_add_i64(mdb, alignment);
+  llmd_add_i32(mdb, encoding);
+  llmd_add_md(mdb, mdLen);
+  llmd_add_md(mdb, mdLenExp);
+  return llmd_finish(mdb);
+}
+
+INLINE static LL_MDRef
+lldbg_create_deferred_len_string_type_mdnode(LL_DebugInfo *db, SPTR sptr,
+                                            int findex)
+{
+  LL_MDRef mdLen = ll_get_md_null();
+  LL_MDRef mdLenExp = ll_get_md_null();
+  LLMD_Builder mdb = llmd_init(db->module);
+  const char *name = "character(*)";
+  const long long size = 32;
+  const long long alignment = 0;
+  const int encoding = 0;
+
+  if (SDSCG(REVMIDLNKG(sptr)) && (DTY(DTYPEG(sptr)) == TY_PTR)) {
+    /* get the array descriptor */
+    SPTR sdscsptr = SDSCG(REVMIDLNKG(sptr));
+    LL_Type *dataloctype = LLTYPE(sdscsptr);
+    BLKINFO *blk_info = get_lexical_block_info(db, sdscsptr, true);
+    LL_MDRef file_mdnode;
+    if (ll_feature_debug_info_need_file_descriptions(&db->module->ir))
+      file_mdnode = get_filedesc_mdnode(db, findex);
+    else
+      file_mdnode = lldbg_emit_file(db, findex);
+
+    LL_MDRef type_mdnode =
+             lldbg_emit_type(db, DT_INT, sdscsptr, findex, false, false, false);
+
+    /* create a local variable to hold the string length */
+    mdLen = lldbg_create_local_variable_mdnode(
+                        db, DW_TAG_auto_variable, blk_info->mdnode, NULL,
+                        file_mdnode, 0, 0, type_mdnode, DIFLAG_ARTIFICIAL,
+                        ll_get_md_null(), 1 /*distinct*/);
+
+    /* string length is preserved in DESC_HDR_BYTE_LEN or len field of Fortran
+     * descriptor. i.e. offsetof(F90_Desc, len), extract it using !DIExpression
+     */
+    const int F90_Desc_byte_len = 8 * (DESC_HDR_BYTE_LEN - DESC_HDR_TAG);
+    const int target_size_offset = F90_Desc_byte_len;
+    const unsigned v1 =
+      lldbg_encode_expression_arg(LL_DW_OP_int, target_size_offset);
+    const unsigned add = lldbg_encode_expression_arg(LL_DW_OP_plus_uconst, 0);
+
+    /* emit an @llvm.dbg.declare with required !DIExpression */
+    LL_MDRef expr_mdnode = lldbg_emit_expression_mdnode(db, 2, add, v1);
+    insert_llvm_dbg_declare(mdLen, sdscsptr, dataloctype,
+                            make_mdref_op(expr_mdnode), OPF_NONE);
+
+    mdLenExp = lldbg_emit_empty_expression_mdnode(db);
+  }
+
   llmd_set_class(mdb, LL_DIStringType);
   llmd_add_i32(mdb, make_dwtag(db, DW_TAG_string_type));
   llmd_add_string(mdb, name);
@@ -2918,6 +2984,14 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
         }
 #endif
       }
+    } else if (is_deferred_char(dtype)) {
+        /* For deferred length string type, emit !DIStringType metadata node
+         * if LLVM version is 11 and above. Here Fortran descriptor contains
+         * the string length.
+         */
+        if (ll_feature_debug_info_ver11(&db->module->ir))
+          type_mdnode =
+              lldbg_create_deferred_len_string_type_mdnode(db, sptr, findex);
     } else
         if (DT_ISBASIC(dtype) && (DTY(dtype) != TY_PTR)) {
 
@@ -3705,8 +3779,8 @@ lldbg_emit_local_variable(LL_DebugInfo *db, SPTR sptr, int findex,
     } else if (ftn_array_need_debug_info(sptr) ||
                pointer_scalar_need_debug_info(sptr)) {
       SPTR array_sptr =(SPTR)REVMIDLNKG(sptr);
-      /* Overwrite the symname and flags to represent the user defined array or
-       * scalar, instead of a compiler generated symbol of array or scalar pointer
+      /* Overwrite the symname and flags to represent the user defined array
+       * instead of a compiler generated symbol of array or scalar pointer.
        */
       symname = (char *)lldbg_alloc(strlen(SYMNAME(array_sptr)) + 1);
       strcpy(symname, SYMNAME(array_sptr));
