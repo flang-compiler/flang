@@ -2,7 +2,7 @@
 !RUN: %flang %s -g -c -o - | llvm-readelf -S - | FileCheck %s --check-prefix=NOPUBNAMESECTION
 
 !RUN: %flang %s -gdwarf-5 -gpubnames -c -o - | llvm-readelf -S - | FileCheck %s --check-prefix=NAMESECTION
-!RUN: %flang %s -g -gpubnames -c -o - | llvm-readelf -S - | FileCheck %s --check-prefix=PUBNAMESECTION
+!RUN: %flang %s -gdwarf-4 -gpubnames -c -o - | llvm-readelf -S - | FileCheck %s --check-prefix=PUBNAMESECTION
 
 !Ensure that `.debug_names` or `.debug_pubnames` are NOT present by default.
 !NONAMESECTION-NOT: .debug_names
