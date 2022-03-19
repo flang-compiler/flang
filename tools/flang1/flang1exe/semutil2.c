@@ -2577,6 +2577,7 @@ get_shape_arraydtype(int shape, int eltype)
 {
   int arrtype, i, n;
   int sz;
+  LOGICAL need_alloc = FALSE;
 
   n = sem.arrdim.ndim = SHD_NDIM(shape);
   sem.arrdim.ndefer = 0;
@@ -2596,13 +2597,15 @@ get_shape_arraydtype(int shape, int eltype)
       sem.bounds[i].uptype = S_EXPR;
       sem.bounds[i].upb = 0;
       sem.bounds[i].upast = sz;
-      sem.arrdim.ndefer++;
+      need_alloc = TRUE;
     }
   }
 
   if (is_deferlenchar_dtype(acs.arrtype))
-    sem.arrdim.ndefer = 1;
+    need_alloc = TRUE;
 
+  if (need_alloc)
+    sem.arrdim.ndefer = n;
   arrtype = mk_arrdsc();
   DTY(arrtype + 1) = eltype;
   return arrtype;
