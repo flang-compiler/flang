@@ -116,6 +116,7 @@ ISZ_T put_skip(ISZ_T old, ISZ_T New, bool is_char);
 #define AG_ARGDTLIST_LENGTH(s) agb.s_base[s].n_argdtlist
 #define AG_ARGDTLIST_IS_VALID(s) agb.s_base[s].argdtlist_is_set
 #define AG_OBJTODBGLIST(s) agb.s_base[s].cmblk_mem_mdnode_list
+#define AG_CMBLKINITDATA(s) agb.s_base[s].cmblk_init_data
 
 #define FPTR_HASHLK(s) fptr_local.s_base[s].hashlk
 #define FPTR_IFACENMPTR(s) fptr_local.s_base[s].ifacenmptr
@@ -154,6 +155,7 @@ typedef struct {
   LL_Type *ret_lltype;   /**< If this is a func this is the return type */
   DTLIST *argdtlist;     /**< linked listed of argument lltype */
   LL_ObjToDbgList *cmblk_mem_mdnode_list; ///< linked listed of cmem mdnode
+  char* cmblk_init_data; /**< llvm reference of common block initialization data*/
   int uplevel_avl;
   int uplevel_sz;
   UPLEVEL_PAIR *uplist; /**< uplevel list for internal procecure */

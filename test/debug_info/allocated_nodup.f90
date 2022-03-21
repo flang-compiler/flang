@@ -1,16 +1,13 @@
 !RUN: %flang -gdwarf-4 -S -emit-llvm %s -o - | FileCheck %s
 
-!CHECK: distinct !DIGlobalVariable(name: "arr",
-!CHECK-SAME: type: [[TYPE:![0-9]+]]
-!CHECK: [[TYPE]] = !DICompositeType(tag: DW_TAG_array_type, baseType: [[DTYPE:![0-9]+]]
-!CHECK: [[DTYPE]] = !DICompositeType(tag: DW_TAG_structure_type, name: "dtype"
-!CHECK-SAME: elements: [[MEMBERS:![0-9]+]]
-!CHECK: [[MEMBERS]] = !{[[MEM1:![0-9]+]]
-!CHECK: [[MEM1]] = !DIDerivedType(tag: DW_TAG_member, name: "memfunptr",
-!CHECK-SAME: baseType: [[FUNPTRTYPE:![0-9]+]]
-!CHECK: [[FUNPTRTYPE]] = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: [[FUNTYPE:![0-9]+]]
-!CHECK: [[FUNTYPE]] = !DISubroutineType(types: [[FUNSIGNATURE:![0-9]+]])
-!CHECK: [[FUNSIGNATURE]] = !{[[DTYPE]]
+!CHECK-DAG: distinct !DIGlobalVariable(name: "arr",{{.*}}type: [[TYPE:![0-9]+]]
+!CHECK-DAG: [[TYPE]] = !DICompositeType(tag: DW_TAG_array_type, baseType: [[DTYPE:![0-9]+]]
+!CHECK-DAG: [[DTYPE]] = !DICompositeType(tag: DW_TAG_structure_type, name: "dtype"{{.*}}elements: [[MEMBERS:![0-9]+]]
+!CHECK-DAG: [[MEMBERS]] = !{[[MEM1:![0-9]+]]
+!CHECK-DAG: [[MEM1]] = !DIDerivedType(tag: DW_TAG_member, name: "memfunptr",{{.*}}baseType: [[FUNPTRTYPE:![0-9]+]]
+!CHECK-DAG: [[FUNPTRTYPE]] = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: [[FUNTYPE:![0-9]+]]
+!CHECK-DAG: [[FUNTYPE]] = !DISubroutineType(types: [[FUNSIGNATURE:![0-9]+]])
+!CHECK-DAG: [[FUNSIGNATURE]] = !{[[DTYPE]]
 
 module pdt
   type dtype
