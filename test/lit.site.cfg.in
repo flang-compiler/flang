@@ -7,6 +7,7 @@
 @LIT_SITE_CFG_IN_HEADER@
 
 import sys
+import re
 
 config.llvm_src_root = "@LLVM_SOURCE_DIR@"
 config.llvm_obj_root = "@LLVM_BINARY_DIR@"
@@ -25,6 +26,9 @@ config.have_zlib = "@HAVE_LIBZ@"
 config.enable_shared = @ENABLE_SHARED@
 config.enable_backtrace = "@ENABLE_BACKTRACES@"
 config.host_arch = "@HOST_ARCH@"
+
+if re.match(r'^aarch64', config.target_triple):
+    config.target_supports_quadfp = "@TARGET_SUPPORTS_QUADFP@"
 
 # Support substitution of the tools and libs dirs with user parameters. This is
 # used when we can't determine the tool dir at configuration time.
