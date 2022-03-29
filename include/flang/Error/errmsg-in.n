@@ -1334,8 +1334,9 @@ LAUNCH_BOUNDS is now allowed on ATTRIBUTES(DEVICE) or host subprograms.
 The LAUNCH_BOUNDS maximum number of threads and minimum grid size must
 be positive integer values.
 .MS W 602 "No clause specified for the vector directive. Note: Only the always clause is supported."
-.MS W 603 "Unsupported clause specified for the vector directive. Only the always clause is supported."
+.MS W 603 "Unsupported clause specified for the vector directive. Only the always and vectorlength clauses are supported."
 .MS W 604 "Unsupported clause specified for the omp simd directive. The directive will be ignored."
+.MS W 803 "Unsupported argument in the vectorlength clause; allowed values are one of: 'fixed', 'scalable', or a numeric literal"
 .MS S 901 "#elif after #else"
 A preprocessor #elif directive was found after a #else directive; only
 #endif is allowed in this context.

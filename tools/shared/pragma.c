@@ -271,6 +271,62 @@ static void lcase(char *);
 static bool craydir; /* true if cray directive */
 static bool sundir;  /* true if sun directive */
 
+/*
+ * reads vectorlength directive () set proper flags or raise error
+ */
+static void scan_vectorlength(int *toSet, int *num, int typ) {
+  int backup_nowarn = gbl.nowarn;
+  if (gtok() != T_LP){
+    errwarn((error_code_t)803);
+    gbl.nowarn = backup_nowarn;
+    return;
+  }
+
+  while (typ != T_RP) {
+    typ = gtok();
+    if (typ == T_INT) {
+      if (*num == -1) {
+        *num = (int)itok;
+        *toSet |= 1;
+      }
+      typ = gtok();
+      if (typ != T_COMMA && typ != T_RP) {
+        backup_nowarn = gbl.nowarn;
+        gbl.nowarn = false;
+        errwarn((error_code_t)803);
+        gbl.nowarn = backup_nowarn;
+        break;
+      }
+      continue;
+    }
+    if (strcmp(ctok, "fixed") == 0) {
+      *toSet |= 2;
+      if (gtok() != T_RP) {
+        backup_nowarn = gbl.nowarn;
+        gbl.nowarn = false;
+        errwarn((error_code_t)803);
+        gbl.nowarn = backup_nowarn;
+      }
+      break;
+    } else if (strcmp(ctok, "scalable") == 0) {
+      *toSet |= 4;
+      if (gtok() != T_RP) {
+        backup_nowarn = gbl.nowarn;
+        gbl.nowarn = false;
+        errwarn((error_code_t)803);
+        gbl.nowarn = backup_nowarn;
+      }
+      break;
+    } else {
+      backup_nowarn = gbl.nowarn;
+      gbl.nowarn = false;
+      errwarn((error_code_t)803);
+      gbl.nowarn = backup_nowarn;
+      break;
+    }
+  }
+}
+
 /* ----------------------------------------------------------- */
 
 /*
@@ -658,7 +714,14 @@ do_sw(void)
           break;
         }
         LCASE(ctok);
-        if (strcmp(ctok, "always") == 0) {
+        if (strcmp(ctok, "vectorlength") == 0) {
+          int toSet = 0;
+          int num = -1;
+
+          scan_vectorlength(&toSet, &num, typ);
+          bset(DIR_OFFSET(currdir, x[234]), toSet);
+          assn(DIR_OFFSET(currdir, x[235]), num);
+        } else if (strcmp(ctok, "always") == 0) {
           bclr(DIR_OFFSET(currdir, x[19]), 0x18);
           bset(DIR_OFFSET(currdir, x[191]), 0x4);
         } else {
