@@ -119,6 +119,12 @@ typedef struct {
       unsigned unroll : 1;     /* bih is a loop to be fully unrolled */
       unsigned unroll_cnt : 1; /* bih has a user-specified unroll factor */
       unsigned nounroll : 1;   /* bih is a loop that must not be unrolled */
+      unsigned vectorlength_scalable : 1;  /* bih is a loop with vectorlength
+                                              set
+                                            */
+      unsigned vectorlength_enabled : 1;   /* bih is a loop that must be 
+                                              vectorized 
+                                            */
     } bits;
   } flags2;
   int lpcntFrom;  /* When a loop count temp is created, record the induction
@@ -236,6 +242,8 @@ typedef struct {
 #define BIH_UNROLL(i) bihb.stg_base[i].flags2.bits.unroll
 #define BIH_UNROLL_COUNT(i) bihb.stg_base[i].flags2.bits.unroll_cnt
 #define BIH_NOUNROLL(i) bihb.stg_base[i].flags2.bits.nounroll
+#define BIH_VECTORLENGTH_SCALABLE(i) bihb.stg_base[i].flags2.bits.vectorlength_scalable
+#define BIH_VECTORLENGTH_ENABLED(i) bihb.stg_base[i].flags2.bits.vectorlength_enabled
 
 #define EXEC_COUNT double
 #define UNKNOWN_EXEC_CNT -1.0

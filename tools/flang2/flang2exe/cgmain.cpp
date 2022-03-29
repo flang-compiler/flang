@@ -1340,6 +1340,19 @@ cons_unroll_count_metadata(int unroll_factor)
   return unroll;
 }
 
+/**
+   \brief Construct exactly one instance of !{!"llvm.loop.vectorize.scalable.enable", <arg>}.
+ */
+INLINE static LL_MDRef
+cons_vectorlength_scalable_metadata( int arg )
+{
+  LL_MDRef lvcomp[2];
+
+  lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.scalable.enable");
+  lvcomp[1] = ll_get_md_i1( arg );
+  return ll_get_md_node( cpu_llvm_module, LL_PlainMDNode, lvcomp, 2 );
+}
+
 INLINE static bool
 ignore_simd_block(int bih)
 {
@@ -1429,6 +1442,25 @@ process_params(void)
 }
 
 /**
+   \brief Constructs needed vectorlength nodes
+ */
+static void construct_vectorlength_metadata(LL_MDRef *loop_md, int vectorlength_factor, int scalable)
+{
+  LL_MDRef vectorlength_enable = cons_vectorize_metadata();
+  ll_extend_md_node(cpu_llvm_module, *loop_md, vectorlength_enable);
+  LL_MDRef vectorlength_scalable  = cons_vectorlength_scalable_metadata(scalable);
+  ll_extend_md_node(cpu_llvm_module, *loop_md, vectorlength_scalable);
+  if (vectorlength_factor > 0) {
+    LL_MDRef lvcomp[2];
+    LL_MDRef width;
+    lvcomp[0] = ll_get_md_string(cpu_llvm_module, "llvm.loop.vectorize.width");
+    lvcomp[1] = ll_get_md_i32(cpu_llvm_module, vectorlength_factor);
+    width = ll_get_md_node(cpu_llvm_module, LL_PlainMDNode, lvcomp, 2);
+    ll_extend_md_node(cpu_llvm_module, *loop_md, width);
+  }
+}
+
+/**
    \brief Perform code translation from ILI to LLVM for one routine
  */
 void
@@ -1448,6 +1480,7 @@ schedule(void)
   bool first = true;
   CG_cpu_compile = true;
   int unroll_factor = 0;
+  int vectorlength_factor = 0;
 
   funcId++;
   assign_fortran_storage_classes();
@@ -1674,6 +1707,11 @@ restartConcur:
     } else {
       clear_rw_access_grp();
     }
+    if (flg.x[234] > 0) {
+      BIH_VECTORLENGTH_ENABLED(bih) = true;
+      BIH_VECTORLENGTH_SCALABLE(bih) = (XBIT(234, 0x4) > 0);
+      vectorlength_factor = flg.x[235];
+    }
     if (flg.x[9] > 0)
       unroll_factor = flg.x[9];
     if (XBIT(11, 0x2) && unroll_factor)
@@ -1768,6 +1806,13 @@ restartConcur:
             i->flags |= LOOP_BACKEDGE_FLAG;
             i->misc_metadata = loop_md;
           }
+        }
+
+        if (BIH_VECTORLENGTH_ENABLED(bih)) {
+          if (LL_MDREF_IS_NULL(loop_md)) {
+            loop_md = cons_loop_id_md();
+          }
+          construct_vectorlength_metadata(&loop_md, vectorlength_factor, BIH_VECTORLENGTH_SCALABLE(bih));
         }
         if (BIH_UNROLL(bih)) { // Set on open_pragma() -> if(XBIT(11,0X3))
           if (LL_MDREF_IS_NULL(loop_md))

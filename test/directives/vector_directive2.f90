@@ -11,4 +11,4 @@ subroutine add(arr1,arr2,arr3,N)
     arr3(i) = arr1(i) - arr2(i)
   end do
 end subroutine
-! CHECK-WRONG-CLAUSE: F90-W-0603-Unsupported clause specified for the vector directive. Only the always clause is supported.
+! CHECK-WRONG-CLAUSE: F90-W-0603-Unsupported clause specified for the vector directive. Only the always and vectorlength clauses are supported.
