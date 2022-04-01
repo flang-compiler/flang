@@ -20,7 +20,7 @@ function print_usage {
     echo "Example:";
     echo "  $ git clone https://github.com/flang-compiler/flang";
     echo "  $ cd flang";
-    echo "  $ .github/workflows/build-flang.sh -t X86 -p /install/prefix/ -n 2 -s";
+    echo "  $ ./build-flang.sh -t X86 -p /install/prefix/ -n 2 -s";
     echo "";
     echo "Options:";
     echo "  -t  Target to build for (X86, AArch64, PowerPC). Default: X86";
