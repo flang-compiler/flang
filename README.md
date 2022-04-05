@@ -9,9 +9,8 @@ of the LLVM project since 2020, although both are developed by the same
 community. It is also unrelated to other projects of the same name, such as
 https://github.com/llvm-flang/flang and https://github.com/isanbard/flang.
 
-Classic Flang is used in several downstream commercial projects, and
-continues to be maintained, but the plan is to replace Classic Flang with
-the new Flang in the future.
+Classic Flang is used in several downstream commercial projects like the
+[AMD](https://developer.amd.com/amd-aocc/), [Arm](https://www.arm.com/products/development-tools/server-and-hpc/allinea-studio/fortran-compiler) and [Huawei](https://support.huaweicloud.com/intl/en-us/ug-bisheng-kunpengdevps/kunpengbisheng_06_0001.html) compilers, and continues to be maintained, but the plan is to replace Classic Flang with the new Flang in the future.
 
 Visit the Flang wiki for more information:
 
