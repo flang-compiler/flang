@@ -4085,50 +4085,8 @@ lldbg_create_cmblk_mem_mdnode_list(SPTR sptr, SPTR gblsym)
 }
 
 static LL_MDRef
-lldbg_create_cmblk_gv_mdnode(LL_DebugInfo *db, LL_MDRef cmnblk_mdnode,
-                             SPTR sptr)
-{
-  LL_MDRef mdref, type_mdnode, subscripts_mdnode, subscript_mdnode,
-      elem_type_mdnode;
-  DBLINT64 align;
-  ISZ_T sz, lb, ub, dim_ele;
-  DTYPE elem_dtype;
-  LLMD_Builder mdb = llmd_init(db->module);
-  const char *display_name;
-
-  elem_dtype = DT_BINT;
-  sz = SIZEG(sptr);
-  dim_ele = sz - 1;
-  lb = 0;
-  ub = dim_ele;
-  align[1] = ((alignment(elem_dtype) + 1) * 8);
-  align[0] = 0;
-  if (ll_feature_debug_info_ver90(&db->module->ir))
-    subscript_mdnode = lldbg_create_subrange_mdnode(
-        db, ll_get_md_i64(db->module, lb), ll_get_md_i64(db->module, ub),
-        ll_get_md_null());
-  else
-    subscript_mdnode = lldbg_create_subrange_mdnode_pre11(db, lb, sz);
-  llmd_add_md(mdb, subscript_mdnode);
-  sz *= ZSIZEOF(elem_dtype) * 8;
-  elem_type_mdnode =
-      lldbg_emit_type(db, elem_dtype, sptr, 1, false, false, false);
-  subscripts_mdnode = llmd_finish(mdb);
-  type_mdnode = lldbg_create_array_type_mdnode(
-      db, ll_get_md_null(), 0, sz, align, elem_type_mdnode, subscripts_mdnode,
-      ll_get_md_null(), ll_get_md_null(), ll_get_md_null(), ll_get_md_null());
-  display_name = SYMNAME(sptr);
-  mdref = lldbg_create_global_variable_mdnode(
-      db, cmnblk_mdnode, display_name, SYMNAME(sptr), "", ll_get_md_null(),
-      DECLLINEG(sptr), type_mdnode, 0, 1, NULL, -1, DIFLAG_ARTIFICIAL, 0,
-      SPTR_NULL, ll_get_md_null());
-  ll_add_global_debug(db->module, sptr, mdref);
-  return mdref;
-}
-
-static LL_MDRef
 lldbg_create_common_block_mdnode(LL_DebugInfo *db, LL_MDRef scope,
-                                 LL_MDRef decl, char *name)
+                                 char *name)
 {
   LLMD_Builder mdb;
   char *common_block_name, *pname, *pmname;
@@ -4148,7 +4106,7 @@ lldbg_create_common_block_mdnode(LL_DebugInfo *db, LL_MDRef scope,
   // Use the DICommonBlock template
   llmd_set_class(mdb, LL_DICommonBlock);
   llmd_add_md(mdb, scope);                 // scope
-  llmd_add_md(mdb, decl);                  // declaration
+  llmd_add_md(mdb, ll_get_md_null());      // declaration
   llmd_add_string(mdb, common_block_name); // name
   return llmd_finish(mdb);
 }
@@ -4156,11 +4114,9 @@ lldbg_create_common_block_mdnode(LL_DebugInfo *db, LL_MDRef scope,
 LL_MDRef
 lldbg_emit_common_block_mdnode(LL_DebugInfo *db, SPTR sptr)
 {
-  LL_MDRef scope_modnode, cmnblk_mdnode, cmnblk_gv_mdnode;
+  LL_MDRef scope_modnode, cmnblk_mdnode;
   SPTR scope = SCOPEG(sptr);
   const char *cmnblk_name = new_debug_name(SYMNAME(scope), SYMNAME(sptr), NULL);
-  LL_MDNode *node;
-  unsigned slot;
 
   cmnblk_mdnode = ll_get_module_debug(db->module->common_debug_map, cmnblk_name);
   if (!LL_MDREF_IS_NULL(cmnblk_mdnode))
@@ -4169,13 +4125,8 @@ lldbg_emit_common_block_mdnode(LL_DebugInfo *db, SPTR sptr)
                       ? db->cur_subprogram_mdnode
                       : lldbg_emit_module_mdnode(db, scope);
   cmnblk_mdnode = lldbg_create_common_block_mdnode(
-      db, scope_modnode, ll_get_md_null(), SYMNAME(sptr));
+      db, scope_modnode, SYMNAME(sptr));
   db->cur_cmnblk_mdnode = cmnblk_mdnode;
-  cmnblk_gv_mdnode = lldbg_create_cmblk_gv_mdnode(db, cmnblk_mdnode, sptr);
-  slot = LL_MDREF_value(cmnblk_gv_mdnode) - 1;
-  node = db->module->mdnodes[slot];
-  cmnblk_gv_mdnode = node->elem[0];
-  ll_update_md_node(db->module, cmnblk_mdnode, 1, cmnblk_gv_mdnode);
   ll_add_module_debug(db->module->common_debug_map, cmnblk_name, cmnblk_mdnode);  
   if (db->cur_subprogram_mdnode)
     add_debug_cmnblk_variables(db, sptr);
