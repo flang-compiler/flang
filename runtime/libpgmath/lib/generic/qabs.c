@@ -8,6 +8,7 @@
 /* Intrinsic function which take quad precision arguments. */
 
 #include "mthdecls.h"
+
 union {
   long double val;
   unsigned int num[4];

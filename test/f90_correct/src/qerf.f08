@@ -4,7 +4,7 @@
 
 !*   Intrinsics function floor take quad precision.
 program p
-  parameter(n = 4)
+  integer, parameter :: n = 4
   integer, parameter :: k = 16
   real(16) :: rslts(n), expect(n)
   real(kind = k) :: t1

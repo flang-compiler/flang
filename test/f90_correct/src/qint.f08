@@ -4,7 +4,7 @@
 
 !*   Intrinsics function int take quad precision.
 program p
-  parameter(n = 5)
+  integer, parameter :: n = 5
   integer, parameter :: k = 16
   integer(8) :: rslts(n), expect(n)
   real(kind = k) :: t1

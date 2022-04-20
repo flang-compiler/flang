@@ -6462,7 +6462,7 @@ void ENTFTN(RNUMD, rnumd)(__REAL8_T *hb, F90_Desc *harvest)
       return;
     }
     last_i = -1;
-    if (~(unsigned int)F90_FLAGS_G(harvest) & __OFF_TEMPLATE) {
+    if ((~(unsigned int)F90_FLAGS_G(harvest)) & __OFF_TEMPLATE) {
       I8(__fort_cycle_bounds)(harvest);
       i = I8(level)(harvest);
       prng_loop_d(hb, harvest, F90_LBASE_G(harvest) - 1, F90_RANK_G(harvest), 0,

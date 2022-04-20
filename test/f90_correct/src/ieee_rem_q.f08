@@ -50,7 +50,7 @@ program test
   rslt(13) = ieee_rem(x, n)
   rslt(14) = ieee_rem(x, y)
 
-  do i=1, 14
+  do i = 1, 14
     if (i <= 9) then
       if (rslt(i) /= ex(i)) STOP i
     else

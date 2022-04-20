@@ -71,7 +71,6 @@ void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
    * ta == 0, tb == 1; tindex = 2
    * ta == 1, tb == 1; tindex = 3
    */
-  /*  if( ( tb == 0 ) && ( ncb == 1 ) && ( ldb == 1 ) ){ */
   if ((tb == 0) && (ncb == 1)) {
     /* matrix vector multiply */
     ftn_mvmul_real16_(&ta, &mra, &kab, alpha, a, &lda, b, beta, c);
@@ -265,7 +264,6 @@ void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
       break;
     case 3: /* both matrices tranposed. Combination of cases 1 and 2 */
       /* Transpose matrix b */
-
       indx_strt = 0;
       bstrt = 0;
       for (j = 0; j < rowsb; j++) {

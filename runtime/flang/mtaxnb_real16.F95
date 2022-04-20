@@ -6,7 +6,6 @@
 
 #include "mmul_dir.h"
 
-
 subroutine ftn_mtaxnb_real16( mra, ncb, kab, alpha, a, lda, b, ldb, beta, &
      & c, ldc )
   implicit none
@@ -221,5 +220,4 @@ subroutine ftn_mtaxnb_real16( mra, ncb, kab, alpha, a, lda, b, ldb, beta, &
 
     deallocate( buffera )
   endif
-  return
 end subroutine ftn_mtaxnb_real16

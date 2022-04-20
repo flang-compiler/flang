@@ -19,26 +19,26 @@
 long double
 __mth_i_qerfc_scaled(long double arg)
 {
-    if (arg >= xchg) {
-      int i;
-      long double presum;
-      long double nowsum = 0.0;
-      long double ps = 1.0;
-      long double n1_2xx = 1.0 / (2.0 * arg * arg);
+  if (arg >= xchg) {
+    int i;
+    long double presum;
+    long double nowsum = 0.0;
+    long double ps = 1.0;
+    long double n1_2xx = 1.0 / (2.0 * arg * arg);
 
-      for (i = 1; i < iteration; i++) {
-        ps *= (1 - (2 * i)) * n1_2xx;
-        presum = nowsum + ps;
-        if (presum == nowsum)
-          break;
-        nowsum = presum;
-      }
-      return (1.0 + nowsum) / arg * sqrpi;
-    } else {
-      if (arg >= xneg) {
-        return erfcl(arg) * expl(arg * arg);
-      } else {
-        return erfcl(xneg) * expl(xneg * xneg);
-      }
+    for (i = 1; i < iteration; i++) {
+      ps *= (1 - (2 * i)) * n1_2xx;
+      presum = nowsum + ps;
+      if (presum == nowsum)
+        break;
+      nowsum = presum;
     }
+    return (1.0 + nowsum) / arg * sqrpi;
+  } else {
+    if (arg >= xneg) {
+      return erfcl(arg) * expl(arg * arg);
+    } else {
+      return erfcl(xneg) * expl(xneg * xneg);
+    }
+  }
 }

@@ -4,7 +4,7 @@
 
 !*   Intrinsics function ceil take quad precision.
 program p
-  parameter(n = 8)
+  integer, parameter :: n = 8
   integer, parameter :: k = 16
   integer(8) :: rslts(n), expect(n)
   integer(8) :: r1, r2

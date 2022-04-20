@@ -6,7 +6,6 @@
 
 #include "mmul_dir.h"
 
-
 subroutine ftn_gather_real16( a, lda, alpha, buffer, bufrows, bufcols )
   implicit none
 
@@ -37,7 +36,5 @@ subroutine ftn_gather_real16( a, lda, alpha, buffer, bufrows, bufcols )
      enddo
      ndx = ndx + bufrows
   enddo
-  !      write( *, * ) ( a(1, j ), j = 1, bufcols )
-  !      write( *, * )( buffer( i ), i = 1, bufrows * bufcols )
   return
 end subroutine ftn_gather_real16

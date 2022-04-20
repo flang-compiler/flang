@@ -66,7 +66,7 @@ char __f90io_conv_buf[96] = {0}; /* sufficient size for non-char types - must
                                   * be init'd for 32-bit OSX
                                   */
 static char *conv_bufp = __f90io_conv_buf;
-static signed conv_bufsize = sizeof(__f90io_conv_buf);
+static size_t conv_bufsize = sizeof(__f90io_conv_buf);
 
 static char cmplx_buf[64]; /* just for list-directed and nml io */
 static char exp_letter = 'E';

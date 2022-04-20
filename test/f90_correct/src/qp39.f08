@@ -31,7 +31,6 @@ program test
   tk%tmpa = 1.987654321987654321987654321987654321_16
   tk%tmpb = 2.987654321987654321987654321987654321_16
 
-  !open(8,file="tnmlist.in", action='write', recl=80, delim='APOSTROPHE')
   open(8,file="tnmlist.in", action='write',  delim='APOSTROPHE')
 
   write(unit=8,nml=tdata)

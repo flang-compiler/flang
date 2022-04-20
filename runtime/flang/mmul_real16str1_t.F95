@@ -143,7 +143,3 @@ subroutine F90_matmul_real16_str1_mxv_t(dest, s1,s2, &
       end do
   endif
 end
-
-
-
-

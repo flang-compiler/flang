@@ -9,9 +9,9 @@
 
 subroutine ftn_transpose_real16( a, lda, alpha, buffer, bufrows, bufcols )
   implicit none
-  integer*8 lda
+  integer*8 :: lda
   integer :: bufrows, bufcols
-  integer i, j, ndx, ndxsave
+  integer :: i, j, ndx, ndxsave
   real*16 :: a( lda, * ), alpha
   real*16 :: buffer(bufrows * bufcols)
 

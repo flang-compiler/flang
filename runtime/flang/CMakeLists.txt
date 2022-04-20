@@ -276,7 +276,7 @@ SET(FTN_SUPPORT_DESC_INDEP
   initpar.c
   inquire.c
   iso_c_bind.F95
-  iso_fortran_env.f90
+  iso_fortran_env.F90
   ldread.c
   ldwrite.c
   linux_dummy.c

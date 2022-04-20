@@ -24,7 +24,3 @@ run:
 	ieee_rem_q.$(EXESUFFIX)
 
 verify: ;
-
-
-
-

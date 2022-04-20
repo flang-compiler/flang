@@ -5,7 +5,7 @@
 !*   Intrinsics function max/min take quad precision.
 program p
   use check_mod
-  parameter(n = 8)
+  integer, parameter :: n = 8
   integer, parameter :: k = 16
   real(kind = k) :: x1, x2, x3, x4, x5
   parameter(x1 = 1.2345678123151412321321541_16)

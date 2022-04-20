@@ -8,6 +8,7 @@
 /* Intrinsic function which take quad precision arguments. */
 
 #include "mthdecls.h"
+
 long double __mth_i_qpowq(long double x, long double y)
 {
   return powl(x, y);

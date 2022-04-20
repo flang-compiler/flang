@@ -10,6 +10,7 @@
 #else
 long double atan2(long double x, long double y);
 #endif
+
 long double
 __mth_i_qatan2(long double x, long double y)
 {

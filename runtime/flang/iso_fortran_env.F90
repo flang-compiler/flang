@@ -59,7 +59,11 @@
 	integer REAL64
 	parameter (REAL64 = 8)
 	integer REAL128
-	parameter (REAL128 = 16)
+#ifdef TARGET_SUPPORTS_QUADFP
+        parameter (REAL128 = 16)
+#else
+        parameter (REAL128 = -1)
+#endif
 
         integer INTEGER_KINDS(4)
         parameter (INTEGER_KINDS = (/INT8, INT16, INT32, INT64/))

@@ -4,7 +4,7 @@
 
 !*   Intrinsics function asin acos atan take quad precision.
 program p
-  parameter(n = 15)
+  integer, parameter :: n = 15
   integer, parameter :: k = 16
   real(16) :: rslts(n), expect(n)
   real(kind = k) :: t1

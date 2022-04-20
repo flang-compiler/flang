@@ -8,6 +8,7 @@
 /* Intrinsic function which take quad precision arguments. */
 
 #include "mthdecls.h"
+
 long double __mth_i_qcos(long double d)
 {
   return cosl(d);

@@ -243,6 +243,4 @@ subroutine ftn_mnaxnb_real16( mra, ncb, kab, alpha, a, lda, b, ldb, beta, &
     enddo
     deallocate( buffera )
   endif
-
-  return
 end subroutine ftn_mnaxnb_real16

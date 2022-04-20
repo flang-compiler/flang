@@ -19,7 +19,6 @@ void ENTF90(MATMUL_REAL16, matmul_real16)(char *dest_addr, char *s1_addr,
                                         char *s2_addr, F90_Desc *dest_desc,
                                         F90_Desc *s1_desc, F90_Desc *s2_desc)
 {
-
   __REAL16_T *s1_base;
   __REAL16_T *s2_base;
   __REAL16_T *dest_base;

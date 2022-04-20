@@ -10,7 +10,6 @@ program test
   character(80) :: str
   namelist /tdata/ tmpa,tmpb
 
-  !open(8,file="tnmlist.in", action='write', recl=80, delim='APOSTROPHE')
   open(8,file="tnmlist.in", action='write',  delim='APOSTROPHE')
 
   write(unit=8,nml=tdata)

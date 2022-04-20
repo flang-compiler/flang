@@ -5,7 +5,7 @@
 !*   Intrinsics function mod take quad precision.
 program p
   use check_mod
-  parameter(n = 4)
+  integer, parameter :: n = 4
   integer, parameter :: k = 16
   real(16) :: rslts(n), expect(n), r = mod(1.000002_16,0.9999999999_16), er
   real(kind = k) :: t1, t2

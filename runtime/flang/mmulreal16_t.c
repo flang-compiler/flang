@@ -20,7 +20,6 @@ void ENTF90(MATMUL_REAL16,
                                int *t_flag, F90_Desc *dest_desc,
                                F90_Desc *s1_desc, F90_Desc *s2_desc)
 {
-
   __REAL16_T *s1_base;
   __REAL16_T *s1_elem_p;
   __REAL16_T *s2_base;
@@ -168,60 +167,58 @@ void ENTF90(MATMUL_REAL16,
   }
 
   /* transpose s1 */
-  {
-    __INT_T dest_offset;
-    __INT_T s1_d1_base, s1_d1_offset, s1_m_delta, s1_n_delta, s2_n_delta,
-        s2_d2_base, s2_k_delta, d_d1_base, d_m_delta, d_d2_base, d_k_delta;
-    __INT_T k;
-    __INT_T l;
-    __INT_T m;
-    __INT_T n;
+  __INT_T dest_offset;
+  __INT_T s1_d1_base, s1_d1_offset, s1_m_delta, s1_n_delta, s2_n_delta,
+      s2_d2_base, s2_k_delta, d_d1_base, d_m_delta, d_d2_base, d_k_delta;
+  __INT_T k;
+  __INT_T l;
+  __INT_T m;
+  __INT_T n;
 
-    l = s1_d1_lstride;
-    s1_d1_lstride = s1_d2_lstride;
-    s1_d2_lstride = l;
+  l = s1_d1_lstride;
+  s1_d1_lstride = s1_d2_lstride;
+  s1_d2_lstride = l;
 
-    s1_base = (__REAL16_T *)s1_addr + F90_LBASE_G(s1_desc) +
-              s1_d1_lb * s1_d1_lstride + s1_d2_lb * s1_d2_lstride - 1;
-    s2_base = (__REAL16_T *)s2_addr + F90_LBASE_G(s2_desc) +
-              s2_d1_lb * s2_d1_lstride + s2_d2_lb * s2_d2_lstride - 1;
-    dest_base = (__REAL16_T *)dest_addr + F90_LBASE_G(dest_desc) +
-                d_d1_lb * d_d1_lstride + d_d2_lb * d_d2_lstride - 1;
+  s1_base = (__REAL16_T *)s1_addr + F90_LBASE_G(s1_desc) +
+            s1_d1_lb * s1_d1_lstride + s1_d2_lb * s1_d2_lstride - 1;
+  s2_base = (__REAL16_T *)s2_addr + F90_LBASE_G(s2_desc) +
+            s2_d1_lb * s2_d1_lstride + s2_d2_lb * s2_d2_lstride - 1;
+  dest_base = (__REAL16_T *)dest_addr + F90_LBASE_G(dest_desc) +
+              d_d1_lb * d_d1_lstride + d_d2_lb * d_d2_lstride - 1;
 
-    d_d1_base = d_d1_soffset * d_d1_lstride;
-    d_m_delta = d_d1_sstride * d_d1_lstride;
-    d_d2_base = d_d2_soffset * d_d2_lstride;
-    d_k_delta = s1_rank == 2 ? d_d2_sstride * d_d2_lstride : d_m_delta;
+  d_d1_base = d_d1_soffset * d_d1_lstride;
+  d_m_delta = d_d1_sstride * d_d1_lstride;
+  d_d2_base = d_d2_soffset * d_d2_lstride;
+  d_k_delta = s1_rank == 2 ? d_d2_sstride * d_d2_lstride : d_m_delta;
 
-    s1_d1_base = s1_d1_soffset * s1_d1_lstride;
+  s1_d1_base = s1_d1_soffset * s1_d1_lstride;
+  s1_d1_offset = s1_d1_base;
+  s1_m_delta = s1_d1_sstride * s1_d1_lstride;
+  s1_base += s1_d2_soffset * s1_d2_lstride;
+  s1_n_delta = s1_rank == 2 ? s1_d2_sstride * s1_d2_lstride : s1_m_delta;
+
+  s2_base += s2_d1_soffset * s2_d1_lstride;
+  s2_n_delta = s2_d1_sstride * s2_d1_lstride;
+  s2_d2_base = s2_d2_soffset * s2_d2_lstride;
+  s2_k_delta = s2_d2_sstride * s2_d2_lstride;
+
+  for (k = 0; k < k_extent; k++) {
+    dest_offset = d_d1_base + d_d2_base;
+    d_d2_base += d_k_delta;
     s1_d1_offset = s1_d1_base;
-    s1_m_delta = s1_d1_sstride * s1_d1_lstride;
-    s1_base += s1_d2_soffset * s1_d2_lstride;
-    s1_n_delta = s1_rank == 2 ? s1_d2_sstride * s1_d2_lstride : s1_m_delta;
-
-    s2_base += s2_d1_soffset * s2_d1_lstride;
-    s2_n_delta = s2_d1_sstride * s2_d1_lstride;
-    s2_d2_base = s2_d2_soffset * s2_d2_lstride;
-    s2_k_delta = s2_d2_sstride * s2_d2_lstride;
-
-    for (k = 0; k < k_extent; k++) {
-      dest_offset = d_d1_base + d_d2_base;
-      d_d2_base += d_k_delta;
-      s1_d1_offset = s1_d1_base;
-      for (m = 0; m < m_extent; m++) {
-        s1_elem_p = s1_base + s1_d1_offset;
-        s1_d1_offset += s1_m_delta;
-        s2_elem_p = s2_base + s2_d2_base;
-        rslt_tmp = 0;
-        for (n = 0; n < n_extent; n++) {
-          rslt_tmp += *s1_elem_p * *s2_elem_p;
-          s1_elem_p += s1_n_delta;
-          s2_elem_p += s2_n_delta;
-        }
-        *(dest_base + dest_offset) = rslt_tmp;
-        dest_offset += d_m_delta;
+    for (m = 0; m < m_extent; m++) {
+      s1_elem_p = s1_base + s1_d1_offset;
+      s1_d1_offset += s1_m_delta;
+      s2_elem_p = s2_base + s2_d2_base;
+      rslt_tmp = 0;
+      for (n = 0; n < n_extent; n++) {
+        rslt_tmp += *s1_elem_p * *s2_elem_p;
+        s1_elem_p += s1_n_delta;
+        s2_elem_p += s2_n_delta;
       }
-      s2_d2_base += s2_k_delta;
+      *(dest_base + dest_offset) = rslt_tmp;
+      dest_offset += d_m_delta;
     }
+    s2_d2_base += s2_k_delta;
   }
 }

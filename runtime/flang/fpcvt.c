@@ -1176,18 +1176,6 @@ __fortio_ecvt(long double lvalue, int width, int ndigit,
   return NULL;
 }
 
-#define MASK_EXPONENT_DBLE 0x7ff00000  /* mask of exponent for double precision */
-#define MASK_EXPONENT_QUAD 0x7fff0000  /* mask of exponent for quad precision */
-#define MASK_FRACTION_HIGH6_DBLE 0xfc000 /* mask of high 6 bit of FRACTION for double precision */
-#define MASK_FRACTION_HIGH6_QUAD 0xfc00 /* mask of high 6 bit of FRACTION for quad precision */
-#define SHIFT_EXPONENT_DBLE 12
-#define SHIFT_EXPONENT_QUAD 8
-#define SHIFT_FRACTION_DBLE 14
-#define SHIFT_FRACTION_QUAD 10
-#define BIAS_DBLE 261881
-#define BIAS_QUAD 4194041
-#define EXPONENT_BIAS_DBLE 0x3fe00000 /* i.e., exponent field value of 0.5 */
-#define EXPONENT_BIAS_QUAD 0x3ffe0000 /* i.e., exponent field value of 0.5 */
 char *
 __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign, int round,
               int is_quad)
@@ -1290,11 +1278,11 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
         178, 181, 185, 188, 192, 195, 198, 202, 205, 208, 212, 215, 218,
         221, 224, 228, 231, 234, 237, 240, 243, 246, 249, 252, 255};
       if (!is_quad) {
-        nexp = ((ieee_v.i[1] & MASK_EXPONENT_DBLE) >> SHIFT_EXPONENT_DBLE) - BIAS_DBLE; // 261880 works too
-        idx = ((ieee_v.i[1] & MASK_FRACTION_HIGH6_DBLE) >> SHIFT_FRACTION_DBLE);
+        nexp = ((ieee_v.i[1] & 0x7ff00000) >> 12) - 261881; // 261880 works too
+        idx = ((ieee_v.i[1] & 0xfc000) >> 14);
       } else {
-        nexp = ((ieeeq_v.i[SUBSCRIPT_3] & MASK_EXPONENT_QUAD) >> SHIFT_EXPONENT_QUAD) - BIAS_QUAD; // 4194040 works too
-        idx = ((ieeeq_v.i[SUBSCRIPT_3] & MASK_FRACTION_HIGH6_QUAD) >>SHIFT_FRACTION_QUAD);
+        nexp = ((ieeeq_v.i[SUBSCRIPT_3] & 0x7fff0000) >> 8) - 4194041; // 4194040 works too
+        idx = ((ieeeq_v.i[SUBSCRIPT_3] & 0xfc00 ) >> 10);
       }
       nexp += lkup[idx];
       ldz = (nexp * 1233) >> 20;
@@ -1707,11 +1695,11 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
         } else if (round == FIO_ZERO) {
           tmp[0] = '0';
         } else if (round == FIO_COMPATIBLE) {
-          tmp[0] = (ieee_v.i[1] < EXPONENT_BIAS_DBLE) ? '0' : '1';
-        } else if ((ieee_v.i[1] == EXPONENT_BIAS_DBLE) && (ieee_v.i[0] == 0x0)) {
+          tmp[0] = (ieee_v.i[1] < 0x3fe00000) ? '0' : '1';
+        } else if ((ieee_v.i[1] == 0x3fe00000) && (ieee_v.i[0] == 0x0)) {
           tmp[0] = '0';
         } else {
-          tmp[0] = (ieee_v.i[1] < EXPONENT_BIAS_DBLE) ? '0' : '1';
+          tmp[0] = (ieee_v.i[1] < 0x3fe00000) ? '0' : '1';
         }
       } else {
         if ((ieeeq_v.i[SUBSCRIPT_3] == 0x0) && (ieeeq_v.i[SUBSCRIPT_2] == 0x0) &&
@@ -1725,12 +1713,13 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
         } else if (round == FIO_ZERO) {
           tmp[0] = '0';
         } else if (round == FIO_COMPATIBLE) {
-          tmp[0] = (ieeeq_v.i[SUBSCRIPT_3] < EXPONENT_BIAS_QUAD) ? '0' : '1';
-        } else if ((ieeeq_v.i[SUBSCRIPT_3] == EXPONENT_BIAS_QUAD) && (ieeeq_v.i[SUBSCRIPT_2] == 0x0 &&
-                   (ieeeq_v.i[1] == 0x0) && (ieeeq_v.i[0] == 0x0))) {
+          tmp[0] = (ieeeq_v.i[SUBSCRIPT_3] < 0x3ffe0000) ? '0' : '1';
+        } else if ((ieeeq_v.i[SUBSCRIPT_3] == 0x3ffe0000) &&
+                   (ieeeq_v.i[SUBSCRIPT_2] == 0x0 && (ieeeq_v.i[1] == 0x0) &&
+                   (ieeeq_v.i[0] == 0x0))) {
           tmp[0] = '0';
         } else {
-          tmp[0] = (ieeeq_v.i[SUBSCRIPT_3] < EXPONENT_BIAS_QUAD) ? '0' : '1';
+          tmp[0] = (ieeeq_v.i[SUBSCRIPT_3] < 0x3ffe0000) ? '0' : '1';
         }
       }
       return tmp;
