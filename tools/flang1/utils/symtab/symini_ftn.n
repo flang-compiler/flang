@@ -1792,7 +1792,7 @@ sptr    name    pcnt    atyp    dtype   ILM     pname   arrayf native?
 .H5 IEEE_VALUE - -
 .AT elemental x class
 .H5 IEEE_SELECTED_REAL_KIND - -
-.AT transformational *p *r
+.AT transformational *p *r *radix
 .H5 IEEE_GET_ROUNDING_MODE - -
 .AT subroutine round value
 .H5 IEEE_GET_UNDERFLOW_MODE - -
