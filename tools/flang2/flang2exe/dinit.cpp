@@ -2642,6 +2642,20 @@ eval_abs(CONST *arg, DTYPE dtype)
       dtype = rsltdtype = DT_DBLE;
 
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+      con1 = wrkarg->u1.conval;
+      GET_QUAD(num1, CONVAL1G(con1));
+      GET_QUAD(num2, CONVAL2G(con1));
+      xqmul(num1, num1, num1);
+      xqmul(num2, num2, num2);
+      xqadd(num1, num2, num2);
+      xqsqrt(num2, num1);
+      con1 = getcon(num1, dtype);
+      wrkarg->dtype = DT_QUAD;
+      dtype = rsltdtype = DT_QUAD;
+      break;
+#endif
     default:
       con1 = wrkarg->u1.conval;
       break;

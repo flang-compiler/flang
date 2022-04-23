@@ -15,6 +15,9 @@ module check_mod
     module procedure checkr16
 #endif
     module procedure checkc4, checkc8, checkc1
+#ifdef __flang_quadfp__
+    module procedure checkc16
+#endif
     module procedure checkcptr, checkcptr2d, checkbytes, checkdt
   end interface
 
@@ -57,6 +60,7 @@ module check_mod
   character(80) :: fmt20="'res (0x',z2.2,') exp (0x',z2.2,')')"
 #ifdef __flang_quadfp__
   character(160) :: fmt21="'res ',f0.33,' (0x',z33.33,') exp ',f0.33,' (0x',z33.33,')')"
+  character(320) :: fmt22="'res ',2(f0.33,1x),2('(0x',z33.33,') '),'exp ',2(f0.33,1x),2('(0x',z33.33,') '))"
 #endif
 
   contains
@@ -933,6 +937,95 @@ module check_mod
       endif
       return
     end subroutine checkc8
+    ! complex*32
+#ifdef __flang_quadfp__
+    subroutine checkc16(reslt, expct, np, atoler, rtoler, ulptoler, ieee)
+!dir$ ignore_tkr (r) reslt, expct
+      complex*32, dimension(*) :: reslt
+      complex*32, dimension(*) :: expct
+      integer :: np
+      complex*32, optional :: atoler, rtoler, ulptoler
+      logical, optional :: ieee
+      integer i, tests_passed, tests_failed, tests_tolerated
+      real*16     abserror, relerror
+      real*16     rres, rexp, rx
+      logical ieee_on, anytolerated
+
+      anytolerated = present(atoler) .or. present(rtoler) .or. present(ulptoler)
+      ieee_on = .false.
+      if (present(ieee)) ieee_on = ieee
+
+      tests_passed = 0
+      tests_failed = 0
+      tests_tolerated = 0
+
+      do i = 1, np
+        if (ieee_on) then
+          rres = qreal(reslt(i))
+          rexp = qreal(expct(i))
+          irri = ieeecheckcases(rres, rexp)
+          rres = qimag(reslt(i))
+          rexp = qimag(expct(i))
+          icri = ieeecheckcases(rres, rexp)
+          if ((irri.eq.1) .or. (icri.eq.1)) then
+            goto 100
+          else if ((irri.eq.2) .and. (icri.eq.2)) then
+            tests_passed = tests_passed + 1
+            cycle
+          end if
+        end if
+
+        if (expct(i) .eq. reslt(i)) then
+            tests_passed = tests_passed + 1
+            cycle
+        end if
+
+        abserror = cqabs(expct(i) - reslt(i))
+        if (present(atoler)) then
+          if (abserror .gt. cqabs(atoler)) goto 100
+        end if
+
+        if (present(rtoler)) then
+          relerror = abserror / qmax(cqabs(expct(i)),ieee_next_after(0.0_16,1.0_16))
+          if (relerror .gt. cqabs(rtoler)) goto 100
+        end if
+
+        if (present(ulptoler)) then
+          rres = qreal(reslt(i))
+          rexp = qreal(expct(i))
+          if (ulperror(rres,rexp) .gt. qreal(ulptoler)) goto 100
+          rres = qimag(reslt(i))
+          rexp = qimag(expct(i))
+          if (ulperror(rres,rexp) .gt. qimag(ulptoler)) goto 100
+        end if
+
+        if (anytolerated) then  ! Some tolerances, so if here we've passed
+            tests_passed = tests_passed + 1
+            tests_tolerated = tests_tolerated + 1
+            if (tests_tolerated .le. 100) then
+              write(6,fmt=fmt02//fmt22) i, reslt(i),reslt(i), expct(i),expct(i)
+            end if
+            cycle
+        end if
+
+  100   tests_failed = tests_failed + 1   ! No tolerances, here we've failed
+        if (tests_failed .le. 100) then
+            write(6,fmt=fmt03//fmt22) i, reslt(i),reslt(i), expct(i),expct(i)
+        end if
+      enddo
+
+      if (tests_failed .eq. 0) then
+         if (tests_tolerated .eq. 0) then
+            write(6,fmt=fmt04) np, tests_passed
+         else
+            write(6,fmt=fmt05) np, tests_passed, tests_tolerated
+         endif
+      else
+            write(6,fmt=fmt06) np, tests_passed, tests_failed
+      endif
+      return
+    end subroutine checkc16
+#endif
 
     ! Now character*1
     subroutine checkc1(reslt, expct, np, atoler, rtoler)
