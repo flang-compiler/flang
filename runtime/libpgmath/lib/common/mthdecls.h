@@ -193,6 +193,8 @@ quad_complex_t pgmath_cmplxl(float128_t r, float128_t i)
         float _f(float real, float imag)
 #define	DBLFUNC_C_(_f)    \
         double _f(double real, double imag)
+#define	QUADFUNC_C_(_f)    \
+        float128_t _f(float128_t real, float128_t imag)
 
 #define	CMPLXFUNC_C_(_f)    \
         void _f(cmplx_t *cmplx, float real, float imag)
@@ -237,6 +239,9 @@ quad_complex_t pgmath_cmplxl(float128_t r, float128_t i)
 #define	DBLFUNC_C_C99_(_f)    \
         double MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (double_complex_t zarg)
+#define	QUADFUNC_C_C99_(_f)    \
+        float128_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (quad_complex_t lzarg)
 
 #define	CMPLXFUNC_C_C99_(_f)    \
         float_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
@@ -290,6 +295,7 @@ quad_complex_t pgmath_cmplxl(float128_t r, float128_t i)
 
 #define	FLTFUNC_C(_f)		FLTFUNC_C_(_f)
 #define	DBLFUNC_C(_f)		DBLFUNC_C_(_f)
+#define	QUADFUNC_C(_f)		QUADFUNC_C_(_f)
 
 #define	CMPLXFUNC_C(_f)		CMPLXFUNC_C_(_f)
 #define	CMPLXFUNC_C_C(_f)	CMPLXFUNC_C_C_(_f)
@@ -359,6 +365,7 @@ quad_complex_t pgmath_cmplxl(float128_t r, float128_t i)
 
 #define	FLTFUNC_C(_f)		FLTFUNC_C_C99_(_f)
 #define	DBLFUNC_C(_f)		DBLFUNC_C_C99_(_f)
+#define	QUADFUNC_C(_f)		QUADFUNC_C_C99_(_f)
 
 #define	CMPLXFUNC_C(_f)		CMPLXFUNC_C_C99_(_f)
 #define	CMPLXFUNC_C_C(_f)	CMPLXFUNC_C_C_C99_(_f)
@@ -427,6 +434,7 @@ quad_complex_t pgmath_cmplxl(float128_t r, float128_t i)
  */
 #define	FLTDECL_C(_f)		FLTFUNC_C_(_f)     ; FLTFUNC_C_C99_(_f);
 #define	DBLDECL_C(_f)		DBLFUNC_C_(_f)     ; DBLFUNC_C_C99_(_f);
+#define	QUADDECL_C(_f)		QUADFUNC_C_(_f)    ; QUADFUNC_C_C99_(_f);
 
 #define	CMPLXDECL_C(_f)		CMPLXFUNC_C_(_f)   ; CMPLXFUNC_C_C99_(_f);
 #define	CMPLXDECL_C_C(_f)	CMPLXFUNC_C_C_(_f) ; CMPLXFUNC_C_C_C99_(_f);
@@ -718,7 +726,7 @@ ZMPLXDECL_Z(__mth_i_cdsqrt);
 ZMPLXDECL_Z(__mth_i_cdtan);
 ZMPLXDECL_Z(__mth_i_cdtanh);
 
-
+QUADDECL_C(__mth_i_cqabs);
 __CDECL LZMPLXDECL_LZ_LZ(__mth_i_cqdiv);
 __CDECL LZMPLXDECL_LZ_LZ(__mth_i_cqpowcq);
 LZMPLXDECL_LZ_I(__mth_i_cqpowi);

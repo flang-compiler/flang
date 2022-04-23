@@ -361,6 +361,13 @@ Absolute value of single precision real number.
 .OP ARGDP t2 ip1 t1
 .OP QJSR t3 =e'%d%__mth_i_cdabs t2
 .OP DFRDP r t3 dpret
+.IL CQABS arth lnk
+.AT spec
+.OP NULL t1 iv0
+.OP ARGQP t1 rp1 t1
+.OP ARGQP t2 ip1 t1
+.OP QJSR t3 =e'%q%__mth_i_cqabs t2
+.OP DFRQP r t3 qpret
 .IL LEN fstr lnk
 Length of a character expression.  This ILM contains a link to
 one character expression.

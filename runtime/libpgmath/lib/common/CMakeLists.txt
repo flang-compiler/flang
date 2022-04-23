@@ -229,6 +229,7 @@ set(MTH_CMPLX_SRCS
   ctanh.c)
 
 set(MTH_CMPLX_SRCS_QUADFP
+  cqabs.c
   cqdiv.c
   cqpowcq.c
   cqpowi.c

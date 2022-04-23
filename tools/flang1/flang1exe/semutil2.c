@@ -8857,6 +8857,20 @@ eval_abs(ACL *arg, DTYPE dtype)
       con1 = wrkarg->conval;
       rsltdtype = DT_REAL;
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+      con1 = wrkarg->conval;
+      GET_QUAD(num1, CONVAL1G(con1));
+      GET_QUAD(num2, CONVAL2G(con1));
+      xqmul(num1, num1, num1);
+      xqmul(num2, num2, num2);
+      xqadd(num1, num2, num2);
+      xqsqrt(num2, num1);
+      con1 = getcon(num1, dtype);
+      dtype = rsltdtype = DT_QUAD;
+      wrkarg->dtype = dtype;
+      break;
+#endif
     default:
       con1 = wrkarg->conval;
       break;

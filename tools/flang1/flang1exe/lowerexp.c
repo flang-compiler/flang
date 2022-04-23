@@ -3219,6 +3219,9 @@ intrinsic_arg_dtype(int intr, int ast, int args, int nargs)
 #endif
   case I_CABS:
   case I_CDABS:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_CQABS:
+#endif
   case I_BESSEL_JN:
   case I_BESSEL_YN:
     /* don't coerce */
@@ -3662,6 +3665,9 @@ lower_intrinsic(int ast)
 #endif
   case I_CABS:
   case I_CDABS:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_CQABS:
+#endif
     /* use datatype of argument */
     arg1 = ARGT_ARG(args, 0);
     lower_expression(arg1);
@@ -3669,6 +3675,8 @@ lower_intrinsic(int ast)
 #ifdef TARGET_SUPPORTS_QUADFP
     if (intr == I_QABS)
       ilm = intrin_name("ABS", arg1, in_r_D_Q);
+    else if (intr == I_CQABS)
+      ilm = intrin_name("ABS", arg1, in_r_D_Q_C_CD_CQ);
     else
 #endif
       ilm = intrin_name("ABS", arg1, in_I_K_r_D_C_CD);
