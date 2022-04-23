@@ -488,6 +488,8 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental a
 .IN .CQABS 1 CQ Q none * V
 .AT elemental a
+.IN CQABS 1 CQ Q none * V
+.AT elemental a
 
 
 .IN ..AIMAG 1 C R IMAG * V
@@ -967,7 +969,7 @@ sptr	name	siname	iname	rname	dname	cname	cdname	i8name	qname	cqname
 .AT elemental a
 .GN JNINT - - .JNINT JIDNNT - - - - -
 .AT elemental a
-.GN ABS IIABS IABS .ABS DABS CABS CDABS KIABS QABS .CQABS
+.GN ABS IIABS IABS .ABS DABS CABS CDABS KIABS QABS CQABS
 .AT elemental a
 .GN MOD IMOD .MOD AMOD DMOD - - KMOD QMOD -
 .AT elemental a p

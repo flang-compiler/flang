@@ -17,7 +17,7 @@ struct SYM;
 
 /* Keep in sync with INIT_NAMES_SIZE, in syminidf.h. Note that flang1 and
    flang2 have different values for STB_NSIZE; choose the larger one. */
-#define STB_NSIZE 5069
+#define STB_NSIZE 5075
 
 /**
  * \file
