@@ -1,14 +1,13 @@
 !! check for pragma support for !dir$ vector always
 !RUN: %flang -S -O2 -emit-llvm %s -o - | FileCheck %s
 !CHECK: define void @sumsimd_{{.*$}}
-!CHECK: {{.*}}!llvm.access.group ![[ACCGRP:[0-9]+]]
-!CHECK: vector.ph:{{.*}}
-!CHECK: vector.body:{{.*}}
-!CHECK: {{.*}}shufflevector{{.*}}
-!CHECK: {{.*}}add <2 x i64>{{.*}}
-!CHECK: {{.*}}"llvm.loop.parallel_accesses", ![[ACCGRP]]}
-!CHECK: {{.*}}"llvm.loop.isvectorized", i32 1{{.*}}
-!CHECK: {{.*}}"llvm.loop.unroll.runtime.disable"{{.*}}
+!CHECK: !llvm.access.group ![[ACCGRP:[0-9]+]]
+!CHECK: vector.ph:
+!CHECK: vector.body:
+!CHECK: add nsw <2 x i32>
+!CHECK: "llvm.loop.parallel_accesses", ![[ACCGRP]]}
+!CHECK: "llvm.loop.isvectorized", i32 1
+!CHECK: "llvm.loop.unroll.runtime.disable"
 
 SUBROUTINE sumsimd(myarr1,myarr2,ub)
   INTEGER, POINTER :: myarr1(:)

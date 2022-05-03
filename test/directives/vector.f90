@@ -15,6 +15,5 @@ subroutine add(arr1,arr2,arr3,N)
 end subroutine
 ! METADATA: !"llvm.loop.vectorize.enable", i1 true
 ! IGNORE-DIRECTIVES-NOT: !"llvm.loop.vectorize.enable", i1 true
-! CHECK: load <[[VF:[0-9]+]] x i32>
-! CHECK: store <[[VF]] x i32>
+! CHECK: store <[[VF:[0-9]+]] x i32>
 ! VECTOR-NOT: <{{[0-9]+}} x
