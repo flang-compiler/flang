@@ -23,10 +23,11 @@ c  --- check the results:
 	common /fast/ a(100)
 	real*8 a
 	real*8 x1wxyz
-	integer istuff
+	integer istuff, stuff
 	locf(x1wxyz) = ishft(%loc(x1wxyz),-3)
 	istuff = locf(a(1))
-	if (istuff .ne. ishft(%loc(a(1)),-3)) then
+	stuff = ishft(%loc(a(1)),-3)
+	if (istuff .ne. stuff) then
 	    if1 = 99
 	else
 	    if1 = 1
