@@ -20,17 +20,17 @@
        print *, acc(100)
       end program
 ! ATTRS-SVE-128: attributes #{{[0-9]+}}
-! ATTRS-SVE-128-DAG: "target-features"="+neon,+sve"
+! ATTRS-SVE-128-DAG: "target-features"="+neon{{(,\+v8a)*}},+sve"
 ! ATTRS-SVE-128-DAG: vscale_range(1,1)
 ! ATTRS-SVE-256: attributes #{{[0-9]+}}
-! ATTRS-SVE-256-DAG: "target-features"="+neon,+sve"
+! ATTRS-SVE-256-DAG: "target-features"="+neon{{(,\+v8a)*}},+sve"
 ! ATTRS-SVE-256-DAG: vscale_range(2,2)
 ! ATTRS-SVE2-512: attributes #{{[0-9]+}}
-! ATTRS-SVE2-512-DAG: "target-features"="+neon,+sve2,+sve"
+! ATTRS-SVE2-512-DAG: "target-features"="+neon{{(,\+v8a)*}},+sve2,+sve"
 ! ATTRS-SVE2-512-DAG: vscale_range(4,4)
 ! ATTRS-SVE2SHA3-2048: attributes #{{[0-9]+}}
-! ATTRS-SVE2SHA3-2048-DAG: "target-features"="+neon,+sve2-sha3,+sve,+sve2"
+! ATTRS-SVE2SHA3-2048-DAG: "target-features"="+neon{{(,\+v8a)*}},+sve2-sha3,+sve,+sve2"
 ! ATTRS-SVE2SHA3-2048-DAG: vscale_range(16,16)
 ! ATTRS-SVE2-SCALABLE: attributes #{{[0-9]+}}
-! ATTRS-SVE2-SCALABLE-DAG: "target-features"="+neon,+sve2,+sve"
+! ATTRS-SVE2-SCALABLE-DAG: "target-features"="+neon{{(,\+v8a)*}},+sve2,+sve"
 ! ATTRS-SVE2-SCALABLE-DAG: vscale_range(1,16)
