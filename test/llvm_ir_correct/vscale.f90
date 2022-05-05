@@ -23,23 +23,23 @@
        print *, acc(100)
       end program
 ! ATTRS-NEON-NOT: vscale_range
-! ATTRS-NEON: attributes{{.*}}"target-features"="+neon"
+! ATTRS-NEON: attributes{{.*}}"target-features"="+neon{{(,\+v8a)*}}"
 ! ATTRS-SVE: attributes #{{[0-9]+}}
-! ATTRS-SVE-DAG: "target-features"="+neon,+sve"
+! ATTRS-SVE-DAG: "target-features"="+neon{{(,\+v8a)*}},+sve"
 ! ATTRS-SVE-DAG: vscale_range(1,16)
 ! ATTRS-SVE2: attributes #{{[0-9]+}}
-! ATTRS-SVE2-DAG: "target-features"="+neon,+sve2,+sve"
+! ATTRS-SVE2-DAG: "target-features"="+neon{{(,\+v8a)*}},+sve2,+sve"
 ! ATTRS-SVE2-DAG: vscale_range(1,16)
 ! ATTRS-SVE2SHA3: attributes #{{[0-9]+}}
-! ATTRS-SVE2SHA3-DAG: "target-features"="+neon,+sve2-sha3,+sve,+sve2"
+! ATTRS-SVE2SHA3-DAG: "target-features"="+neon{{(,\+v8a)*}},+sve2-sha3,+sve,+sve2"
 ! ATTRS-SVE2SHA3-DAG: vscale_range(1,16)
 ! ATTRS-SVE-NOSVE-NOT: vscale_range
-! ATTRS-SVE-NOSVE: attributes{{.*}}"target-features"="+neon,-sve,-sve2,-sve2-bitperm,-sve2-sha3,-sve2-aes,-sve2-sm4"
+! ATTRS-SVE-NOSVE: attributes{{.*}}"target-features"="+neon{{(,\+v8a)*}},-sve,-sve2,-sve2-bitperm,-sve2-sha3,-sve2-aes,-sve2-sm4"
 ! ATTRS-SVE2-NOSVE2SHA3: attributes #{{[0-9]+}}
-! ATTRS-SVE2-NOSVE2SHA3-DAG: "target-features"="+neon,+sve2,+sve,-sve2-sha3"
+! ATTRS-SVE2-NOSVE2SHA3-DAG: "target-features"="+neon{{(,\+v8a)*}},+sve2,+sve,-sve2-sha3"
 ! ATTRS-SVE2-NOSVE2SHA3-DAG: vscale_range(1,16)
 ! ATTRS-SVE2SHA3-NOSVE2: attributes #{{[0-9]+}}
-! ATTRS-SVE2SHA3-NOSVE2-DAG: "target-features"="+neon,+sve,-sve2,-sve2-bitperm,-sve2-sha3,-sve2-aes,-sve2-sm4"
+! ATTRS-SVE2SHA3-NOSVE2-DAG: "target-features"="+neon{{(,\+v8a)*}},+sve,-sve2,-sve2-bitperm,-sve2-sha3,-sve2-aes,-sve2-sm4"
 ! ATTRS-SVE2SHA3-NOSVE2-DAG: vscale_range(1,16)
 ! ATTRS-SVE2SHA3-NOSVE-NOT: vscale_range
-! ATTRS-SVE2SHA3-NOSVE: attributes{{.*}}"target-features"="+neon,-sve,-sve2,-sve2-bitperm,-sve2-sha3,-sve2-aes,-sve2-sm4"
+! ATTRS-SVE2SHA3-NOSVE: attributes{{.*}}"target-features"="+neon{{(,\+v8a)*}},-sve,-sve2,-sve2-bitperm,-sve2-sha3,-sve2-aes,-sve2-sm4"
