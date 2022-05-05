@@ -5,6 +5,7 @@ OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
 # Initialize our own variables:
 TARGET="X86"
+BUILD_TYPE="Release"
 INSTALL_PREFIX="/usr/local"
 NPROC=1
 USE_CCACHE="0"
@@ -24,15 +25,17 @@ function print_usage {
     echo "";
     echo "Options:";
     echo "  -t  Target to build for (X86, AArch64, PowerPC). Default: X86";
+    echo "  -d  CMake build type. Default: Release";
     echo "  -p  Install prefix. Default: /usr/local";
     echo "  -n  Number of parallel jobs. Default: 1";
     echo "  -c  Use ccache. Default: 0 - do not use ccache";
     echo "  -s  Use sudo to install. Default: 0 - do not use sudo";
 }
 
-while getopts "t:p:n:c?s?" opt; do
+while getopts "t:d:p:n:c?s?" opt; do
     case "$opt" in
         t) TARGET=$OPTARG;;
+        d) BUILD_TYPE=$OPTARG;;
         p) INSTALL_PREFIX=$OPTARG;;
         n) NPROC=$OPTARG;;
         c) USE_CCACHE="1";;
@@ -42,7 +45,7 @@ while getopts "t:p:n:c?s?" opt; do
 done
 
 CMAKE_OPTIONS="-DCMAKE_INSTALL_PREFIX=$INSTALL_PREFIX \
-    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DCMAKE_CXX_COMPILER=$INSTALL_PREFIX/bin/clang++ \
     -DCMAKE_C_COMPILER=$INSTALL_PREFIX/bin/clang \
     -DLLVM_TARGETS_TO_BUILD=$TARGET"
