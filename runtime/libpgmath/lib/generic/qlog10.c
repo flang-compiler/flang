@@ -9,7 +9,8 @@
 
 #include "mthdecls.h"
 
-long double __mth_i_qlog10(long double d)
+long double
+__mth_i_qlog10(long double d)
 {
   return log10l(d);
 }

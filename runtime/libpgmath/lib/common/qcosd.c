@@ -9,7 +9,8 @@
 
 #include <stdint.h>
 #include "mthdecls.h"
-long double __mth_i_qcosd(long double d)
+long double
+__mth_i_qcosd(long double d)
 {
   union {
     float128_t q;

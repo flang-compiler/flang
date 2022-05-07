@@ -8038,7 +8038,7 @@ ref_pd(SST *stktop, ITEM *list)
       E74_CNT(pdsym, count, 1, 3);
       goto call_e74_cnt;
     }
-    if (evl_kwd_args(list, MAX_ARGS_NUMBER, KWDARGSTR(pdsym))) 
+    if (evl_kwd_args(list, MAX_ARGS_NUMBER, KWDARGSTR(pdsym)))
       goto exit_;
 
     if (sem.dinit_data) {
@@ -8144,7 +8144,7 @@ ref_pd(SST *stktop, ITEM *list)
         con1 = A_SPTRG(ast);
         con1 = CONVAL2G(con1);
         if (con1 != 2)
-		conval = -5;
+          conval = -5;
       }
     }
 
@@ -8540,7 +8540,8 @@ ref_pd(SST *stktop, ITEM *list)
         rtlRtn = RTE_spacingq;
         break;
       default:
-        interr("PD_spacingq or PD_rrspacingq or PD_fraction, pdtype", pdtype, 3);
+        interr("PD_spacingq or PD_rrspacingq or PD_fraction, pdtype", pdtype,
+               3);
       }
     }
     (void)sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), dtype1);
@@ -9387,7 +9388,7 @@ ref_pd(SST *stktop, ITEM *list)
       dtyper = DT_LOG;
     if (DTY(dtype2) == TY_REAL) {
       ast = mk_binop(OP_GE, ast, mk_cnst(stb.flt0), dtyper);
-    } else if(DTY(dtype2) == TY_DBLE) {
+    } else if (DTY(dtype2) == TY_DBLE) {
       ast = mk_binop(OP_GE, ast, mk_cnst(stb.dbl0), dtyper);
     } else {
       ast = mk_binop(OP_GE, ast, mk_cnst(stb.quad0), dtyper);
@@ -9544,12 +9545,12 @@ ref_pd(SST *stktop, ITEM *list)
     } else if (DTY(dtype1) == TY_DBLE) { /* TY_DBLE */
       if (pdtype == PD_scale)
         rtlRtn = RTE_scaled;
-      else 
+      else
         rtlRtn = RTE_setexpd;
     } else {
       if (pdtype == PD_scale)
         rtlRtn = RTE_scaleq;
-      else 
+      else
         rtlRtn = RTE_setexpq;
     }
     (void)sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), dtype1);
@@ -9586,7 +9587,7 @@ ref_pd(SST *stktop, ITEM *list)
       val[0] = 0x00010000;
       val[1] = 0x00000000;
       val[2] = 0x00000000;
-      val[3] = MIN_QUAD_VALUE_BIT96_127 ;
+      val[3] = MIN_QUAD_VALUE_BIT96_127;
       goto const_quad_val;
     default:
       break;

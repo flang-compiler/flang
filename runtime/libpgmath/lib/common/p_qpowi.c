@@ -19,9 +19,9 @@
  * as a temporary workaround to get higher precision multiplies.
  */
 
-#if defined (TARGET_LINUX_GENERIC) || defined (TARGET_LINUX_POWER) || \
-    defined (LINUX8664) || defined (TARGET_X8664) || defined(TARGET_LINUX_ARM64)
-#define	__float128	long double
+#if defined(TARGET_LINUX_GENERIC) || defined(TARGET_LINUX_POWER) ||            \
+    defined(LINUX8664) || defined(TARGET_X8664) || defined(TARGET_LINUX_ARM64)
+#define __float128 long double
 #endif
 
 long double

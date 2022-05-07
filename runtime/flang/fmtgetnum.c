@@ -180,8 +180,8 @@ junk0:
     c = *++cp;
     while (ISDIGIT(c))
       c = *++cp;
-  } else if (c == 'e' || c == 'E' || c == 'd' || c == 'D' ||
-             c == 'q' || c == 'Q') {
+  } else if (c == 'e' || c == 'E' || c == 'd' || c == 'D' || c == 'q' ||
+             c == 'Q') {
     c = *++cp;
     if (c == '+' || c == '-')
       c = *++cp;

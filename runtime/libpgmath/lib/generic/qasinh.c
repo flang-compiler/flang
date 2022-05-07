@@ -9,7 +9,8 @@
 
 #include "mthdecls.h"
 
-long double __mth_i_qasinh(long double arg)
+long double
+__mth_i_qasinh(long double arg)
 {
   return asinhl(arg);
 }

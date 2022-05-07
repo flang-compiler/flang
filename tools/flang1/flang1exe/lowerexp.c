@@ -4524,7 +4524,7 @@ lower_intrinsic(int ast)
     if (DTY(DDTG(A_NDTYPEG(ARGT_ARG(args, 0)))) == TY_REAL) {
       ilm = f90_value_function(mkRteRtnNm(RTE_fracx), DT_REAL4, args, nargs);
 #ifdef TARGET_SUPPORTS_QUADFP
-    } else if(DTY(DDTG(A_NDTYPEG(ARGT_ARG(args, 0)))) == TY_QUAD){
+    } else if (DTY(DDTG(A_NDTYPEG(ARGT_ARG(args, 0)))) == TY_QUAD) {
       ilm = f90_value_function(mkRteRtnNm(RTE_fracqx), DT_QUAD, args, nargs);
 #endif
     } else {
@@ -4538,22 +4538,20 @@ lower_intrinsic(int ast)
           f90_value_function(mkRteRtnNm(RTE_rrspacingx), DT_REAL4, args, nargs);
 #ifdef TARGET_SUPPORTS_QUADFP
     } else if (DTY(DDTG(A_NDTYPEG(ast))) == TY_QUAD) {
-      ilm = 
+      ilm =
           f90_value_function(mkRteRtnNm(RTE_rrspacingqx), DT_QUAD, args, nargs);
 #endif
     } else {
-      ilm = 
-          f90_value_function(mkRteRtnNm(RTE_rrspacingdx), DT_REAL8, args, nargs);
+      ilm = f90_value_function(mkRteRtnNm(RTE_rrspacingdx), DT_REAL8, args,
+                               nargs);
     }
     break;
   case I_SPACING:
     if (DTY(DDTG(A_NDTYPEG(ast))) == TY_REAL) {
-      ilm =
-          f90_value_function(mkRteRtnNm(RTE_spacingx), DT_REAL4, args, nargs);
+      ilm = f90_value_function(mkRteRtnNm(RTE_spacingx), DT_REAL4, args, nargs);
 #ifdef TARGET_SUPPORTS_QUADFP
     } else if (DTY(DDTG(A_NDTYPEG(ast))) == TY_QUAD) {
-      ilm = 
-          f90_value_function(mkRteRtnNm(RTE_spacingqx), DT_QUAD, args, nargs);
+      ilm = f90_value_function(mkRteRtnNm(RTE_spacingqx), DT_QUAD, args, nargs);
 #endif
     } else {
       ilm =
@@ -4562,12 +4560,10 @@ lower_intrinsic(int ast)
     break;
   case I_NEAREST:
     if (DTY(DDTG(A_NDTYPEG(ast))) == TY_REAL) {
-      ilm = 
-          f90_value_function(mkRteRtnNm(RTE_nearestx), DT_REAL4, args, nargs);
+      ilm = f90_value_function(mkRteRtnNm(RTE_nearestx), DT_REAL4, args, nargs);
 #ifdef TARGET_SUPPORTS_QUADFP
     } else if (DTY(DDTG(A_NDTYPEG(ast))) == TY_QUAD) {
-      ilm = 
-          f90_value_function(mkRteRtnNm(RTE_nearestqx), DT_QUAD, args, nargs);
+      ilm = f90_value_function(mkRteRtnNm(RTE_nearestqx), DT_QUAD, args, nargs);
 #endif
     } else {
       ilm =
@@ -4579,7 +4575,7 @@ lower_intrinsic(int ast)
       ilm =
           f90_value_function_I2(mkRteRtnNm(RTE_scalex), DT_REAL4, args, nargs);
 #ifdef TARGET_SUPPORTS_QUADFP
-    } else if(DTY(DDTG(A_NDTYPEG(ast))) == TY_QUAD) {
+    } else if (DTY(DDTG(A_NDTYPEG(ast))) == TY_QUAD) {
       ilm =
           f90_value_function_I2(mkRteRtnNm(RTE_scaleqx), DT_QUAD, args, nargs);
 #endif
@@ -4593,13 +4589,13 @@ lower_intrinsic(int ast)
       ilm =
           f90_value_function_I2(mkRteRtnNm(RTE_setexpx), DT_REAL4, args, nargs);
 #ifdef TARGET_SUPPORTS_QUADFP
-    } else if(DTY(DDTG(A_NDTYPEG(ast))) == TY_QUAD) {
-      ilm = 
+    } else if (DTY(DDTG(A_NDTYPEG(ast))) == TY_QUAD) {
+      ilm =
           f90_value_function_I2(mkRteRtnNm(RTE_setexpqx), DT_QUAD, args, nargs);
 #endif
     } else {
-      ilm = 
-          f90_value_function_I2(mkRteRtnNm(RTE_setexpdx), DT_REAL8, args, nargs);
+      ilm = f90_value_function_I2(mkRteRtnNm(RTE_setexpdx), DT_REAL8, args,
+                                  nargs);
     }
     break;
   case I_VERIFY:

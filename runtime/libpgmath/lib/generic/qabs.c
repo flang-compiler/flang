@@ -15,7 +15,8 @@ union {
 } tmp;
 
 
-long double __mth_i_qabs(long double arg)
+long double
+__mth_i_qabs(long double arg)
 {
   tmp.val = arg;
   /* little endian */

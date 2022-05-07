@@ -26,14 +26,14 @@ typedef __uint128_t uint128_t;
 #define INF_OR_NAN_EXPONENT 0x7fff
 
 #define RJ_EXPONENT_MASK 0x7fff
-#define IMPLICIT_NORMALIZED_BIT ((uint128_t) 1 << EXPLICIT_MANTISSA_BITS)
-                                /* 0x00010000000000000000000000000000 */
+#define IMPLICIT_NORMALIZED_BIT ((uint128_t)1 << EXPLICIT_MANTISSA_BITS)
+/*                                 0x00010000000000000000000000000000 */
 #define MANTISSA_MASK (IMPLICIT_NORMALIZED_BIT - 1)
-                                /* 0x0000ffffffffffffffffffffffffffff */
-#define SIGN_BIT ((uint128_t) 1 << 127)
-                                /* 0x80000000000000000000000000000000 */
-#define MAX_EXACTLY_REPRESENTABLE_UINT128 (~(uint128_t) 0 << EXPONENT_FIELD_BITS)
-                                /* 0xffffffffffffffffffffffffffff8000 */
+/*                                 0x0000ffffffffffffffffffffffffffff */
+#define SIGN_BIT ((uint128_t)1 << 127)
+/*                                 0x80000000000000000000000000000000 */
+#define MAX_EXACTLY_REPRESENTABLE_UINT128 (~(uint128_t)0 << EXPONENT_FIELD_BITS)
+/*                                 0xffffffffffffffffffffffffffff8000 */
 
 /*
  *  When |x| >= this value (0x0010000000000000), |x| == AINT(|x|) and thus
@@ -59,41 +59,43 @@ union raw_fp {
   long double q;
   uint128_t i;
 };
-#define RAW_BITS(x) (((union raw_fp *) &(x))->i)
+#define RAW_BITS(x) (((union raw_fp *)&(x))->i)
 
 #define SHIFT_HH32 96 /* shift value to get bit 96 to 127 of frac */
 #define SHIFT_HL32 64 /* shift value to get high 64 to 95 frac */
 #define SHIFT_LH32 32 /* shift value to get high 32 to 63 of frac */
-#define INT_SIZE 32 /* bit size of integer type */
-#define SHIFT_32 5 /* 32 is 2^5 */
-#define BIT_SIZE 128 /* bit size of quad precision */
-#define BYTE_SIZE 4 /* byte size of quad precision */
-#define REMAIN_BIT 4 /* remain bit to multiply 10 */
-#define WORDS_NUM1 512 /* base-(2**32) digits in little-endian order. value of 2^14/32 */
-#define WORDS_NUM2 516 /* base 2**-32 digits in big-endian order. value of 2^14/32 + 4 */
-#define INFINITY_STR_LEN 8 /* len of strings "Infinity". */
-#define INF_STR_LEN 3 /* len of strings "Inf". */
-#define DIGITS_BILLION 9 /* digits numbers of 1000000000 */
-#define DIGITS_HUNDRED 2 /* digits numbers of 100 */
-#define BASE_NUM 100 /* value of base is 100 */
-#define BILLION 1000000000 /* number of billon */
-#define MASK_4BIT 0xf /* mask of 4 bits */
-#define FACTOR_10 10 /* factor 10 */
-#define DIGIT_5 5 /* digit 5 */
-#define DIGIT_10 10 /* digit 10 */
-#define ESN_DIGITS 3 /* extra digits of ESN */
-#define ESN_SCALE 3 /* scaling of ESN */
-#define SUBSCRIPT_2 2 /* subscript is 2 */
-#define SUBSCRIPT_3 3 /* subscript is 3 */
-#define SUBSCRIPT_4 4 /* subscript is 4 */
+#define INT_SIZE 32   /* bit size of integer type */
+#define SHIFT_32 5    /* 32 is 2^5 */
+#define BIT_SIZE 128  /* bit size of quad precision */
+#define BYTE_SIZE 4   /* byte size of quad precision */
+#define REMAIN_BIT 4  /* remain bit to multiply 10 */
+#define WORDS_NUM1                                                             \
+  512 /* base-(2**32) digits in little-endian order. value of 2^14/32 */
+#define WORDS_NUM2                                                             \
+  516 /* base 2**-32 digits in big-endian order. value of 2^14/32 + 4 */
+#define INFINITY_STR_LEN 8        /* len of strings "Infinity". */
+#define INF_STR_LEN 3             /* len of strings "Inf". */
+#define DIGITS_BILLION 9          /* digits numbers of 1000000000 */
+#define DIGITS_HUNDRED 2          /* digits numbers of 100 */
+#define BASE_NUM 100              /* value of base is 100 */
+#define BILLION 1000000000        /* number of billon */
+#define MASK_4BIT 0xf             /* mask of 4 bits */
+#define FACTOR_10 10              /* factor 10 */
+#define DIGIT_5 5                 /* digit 5 */
+#define DIGIT_10 10               /* digit 10 */
+#define ESN_DIGITS 3              /* extra digits of ESN */
+#define ESN_SCALE 3               /* scaling of ESN */
+#define SUBSCRIPT_2 2             /* subscript is 2 */
+#define SUBSCRIPT_3 3             /* subscript is 3 */
+#define SUBSCRIPT_4 4             /* subscript is 4 */
 #define DEFAULT_EXPONENT_DIGITS 2 /* default digits of exponent */
-#define EXPONENT_DIGIT3 3 /* digits of exponent is 3 */
-#define MAX_EXPONENT_DIGITS 4 /* max digits of exponent */
-#define MAX_EXPONENT_VALUE1 9 /* max vallue of exponent while digit is 1 */
-#define MAX_EXPONENT_VALUE2 99 /* max vallue of exponent while digit is 2 */
-#define MAX_EXPONENT_VALUE3 999 /* max vallue of exponent while digit is 3 */
-#define TRAILING_BLANK2 2 /* trailing blank is 2 */
-#define TRAILING_BLANK4 4 /* trailing blank is 4 */
+#define EXPONENT_DIGIT3 3         /* digits of exponent is 3 */
+#define MAX_EXPONENT_DIGITS 4     /* max digits of exponent */
+#define MAX_EXPONENT_VALUE1 9     /* max vallue of exponent while digit is 1 */
+#define MAX_EXPONENT_VALUE2 99    /* max vallue of exponent while digit is 2 */
+#define MAX_EXPONENT_VALUE3 999   /* max vallue of exponent while digit is 3 */
+#define TRAILING_BLANK2 2         /* trailing blank is 2 */
+#define TRAILING_BLANK4 4         /* trailing blank is 4 */
 
 /*
  *  These are inline variants of memset()/memcpy() used inline for really
@@ -147,17 +149,16 @@ nan_or_infinite(char *out, int width, uint128_t raw, int sign_char)
 }
 
 static char base100[BASE_NUM][2] = {
-  "00", "01", "02", "03", "04", "05", "06", "07", "08", "09",
-  "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
-  "20", "21", "22", "23", "24", "25", "26", "27", "28", "29",
-  "30", "31", "32", "33", "34", "35", "36", "37", "38", "39",
-  "40", "41", "42", "43", "44", "45", "46", "47", "48", "49",
-  "50", "51", "52", "53", "54", "55", "56", "57", "58", "59",
-  "60", "61", "62", "63", "64", "65", "66", "67", "68", "69",
-  "70", "71", "72", "73", "74", "75", "76", "77", "78", "79",
-  "80", "81", "82", "83", "84", "85", "86", "87", "88", "89",
-  "90", "91", "92", "93", "94", "95", "96", "97", "98", "99"
-};
+    "00", "01", "02", "03", "04", "05", "06", "07", "08", "09",
+    "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
+    "20", "21", "22", "23", "24", "25", "26", "27", "28", "29",
+    "30", "31", "32", "33", "34", "35", "36", "37", "38", "39",
+    "40", "41", "42", "43", "44", "45", "46", "47", "48", "49",
+    "50", "51", "52", "53", "54", "55", "56", "57", "58", "59",
+    "60", "61", "62", "63", "64", "65", "66", "67", "68", "69",
+    "70", "71", "72", "73", "74", "75", "76", "77", "78", "79",
+    "80", "81", "82", "83", "84", "85", "86", "87", "88", "89",
+    "90", "91", "92", "93", "94", "95", "96", "97", "98", "99"};
 
 /*
  *  Subroutines for format_int_part below.
@@ -228,7 +229,7 @@ div_by_billion(uint32_t le_x[WORDS_NUM1], int *words)
   int j = *words;
 
   while (j-- > 0) {
-    uint64_t numerator = ((uint64_t) remainder << INT_SIZE) | le_x[j];
+    uint64_t numerator = ((uint64_t)remainder << INT_SIZE) | le_x[j];
     uint64_t quotient = numerator / BILLION;
     remainder = numerator - BILLION * quotient;
     le_x[j] = quotient;
@@ -244,8 +245,9 @@ div_by_billion(uint32_t le_x[WORDS_NUM1], int *words)
 }
 
 static inline uint128_t
-quad_to_uint128 (long double x) {
-  return (uint128_t) x;
+quad_to_uint128(long double x)
+{
+  return (uint128_t)x;
 }
 
 /*
@@ -278,7 +280,8 @@ format_int_part(char *buff, int width, long double x)
     int biased_exponent = (raw >> EXPLICIT_MANTISSA_BITS) & RJ_EXPONENT_MASK;
     int unbiased_exponent = biased_exponent - EXPONENT_BIAS;
     int shift = unbiased_exponent - (EXPLICIT_MANTISSA_BITS + 1);
-    uint32_t word[WORDS_NUM1]; /* base-(2**32) digits in little-endian order. 2^14 / 32 */
+    uint32_t word[WORDS_NUM1]; /* base-(2**32) digits in little-endian order.
+                                  2^14 / 32 */
     int words = 0;
 
     if (shift <= 0) {
@@ -308,11 +311,11 @@ format_int_part(char *buff, int width, long double x)
     if (words > 0) {
       uint128_t ix = word[0];
       if (words > 1)
-        ix |= (uint128_t) word[1] << SHIFT_LH32;
+        ix |= (uint128_t)word[1] << SHIFT_LH32;
       if (words > SUBSCRIPT_2)
-        ix |= (uint128_t) word[SUBSCRIPT_2] << SHIFT_HL32;
+        ix |= (uint128_t)word[SUBSCRIPT_2] << SHIFT_HL32;
       if (words > SUBSCRIPT_3)
-        ix |= (uint128_t) word[SUBSCRIPT_3] << SHIFT_HH32;
+        ix |= (uint128_t)word[SUBSCRIPT_3] << SHIFT_HH32;
       out = reversed_uint128(out, buff, ix);
       if (out == NULL)
         return width + 1; /* overflow */
@@ -340,13 +343,13 @@ mult_fraction(uint32_t be_x[WORDS_NUM2], int words, uint32_t factor)
 }
 
 static inline uint32_t
-mult_delimited_fraction(uint32_t be_x[WORDS_NUM2], int *words, int *upper_zero_words,
-                        uint32_t factor)
+mult_delimited_fraction(uint32_t be_x[WORDS_NUM2], int *words,
+                        int *upper_zero_words, uint32_t factor)
 {
   int up0 = *upper_zero_words, wc = *words;
   uint32_t carry = mult_fraction(be_x + up0, wc - up0, factor);
   if (up0 > 0 && carry != 0) {
-    be_x[*upper_zero_words = up0 - 1] = carry;
+    be_x[ *upper_zero_words = up0 - 1] = carry;
     carry = 0;
   }
   while (wc > 0 && be_x[wc - 1] == 0) {
@@ -373,13 +376,13 @@ decimal_increment(char *buff, int width)
 
 /*
  *  Generate the digits of the decimal representation of the fractional
- *  part of a nonnegative long double.  Exact up to width.  Returns the next digit
- *  (as int, not decimal character) and a guard flag to guide rounding.
+ *  part of a nonnegative long double.  Exact up to width.  Returns the next
+ * digit (as int, not decimal character) and a guard flag to guide rounding.
  */
 static inline void
 format_fraction(char buff[MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS],
-                int *next_digit_for_rounding, bool *is_inexact,
-                int width, long double absx)
+                int *next_digit_for_rounding, bool *is_inexact, int width,
+                long double absx)
 {
   uint128_t raw, frac;
   int biased_exponent, shift;
@@ -432,8 +435,10 @@ format_fraction(char buff[MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS],
   }
 
   /* Extract some single digits the slow way. */
-  while (words > BYTE_SIZE || (words == BYTE_SIZE && ((word[BYTE_SIZE - 1] & MASK_4BIT) != 0))) {
-    int digit = mult_delimited_fraction(word, &words, &upper_zero_words, FACTOR_10);
+  while (words > BYTE_SIZE ||
+         (words == BYTE_SIZE && ((word[BYTE_SIZE - 1] & MASK_4BIT) != 0))) {
+    int digit =
+        mult_delimited_fraction(word, &words, &upper_zero_words, FACTOR_10);
     if (out == end) {
       *next_digit_for_rounding = digit;
       *is_inexact = words != 0;
@@ -444,18 +449,20 @@ format_fraction(char buff[MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS],
 
   /* Extract remaining single digits the fast way. */
   if (words > 0) {
-    raw = upper_zero_words > 0 ? 0 : (uint128_t) word[0] << (SHIFT_HH32 - REMAIN_BIT);
+    raw = upper_zero_words > 0
+              ? 0
+              : (uint128_t)word[0] << (SHIFT_HH32 - REMAIN_BIT);
     if (words > 1) {
-      raw |= (uint128_t) word[1] << (SHIFT_HL32 - REMAIN_BIT);
+      raw |= (uint128_t)word[1] << (SHIFT_HL32 - REMAIN_BIT);
       if (words > SUBSCRIPT_2) {
-        raw |= (uint128_t) word[SUBSCRIPT_2] << (SHIFT_LH32 - REMAIN_BIT);
+        raw |= (uint128_t)word[SUBSCRIPT_2] << (SHIFT_LH32 - REMAIN_BIT);
         if (words > SUBSCRIPT_3)
           raw |= word[SUBSCRIPT_3] >> REMAIN_BIT;
       }
     }
     do {
       int digit = (raw *= FACTOR_10) >> (BIT_SIZE - REMAIN_BIT);
-      raw &= (~(uint128_t) 0) >> REMAIN_BIT;
+      raw &= (~(uint128_t)0) >> REMAIN_BIT;
       if (out == end) {
         *next_digit_for_rounding = digit;
         *is_inexact = raw != 0;
@@ -475,8 +482,8 @@ format_fraction(char buff[MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS],
  */
 static inline int
 fraction_digits(char buff[MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS],
-                int *next_digit_for_rounding, bool *is_inexact,
-                int width, long double absx)
+                int *next_digit_for_rounding, bool *is_inexact, int width,
+                long double absx)
 {
   uint128_t raw, frac;
   int biased_exponent, shift;
@@ -529,8 +536,10 @@ fraction_digits(char buff[MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS],
   }
 
   /* Extract single digits the slow way. */
-  while (words > BYTE_SIZE  || (words == BYTE_SIZE  && ((word[BYTE_SIZE - 1] & MASK_4BIT) != 0))) {
-    int digit = mult_delimited_fraction(word, &words, &upper_zero_words, FACTOR_10);
+  while (words > BYTE_SIZE ||
+         (words == BYTE_SIZE && ((word[BYTE_SIZE - 1] & MASK_4BIT) != 0))) {
+    int digit =
+        mult_delimited_fraction(word, &words, &upper_zero_words, FACTOR_10);
     if (elide_leading_zeroes) {
       if (digit == 0) {
         ++frac_leading_zeroes;
@@ -548,18 +557,20 @@ fraction_digits(char buff[MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS],
 
   /* Extract remaining single digits the fast way. */
   if (words > 0) {
-    raw = upper_zero_words > 0 ? 0 : (uint128_t) word[0] << (SHIFT_HH32 - REMAIN_BIT);
+    raw = upper_zero_words > 0
+              ? 0
+              : (uint128_t)word[0] << (SHIFT_HH32 - REMAIN_BIT);
     if (words > 1) {
-      raw |= (uint128_t) word[1] << (SHIFT_HL32 - REMAIN_BIT);
+      raw |= (uint128_t)word[1] << (SHIFT_HL32 - REMAIN_BIT);
       if (words > SUBSCRIPT_2) {
-        raw |= (uint128_t) word[SUBSCRIPT_2] << (SHIFT_LH32 - REMAIN_BIT);
+        raw |= (uint128_t)word[SUBSCRIPT_2] << (SHIFT_LH32 - REMAIN_BIT);
         if (words > SUBSCRIPT_3)
           raw |= word[SUBSCRIPT_3] >> REMAIN_BIT;
       }
     }
     if (elide_leading_zeroes) {
       uint128_t raw10 = FACTOR_10 * raw;
-      while (raw10 < ((uint128_t) 1 << (BIT_SIZE - REMAIN_BIT))) {
+      while (raw10 < ((uint128_t)1 << (BIT_SIZE - REMAIN_BIT))) {
         raw = raw10;
         raw10 *= FACTOR_10;
         ++frac_leading_zeroes;
@@ -567,7 +578,7 @@ fraction_digits(char buff[MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS],
     }
     do {
       int digit = (raw *= FACTOR_10) >> (BIT_SIZE - REMAIN_BIT);
-      raw &= (~(uint128_t) 0) >> REMAIN_BIT;
+      raw &= (~(uint128_t)0) >> REMAIN_BIT;
       if (out == end) {
         *next_digit_for_rounding = digit;
         *is_inexact = raw != 0;
@@ -585,7 +596,8 @@ fraction_digits(char buff[MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS],
  *  of observing its effect on floating-point addition.
  */
 static inline enum decimal_rounding
-discover_native_rounding_mode(void) {
+discover_native_rounding_mode(void)
+{
   static const long double big_pos = MAX_EXACTLY_REPRESENTABLE_UINT128;
   long double big_neg = -big_pos;
   if (big_pos + 1 > big_pos)
@@ -612,24 +624,24 @@ should_round_up(enum decimal_rounding mode, int next_decimal_digit,
   if (mode == DECIMAL_ROUND_PROCESSOR_DEFINED)
     mode = discover_native_rounding_mode();
   switch (mode) {
-    case DECIMAL_ROUND_IN:
+  case DECIMAL_ROUND_IN:
+    return false;
+  case DECIMAL_ROUND_UP:
+    return !value_is_negative;
+  case DECIMAL_ROUND_DOWN:
+    return value_is_negative;
+  case DECIMAL_ROUND_NEAREST:
+    if (next_decimal_digit != DIGIT_5)
+      return next_decimal_digit > DIGIT_5;
+    /* tie: round to make even */
+    if (is_inexact)
+      return true;
+    if (last_decimal_char_or_0 == 0)
       return false;
-    case DECIMAL_ROUND_UP:
-      return !value_is_negative;
-    case DECIMAL_ROUND_DOWN:
-      return value_is_negative;
-    case DECIMAL_ROUND_NEAREST:
-      if (next_decimal_digit != DIGIT_5)
-        return next_decimal_digit > DIGIT_5;
-      /* tie: round to make even */
-      if (is_inexact)
-        return true;
-      if (last_decimal_char_or_0 == 0)
-        return false;
-      return ((last_decimal_char_or_0 - '0') & 1) == 1;
-    case DECIMAL_ROUND_COMPATIBLE:
-    default:
-      return next_decimal_digit >= DIGIT_5;
+    return ((last_decimal_char_or_0 - '0') & 1) == 1;
+  case DECIMAL_ROUND_COMPATIBLE:
+  default:
+    return next_decimal_digit >= DIGIT_5;
   }
 }
 
@@ -648,7 +660,8 @@ format_expo(char buffer[MAX_EXPONENT_DIGITS], int expo)
 
 /* Predicate: is a string entirely '0'? */
 static inline bool
-all_zeroes(const char *p, int n) {
+all_zeroes(const char *p, int n)
+{
   while (n-- > 0) {
     if (*p++ != '0')
       return false;
@@ -703,12 +716,11 @@ F_format(char *output_buffer, int width,
       uint128_t int_absx = quad_to_uint128(absx);
       int next_digit_for_rounding = 0;
       bool is_inexact = false;
-      format_fraction(frac, &next_digit_for_rounding, &is_inexact,
-                      frac_digits, absx);
-      if (should_round_up(control->rounding, next_digit_for_rounding,
-                          is_inexact,
-                          frac_digits < 1 ? 0 : frac[frac_digits - 1],
-                          is_negative)) {
+      format_fraction(frac, &next_digit_for_rounding, &is_inexact, frac_digits,
+                      absx);
+      if (should_round_up(
+              control->rounding, next_digit_for_rounding, is_inexact,
+              frac_digits < 1 ? 0 : frac[frac_digits - 1], is_negative)) {
         if (decimal_increment(frac, frac_digits))
           ++int_absx; /* fraction rounded .999..9 up to 1.000..0 */
       }
@@ -717,8 +729,7 @@ F_format(char *output_buffer, int width,
 
     int_part_is_zero = absx == 0.0;
     if (int_part_is_zero) {
-      if (is_negative &&
-          control->no_minus_zero &&
+      if (is_negative && control->no_minus_zero &&
           all_zeroes(frac, frac_digits)) {
         /* don't emit -.000... */
         if ((sign_char = control->plus_sign) == '\0') {
@@ -812,8 +823,8 @@ F_format_with_scaling(char *output_buffer, int width,
     while (effective_frac_digits > frac_digits) {
       if (next_digit_for_rounding != 0)
         is_inexact = true;
-      next_digit_for_rounding = payload[int_part_digits +
-                                        --effective_frac_digits] - '0';
+      next_digit_for_rounding =
+          payload[int_part_digits + --effective_frac_digits] - '0';
     }
     if (int_part_digits + frac_digits > 0)
       last_digit_for_rounding = payload[int_part_digits + frac_digits - 1];
@@ -825,8 +836,7 @@ F_format_with_scaling(char *output_buffer, int width,
       }
     }
 
-    if (is_negative &&
-        control->no_minus_zero &&
+    if (is_negative && control->no_minus_zero &&
         all_zeroes(payload, int_part_digits + frac_digits)) {
       /* don't emit -.000... */
       if ((sign_char = control->plus_sign) == '\0') {
@@ -835,8 +845,7 @@ F_format_with_scaling(char *output_buffer, int width,
     }
 
     if (!control->format_F0 && int_part_digits == 0 &&
-        (frac_digits == 0 ||
-         sign_width + 1 /* . */ + frac_digits < width)) {
+        (frac_digits == 0 || sign_width + 1 /* . */ + frac_digits < width)) {
       *--payload = '0';
       int_part_digits = 1;
     }
@@ -893,12 +902,14 @@ ED_format(char *out_buffer, int width, const struct formatting_control *control,
     char *payload = buffer + MAX_INT_DECIMAL_DIGITS - int_part_digits;
     int trailing_zeroes = 0;
     int ESN = control->ESN_format;
-    int extra_digits = ESN == 'N' ? ESN_DIGITS :
-                       ESN == 'S' ? 1 :
-                       control->format_G0 == 1 ? 0 :
-                       control->scale_factor > 0 ? 1 : 0;
-    int scaling = ESN == 'N' ? ESN_SCALE :
-                  ESN == 'S' ? 1 : control->scale_factor;
+    int extra_digits = ESN == 'N'                  ? ESN_DIGITS
+                       : ESN == 'S'                ? 1
+                       : control->format_G0 == 1   ? 0
+                       : control->scale_factor > 0 ? 1
+                                                   : 0;
+    int scaling = ESN == 'N'   ? ESN_SCALE
+                  : ESN == 'S' ? 1
+                               : control->scale_factor;
     int lost_digits = scaling < 0 ? -scaling : 0;
     int sign_width = sign_char != '\0';
     int ED_char_width = 1;
@@ -914,16 +925,15 @@ ED_format(char *out_buffer, int width, const struct formatting_control *control,
     bool is_inexact = false;
 
     if (frac_part_digits > MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS) {
-      trailing_zeroes = frac_part_digits -
-                        MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS;
+      trailing_zeroes =
+          frac_part_digits - MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS;
       frac_part_digits = MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS;
     }
 
     if (int_part_digits == 0) {
-      int frac_leading_zeroes = fraction_digits(payload,
-                                                &next_digit_for_rounding,
-                                                &is_inexact, frac_part_digits,
-                                                absx);
+      int frac_leading_zeroes =
+          fraction_digits(payload, &next_digit_for_rounding, &is_inexact,
+                          frac_part_digits, absx);
       all_digits_zero = frac_leading_zeroes < 0;
       expo = all_digits_zero ? 0 : -frac_leading_zeroes;
     } else if (frac_part_digits < 0) {
@@ -988,7 +998,8 @@ ED_format(char *out_buffer, int width, const struct formatting_control *control,
     }
 
     if (expo_digits == 0)
-      expo_digits = DEFAULT_EXPONENT_DIGITS; /* can grow to 4 below if expo>999! */
+      expo_digits =
+          DEFAULT_EXPONENT_DIGITS; /* can grow to 4 below if expo>999! */
 
     if (all_digits_zero) {
       /* There are just too many special cases that apply to zero
@@ -1002,9 +1013,9 @@ ED_format(char *out_buffer, int width, const struct formatting_control *control,
         if ((sign_char = control->plus_sign) == '\0')
           sign_width = 0;
       }
-      leading_spaces = width - (sign_width + extra_digits + 1 /* . */ +
-                                frac_digits + ED_char_width + 1 /* + */ +
-                                expo_digits);
+      leading_spaces =
+          width - (sign_width + extra_digits + 1 /* . */ + frac_digits +
+                   ED_char_width + 1 /* + */ + expo_digits);
       if (leading_spaces < 0) {
         fill(out, '*', width);
       } else {
@@ -1029,17 +1040,17 @@ ED_format(char *out_buffer, int width, const struct formatting_control *control,
     expo -= scaling;
     abs_expo = expo >= 0 ? expo : -expo;
     if (abs_expo > MAX_EXPONENT_VALUE2 && abs_expo <= MAX_EXPONENT_VALUE3 &&
-        expo_digits == DEFAULT_EXPONENT_DIGITS &&
-        explicit_expo_digits == 0) {
+        expo_digits == DEFAULT_EXPONENT_DIGITS && explicit_expo_digits == 0) {
       /* No explicit "Ee" exponent width was supplied, and the
        * actual exponent won't fit in 2 digits (E+nn); use +nnn.
        */
       if (!control->format_G0)
         ED_char_width = 0;
       expo_digits = DEFAULT_EXPONENT_DIGITS + 1;
-    } else if (abs_expo > MAX_EXPONENT_VALUE3 && (control->format_G0 ||
-       /* deal with FED_E, FED_D and FED_G compatible with Gfortran. */
-       expo_digits == DEFAULT_EXPONENT_DIGITS + 1)) {
+    } else if (abs_expo > MAX_EXPONENT_VALUE3 &&
+               (control->format_G0 ||
+                /* deal with FED_E, FED_D and FED_G compatible with Gfortran. */
+                expo_digits == DEFAULT_EXPONENT_DIGITS + 1)) {
       /* No explicit "Ee" exponent width was supplied, and the
        * actual exponent won't fit in 3 digits (E+nnn); use +nnnn.
        */
@@ -1048,16 +1059,18 @@ ED_format(char *out_buffer, int width, const struct formatting_control *control,
       expo_digits = MAX_EXPONENT_DIGITS;
     }
 
-    if ((abs_expo > MAX_EXPONENT_VALUE1 && expo_digits < DEFAULT_EXPONENT_DIGITS) ||
-        (abs_expo > MAX_EXPONENT_VALUE2 && expo_digits < DEFAULT_EXPONENT_DIGITS + 1) ||
+    if ((abs_expo > MAX_EXPONENT_VALUE1 &&
+         expo_digits < DEFAULT_EXPONENT_DIGITS) ||
+        (abs_expo > MAX_EXPONENT_VALUE2 &&
+         expo_digits < DEFAULT_EXPONENT_DIGITS + 1) ||
         (abs_expo > MAX_EXPONENT_VALUE3 && expo_digits < MAX_EXPONENT_DIGITS)) {
       fill(out, '*', width);
       return;
     }
 
-    leading_spaces = width - (sign_width + extra_digits + 1 /* . */ +
-                              frac_digits +
-                              ED_char_width + 1 /* + */ + expo_digits);
+    leading_spaces =
+        width - (sign_width + extra_digits + 1 /* . */ + frac_digits +
+                 ED_char_width + 1 /* + */ + expo_digits);
 
     if (leading_spaces < 0) {
       fill(out, '*', width);
@@ -1075,8 +1088,8 @@ ED_format(char *out_buffer, int width, const struct formatting_control *control,
       if (scaling > 0) {
         out = copy(out, payload, scaling);
         *out++ = control->point_char;
-        out = copy(out, payload + scaling,
-                   frac_digits + extra_digits - scaling);
+        out =
+            copy(out, payload + scaling, frac_digits + extra_digits - scaling);
       } else {
         if (initial_zero)
           *out++ = '0';
@@ -1108,8 +1121,8 @@ ED_format(char *out_buffer, int width, const struct formatting_control *control,
 
 /* Fortran Gw.d and Gw.dEe output edit descriptors */
 static inline void
-G_format(char *out, int width,
-         const struct formatting_control *control, long double x)
+G_format(char *out, int width, const struct formatting_control *control,
+         long double x)
 {
   uint128_t raw = RAW_BITS(x);
   bool is_negative = (raw & SIGN_BIT) != 0;
@@ -1120,8 +1133,9 @@ G_format(char *out, int width,
   if (biased_exponent != INF_OR_NAN_EXPONENT) {
     int significant_digits = control->fraction_digits; /* 'd' */
     int sign_width = sign_char != '\0';
-    int trailing_blanks = control->exponent_digits == 0 ? TRAILING_BLANK4 :
-                            TRAILING_BLANK2 + control->exponent_digits;
+    int trailing_blanks = control->exponent_digits == 0
+                              ? TRAILING_BLANK4
+                              : TRAILING_BLANK2 + control->exponent_digits;
     int max_int_part_width = width - (sign_width + 1 /* . */ + trailing_blanks);
     int int_part_digits = format_int_part(out, width, absx);
     if (int_part_digits <= max_int_part_width &&
@@ -1142,10 +1156,9 @@ G_format(char *out, int width,
       format_fraction(frac_part, &next_digit_for_rounding, &is_inexact,
                       frac_digits, absx);
 
-      if (should_round_up(control->rounding, next_digit_for_rounding,
-                          is_inexact,
-                          frac_digits < 1 ? 0 : frac_part[frac_digits - 1],
-                          is_negative)) {
+      if (should_round_up(
+              control->rounding, next_digit_for_rounding, is_inexact,
+              frac_digits < 1 ? 0 : frac_part[frac_digits - 1], is_negative)) {
         if (decimal_increment(frac_part, frac_digits)) {
           /* fraction rounded .999..99 up to 1.000..0 */
           if (decimal_increment(int_part, int_part_digits)) {
@@ -1161,8 +1174,9 @@ G_format(char *out, int width,
       if (int_part_digits == 0) {
         bool all_frac_zeroes = all_zeroes(frac_part, frac_digits);
         if (frac_digits > 0 && frac_part[0] == '0' &&
-           (!all_frac_zeroes || next_digit_for_rounding > 0 || is_inexact)
-           || (frac_digits == 0 && control->scale_factor))
+                (!all_frac_zeroes || next_digit_for_rounding > 0 ||
+                 is_inexact) ||
+            (frac_digits == 0 && control->scale_factor))
           goto do_E_formatting; /* 0 < |x| < 0.1 */
         if (all_frac_zeroes) {
           if (is_negative && control->no_minus_zero) {
@@ -1210,18 +1224,18 @@ __fortio_format_quad(char *out, int width,
                      const struct formatting_control *control, long double x)
 {
   switch (control->format_char) {
-    case 'E':
-    case 'D':
-      ED_format(out, width, control, control->format_char, x);
-      break;
-    case 'F':
-      if (control->scale_factor != 0)
-        F_format_with_scaling(out, width, control, x);
-      else
-        F_format(out, width, control, x);
-      break;
-    case 'G':
-    default:
-      G_format(out, width, control, x);
+  case 'E':
+  case 'D':
+    ED_format(out, width, control, control->format_char, x);
+    break;
+  case 'F':
+    if (control->scale_factor != 0)
+      F_format_with_scaling(out, width, control, x);
+    else
+      F_format(out, width, control, x);
+    break;
+  case 'G':
+  default:
+    G_format(out, width, control, x);
   }
 }

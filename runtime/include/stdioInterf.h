@@ -61,7 +61,8 @@ typedef long seekoffx_t;
 
 #define __io_strtod(p, ep) __fortio_strtod(p, ep)
 #define __io_ecvt(v, w, n, d, s, r, q) __fortio_ecvt(v, w, n, d, s, r, q)
-#define __io_fcvt(v, w, n, sf, d, s, r, q) __fortio_fcvt(v, w, n, sf, d, s, r, q)
+#define __io_fcvt(v, w, n, sf, d, s, r, q)                                     \
+  __fortio_fcvt(v, w, n, sf, d, s, r, q)
 
 #define __io_strtold(p, ep) __fortio_strtold(p, ep)
 

@@ -8,7 +8,8 @@
 
 #include "mthdecls.h"
 
-long double __mth_i_qtan(long double d)
+long double
+__mth_i_qtan(long double d)
 {
   return tanl(d);
 }

@@ -7,7 +7,8 @@
 
 #include "mthdecls.h"
 
-long double __mth_i_qhypot(long double x, long double y)
+long double
+__mth_i_qhypot(long double x, long double y)
 {
   long double f = hypotl(x, y);
   return f;

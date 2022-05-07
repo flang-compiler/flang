@@ -9,7 +9,8 @@
 
 #include "mthdecls.h"
 
-long double __mth_i_qceil(long double x)
+long double
+__mth_i_qceil(long double x)
 {
   return ceill(x);
 }

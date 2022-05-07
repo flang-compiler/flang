@@ -9,7 +9,8 @@
 
 #include "mthdecls.h"
 
-long double __mth_i_qpowk(long double x, long long i)
+long double
+__mth_i_qpowk(long double x, long long i)
 {
   long long k;
   long double f;

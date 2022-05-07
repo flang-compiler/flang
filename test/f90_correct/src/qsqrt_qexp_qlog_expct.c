@@ -16,19 +16,20 @@
 #define SQRTL_END 5
 #define EXPL_END 10
 #define LOGL_END 15
-void get_expected_q(long double src[], long double expct[])
+void
+get_expected_q(long double src[], long double expct[])
 {
-    int i;
+  int i;
 
-    for (i = SQRTL_BEGIN; i < SQRTL_END; i++) {
-        expct[i] = sqrtl(src[i]);
-    }
+  for (i = SQRTL_BEGIN; i < SQRTL_END; i++) {
+    expct[i] = sqrtl(src[i]);
+  }
 
-    for (i = EXPL_BEGIN; i < EXPL_END; i++) {
-        expct[i] = expl(src[i]);
-    }
+  for (i = EXPL_BEGIN; i < EXPL_END; i++) {
+    expct[i] = expl(src[i]);
+  }
 
-    for (i = LOGL_BEGIN; i < LOGL_END; i++) {
-        expct[i] = logl(src[i]);
-    }
+  for (i = LOGL_BEGIN; i < LOGL_END; i++) {
+    expct[i] = logl(src[i]);
+  }
 }

@@ -57,8 +57,8 @@ char *__fortio_fmt_i8(DBLINT64, int, int, bool);
 char *__fortio_fmt_d(__BIGREAL_T, int, int, int, int, bool, int);
 
 /** \brief Generate a string for a 'G' format characer */
-char *__fortio_fmt_g(__REAL16_T, int, int, int, int, int, bool, bool, bool,
-                     int, int);
+char *__fortio_fmt_g(__REAL16_T, int, int, int, int, int, bool, bool, bool, int,
+                     int);
 
 /** \brief Generate a string for an 'F' format characer */
 char *__fortio_fmt_f(__BIGREAL_T, int, int, int, bool, bool, int);

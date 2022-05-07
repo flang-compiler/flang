@@ -9,7 +9,8 @@
 
 #include "mthdecls.h"
 
-long double __mth_i_qcosh(long double arg)
+long double
+__mth_i_qcosh(long double arg)
 {
   return coshl(arg);
 }

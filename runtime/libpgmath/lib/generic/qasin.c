@@ -9,7 +9,8 @@
 
 #include "mthdecls.h"
 
-long double __mth_i_qasin(long double d)
+long double
+__mth_i_qasin(long double d)
 {
   return asinl(d);
 }

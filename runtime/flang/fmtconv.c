@@ -130,8 +130,8 @@ __fortio_default_convert(char *item, int type,
     break;
   case __REAL4:
     width = REAL4_W;
-    (void) __fortio_fmt_g((__BIGREAL_T)PP_REAL4(item), width, REAL4_D, REAL4_E,
-                          1, __REAL4, plus_flag, TRUE, dc_flag, round, FALSE);
+    (void)__fortio_fmt_g((__BIGREAL_T)PP_REAL4(item), width, REAL4_D, REAL4_E,
+                         1, __REAL4, plus_flag, TRUE, dc_flag, round, FALSE);
     break;
   case __WORD8:
     width = 16;
@@ -147,14 +147,14 @@ __fortio_default_convert(char *item, int type,
     break;
   case __REAL8:
     width = REAL8_W;
-    (void) __fortio_fmt_g((__BIGREAL_T)PP_REAL8(item), width, REAL8_D, REAL8_E,
-                          1, __REAL8, plus_flag, TRUE, dc_flag, round, FALSE);
+    (void)__fortio_fmt_g((__BIGREAL_T)PP_REAL8(item), width, REAL8_D, REAL8_E,
+                         1, __REAL8, plus_flag, TRUE, dc_flag, round, FALSE);
     break;
   case __REAL16:
     width = G_REAL16_W;
-    (void)
-        __fortio_fmt_g((__REAL16_T)PP_REAL16(item), width, G_REAL16_D, REAL16_E,
-                       1, __REAL16, plus_flag, TRUE, dc_flag, round, TRUE);
+    (void)__fortio_fmt_g((__REAL16_T)PP_REAL16(item), width, G_REAL16_D,
+                         REAL16_E, 1, __REAL16, plus_flag, TRUE, dc_flag, round,
+                         TRUE);
     break;
   case __WORD16:
     assert(0);
@@ -165,15 +165,16 @@ __fortio_default_convert(char *item, int type,
     p = cmplx_buf;
     *p++ = '(';
     width = REAL4_W;
-    (void) __fortio_fmt_g((__BIGREAL_T)PP_REAL4(item), width, REAL4_D, REAL4_E,
-                          1, __REAL4, plus_flag, TRUE, dc_flag, round, FALSE);
+    (void)__fortio_fmt_g((__BIGREAL_T)PP_REAL4(item), width, REAL4_D, REAL4_E,
+                         1, __REAL4, plus_flag, TRUE, dc_flag, round, FALSE);
     p = strip_blnk(p, conv_bufp);
     if (dc_flag == TRUE)
       *p++ = ';';
     else
       *p++ = ',';
-    (void) __fortio_fmt_g((__BIGREAL_T)PP_REAL4(item + 4), width, REAL4_D,
-                          REAL4_E, 1, __REAL4, plus_flag, TRUE, dc_flag, round, FALSE);
+    (void)__fortio_fmt_g((__BIGREAL_T)PP_REAL4(item + 4), width, REAL4_D,
+                         REAL4_E, 1, __REAL4, plus_flag, TRUE, dc_flag, round,
+                         FALSE);
     p = strip_blnk(p, conv_bufp);
     *p++ = ')';
     *p++ = '\0';
@@ -183,15 +184,16 @@ __fortio_default_convert(char *item, int type,
     p = cmplx_buf;
     *p++ = '(';
     width = REAL8_W;
-    (void) __fortio_fmt_g((__BIGREAL_T)PP_REAL8(item), width, REAL8_D, REAL8_E,
-                          1, __REAL8, plus_flag, TRUE, dc_flag, round, FALSE);
+    (void)__fortio_fmt_g((__BIGREAL_T)PP_REAL8(item), width, REAL8_D, REAL8_E,
+                         1, __REAL8, plus_flag, TRUE, dc_flag, round, FALSE);
     p = strip_blnk(p, conv_bufp);
     if (dc_flag == TRUE)
       *p++ = ';';
     else
       *p++ = ',';
-    (void) __fortio_fmt_g((__BIGREAL_T)PP_REAL8(item + 8), width, REAL8_D,
-                          REAL8_E, 1, __REAL8, plus_flag, TRUE, dc_flag, round, FALSE);
+    (void)__fortio_fmt_g((__BIGREAL_T)PP_REAL8(item + 8), width, REAL8_D,
+                         REAL8_E, 1, __REAL8, plus_flag, TRUE, dc_flag, round,
+                         FALSE);
     p = strip_blnk(p, conv_bufp);
     *p++ = ')';
     *p++ = '\0';
@@ -201,17 +203,17 @@ __fortio_default_convert(char *item, int type,
     p = cmplx_buf;
     *p++ = '(';
     width = G_REAL16_W;
-    (void)
-        __fortio_fmt_g((__REAL16_T)PP_REAL16(item), width, G_REAL16_D, REAL16_E,
-                       1, __REAL16, plus_flag, TRUE, dc_flag, round, TRUE);
+    (void)__fortio_fmt_g((__REAL16_T)PP_REAL16(item), width, G_REAL16_D,
+                         REAL16_E, 1, __REAL16, plus_flag, TRUE, dc_flag, round,
+                         TRUE);
     p = strip_blnk(p, conv_bufp);
     if (dc_flag == TRUE)
       *p++ = ';';
     else
       *p++ = ',';
-    (void)
-        __fortio_fmt_g((__REAL16_T)PP_REAL16(item + 16), width, G_REAL16_D,
-                       REAL16_E, 1, __REAL16, plus_flag, TRUE, dc_flag, round, TRUE);
+    (void)__fortio_fmt_g((__REAL16_T)PP_REAL16(item + 16), width, G_REAL16_D,
+                         REAL16_E, 1, __REAL16, plus_flag, TRUE, dc_flag, round,
+                         TRUE);
     p = strip_blnk(p, conv_bufp);
     *p++ = ')';
     *p++ = '\0';
@@ -564,8 +566,8 @@ __fortio_fmt_d(__BIGREAL_T val, int w, int d, int sf, int type, bool plus_flag,
 
 extern char *
 __fortio_fmt_g(__REAL16_T val, int w, int d, int e, int sf, int type,
-              bool plus_flag, bool e_flag, bool dc_flag, int round,
-              int is_quad) /* TRUE, if the value is quad precision. */
+               bool plus_flag, bool e_flag, bool dc_flag, int round,
+               int is_quad) /* TRUE, if the value is quad precision. */
 {
   int sign_char;
   int newd;
@@ -655,12 +657,14 @@ __fortio_fmt_g(__REAL16_T val, int w, int d, int e, int sf, int type,
      * If this value is positive, then the digit is to the right of '.';
      * negative => to the left of '.'.
      */
-    fpdat.cvtp = __io_fcvt(val, w, d - fpdat.exp, 0, &texp, &fpdat.sign, round, is_quad);
+    fpdat.cvtp =
+        __io_fcvt(val, w, d - fpdat.exp, 0, &texp, &fpdat.sign, round, is_quad);
     if (val == (__BIGREAL_T)0.0) {
       texp = fpdat.exp;
     } else if (texp != fpdat.exp) {
       fpdat.exp = texp;
-      fpdat.cvtp = __io_fcvt(val, w, d - texp, 0, &texp, &fpdat.sign, round, is_quad);
+      fpdat.cvtp =
+          __io_fcvt(val, w, d - texp, 0, &texp, &fpdat.sign, round, is_quad);
     }
     fpdat.ndigits = strlen(fpdat.cvtp);
     ww = m;
@@ -826,9 +830,9 @@ __fortio_fmt_f(__BIGREAL_T val, int w, int d,
 
 /* ------------------------------------------------------------------- */
 
-static void conv_e(int d, int e, int sf,
-                   bool e_flag, /* TRUE, if Ee was specified */
-                   int is_quad) /* TRUE, if the value is quad */
+static void
+conv_e(int d, int e, int sf, bool e_flag, /* TRUE, if Ee was specified */
+       int is_quad)                       /* TRUE, if the value is quad */
 {
   char *p;
   int len, neg;
@@ -1091,11 +1095,14 @@ static void
 fp_canon(__BIGREAL_T val, int type, int round)
 {
   if (type == __REAL4)
-    fpdat.cvtp = __io_ecvt(val, REAL4_W, REAL4_D + 1, &fpdat.exp, &fpdat.sign, round, FALSE);
+    fpdat.cvtp = __io_ecvt(val, REAL4_W, REAL4_D + 1, &fpdat.exp, &fpdat.sign,
+                           round, FALSE);
   else if (type == __REAL8)
-    fpdat.cvtp = __io_ecvt(val, REAL8_W, REAL8_D + 1, &fpdat.exp, &fpdat.sign, round, FALSE);
+    fpdat.cvtp = __io_ecvt(val, REAL8_W, REAL8_D + 1, &fpdat.exp, &fpdat.sign,
+                           round, FALSE);
   else
-    fpdat.cvtp = __io_ecvt(val, G_REAL16_W, G_REAL16_D + 1, &fpdat.exp, &fpdat.sign, round, FALSE);
+    fpdat.cvtp = __io_ecvt(val, G_REAL16_W, G_REAL16_D + 1, &fpdat.exp,
+                           &fpdat.sign, round, FALSE);
   if (DBGBIT(0x2)) {
     __io_printf("fp_canon ");
     __fortio_printbigreal(val);

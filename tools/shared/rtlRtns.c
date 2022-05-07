@@ -121,7 +121,7 @@ FtnRteRtn ftnRtlRtns[] = {
     {"frac", "", false, ""},
     {"fracd", "", false, ""},
     {"fracq", "", false, ""},
-    {"fracqx", "", false, ""},  
+    {"fracqx", "", false, ""},
     {"fracdx", "", false, ""},
     {"fracx", "", false, ""},
     {"getarga", "", false, ""},

@@ -50,10 +50,10 @@ __c_mzero8(long long *dest, long cnt)
 }
 
 #ifdef TARGET_SUPPORTS_QUADFP
-static inline void
-__attribute__((always_inline)) __c_mzero16(long double *dest, long cnt)
+static inline void __attribute__((always_inline))
+__c_mzero16(long double *dest, long cnt)
 {
-  (void) __builtin_memset(dest, 0, (size_t) cnt * sizeof(long double));
+  (void)__builtin_memset(dest, 0, (size_t)cnt * sizeof(long double));
 }
 #endif
 
@@ -86,10 +86,10 @@ __c_mcopy8(long long *dest, long long *src, long cnt)
 }
 
 #ifdef TARGET_SUPPORTS_QUADFP
-static inline void
-__attribute__((always_inline)) __c_mcopy16(long double *dest, long double *src, long cnt)
+static inline void __attribute__((always_inline))
+__c_mcopy16(long double *dest, long double *src, long cnt)
 {
-  (void) __builtin_memcpy(dest, src, (size_t) cnt * sizeof(long double));
+  (void)__builtin_memcpy(dest, src, (size_t)cnt * sizeof(long double));
 }
 #endif
 
@@ -130,8 +130,8 @@ __c_mset8(long long *dest, long long value, long cnt)
 }
 
 #ifdef TARGET_SUPPORTS_QUADFP
-static inline void
-__attribute__((always_inline)) __c_mset16(long double *dest, long double value, long cnt)
+static inline void __attribute__((always_inline))
+__c_mset16(long double *dest, long double value, long cnt)
 {
   ssize_t i;
   for (i = 0; i < cnt; ++i)

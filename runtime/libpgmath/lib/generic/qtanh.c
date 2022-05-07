@@ -9,7 +9,8 @@
 
 #include "mthdecls.h"
 
-long double __mth_i_qtanh(long double d)
+long double
+__mth_i_qtanh(long double d)
 {
   return tanhl(d);
 }

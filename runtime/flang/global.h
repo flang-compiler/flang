@@ -289,7 +289,7 @@ typedef struct atag {
   int dtype;       /* __BIGINT,__BIGLOG, __BIGREAL, __BIGCPLX, __(N)CHAR */
   union {          /* value: depends on dtype */
     __BIGINT_T i;  /* __BIGINT, __BIGLOG */
-    __REAL16_T d; /* __REAL16 */
+    __REAL16_T d;  /* __REAL16 */
     DBLINT64 i8; /* __INT8 */
     __INT8_T i8v;
     DBLUINT64 ui8; /* __LOG8 */

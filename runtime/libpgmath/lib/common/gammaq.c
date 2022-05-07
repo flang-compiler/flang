@@ -9,7 +9,8 @@
 
 #include "mthdecls.h"
 
-long double __mth_i_qgamma(long double arg)
+long double
+__mth_i_qgamma(long double arg)
 {
   long double q = tgammal(arg);
   return q;

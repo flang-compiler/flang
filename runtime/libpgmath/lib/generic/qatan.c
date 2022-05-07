@@ -13,7 +13,8 @@
 long double atanl(long double q);
 #endif
 
-long double __mth_i_qatan(long double d)
+long double
+__mth_i_qatan(long double d)
 {
   return atanl(d);
 }

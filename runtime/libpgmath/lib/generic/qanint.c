@@ -9,7 +9,8 @@
 
 #include "mthdecls.h"
 
-long double __mth_i_qanint(long double d)
+long double
+__mth_i_qanint(long double d)
 {
     return roundl(d);
 }

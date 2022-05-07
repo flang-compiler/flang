@@ -4671,99 +4671,99 @@ eval_sqrt(CONST *arg, DTYPE dtype)
   return rslt;
 }
 
-/*---------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 
 #ifdef TARGET_SUPPORTS_QUADFP
-#define FPINTRIN1(iname, ent, fscutil, dscutil, qscutil)            \
-  static CONST *ent(CONST *arg, DTYPE dtype)                        \
-  {                                                                 \
-    CONST *rslt = eval_init_expr_item(arg);                         \
-    CONST *wrkarg;                                                  \
-    INT conval;                                                     \
-    wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);           \
-    for (; wrkarg; wrkarg = wrkarg->next) {                         \
-      INT num1[4];                                                  \
-      INT res[4];                                                   \
-      INT con1;                                                     \
-      con1 = wrkarg->u1.conval;                                     \
-      switch (DTY(wrkarg->dtype)) {                                 \
-      case TY_REAL:                                                 \
-        fscutil(con1, &res[0]);                                     \
-        conval = res[0];                                            \
-        break;                                                      \
-      case TY_DBLE:                                                 \
-        num1[0] = CONVAL1G(con1);                                   \
-        num1[1] = CONVAL2G(con1);                                   \
-        dscutil(num1, res);                                         \
-        conval = getcon(res, DT_DBLE);                              \
-        break;                                                      \
-      case TY_QUAD:                                                 \
-        num1[0] = CONVAL1G(con1);                                   \
-        num1[1] = CONVAL2G(con1);                                   \
-        num1[2] = CONVAL3G(con1);                                   \
-        num1[3] = CONVAL4G(con1);                                   \
-        qscutil(num1, res);                                         \
-        conval = getcon(res, DT_QUAD);                              \
-        break;                                                      \
-      case TY_CMPLX:                                                \
-      case TY_DCMPLX:                                               \
-        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,               \
-              "Intrinsic not supported in initialization:", iname); \
-        break;                                                      \
-      default:                                                      \
-        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,               \
-              "Intrinsic not supported in initialization:", iname); \
-        break;                                                      \
-      }                                                             \
-      conval = cngcon(conval, wrkarg->dtype, dtype);                \
-      wrkarg->u1.conval = conval;                                   \
-      wrkarg->dtype = dtype;                                        \
-      wrkarg->id = AC_CONST;                                        \
-      wrkarg->repeatc = 1;                                          \
-    }                                                               \
-    return rslt;                                                    \
+#define FPINTRIN1(iname, ent, fscutil, dscutil, qscutil)                       \
+  static CONST *ent(CONST *arg, DTYPE dtype)                                   \
+  {                                                                            \
+    CONST *rslt = eval_init_expr_item(arg);                                    \
+    CONST *wrkarg;                                                             \
+    INT conval;                                                                \
+    wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);                      \
+    for (; wrkarg; wrkarg = wrkarg->next) {                                    \
+      INT num1[4];                                                             \
+      INT res[4];                                                              \
+      INT con1;                                                                \
+      con1 = wrkarg->u1.conval;                                                \
+      switch (DTY(wrkarg->dtype)) {                                            \
+      case TY_REAL:                                                            \
+        fscutil(con1, &res[0]);                                                \
+        conval = res[0];                                                       \
+        break;                                                                 \
+      case TY_DBLE:                                                            \
+        num1[0] = CONVAL1G(con1);                                              \
+        num1[1] = CONVAL2G(con1);                                              \
+        dscutil(num1, res);                                                    \
+        conval = getcon(res, DT_DBLE);                                         \
+        break;                                                                 \
+      case TY_QUAD:                                                            \
+        num1[0] = CONVAL1G(con1);                                              \
+        num1[1] = CONVAL2G(con1);                                              \
+        num1[2] = CONVAL3G(con1);                                              \
+        num1[3] = CONVAL4G(con1);                                              \
+        qscutil(num1, res);                                                    \
+        conval = getcon(res, DT_QUAD);                                         \
+        break;                                                                 \
+      case TY_CMPLX:                                                           \
+      case TY_DCMPLX:                                                          \
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,                          \
+              "Intrinsic not supported in initialization:", iname);            \
+        break;                                                                 \
+      default:                                                                 \
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,                          \
+              "Intrinsic not supported in initialization:", iname);            \
+        break;                                                                 \
+      }                                                                        \
+      conval = cngcon(conval, wrkarg->dtype, dtype);                           \
+      wrkarg->u1.conval = conval;                                              \
+      wrkarg->dtype = dtype;                                                   \
+      wrkarg->id = AC_CONST;                                                   \
+      wrkarg->repeatc = 1;                                                     \
+    }                                                                          \
+    return rslt;                                                               \
   }
 #else
-#define FPINTRIN1(iname, ent, fscutil, dscutil, qscutil)            \
-  static CONST *ent(CONST *arg, DTYPE dtype)                        \
-  {                                                                 \
-    CONST *rslt = eval_init_expr_item(arg);                         \
-    CONST *wrkarg;                                                  \
-    INT conval;                                                     \
-    wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);           \
-    for (; wrkarg; wrkarg = wrkarg->next) {                         \
-      INT num1[4];                                                  \
-      INT res[4];                                                   \
-      INT con1;                                                     \
-      con1 = wrkarg->u1.conval;                                     \
-      switch (DTY(wrkarg->dtype)) {                                 \
-      case TY_REAL:                                                 \
-        fscutil(con1, &res[0]);                                     \
-        conval = res[0];                                            \
-        break;                                                      \
-      case TY_DBLE:                                                 \
-        num1[0] = CONVAL1G(con1);                                   \
-        num1[1] = CONVAL2G(con1);                                   \
-        dscutil(num1, res);                                         \
-        conval = getcon(res, DT_DBLE);                              \
-        break;                                                      \
-      case TY_CMPLX:                                                \
-      case TY_DCMPLX:                                               \
-        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,               \
-              "Intrinsic not supported in initialization:", iname); \
-        break;                                                      \
-      default:                                                      \
-        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,               \
-              "Intrinsic not supported in initialization:", iname); \
-        break;                                                      \
-      }                                                             \
-      conval = cngcon(conval, wrkarg->dtype, dtype);                \
-      wrkarg->u1.conval = conval;                                   \
-      wrkarg->dtype = dtype;                                        \
-      wrkarg->id = AC_CONST;                                        \
-      wrkarg->repeatc = 1;                                          \
-    }                                                               \
-    return rslt;                                                    \
+#define FPINTRIN1(iname, ent, fscutil, dscutil, qscutil)                       \
+  static CONST *ent(CONST *arg, DTYPE dtype)                                   \
+  {                                                                            \
+    CONST *rslt = eval_init_expr_item(arg);                                    \
+    CONST *wrkarg;                                                             \
+    INT conval;                                                                \
+    wrkarg = (rslt->id == AC_ACONST ? rslt->subc : rslt);                      \
+    for (; wrkarg; wrkarg = wrkarg->next) {                                    \
+      INT num1[4];                                                             \
+      INT res[4];                                                              \
+      INT con1;                                                                \
+      con1 = wrkarg->u1.conval;                                                \
+      switch (DTY(wrkarg->dtype)) {                                            \
+      case TY_REAL:                                                            \
+        fscutil(con1, &res[0]);                                                \
+        conval = res[0];                                                       \
+        break;                                                                 \
+      case TY_DBLE:                                                            \
+        num1[0] = CONVAL1G(con1);                                              \
+        num1[1] = CONVAL2G(con1);                                              \
+        dscutil(num1, res);                                                    \
+        conval = getcon(res, DT_DBLE);                                         \
+        break;                                                                 \
+      case TY_CMPLX:                                                           \
+      case TY_DCMPLX:                                                          \
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,                          \
+              "Intrinsic not supported in initialization:", iname);            \
+        break;                                                                 \
+      default:                                                                 \
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,                          \
+              "Intrinsic not supported in initialization:", iname);            \
+        break;                                                                 \
+      }                                                                        \
+      conval = cngcon(conval, wrkarg->dtype, dtype);                           \
+      wrkarg->u1.conval = conval;                                              \
+      wrkarg->dtype = dtype;                                                   \
+      wrkarg->id = AC_CONST;                                                   \
+      wrkarg->repeatc = 1;                                                     \
+    }                                                                          \
+    return rslt;                                                               \
   }
 #endif
 
@@ -4786,114 +4786,114 @@ FPINTRIN1("acos", eval_acos, xfacos, xdacos, xqacos)
 FPINTRIN1("atan", eval_atan, xfatan, xdatan, xqatan)
 
 #ifdef TARGET_SUPPORTS_QUADFP
-#define FPINTRIN2(iname, ent, fscutil, dscutil, qscutil)            \
-  static CONST *ent(CONST *arg, DTYPE dtype)                        \
-  {                                                                 \
-    CONST *rslt;                                                    \
-    CONST *arg1, *arg2;                                             \
-    INT conval;                                                     \
-    arg1 = eval_init_expr_item(arg);                                \
-    arg2 = eval_init_expr_item(arg->next);                          \
-    rslt = clone_init_const_list(arg1, true);                       \
-    arg1 = (rslt->id == AC_ACONST ? rslt->subc : rslt);             \
-    arg2 = (arg2->id == AC_ACONST ? arg2->subc : arg2);             \
-    for (; arg1; arg1 = arg1->next, arg2 = arg2->next) {            \
-      INT num1[4], num2[4];                                         \
-      INT res[4];                                                   \
-      INT con1, con2;                                               \
-      con1 = arg1->u1.conval;                                       \
-      con2 = arg2->u1.conval;                                       \
-      switch (DTY(arg1->dtype)) {                                   \
-      case TY_REAL:                                                 \
-        fscutil(con1, con2, &res[0]);                               \
-        conval = res[0];                                            \
-        break;                                                      \
-      case TY_DBLE:                                                 \
-        num1[0] = CONVAL1G(con1);                                   \
-        num1[1] = CONVAL2G(con1);                                   \
-        num2[0] = CONVAL1G(con2);                                   \
-        num2[1] = CONVAL2G(con2);                                   \
-        dscutil(num1, num2, res);                                   \
-        conval = getcon(res, DT_DBLE);                              \
-        break;                                                      \
-      case TY_QUAD:                                                 \
-        num1[0] = CONVAL1G(con1);                                   \
-        num1[1] = CONVAL2G(con1);                                   \
-        num1[2] = CONVAL3G(con1);                                   \
-        num1[3] = CONVAL4G(con1);                                   \
-        num2[0] = CONVAL1G(con2);                                   \
-        num2[1] = CONVAL2G(con2);                                   \
-        num2[2] = CONVAL3G(con2);                                   \
-        num2[3] = CONVAL4G(con2);                                   \
-        qscutil(num1, num2, res);                                   \
-        conval = getcon(res, DT_QUAD);                              \
-        break;                                                      \
-      case TY_CMPLX:                                                \
-      case TY_DCMPLX:                                               \
-        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,               \
-              "Intrinsic not supported in initialization:", iname); \
-        break;                                                      \
-      default:                                                      \
-        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,               \
-              "Intrinsic not supported in initialization:", iname); \
-        break;                                                      \
-      }                                                             \
-      conval = cngcon(conval, arg1->dtype, dtype);                  \
-      arg1->u1.conval = conval;                                     \
-      arg1->dtype = dtype;                                          \
-      arg1->id = AC_CONST;                                          \
-      arg1->repeatc = 1;                                            \
-    }                                                               \
-    return rslt;                                                    \
+#define FPINTRIN2(iname, ent, fscutil, dscutil, qscutil)                       \
+  static CONST *ent(CONST *arg, DTYPE dtype)                                   \
+  {                                                                            \
+    CONST *rslt;                                                               \
+    CONST *arg1, *arg2;                                                        \
+    INT conval;                                                                \
+    arg1 = eval_init_expr_item(arg);                                           \
+    arg2 = eval_init_expr_item(arg->next);                                     \
+    rslt = clone_init_const_list(arg1, true);                                  \
+    arg1 = (rslt->id == AC_ACONST ? rslt->subc : rslt);                        \
+    arg2 = (arg2->id == AC_ACONST ? arg2->subc : arg2);                        \
+    for (; arg1; arg1 = arg1->next, arg2 = arg2->next) {                       \
+      INT num1[4], num2[4];                                                    \
+      INT res[4];                                                              \
+      INT con1, con2;                                                          \
+      con1 = arg1->u1.conval;                                                  \
+      con2 = arg2->u1.conval;                                                  \
+      switch (DTY(arg1->dtype)) {                                              \
+      case TY_REAL:                                                            \
+        fscutil(con1, con2, &res[0]);                                          \
+        conval = res[0];                                                       \
+        break;                                                                 \
+      case TY_DBLE:                                                            \
+        num1[0] = CONVAL1G(con1);                                              \
+        num1[1] = CONVAL2G(con1);                                              \
+        num2[0] = CONVAL1G(con2);                                              \
+        num2[1] = CONVAL2G(con2);                                              \
+        dscutil(num1, num2, res);                                              \
+        conval = getcon(res, DT_DBLE);                                         \
+        break;                                                                 \
+      case TY_QUAD:                                                            \
+        num1[0] = CONVAL1G(con1);                                              \
+        num1[1] = CONVAL2G(con1);                                              \
+        num1[2] = CONVAL3G(con1);                                              \
+        num1[3] = CONVAL4G(con1);                                              \
+        num2[0] = CONVAL1G(con2);                                              \
+        num2[1] = CONVAL2G(con2);                                              \
+        num2[2] = CONVAL3G(con2);                                              \
+        num2[3] = CONVAL4G(con2);                                              \
+        qscutil(num1, num2, res);                                              \
+        conval = getcon(res, DT_QUAD);                                         \
+        break;                                                                 \
+      case TY_CMPLX:                                                           \
+      case TY_DCMPLX:                                                          \
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,                          \
+              "Intrinsic not supported in initialization:", iname);            \
+        break;                                                                 \
+      default:                                                                 \
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,                          \
+              "Intrinsic not supported in initialization:", iname);            \
+        break;                                                                 \
+      }                                                                        \
+      conval = cngcon(conval, arg1->dtype, dtype);                             \
+      arg1->u1.conval = conval;                                                \
+      arg1->dtype = dtype;                                                     \
+      arg1->id = AC_CONST;                                                     \
+      arg1->repeatc = 1;                                                       \
+    }                                                                          \
+    return rslt;                                                               \
   }
 #else
-#define FPINTRIN2(iname, ent, fscutil, dscutil, qscutil)            \
-  static CONST *ent(CONST *arg, DTYPE dtype)                        \
-  {                                                                 \
-    CONST *rslt;                                                    \
-    CONST *arg1, *arg2;                                             \
-    INT conval;                                                     \
-    arg1 = eval_init_expr_item(arg);                                \
-    arg2 = eval_init_expr_item(arg->next);                          \
-    rslt = clone_init_const_list(arg1, true);                       \
-    arg1 = (rslt->id == AC_ACONST ? rslt->subc : rslt);             \
-    arg2 = (arg2->id == AC_ACONST ? arg2->subc : arg2);             \
-    for (; arg1; arg1 = arg1->next, arg2 = arg2->next) {            \
-      INT num1[4], num2[4];                                         \
-      INT res[4];                                                   \
-      INT con1, con2;                                               \
-      con1 = arg1->u1.conval;                                       \
-      con2 = arg2->u1.conval;                                       \
-      switch (DTY(arg1->dtype)) {                                   \
-      case TY_REAL:                                                 \
-        fscutil(con1, con2, &res[0]);                               \
-        conval = res[0];                                            \
-        break;                                                      \
-      case TY_DBLE:                                                 \
-        num1[0] = CONVAL1G(con1);                                   \
-        num1[1] = CONVAL2G(con1);                                   \
-        num2[0] = CONVAL1G(con2);                                   \
-        num2[1] = CONVAL2G(con2);                                   \
-        dscutil(num1, num2, res);                                   \
-        conval = getcon(res, DT_DBLE);                              \
-        break;                                                      \
-      case TY_CMPLX:                                                \
-      case TY_DCMPLX:                                               \
-        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,               \
-              "Intrinsic not supported in initialization:", iname); \
-        break;                                                      \
-      default:                                                      \
-        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,               \
-              "Intrinsic not supported in initialization:", iname); \
-        break;                                                      \
-      }                                                             \
-      conval = cngcon(conval, arg1->dtype, dtype);                  \
-      arg1->u1.conval = conval;                                     \
-      arg1->dtype = dtype;                                          \
-      arg1->id = AC_CONST;                                          \
-      arg1->repeatc = 1;                                            \
-    }                                                               \
-    return rslt;                                                    \
+#define FPINTRIN2(iname, ent, fscutil, dscutil, qscutil)                       \
+  static CONST *ent(CONST *arg, DTYPE dtype)                                   \
+  {                                                                            \
+    CONST *rslt;                                                               \
+    CONST *arg1, *arg2;                                                        \
+    INT conval;                                                                \
+    arg1 = eval_init_expr_item(arg);                                           \
+    arg2 = eval_init_expr_item(arg->next);                                     \
+    rslt = clone_init_const_list(arg1, true);                                  \
+    arg1 = (rslt->id == AC_ACONST ? rslt->subc : rslt);                        \
+    arg2 = (arg2->id == AC_ACONST ? arg2->subc : arg2);                        \
+    for (; arg1; arg1 = arg1->next, arg2 = arg2->next) {                       \
+      INT num1[4], num2[4];                                                    \
+      INT res[4];                                                              \
+      INT con1, con2;                                                          \
+      con1 = arg1->u1.conval;                                                  \
+      con2 = arg2->u1.conval;                                                  \
+      switch (DTY(arg1->dtype)) {                                              \
+      case TY_REAL:                                                            \
+        fscutil(con1, con2, &res[0]);                                          \
+        conval = res[0];                                                       \
+        break;                                                                 \
+      case TY_DBLE:                                                            \
+        num1[0] = CONVAL1G(con1);                                              \
+        num1[1] = CONVAL2G(con1);                                              \
+        num2[0] = CONVAL1G(con2);                                              \
+        num2[1] = CONVAL2G(con2);                                              \
+        dscutil(num1, num2, res);                                              \
+        conval = getcon(res, DT_DBLE);                                         \
+        break;                                                                 \
+      case TY_CMPLX:                                                           \
+      case TY_DCMPLX:                                                          \
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,                          \
+              "Intrinsic not supported in initialization:", iname);            \
+        break;                                                                 \
+      default:                                                                 \
+        error(S_0155_OP1_OP2, ERR_Severe, gbl.lineno,                          \
+              "Intrinsic not supported in initialization:", iname);            \
+        break;                                                                 \
+      }                                                                        \
+      conval = cngcon(conval, arg1->dtype, dtype);                             \
+      arg1->u1.conval = conval;                                                \
+      arg1->dtype = dtype;                                                     \
+      arg1->id = AC_CONST;                                                     \
+      arg1->repeatc = 1;                                                       \
+    }                                                                          \
+    return rslt;                                                               \
   }
 #endif
 

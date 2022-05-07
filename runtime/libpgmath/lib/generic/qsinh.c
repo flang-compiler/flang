@@ -9,7 +9,8 @@
 
 #include "mthdecls.h"
 
-long double __mth_i_qsinh(long double arg)
+long double
+__mth_i_qsinh(long double arg)
 {
   return sinhl(arg);
 }

@@ -9,7 +9,8 @@
 
 #include "mthdecls.h"
 
-long double __mth_i_qerf(long double arg)
+long double
+__mth_i_qerf(long double arg)
 {
   long double f = erfl(arg);
   return f;

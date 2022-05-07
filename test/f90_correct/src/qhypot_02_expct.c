@@ -10,11 +10,13 @@
 #include <stdio.h>
 #include <math.h>
 
-void get_expected_q(long double src1[], long double src2[], long double expct[], int n)
+void
+get_expected_q(long double src1[], long double src2[], long double expct[],
+               int n)
 {
-    int i;
+  int i;
 
-    for (i = 0; i < n; i++) {
-        expct[i] = hypotl(src1[i], src2[i]);
-    }
+  for (i = 0; i < n; i++) {
+    expct[i] = hypotl(src1[i], src2[i]);
+  }
 }

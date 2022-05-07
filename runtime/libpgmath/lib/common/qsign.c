@@ -15,7 +15,8 @@
 #define BITSDL(f) ((int *)&(f))[0]
 #define BSIGNF 0x80000000
 
-long double __mth_i_qsign(long double a, long double b)
+long double
+__mth_i_qsign(long double a, long double b)
 {
   long double *pa = &a;
   long double *pb = &b;

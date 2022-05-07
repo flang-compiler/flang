@@ -12,7 +12,8 @@
 #define MYPI 180.0
 #define HFPI 90.0
 
-long double __mth_i_qtand(long double d)
+long double
+__mth_i_qtand(long double d)
 {
   union {
     float128_t q;
