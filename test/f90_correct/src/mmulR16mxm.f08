@@ -6,39 +6,39 @@
 
 program p
   use check_mod
-  parameter(NbrTests=1680)
-  parameter(n_extent=6)
-  parameter(m_extent=4)
-  parameter(k_extent=8)
-  
-  real*16, dimension(n_extent,m_extent) :: arr1
-  real*16, dimension(m_extent,k_extent) :: arr2
-  real*16, dimension(n_extent,k_extent) :: arr3
-  real*16, dimension(n_extent,m_extent) :: arr4
-  real*16, dimension(n_extent,m_extent) :: arr5
-  real*16, dimension(n_extent,m_extent) :: arr6
-  
-  real*16, dimension(m_extent,k_extent) :: arr7
-  real*16, dimension(m_extent,k_extent) :: arr8
-  real*16, dimension(m_extent,k_extent) :: arr9
-  
-  real*16, dimension(n_extent,k_extent) :: arr10
-  real*16, dimension(n_extent,k_extent) :: arr11
-  real*16, dimension(n_extent,k_extent) :: arr12
-  
-  real*16, dimension(2:n_extent+1,m_extent) :: arr13
-  real*16, dimension(2:m_extent+1,k_extent) :: arr14
-  real*16, dimension(2:n_extent+1,k_extent) :: arr15
-  real*16, dimension(n_extent,2:m_extent+1) :: arr16
-  real*16, dimension(m_extent,2:k_extent+1) :: arr17
-  real*16, dimension(n_extent,2:k_extent+1) :: arr18
-  real*16, dimension(n_extent,k_extent) :: arr19
-  
-  REAL*16 :: expect(NbrTests) 
-  REAL*16 :: results(NbrTests)
-  
-  integer:: i,j
-  
+  integer, parameter :: NbrTests = 1680
+  integer, parameter :: n_extent = 6
+  integer, parameter :: m_extent = 4
+  integer, parameter :: k_extent = 8
+
+  real*16, dimension(n_extent, m_extent) :: arr1
+  real*16, dimension(m_extent, k_extent) :: arr2
+  real*16, dimension(n_extent, k_extent) :: arr3
+  real*16, dimension(n_extent, m_extent) :: arr4
+  real*16, dimension(n_extent, m_extent) :: arr5
+  real*16, dimension(n_extent, m_extent) :: arr6
+
+  real*16, dimension(m_extent, k_extent) :: arr7
+  real*16, dimension(m_extent, k_extent) :: arr8
+  real*16, dimension(m_extent, k_extent) :: arr9
+
+  real*16, dimension(n_extent, k_extent) :: arr10
+  real*16, dimension(n_extent, k_extent) :: arr11
+  real*16, dimension(n_extent, k_extent) :: arr12
+
+  real*16, dimension(2:n_extent + 1, m_extent) :: arr13
+  real*16, dimension(2:m_extent + 1, k_extent) :: arr14
+  real*16, dimension(2:n_extent + 1, k_extent) :: arr15
+  real*16, dimension(n_extent, 2:m_extent + 1) :: arr16
+  real*16, dimension(m_extent, 2:k_extent + 1) :: arr17
+  real*16, dimension(n_extent, 2:k_extent + 1) :: arr18
+  real*16, dimension(n_extent, k_extent) :: arr19
+
+  real*16 :: expect(NbrTests)
+  real*16 :: results(NbrTests)
+
+  integer:: i, j
+
   data arr1 /0.0_16, 1.0_16, 2.0_16, 3.0_16, 4.0_16, 5.0_16,       &
              6.0_16, 7.0_16, 8.0_16, 9.0_16, 10.0_16, 11.0_16,     &
              12.0_16, 13.0_16, 14.0_16, 15.0_16, 16.0_16, 17.0_16, &
@@ -156,7 +156,6 @@ program p
              36.0_16, 37.0_16, 38.0_16, 39.0_16, 40.0_16, 41.0_16, &
              42.0_16, 43.0_16, 44.0_16, 45.0_16, 46.0_16, 47.0_16/
 
-  
   data expect / &
    84.0_16,  90.0_16,  96.0_16, 102.0_16, 108.0_16, 114.0_16, 228.0_16, 250.0_16, 272.0_16, 294.0_16, &
   316.0_16, 338.0_16, 372.0_16, 410.0_16, 448.0_16, 486.0_16, 524.0_16, 562.0_16, 516.0_16, 570.0_16, &
@@ -320,251 +319,212 @@ program p
     0.0_16,   0.0_16,   0.0_16,   0.0_16,   0.0_16,   0.0_16, 174.0_16, 201.0_16, 228.0_16, 255.0_16, &
   282.0_16, 309.0_16,   0.0_16,   0.0_16,   0.0_16,   0.0_16,   0.0_16,   0.0_16, 318.0_16, 369.0_16, &
   420.0_16, 471.0_16, 522.0_16, 573.0_16,   0.0_16,   0.0_16,   0.0_16,   0.0_16,   0.0_16,   0.0_16, &
- 462.0_16, 537.0_16, 612.0_16, 687.0_16, 762.0_16, 837.0_16,   0.0_16,   0.0_16,   0.0_16,   0.0_16,  &
+  462.0_16, 537.0_16, 612.0_16, 687.0_16, 762.0_16, 837.0_16,   0.0_16,   0.0_16,   0.0_16,   0.0_16, &
     0.0_16,   0.0_16,  48.0_16,   0.0_16,  54.0_16,   0.0_16,  60.0_16,   0.0_16, 192.0_16,   0.0_16, &
   222.0_16,   0.0_16, 252.0_16,   0.0_16, 336.0_16,   0.0_16, 390.0_16,   0.0_16, 444.0_16,   0.0_16, &
   480.0_16,   0.0_16, 558.0_16,   0.0_16, 636.0_16,   0.0_16, 624.0_16,   0.0_16, 726.0_16,   0.0_16, &
   828.0_16,   0.0_16, 768.0_16,   0.0_16, 894.0_16,   0.0_16,1020.0_16,   0.0_16, 912.0_16,   0.0_16, &
  1062.0_16,   0.0_16,1212.0_16,   0.0_16,1056.0_16,   0.0_16,1230.0_16,   0.0_16,1404.0_16,   0.0_16/
 
-
-
   !test 1-48
-  arr3=0.0_16
-  arr3 = matmul(arr1,arr2)
-  call assign_result(1,48,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3 = matmul(arr1, arr2)
+  call assign_result(1, 48, arr3, results)
+
   ! test 49-96
-  arr3=0.0_16
-  arr3(2:n_extent,:) = matmul(arr1(2:n_extent,:),arr2)
-  call assign_result(49,96,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3(2:n_extent, :) = matmul(arr1(2:n_extent, :), arr2)
+  call assign_result(49, 96, arr3, results)
+
   ! test 97-144
-  arr3=0.0_16
-  arr3(1:n_extent-1,:) = matmul(arr1(1:n_extent-1,:),arr2)
-  call assign_result(97,144,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3(1:n_extent - 1, :) = matmul(arr1(1:n_extent - 1, :), arr2)
+  call assign_result(97, 144, arr3, results)
+
   ! test 145-192
-  arr3=0.0_16
-  arr3 = matmul(arr1(:,2:m_extent),arr2(2:m_extent,:))
-  call assign_result(145,192,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3 = matmul(arr1(:, 2:m_extent), arr2(2:m_extent, :))
+  call assign_result(145, 192, arr3, results)
+
   ! test 193-240
-  arr3=0.0_16
-  arr3 = matmul(arr1(:,2:m_extent),arr2(2:m_extent,:))
-  call assign_result(193,240,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3 = matmul(arr1(:, 2:m_extent), arr2(2:m_extent, :))
+  call assign_result(193, 240, arr3, results)
+
   ! test 241-288
-  arr3=0.0_16
-  arr3 = matmul(arr1(:,1:m_extent-1),arr2(1:m_extent-1,:))
-  call assign_result(241,288,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3 = matmul(arr1(:, 1:m_extent - 1), arr2(1:m_extent - 1, :))
+  call assign_result(241, 288, arr3, results)
+
   !test 289-336
-  arr3=0.0_16
-  arr3(1:3,1:3) = matmul(arr1(1:3,1:3),arr2(1:3,1:3))
-  call assign_result(289,336,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3(1:3, 1:3) = matmul(arr1(1:3, 1:3), arr2(1:3, 1:3))
+  call assign_result(289, 336, arr3, results)
+
   ! test 337-384
-  arr3=0.0_16
-  arr3(2:4,2:4) = matmul(arr1(2:4,2:4),arr2(2:4,2:4))
-  call assign_result(337,384,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3(2:4, 2:4) = matmul(arr1(2:4, 2:4), arr2(2:4, 2:4))
+  call assign_result(337, 384, arr3, results)
+
   ! test 385-432
-  arr3=0.0_16
-  arr3(:,1:k_extent:2) = matmul(arr1(:,1:m_extent-1),arr2(1:m_extent-1,1:k_extent:2))
-  call assign_result(385,432,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3(:, 1:k_extent:2) = matmul(arr1(:, 1:m_extent - 1), arr2(1:m_extent - 1, 1:k_extent:2))
+  call assign_result(385, 432, arr3, results)
+
   ! test 433-480
-  arr3=0.0_16
-  arr3(1:n_extent:2,:) = matmul(arr1(1:n_extent:2,2:m_extent),arr2(1:m_extent-1,:))
-  call assign_result(433,480,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3(1:n_extent:2, :) = matmul(arr1(1:n_extent:2, 2:m_extent), arr2(1:m_extent - 1, :))
+  call assign_result(433, 480, arr3, results)
+
   ! test 481-528
-  arr3=0.0_16
-  arr3(1:n_extent:2,1:k_extent:2) = matmul(arr1(1:n_extent:2,1:m_extent-1),      &
-                                           arr2(1:m_extent-1,1:k_extent:2))
-  call assign_result(481,528,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3(1:n_extent:2, 1:k_extent:2) = matmul(arr1(1:n_extent:2, 1:m_extent - 1), &
+                                            arr2(1:m_extent - 1, 1:k_extent:2))
+  call assign_result(481, 528, arr3, results)
+
   ! test 529-576
-  arr3=0.0_16
-  arr3(1:n_extent-1:2,1:k_extent-1:2) = matmul(arr1(1:n_extent-1:2,2:m_extent), &
-                                               arr2(1:m_extent-1,1:k_extent:2))
-  call assign_result(529,576,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3(1:n_extent - 1:2, 1:k_extent - 1:2) = matmul(arr1(1:n_extent - 1:2, 2:m_extent), &
+                                                    arr2(1:m_extent - 1, 1:k_extent:2))
+  call assign_result(529, 576, arr3, results)
+
   ! test 577-624
-  arr3=0.0_16
-  arr3(2:n_extent:2,2:k_extent:2) = matmul(arr1(2:n_extent:2,1:m_extent-1), &
-                                               arr2(2:m_extent,2:k_extent:2))
-  call assign_result(577,624,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3(2:n_extent:2, 2:k_extent:2) = matmul(arr1(2:n_extent:2, 1:m_extent - 1), &
+                                            arr2(2:m_extent, 2:k_extent:2))
+  call assign_result(577, 624, arr3, results)
+
   !test 625-672
-  arr3=0.0_16
-  arr3(n_extent:1:-2,1:k_extent:2) = matmul(arr1(n_extent:1:-2,1:m_extent-1),      &
-                                           arr2(1:m_extent-1,k_extent:1:-2))
-  call assign_result(625,672,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3(n_extent:1:-2, 1:k_extent:2) = matmul(arr1(n_extent:1:-2, 1:m_extent - 1), &
+                                             arr2(1:m_extent - 1, k_extent:1:-2))
+  call assign_result(625, 672, arr3, results)
+
   ! test 673-720
-  arr3=0.0_16
-  arr3(1:n_extent-1:2,k_extent-1:1:-2) = matmul(arr1(1:n_extent-1:2,m_extent:2:-1), &
-                                               arr2(m_extent-1:1:-1,1:k_extent:2))
-  call assign_result(673,720,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3(1:n_extent - 1:2, k_extent - 1:1:-2) = matmul(arr1(1:n_extent - 1:2, m_extent:2:-1), &
+                                                     arr2(m_extent - 1:1:-1, 1:k_extent:2))
+  call assign_result(673, 720, arr3, results)
+
   ! test 721-768
-  arr3=0.0_16
-  arr3(n_extent:2:-2,k_extent:2:-2) = matmul(arr1(n_extent:2:-2,m_extent-1:1:-1), &
-                                               arr2(m_extent:2:-1,k_extent:2:-2))
-  call assign_result(721,768,arr3,results)
-  ! print *,arr3
-  
+  arr3 = 0.0_16
+  arr3(n_extent:2:-2, k_extent:2:-2) = matmul(arr1(n_extent:2:-2, m_extent - 1:1:-1), &
+                                              arr2(m_extent:2:-1, k_extent:2:-2))
+  call assign_result(721, 768, arr3, results)
+
   ! test 769-816
-  arr10=0.0_16
-  arr10(2:4,2:4) = matmul(arr4(2:4,2:4),arr7(2:4,2:4))
-  call assign_result(769,816,arr10,results)
-  ! print *,arr10
-  
+  arr10 = 0.0_16
+  arr10(2:4, 2:4) = matmul(arr4(2:4, 2:4), arr7(2:4, 2:4))
+  call assign_result(769, 816, arr10, results)
+
   ! test 817-864
-  arr11=0.0_16
-  arr11(:,1:k_extent:2) = matmul(arr4(:,1:m_extent-1),arr8(1:m_extent-1,1:k_extent:2))
-  call assign_result(817,864,arr11,results)
-  ! print *,arr11
-  
+  arr11 = 0.0_16
+  arr11(:, 1:k_extent:2) = matmul(arr4(:, 1:m_extent - 1), arr8(1:m_extent - 1, 1:k_extent:2))
+  call assign_result(817, 864, arr11, results)
+
   !test 865-912
-  arr12=0.0_16
-  arr12(1:n_extent:2,:) = matmul(arr4(1:n_extent:2,2:m_extent),arr9(1:m_extent-1,:))
-  call assign_result(865,912,arr12,results)
-  ! print *,arr12
-  
+  arr12 = 0.0_16
+  arr12(1:n_extent:2, :) = matmul(arr4(1:n_extent:2, 2:m_extent), arr9(1:m_extent - 1, :))
+  call assign_result(865, 912, arr12, results)
+
   ! test 913-960
-  arr10=0.0_16
-  arr10(1:n_extent:2,1:k_extent:2) = matmul(arr5(1:n_extent:2,1:m_extent-1),      &
-                                           arr8(1:m_extent-1,1:k_extent:2))
-  call assign_result(913,960,arr10,results)
-  ! print *,arr10
-  
+  arr10 = 0.0_16
+  arr10(1:n_extent:2, 1:k_extent:2) = matmul(arr5(1:n_extent:2, 1:m_extent - 1), &
+                                             arr8(1:m_extent - 1, 1:k_extent:2))
+  call assign_result(913, 960, arr10, results)
+
   !test 961-1008
-  arr11=0.0_16
-  arr11(1:n_extent-1:2,1:k_extent-1:2) = matmul(arr5(1:n_extent-1:2,2:m_extent), &
-                                               arr9(1:m_extent-1,1:k_extent:2))
-  call assign_result(961,1008,arr11,results)
-  ! print *,arr11
-  
+  arr11 = 0.0_16
+  arr11(1:n_extent - 1:2, 1:k_extent - 1:2) = matmul(arr5(1:n_extent - 1:2, 2:m_extent), &
+                                                     arr9(1:m_extent - 1, 1:k_extent:2))
+  call assign_result(961, 1008, arr11, results)
+
   ! test 1009-1056
-  arr12=0.0_16
-  arr12(2:n_extent:2,2:k_extent:2) = matmul(arr5(2:n_extent:2,1:m_extent-1), &
-                                               arr7(2:m_extent,2:k_extent:2))
-  call assign_result(1009,1056,arr12,results)
-  ! print *,arr12
-  
+  arr12 = 0.0_16
+  arr12(2:n_extent:2, 2:k_extent:2) = matmul(arr5(2:n_extent:2, 1:m_extent - 1), &
+                                             arr7(2:m_extent, 2:k_extent:2))
+  call assign_result(1009, 1056, arr12, results)
+
   !test 1057-1104
-  arr10=0.0_16
-  arr10(n_extent:1:-2,1:k_extent:2) = matmul(arr6(n_extent:1:-2,1:m_extent-1),      &
-                                           arr9(1:m_extent-1,k_extent:1:-2))
-  call assign_result(1057,1104,arr10,results)
-  ! print *,arr10
-  
+  arr10 = 0.0_16
+  arr10(n_extent:1:-2, 1:k_extent:2) = matmul(arr6(n_extent:1:-2, 1:m_extent - 1), &
+                                              arr9(1:m_extent - 1, k_extent:1:-2))
+  call assign_result(1057, 1104, arr10, results)
+
   !test 1105-1152
-  arr11=0.0_16
-  arr11(1:n_extent-1:2,k_extent-1:1:-2) = matmul(arr6(1:n_extent-1:2,m_extent:2:-1), &
-                                               arr7(m_extent-1:1:-1,1:k_extent:2))
-  call assign_result(1105,1152,arr11,results)
-  ! print *,arr11
-  
+  arr11 = 0.0_16
+  arr11(1:n_extent - 1:2, k_extent - 1:1:-2) = matmul(arr6(1:n_extent - 1:2, m_extent:2:-1), &
+                                                      arr7(m_extent - 1:1:-1, 1:k_extent:2))
+  call assign_result(1105, 1152, arr11, results)
+
   !test 1153-1200
-  arr12=0.0_16
-  arr12(n_extent:2:-2,k_extent:2:-2) = matmul(arr6(n_extent:2:-2,m_extent-1:1:-1), &
-                                               arr8(m_extent:2:-1,k_extent:2:-2))
-  call assign_result(1153,1200,arr12,results)
-  ! print *,arr12
-  
+  arr12 = 0.0_16
+  arr12(n_extent:2:-2, k_extent:2:-2) = matmul(arr6(n_extent:2:-2, m_extent - 1:1:-1), &
+                                               arr8(m_extent:2:-1, k_extent:2:-2))
+  call assign_result(1153, 1200, arr12, results)
+
   arr19 = 0.0_16
 
   ! test 1201-1248
-  arr15=0.0_16
-  arr15 =  arr19 + matmul(arr13,arr14)
-  call assign_result(1201,1248,arr15,results)
-  ! print *,arr15
-
+  arr15 = 0.0_16
+  arr15 = arr19 + matmul(arr13, arr14)
+  call assign_result(1201, 1248, arr15, results)
 
   ! test 1249-1296
-  arr18=0.0_16
-  arr18 = arr19 +  matmul(arr16,arr17)
-  call assign_result(1249,1296,arr18,results)
-  ! print *,arr15
+  arr18 = 0.0_16
+  arr18 = arr19 + matmul(arr16, arr17)
+  call assign_result(1249, 1296, arr18, results)
 
   ! test 1297-1344
-  arr15=0.0_16
-  arr15(2:n_extent,:) = matmul(arr13(2:n_extent,:),arr14)
-  call assign_result(1297,1344,arr15,results)
-  ! print *,arr15
+  arr15 = 0.0_16
+  arr15(2:n_extent, :) = matmul(arr13(2:n_extent, :), arr14)
+  call assign_result(1297, 1344, arr15, results)
 
   ! test 1345-1392
-  arr15=0.0_16
-  arr15 = arr19 + matmul(arr13(:,2:m_extent),arr14(3:m_extent+1,:))
-  call assign_result(1345,1392,arr15,results)
-  ! print *,arr15
+  arr15 = 0.0_16
+  arr15 = arr19 + matmul(arr13(:, 2:m_extent), arr14(3:m_extent + 1, :))
+  call assign_result(1345, 1392, arr15, results)
 
   ! test 1393-1440
-  arr15=0.0_16
-  arr15 = arr19 + matmul(arr13(:,2:m_extent),arr14(3:m_extent+1,:))
-  call assign_result(1393,1440,arr15,results)
-  ! print *,arr15
+  arr15 = 0.0_16
+  arr15 = arr19 + matmul(arr13(:, 2:m_extent), arr14(3:m_extent + 1, :))
+  call assign_result(1393, 1440, arr15, results)
 
   ! test 1441-1488
-  arr15=0.0_16
-  arr15 = arr19 + matmul(arr13(:,1:m_extent-1),arr14(2:m_extent,:))
-  call assign_result(1441,1488,arr15,results)
-  !print *,arr15
+  arr15 = 0.0_16
+  arr15 = arr19 + matmul(arr13(:, 1:m_extent - 1), arr14(2:m_extent, :))
+  call assign_result(1441, 1488, arr15, results)
 
   !test 1489-1536
-  arr15=0.0_16
-  arr15(2:4,1:3) = arr19(2:4,1:3) + matmul(arr13(2:4,1:3),arr14(2:4,1:3))
-  call assign_result(1489,1536,arr15,results)
-  ! print *,arr15
+  arr15 = 0.0_16
+  arr15(2:4, 1:3) = arr19(2:4, 1:3) + matmul(arr13(2:4, 1:3), arr14(2:4, 1:3))
+  call assign_result(1489, 1536, arr15, results)
 
   ! test 1537-1584
-  arr15=0.0_16
-  arr15(3:5,2:4) = arr19(3:5,2:4) + matmul(arr13(3:5,2:4),arr14(3:5,2:4))
-  call assign_result(1537,1584,arr15,results)
-  ! print *,arr15
+  arr15 = 0.0_16
+  arr15(3:5, 2:4) = arr19(3:5, 2:4) + matmul(arr13(3:5, 2:4), arr14(3:5, 2:4))
+  call assign_result(1537, 1584, arr15, results)
 
   ! test 1585-1632
-  arr15=0.0_16
-  arr15(:,1:k_extent:2) = arr19(:,1:k_extent:2) +  &
-                         matmul(arr13(:,1:m_extent-1),arr14(2:m_extent,1:k_extent:2))
-  call assign_result(1585,1632,arr15,results)
-  ! print *,arr15
+  arr15 = 0.0_16
+  arr15(:, 1:k_extent:2) = arr19(:, 1:k_extent:2) + &
+                           matmul(arr13(:, 1:m_extent - 1), arr14(2:m_extent, 1:k_extent:2))
+  call assign_result(1585, 1632, arr15, results)
 
   ! test 1633-1680
-  arr15=0.0_16
-  arr15(2:n_extent+1:2,:) = arr19(2:n_extent+1:2,:) +   &
-                           matmul(arr13(2:n_extent+1:2,2:m_extent),arr14(2:m_extent,:))
-  call assign_result(1633,1680,arr15,results)
-  ! print *,arr15
+  arr15 = 0.0_16
+  arr15(2:n_extent + 1:2, :) = arr19(2:n_extent + 1:2, :) + &
+                               matmul(arr13(2:n_extent + 1:2, 2:m_extent), arr14(2:m_extent, :))
+  call assign_result(1633, 1680, arr15, results)
 
   call checkr16(results, expect, NbrTests)
 
 end program
 
-subroutine assign_result(s_idx, e_idx , arr, rslt)
+subroutine assign_result(s_idx, e_idx, arr, rslt)
   integer:: s_idx, e_idx
-  REAL*16, dimension(1:e_idx-s_idx+1) :: arr
-  REAL*16, dimension(e_idx) :: rslt
-  
+  real*16, dimension(1:e_idx - s_idx + 1) :: arr
+  real*16, dimension(e_idx) :: rslt
 
   rslt(s_idx:e_idx) = arr
 

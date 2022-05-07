@@ -5,7 +5,7 @@
 !*   Intrinsics function sign take quad precision.
 program p
   use check_mod
-  parameter(n = 4)
+  integer, parameter :: n = 4
   integer, parameter :: k = 16
   real(16) :: rslts(n), expect(n)
   real(kind = k) :: t1, t2

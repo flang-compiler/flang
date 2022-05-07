@@ -6,24 +6,25 @@
 
 program p
   use check_mod
-  parameter(NbrTests=210)
+  integer, parameter :: NbrTests = 210
 
-  real*16, dimension(11,10) :: arr1
+  real*16, dimension(11, 10) :: arr1
   real*16, dimension(11) :: arr2
   real*16, dimension(10) :: arr3
-  real*16, dimension(2,10) :: arr4
+  real*16, dimension(2, 10) :: arr4
 
-  REAL*16 :: expect(NbrTests)
-  REAL*16 :: results(NbrTests)
-  
+  real*16 :: expect(NbrTests)
+  real*16 :: results(NbrTests)
+
   integer :: i, j
 
   do i = 1, 11
-     arr2(i) = i * 1.0_16
-     do j = 1, 10
-        arr1(i, j) = (11 * i + j - 11) * 1.0_16
-     end do
-   end do
+    arr2(i) = i * 1.0_16
+    do j = 1, 10
+      arr1(i, j) = (11 * i + j - 11) * 1.0_16
+    end do
+  end do
+
   data expect / &
  4906.0_16, 4972.0_16, 5038.0_16, 5104.0_16, 5170.0_16, 5236.0_16, 5302.0_16, 5368.0_16, 5434.0_16, 5500.0_16, &
  3684.0_16, 3738.0_16, 3792.0_16, 3846.0_16, 3900.0_16, 3954.0_16, 4008.0_16, 4062.0_16, 4116.0_16, 4170.0_16, &
@@ -46,104 +47,71 @@ program p
     0.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16, &
     0.0_16, 4906.0_16,    0.0_16, 4972.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16, &
     0.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16,    0.0_16/
-                                                                                                      
 
- !print *,"tests 1-10"
-  arr3=0.0_16
-  arr3 = matmul(transpose(arr1),arr2)
-  call assign_result(1,10,arr3,results)
- !print *,arr3
+  arr3 = 0.0_16
+  arr3 = matmul(transpose(arr1), arr2)
+  call assign_result(1, 10, arr3, results)
 
- !print *,"tests 11-20"
-  arr3=0.0_16
-  arr3 = matmul(transpose(arr1(2:10,:)),arr2(2:10))
-  call assign_result(11,20,arr3,results)
- !print *,arr3
+  arr3 = 0.0_16
+  arr3 = matmul(transpose(arr1(2:10, :)), arr2(2:10))
+  call assign_result(11, 20, arr3, results)
 
- !print *,"tests 21-30"
-  arr3=0.0_16
-  arr3 = matmul(transpose(arr1(2:4,:)),arr2(2:4))
-  call assign_result(21,30,arr3,results)
- !print *,arr3
+  arr3 = 0.0_16
+  arr3 = matmul(transpose(arr1(2:4, :)), arr2(2:4))
+  call assign_result(21, 30, arr3, results)
 
- !print *,"tests 31-40"
-  arr3=0.0_16
-  arr3 = matmul(transpose(arr1(1:9,:)),arr2(1:9))
-  call assign_result(31,40,arr3,results)
- !print *,arr3
+  arr3 = 0.0_16
+  arr3 = matmul(transpose(arr1(1:9, :)), arr2(1:9))
+  call assign_result(31, 40, arr3, results)
 
- !print *,"tests 41-50"
-  arr3=0.0_16
-  arr3(1:8) = matmul(transpose(arr1(2:10:2,1:8)),arr2(2:10:2))
-  call assign_result(41,50,arr3,results)
- !print *,arr3
+  arr3 = 0.0_16
+  arr3(1:8) = matmul(transpose(arr1(2:10:2, 1:8)), arr2(2:10:2))
+  call assign_result(41, 50, arr3, results)
 
- !print *,"tests 51-60"
-  arr3=0.0_16
-  arr3(2:10) = matmul(transpose(arr1(:,2:10)),arr2)
-  call assign_result(51,60,arr3,results)
- !print *,arr3
+  arr3 = 0.0_16
+  arr3(2:10) = matmul(transpose(arr1(:, 2:10)), arr2)
+  call assign_result(51, 60, arr3, results)
 
- !print *,"tests 61-70"
-  arr3=0.0_16
-  arr3(1:8) = matmul(transpose(arr1(:,1:8)),arr2)
-  call assign_result(61,70,arr3,results)
- !print *,arr3
+  arr3 = 0.0_16
+  arr3(1:8) = matmul(transpose(arr1(:, 1:8)), arr2)
+  call assign_result(61, 70, arr3, results)
 
- !print *,"tests 71-90"
-  arr4=0.0_16
-  arr4(2,:) = matmul(transpose(arr1),arr2)
-  call assign_result(71,90,arr4,results)
- !print *,arr4
+  arr4 = 0.0_16
+  arr4(2, :) = matmul(transpose(arr1), arr2)
+  call assign_result(71, 90, arr4, results)
 
- !print *,"tests 91-110"
-  arr4=0.0_16
-  arr4(2,:) = matmul(transpose(arr1(2:4,:)),arr2(2:4))
-  call assign_result(91,110,arr4,results)
- !print *,arr4
+  arr4 = 0.0_16
+  arr4(2, :) = matmul(transpose(arr1(2:4, :)), arr2(2:4))
+  call assign_result(91, 110, arr4, results)
 
- !print *,"tests 111-130"
-  arr4=0.0_16
-  arr4(2,:) = matmul(transpose(arr1(2:4,:)),arr2(2:4))
-  call assign_result(111,130,arr4,results)
- !print *,arr4
+  arr4 = 0.0_16
+  arr4(2, :) = matmul(transpose(arr1(2:4, :)), arr2(2:4))
+  call assign_result(111, 130, arr4, results)
 
- !print *,"tests 131-150"
-  arr4=0.0_16
-  arr4(2,:) = matmul(transpose(arr1(1:3,:)),arr2(1:3))
-  call assign_result(131,150,arr4,results)
- !print *,arr4
+  arr4 = 0.0_16
+  arr4(2, :) = matmul(transpose(arr1(1:3, :)), arr2(1:3))
+  call assign_result(131, 150, arr4, results)
 
- !print *,"tests 151-170"
-  arr4=0.0_16
-  arr4(2,1:2) = matmul(transpose(arr1(2:10:2,1:2)),arr2(2:10:2))
-  call assign_result(151,170,arr4,results)
- !print *,arr4
+  arr4 = 0.0_16
+  arr4(2, 1:2) = matmul(transpose(arr1(2:10:2, 1:2)), arr2(2:10:2))
+  call assign_result(151, 170, arr4, results)
 
- !print *,"tests 171-190"
-  arr4=0.0_16
-  arr4(2,2:3) = matmul(transpose(arr1(:,2:3)),arr2)
-  call assign_result(171,190,arr4,results)
- !print *,arr4
+  arr4 = 0.0_16
+  arr4(2, 2:3) = matmul(transpose(arr1(:, 2:3)), arr2)
+  call assign_result(171, 190, arr4, results)
 
- !print *,"tests 191-210"
-  arr4=0.0_16
-  arr4(2,1:2) = matmul(transpose(arr1(:,1:2)),arr2)
-  call assign_result(191,210,arr4,results)
- !print *,arr4
-
+  arr4 = 0.0_16
+  arr4(2, 1:2) = matmul(transpose(arr1(:, 1:2)), arr2)
+  call assign_result(191, 210, arr4, results)
 
   call checkr16(results, expect, NbrTests)
-  
 end program
 
-subroutine assign_result(s_idx, e_idx , arr, rslt)
+subroutine assign_result(s_idx, e_idx, arr, rslt)
   integer:: s_idx, e_idx
-  REAL*16, dimension(1:e_idx-s_idx+1) :: arr
-  REAL*16, dimension(e_idx) :: rslt
-
+  real*16, dimension(1:e_idx - s_idx + 1) :: arr
+  real*16, dimension(e_idx) :: rslt
 
   rslt(s_idx:e_idx) = arr
-
 end subroutine
 

@@ -6,7 +6,7 @@
 program p
   use ieee_arithmetic
   use check_mod
-  parameter(n = 2)
+  integer, parameter :: n = 2
   integer, parameter :: k = 16
   real(kind = k) :: z = 0.0_16, pz = -1.0_16
   real(kind = k) :: rslts(n), expect(n)

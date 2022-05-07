@@ -6,8 +6,8 @@
 
 program p
   use check_mod
-  parameter(NbrTests = 1378)
-  
+  integer, parameter :: NbrTests = 1378
+
   real*16, dimension(3) :: arr1
   real*16, dimension(3, 4) :: arr2
   real*16, dimension(4) :: arr3
@@ -23,24 +23,24 @@ program p
   real*16, dimension(389, 387) :: arr17
   real*16, dimension(387) :: arr18
   real*16, dimension(2, 387) :: arr19
-  
+
   data arr1 /0.0_16, 1.0_16, 2.0_16/
-  data arr5 /0.0_16, 1.0_16, 2.0_16, 3.0_16, 4.0_16, 5.0_16, &
+  data arr5 /0.0_16, 1.0_16, 2.0_16, 3.0_16, 4.0_16, 5.0_16,   &
              6.0_16, 7.0_16, 8.0_16, 9.0_16, 10.0_16, 11.0_16/
-  data arr2 /0.0_16, 1.0_16, 2.0_16, 3.0_16, 4.0_16, 5.0_16, &                                                                                
+  data arr2 /0.0_16, 1.0_16, 2.0_16, 3.0_16, 4.0_16, 5.0_16,   &
              6.0_16, 7.0_16, 8.0_16, 9.0_16, 10.0_16, 11.0_16/
   data arr6 /0.0_16, 1.0_16, 2.0_16/
   data arr3 /0.0_16, 1.0_16, 2.0_16, 3.0_16/
-  data arr4 /0.0_16, 1.0_16, 2.0_16, 3.0_16, 4.0_16, 5.0_16, &                                                                                       
+  data arr4 /0.0_16, 1.0_16, 2.0_16, 3.0_16, 4.0_16, 5.0_16,   &
              6.0_16, 7.0_16, 8.0_16, 9.0_16, 10.0_16, 11.0_16, &
              12.0_16, 13.0_16, 14.0_16, 15.0_16/
-  data arr7 /0.0_16, 1.0_16, 2.0_16, 3.0_16, 4.0_16, 5.0_16, &                                                                                
-             6.0_16, 7.0_16, 8.0_16, 9.0_16, 10.0_16, 11.0_16, &                                                                              
+  data arr7 /0.0_16, 1.0_16, 2.0_16, 3.0_16, 4.0_16, 5.0_16,   &
+             6.0_16, 7.0_16, 8.0_16, 9.0_16, 10.0_16, 11.0_16, &
              12.0_16, 13.0_16, 14.0_16, 15.0_16/
-  
-  REAL*16 :: expect(NbrTests)
-  REAL*16 :: results(NbrTests)
-  
+
+  real*16 :: expect(NbrTests)
+  real*16 :: results(NbrTests)
+
   data expect / &
         5.0_16,      14.0_16,      23.0_16,      32.0_16,       0.0_16,      14.0_16, &
        23.0_16,      32.0_16,      14.0_16,      23.0_16, &
@@ -318,108 +318,106 @@ program p
  14525550.0_16,       0.0_16,14563575.0_16,       0.0_16, &
  14601600.0_16,       0.0_16,14639625.0_16,       0.0_16,14677650.0_16,       0.0_16, &
  14715675.0_16,       0.0_16,       1.0_16,       0.0_16/
- 
-  
-  
+
   arr3 = 0.0_16
   arr3 = matmul(arr1, arr2)
   call assign_result(1, 4, arr3, results)
-  
+
   arr3 = 0.0_16
   arr3(2:4) = matmul(arr1, arr2(:, 2:4))
   call assign_result(5, 8, arr3, results)
-  
+
   arr3 = 0.0_16
   arr3(1:3) = matmul(arr1, arr2(:, 2:4))
   call assign_result(9, 12, arr3, results)
-  
+
   arr3 = 0.0_16
   arr3(2:4) = matmul(arr1, arr2(:, 1:3))
   call assign_result(13, 16, arr3, results)
-  
+
   arr3 = 0.0_16
   arr3(2:4) = matmul(arr1(1:2), arr2(1:2, 2:4))
   call assign_result(17, 20, arr3, results)
-  
+
   arr3 = 0.0_16
   arr3 = matmul(arr1(1:2), arr2(2:3, :))
   call assign_result(21, 24, arr3, results)
-  
+
   arr3 = 0.0_16
   arr3 = matmul(arr1(2:3), arr2(1:2, :))
   call assign_result(25, 28, arr3, results)
-  
+
   arr3 = 0.0_16
   arr3(2:4) = matmul(arr1(2:3), arr2(1:2, 1:3))
   call assign_result(29, 32, arr3, results)
-  
+
   arr3 = 0.0_16
   arr3(1:3) = matmul(arr1(1:2), arr2(2:3, 2:4))
   call assign_result(33, 36, arr3, results)
-  
+
   arr3 = 0.0_16
   arr3(1:3) = matmul(arr1(1:3:2), arr2(1:3:2, 2:4))
   call assign_result(37, 40, arr3, results)
-  
+
   arr3 = 0.0_16
   arr3(2:4:2) = matmul(arr1(2:3), arr2(1:2, 1:3:2))
   call assign_result(41, 44, arr3, results)
-  
+
   arr3 = 0.0_16
-  arr3(1:3:2) = matmul(arr1(1:2), arr2(2:3,2:4:2))
+  arr3(1:3:2) = matmul(arr1(1:2), arr2(2:3, 2:4:2))
   call assign_result(45, 48, arr3, results)
-  
+
   arr4 = 0.0_16
   arr4(2, 1:3:2) = matmul(arr1(1:2), arr2(2:3, 2:4:2))
   call assign_result(49, 64, arr4, results)
-  
+
   arr4 = 0.0_16
-  arr4(1:3:2, 3)  = matmul(arr1(1:2), arr2(2:3, 2:4:2))
-  call assign_result(65,80,arr4,results)
-  
+  arr4(1:3:2, 3) = matmul(arr1(1:2), arr2(2:3, 2:4:2))
+  call assign_result(65, 80, arr4, results)
+
   arr7 = 0.0_16
-  arr7(0, 0:2:2)  = matmul(arr6(-3:-2), arr5(1:3:2, 0:1))
+  arr7(0, 0:2:2) = matmul(arr6(-3:-2), arr5(1:3:2, 0:1))
   call assign_result(81, 96, arr7, results)
-  
+
   arr7 = 0.0_16
-  arr7(-1:1:2, 2)  = matmul(arr6(-2:-1), arr5(1:3:2, 0:1))
+  arr7(-1:1:2, 2) = matmul(arr6(-2:-1), arr5(1:3:2, 0:1))
   call assign_result(97, 112, arr7, results)
-  
+
   arr3 = 0.0_16
   arr3(3:1:-1) = matmul(arr1(3:1:-2), arr2(1:3:2, 2:4))
   call assign_result(113, 116, arr3, results)
-  
+
   arr3 = 0.0_16
   arr3(4:2:-2) = matmul(arr1(3:2:-1), arr2(1:2, 3:1:-2))
   call assign_result(117, 120, arr3, results)
-  
+
   arr4 = 0.0_16
   arr4(2, 3:1:-2) = matmul(arr1(1:2), arr2(3:2:-1, 4:2:-2))
   call assign_result(121, 136, arr4, results)
-  
+
   arr4 = 0.0_16
   arr4(3:1:-2, 3) = matmul(arr1(2:1:-1), arr2(3:2:-1, 2:4:2))
   call assign_result(137, 152, arr4, results)
-  
+
   arr7 = 0.0_16
   arr7(0, 2:0:-2) = matmul(arr6(-3:-2), arr5(1:3:2, 0:1))
   call assign_result(153, 168, arr7, results)
-  
+
   arr7 = 0.0_16
   arr7(1:-1:-2, 2) = matmul(arr6(-1:-2:-1), arr5(3:1:-2, 0:1))
   call assign_result(169, 184, arr7, results)
-  
-  do i = 1,11
+
+  do i = 1, 11
     m2 = mod(i, 2)
-    if (m2 .eq. 0 ) then
+    if (m2 .eq. 0) then
       arr13(i) = 0.0_16
     else
       arr13(i) = i * 1.0_16
-    endif
+    end if
     do j = 1, 11
       arr14(i, j) = j * 1.0_16
-    enddo
-  enddo
+    end do
+  end do
 
   arr20 = 0.0_16
   arr20 = matmul(arr13, arr14)
@@ -429,17 +427,17 @@ program p
   arr15(1, :) = matmul(arr13, arr14)
   call assign_result(196, 217, arr15, results)
 
-  do i = 1,389
+  do i = 1, 389
     m2 = mod(i, 2)
-    if (m2 .eq. 0 ) then
+    if (m2 .eq. 0) then
       arr16(i) = 0.0_16
     else
       arr16(i) = i * 1.0_16
-    endif
+    end if
     do j = 1, 387
       arr17(i, j) = j * 1.0_16
-    enddo
-  enddo
+    end do
+  end do
 
   arr18 = 0.0_16
   arr18 = matmul(arr16, arr17)
@@ -450,14 +448,12 @@ program p
   call assign_result(605, 1378, arr19, results)
 
   call checkr16(results, expect, NbrTests)
-
 end program
 
-subroutine assign_result(s_idx, e_idx , arr, rslt)
+subroutine assign_result(s_idx, e_idx, arr, rslt)
   integer:: s_idx, e_idx
-  REAL*16, dimension(1:e_idx-s_idx+1) :: arr
-  REAL*16, dimension(e_idx) :: rslt
+  real*16, dimension(1:e_idx - s_idx + 1) :: arr
+  real*16, dimension(e_idx) :: rslt
 
   rslt(s_idx:e_idx) = arr
-
 end subroutine

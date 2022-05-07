@@ -4,7 +4,7 @@
 
 !*   Intrinsics function inverse hyperbolic take quad precision.
 program p
-  parameter(n = 6)
+  integer, parameter :: n = 6
   integer, parameter :: k = 16
   real(kind = k) ::  expect(n)
   real(kind = k) :: t1

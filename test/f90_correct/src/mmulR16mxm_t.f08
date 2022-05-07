@@ -6,10 +6,10 @@
 
 program p
   use check_mod
-  parameter(NbrTests = 192)
-  parameter(n_extent = 10)
-  parameter(m_extent = 10)
-  parameter(k_extent = 10)
+  integer, parameter :: NbrTests = 192
+  integer, parameter :: n_extent = 10
+  integer, parameter :: m_extent = 10
+  integer, parameter :: k_extent = 10
 
   real*16, dimension(n_extent, m_extent) :: arr1
   real*16, dimension(n_extent, k_extent) :: arr2
@@ -17,14 +17,14 @@ program p
 
   REAL*16 :: expect(NbrTests)
   REAL*16 :: results(NbrTests)
-  
+
   integer :: i,j
   do i = 1, 10
      do j = 1, 10
         arr1(i, j) = (10 * i + j - i) * 1.0_16
         arr2(i, j) = (10 * i + j - i) * 1.0_16
      end do
-  end do 
+  end do
 
   data expect  /&
  32185.0_16,32690.0_16,33195.0_16,33700.0_16,34205.0_16,34710.0_16,35215.0_16,35720.0_16, &
@@ -50,7 +50,7 @@ program p
      0.0_16,32690.0_16,    0.0_16,33700.0_16,    0.0_16,34710.0_16,    0.0_16,35720.0_16, &
      0.0_16,36730.0_16,    0.0_16,33205.0_16,    0.0_16,34235.0_16,    0.0_16,35265.0_16, &
      0.0_16,36295.0_16,    0.0_16,37325.0_16,    0.0_16,33720.0_16,    0.0_16,34770.0_16, &
-     0.0_16,35820.0_16,    0.0_16,36870.0_16,    0.0_16,37920.0_16,    0.0_16,34235.0_16/   
+     0.0_16,35820.0_16,    0.0_16,36870.0_16,    0.0_16,37920.0_16,    0.0_16,34235.0_16/
 
   arr3 = 0.0_16
   arr3 = matmul(transpose(arr1), arr2)
@@ -62,7 +62,7 @@ program p
 
   arr3 = 0.0_16
   arr3 = matmul(transpose(arr1(1:n_extent-1, :)),arr2(1:n_extent-1, :))
-  call assign_result(65, 96, arr3, results) 
+  call assign_result(65, 96, arr3, results)
 
   arr3 = 0.0_16
   arr3(2:m_extent, :) = matmul(transpose(arr1(:, 2:m_extent)), arr2)
@@ -77,7 +77,7 @@ program p
   call assign_result(161, 192, arr3, results)
 
   call checkr16(results, expect, NbrTests)
-  
+
 end program
 
 subroutine assign_result(s_idx, e_idx , arr, rslt)
