@@ -4441,7 +4441,6 @@ ENTF90(KSEL_REAL_KIND, ksel_real_kind)
     else
       e -= 2;
   }
-#ifdef TARGET_SUPPORTS_QUADFP
   if (ISPRESENT(radixb)) {
     int radix = I8(__fort_fetch_int)(radixb, radixd);
     if (radix != 2)
@@ -4449,7 +4448,6 @@ ENTF90(KSEL_REAL_KIND, ksel_real_kind)
     else
       k = k ? k : 4;
   }
-#endif
   return (__INT8_T)e ? e : k;
 }
 
@@ -4457,7 +4455,7 @@ __INT_T
 ENTF90(SEL_REAL_KIND, sel_real_kind)
 (char *pb, char *rb, char *radixb, F90_Desc *pd, F90_Desc *rd, F90_Desc *radixd)
 {
-  int p, r, radix, e, k;
+  int p, r, e, k;
 
   e = 0;
   k = 0;
@@ -4467,8 +4465,10 @@ ENTF90(SEL_REAL_KIND, sel_real_kind)
       k = 4;
     else if (p <= 15)
       k = 8;
+#ifdef TARGET_SUPPORTS_QUADFP
     else if (p <= 33)
       k = 16;
+#endif
     else
       e -= 1;
   }
@@ -4482,16 +4482,17 @@ ENTF90(SEL_REAL_KIND, sel_real_kind)
       if (k < 8)
         k = 8;
     }
+#ifdef TARGET_SUPPORTS_QUADFP
     else if (r <= 4931) {
       if (k < 16)
         k = 16;
     }
-
+#endif
     else
       e -= 2;
   }
   if (ISPRESENT(radixb)) {
-    radix = I8(__fort_fetch_int)(radixb, radixd);
+    int radix = I8(__fort_fetch_int)(radixb, radixd);
     if (radix != 2)
       e = -5;
     else
