@@ -8,11 +8,10 @@ program p
   integer, parameter :: k = 16
   integer(4) :: rslts(n), expect(n)
   real(kind = k) :: t1
-  integer(4) :: c, d , e, f
-  parameter(c = nint(1.2345_16 + sin(0.0_16)))
-  parameter(d = nint(huge(0.0_16) + sin(0.0_16)))
-  parameter(e = nint(-1.2345_16 + sin(0.0_16)))
-  parameter(f = nint(-huge(0.0_16) + sin(0.0_16)))
+  integer(4), parameter :: c = nint(1.2345_16 + sin(0.0_16))
+  integer(4), parameter :: d = nint(huge(0.0_16) + sin(0.0_16))
+  integer(4), parameter :: e = nint(-1.2345_16 + sin(0.0_16))
+  integer(4), parameter :: f = nint(-huge(0.0_16) + sin(0.0_16))
 
   expect(1) = 2147483647
   expect(2) = -2
@@ -34,7 +33,7 @@ program p
   rslts(6) = d
   rslts(7) = e
   rslts(8) = f
- 
+
   call check(rslts, expect, n)
 
 end program p

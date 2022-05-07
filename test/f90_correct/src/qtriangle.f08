@@ -4,7 +4,7 @@
 
 !*   Intrinsics function asin acos atan take quad precision.
 program p
-  parameter(n = 15)
+  integer, parameter :: n = 15
   integer, parameter :: k = 16
   real(16) :: rslts(n), expect(n)
   real(kind = k) :: t1
@@ -36,14 +36,14 @@ program p
   if (abs(sin(t1) - expect(3)) <= eps_q) flag(3) = 1
   if (abs((sin(-145678.12345_16) - expect(4)) / sin(-145678.12345_16)) <= eps_q) flag(4) = 1
   if (abs((sin(asin(-1.0_16)) - expect(5)) / sin(asin(-1.0_16))) <= eps_q) flag(5) = 1
-  
+
   t1 = 1111111111.22222222_16
-  if (abs((cos(t1) - expect(6)) / cos(t1)) <= eps_q) flag(6) = 1 
+  if (abs((cos(t1) - expect(6)) / cos(t1)) <= eps_q) flag(6) = 1
   t1 = -1.12345_16
-  if (abs((cos(t1) - expect(7)) / cos(t1)) <= eps_q) flag(7) = 1 
+  if (abs((cos(t1) - expect(7)) / cos(t1)) <= eps_q) flag(7) = 1
   t1 = -0.0_16
-  if (abs((cos(t1) - expect(8)) / cos(t1)) <= eps_q) flag(8) = 1 
-  if (abs((cos(-145678.12345_16) - expect(9)) / cos(-145678.12345_16)) <= eps_q) flag(9) = 1 
+  if (abs((cos(t1) - expect(8)) / cos(t1)) <= eps_q) flag(8) = 1
+  if (abs((cos(-145678.12345_16) - expect(9)) / cos(-145678.12345_16)) <= eps_q) flag(9) = 1
   if (abs((cos(acos(-1.0_16)) - expect(10)) / cos(acos(-1.0_16))) <= eps_q) flag(10) = 1
 
   t1 = 1111111111.22222222_16

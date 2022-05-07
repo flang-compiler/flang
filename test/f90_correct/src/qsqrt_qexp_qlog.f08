@@ -6,7 +6,7 @@
 program p
   use ISO_C_BINDING
   use check_mod
-    
+
   interface
     subroutine get_expected_q( src, expct) bind(C)
     use ISO_C_BINDING
@@ -15,14 +15,14 @@ program p
     end subroutine
   end interface
 
-  parameter(n = 15)
+  integer, parameter :: n = 15
   real (16) :: rslts(n) , expect(n)
   real (16) :: src(n), e1, e2, e3
   real (16) :: r1 = sqrt(1.23456_16)
   real (16), parameter :: r2 = sqrt(1.23456_16 + sin(0.0_16))
   real (16), parameter :: r3 = exp(1.23456_16 + sin(0.0_16))
   real (16), parameter :: r4 = log(1.23456_16 + sin(0.0_16))
-  
+
   src(1) = 1111111111.22222222_16
   src(2) = 1.12345_16
   src(3) = 0.0_16
@@ -56,7 +56,7 @@ program p
   rslts(13) = log(src(13))
   rslts(14) = log(exp(3.0_16))
   rslts(15) = log(1024.0_16)
-  
+
   e1 = 1.11110755554986664846214940411821916_16
   e2 = 3.43686596694224470265687660821204048_16
   e3 = 0.210714631295172515073249195797797214_16

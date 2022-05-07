@@ -5,7 +5,7 @@
 !*   Intrinsics function huge nearest epsilon take quad precision.
 program p
   use check_mod
-  parameter(n = 7)
+  integer, parameter :: n = 7
   real(kind = 16) :: rslts(n), expect(n), t1
 
   expect(1) = 3.00000000000000000000000000000000039_16
@@ -15,7 +15,7 @@ program p
   expect(5) = 6.47517511943802511092443895822764655E-4966_16
   expect(6) = -6.47517511943802511092443895822764655E-4966_16
   expect(7) = 0.999999999999999999999999999999999904_16
-  
+
   t1 = 3.0_16
   rslts(1) = nearest(t1, 1.0_16)
   rslts(2) = nearest(t1, -1.0_16)

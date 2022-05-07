@@ -8,8 +8,8 @@ program p
   integer, parameter :: k = 16
   integer(8) :: rslts(n), expect(n)
   real(kind = k) :: t1
-  parameter(a = abs(2.5))
-  parameter(c = int(a))
+  real(kind = k), parameter :: a = abs(2.5)
+  integer(8), parameter :: c = int(a)
 
   expect(1) = 111111
   expect(2) = -1
