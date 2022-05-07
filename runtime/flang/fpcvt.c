@@ -880,9 +880,9 @@ __fortio_ecvt(long double lvalue, int width, int ndigit, int *decpt, int *sign,
   if (round == FIO_COMPATIBLE) {
     writefmt(fmt, ndigit, 'E', is_quad);
     if (!is_quad)
-      j = sprintf(tmp, fmt, value);
+      j = snprintf(tmp, sizeof(tmp), fmt, value);
     else
-      j = sprintf(tmp, fmt, lvalue);
+      j = snprintf(tmp, sizeof(tmp), fmt, lvalue);
     if (ndigit) {
       i0 = 1;
       tmp[i0] = tmp[0];
@@ -913,9 +913,9 @@ __fortio_ecvt(long double lvalue, int width, int ndigit, int *decpt, int *sign,
         if (tmp[i1] == '5') {
           writefmt(fmt, ndigit + 20, 'E', is_quad);
           if (!is_quad)
-            j = sprintf(tmp, fmt, value);
+            j = snprintf(tmp, sizeof(tmp), fmt, value);
           else
-            j = sprintf(tmp, fmt, lvalue);
+            j = snprintf(tmp, sizeof(tmp), fmt, lvalue);
           i0 = 1;
           tmp[i0] = tmp[0];
         }
@@ -949,9 +949,9 @@ __fortio_ecvt(long double lvalue, int width, int ndigit, int *decpt, int *sign,
       if (ndigit) {
         writefmt(fmt, ndigit - 1, 'E', is_quad);
         if (!is_quad)
-          j = sprintf(tmp, fmt, value);
+          j = snprintf(tmp, sizeof(tmp), fmt, value);
         else
-          j = sprintf(tmp, fmt, lvalue);
+          j = snprintf(tmp, sizeof(tmp), fmt, lvalue);
         if (ndigit > 1) {
           i0 = 1;
           tmp[i0] = tmp[0];
@@ -979,9 +979,9 @@ __fortio_ecvt(long double lvalue, int width, int ndigit, int *decpt, int *sign,
             /* Use sprintf to round again */
             writefmt(fmt, ndigit - 1, 'E', is_quad);
             if (!is_quad)
-              j = sprintf(tmp, fmt, value);
+              j = snprintf(tmp, sizeof(tmp), fmt, value);
             else
-              j = sprintf(tmp, fmt, lvalue);
+              j = snprintf(tmp, sizeof(tmp), fmt, lvalue);
             if (ndigit > 1) {
               i0 = 1;
               tmp[i0] = tmp[0];
@@ -1042,9 +1042,9 @@ __fortio_ecvt(long double lvalue, int width, int ndigit, int *decpt, int *sign,
       */
       writefmt(fmt, ndigit, 'E', is_quad);
       if (!is_quad)
-        j = sprintf(tmp, fmt, value);
+        j = snprintf(tmp, sizeof(tmp), fmt, value);
       else
-        j = sprintf(tmp, fmt, lvalue);
+        j = snprintf(tmp, sizeof(tmp), fmt, lvalue);
       i0 = 1;
       tmp[i0] = tmp[0];
       i = ndigit + 4;
@@ -1069,9 +1069,9 @@ __fortio_ecvt(long double lvalue, int width, int ndigit, int *decpt, int *sign,
         if (tmp[i] == '0') {
           writefmt(fmt, ndigit + 20, 'E', is_quad);
           if (!is_quad)
-            j = sprintf(tmp, fmt, value);
+            j = snprintf(tmp, sizeof(tmp), fmt, value);
           else
-            j = sprintf(tmp, fmt, lvalue);
+            j = snprintf(tmp, sizeof(tmp), fmt, lvalue);
           i0 = 1;
           tmp[i0] = tmp[0];
         }
@@ -1099,9 +1099,9 @@ __fortio_ecvt(long double lvalue, int width, int ndigit, int *decpt, int *sign,
       */
       writefmt(fmt, ndigit, 'E', is_quad);
       if (!is_quad)
-        j = sprintf(tmp, fmt, value);
+        j = snprintf(tmp, sizeof(tmp), fmt, value);
       else
-        j = sprintf(tmp, fmt, lvalue);
+        j = snprintf(tmp, sizeof(tmp), fmt, lvalue);
       i0 = 1;
       tmp[i0] = tmp[0];
       i = ndigit + 4;
@@ -1126,9 +1126,9 @@ __fortio_ecvt(long double lvalue, int width, int ndigit, int *decpt, int *sign,
         if (tmp[i] == '0') {
           writefmt(fmt, ndigit + 20, 'E', is_quad);
           if (!is_quad)
-            j = sprintf(tmp, fmt, value);
+            j = snprintf(tmp, sizeof(tmp), fmt, value);
           else
-            j = sprintf(tmp, fmt, lvalue);
+            j = snprintf(tmp, sizeof(tmp), fmt, lvalue);
           i0 = 1;
           tmp[i0] = tmp[0];
           tmp[ndigit + 21] = '\0';
@@ -1306,9 +1306,9 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
         if ((prec + ldz + 1) <= 0) {
           writefmt(fmt, 1, 'E', is_quad);
           if (!is_quad)
-            j = sprintf(tmp, fmt, v);
+            j = snprintf(tmp, sizeof(tmp), fmt, v);
           else
-            j = sprintf(tmp, fmt, lv);
+            j = snprintf(tmp, sizeof(tmp), fmt, lv);
           i0 = 1;
           tmp[i0] = tmp[0];
           i = 5;
@@ -1322,9 +1322,9 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
         } else {
           writefmt(fmt, prec + ldz + 1, 'E', is_quad);
           if (!is_quad)
-            j = sprintf(tmp, fmt, v);
+            j = snprintf(tmp, sizeof(tmp), fmt, v);
           else
-            j = sprintf(tmp, fmt, lv);
+            j = snprintf(tmp, sizeof(tmp), fmt, lv);
           i0 = 1;
           tmp[i0] = tmp[0];
           i = prec + ldz + 4 + 1;
@@ -1336,9 +1336,9 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
           if ((kdz == ldz) && (tmp[i] == '5')) {
             writefmt(fmt, prec + ldz + 1 + 20, 'E', is_quad);
             if (!is_quad)
-              j = sprintf(tmp, fmt, v);
+              j = snprintf(tmp, sizeof(tmp), fmt, v);
             else
-              j = sprintf(tmp, fmt, lv);
+              j = snprintf(tmp, sizeof(tmp), fmt, lv);
             i0 = 1;
             tmp[i0] = tmp[0];
           } else if (kdz + 1 == ldz) {
@@ -1346,9 +1346,9 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
             if ((tmp[i - 1] == '5') && (tmp[i] == '0')) {
               writefmt(fmt, prec + ldz + 1 + 20, 'E', is_quad);
               if (!is_quad)
-                j = sprintf(tmp, fmt, v);
+                j = snprintf(tmp, sizeof(tmp), fmt, v);
               else
-                j = sprintf(tmp, fmt, lv);
+                j = snprintf(tmp, sizeof(tmp), fmt, lv);
               i0 = 1;
               tmp[i0] = tmp[0];
             }
@@ -1383,9 +1383,9 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
         */
         writefmt(fmt, prec + ldz, 'E', is_quad);
         if (!is_quad)
-          j = sprintf(tmp, fmt, v);
+          j = snprintf(tmp, sizeof(tmp), fmt, v);
         else
-          j = sprintf(tmp, fmt, lv);
+          j = snprintf(tmp, sizeof(tmp), fmt, lv);
         i0 = 1;
         tmp[i0] = tmp[0];
         i = prec + ldz + 4;
@@ -1396,9 +1396,9 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
           ldz = kdz;
           writefmt(fmt, prec + ldz, 'E', is_quad);
           if (!is_quad)
-            j = sprintf(tmp, fmt, v);
+            j = snprintf(tmp, sizeof(tmp), fmt, v);
           else
-            j = sprintf(tmp, fmt, lv);
+            j = snprintf(tmp, sizeof(tmp), fmt, lv);
           i0 = 1;
           tmp[i0] = tmp[0];
         }
@@ -1420,9 +1420,9 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
         */
         writefmt(fmt, prec + ldz + 1, 'E', is_quad);
         if (!is_quad)
-          j = sprintf(tmp, fmt, v);
+          j = snprintf(tmp, sizeof(tmp), fmt, v);
         else
-          j = sprintf(tmp, fmt, lv);
+          j = snprintf(tmp, sizeof(tmp), fmt, lv);
         i0 = 1;
         tmp[i0] = tmp[0];
         i = prec + ldz + 4 + 1;
@@ -1437,9 +1437,9 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
           if ((tmp[i] == '0') && (tmp[j] == '0')) {
             writefmt(fmt, prec + ldz + 1 + 20, 'E', is_quad);
             if (!is_quad)
-              j = sprintf(tmp, fmt, v);
+              j = snprintf(tmp, sizeof(tmp), fmt, v);
             else
-              j = sprintf(tmp, fmt, lv);
+              j = snprintf(tmp, sizeof(tmp), fmt, lv);
             i0 = 1;
             tmp[i0] = tmp[0];
           }
@@ -1465,9 +1465,9 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
         */
         writefmt(fmt, prec + ldz + 1, 'E', is_quad);
         if (!is_quad)
-          j = sprintf(tmp, fmt, v);
+          j = snprintf(tmp, sizeof(tmp), fmt, v);
         else
-          j = sprintf(tmp, fmt, lv);
+          j = snprintf(tmp, sizeof(tmp), fmt, lv);
         i0 = 1;
         tmp[i0] = tmp[0];
         i = prec + ldz + 4 + 1;
@@ -1482,9 +1482,9 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
           if ((tmp[i] == '0') && (tmp[j] == '0')) {
             writefmt(fmt, prec + ldz + 1 + 20, 'E', is_quad);
             if (!is_quad)
-              j = sprintf(tmp, fmt, v);
+              j = snprintf(tmp, sizeof(tmp), fmt, v);
             else
-              j = sprintf(tmp, fmt, lv);
+              j = snprintf(tmp, sizeof(tmp), fmt, lv);
             i0 = 1;
             tmp[i0] = tmp[0];
             tmp[prec + ldz + 22] = '\0';
@@ -1546,9 +1546,9 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
 
         /* Rely on sprintf to correctly round the result */
         if (!is_quad)
-          j = sprintf(tmp, fmt, v);
+          j = snprintf(tmp, sizeof(tmp), fmt, v);
         else
-          j = sprintf(tmp, fmt, lv);
+          j = snprintf(tmp, sizeof(tmp), fmt, lv);
 
         if (round == FIO_COMPATIBLE) {
           i1 = 2 + prec;
@@ -1569,9 +1569,9 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
           if (tmp[2 + prec] == '5') {
             writefmt(fmt, prec + 21, 'f', is_quad);
             if (!is_quad)
-              j = sprintf(tmp, fmt, v);
+              j = snprintf(tmp, sizeof(tmp), fmt, v);
             else
-              j = sprintf(tmp, fmt, lv);
+              j = snprintf(tmp, sizeof(tmp), fmt, lv);
           }
           if (tmp[i1] < '5') {
             tmp[prec + 2] = '\0';
@@ -1629,9 +1629,9 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
         if (tmp[2 + prec] == '0') {
           writefmt(fmt, prec + 20, 'f', is_quad);
           if (!is_quad)
-            j = sprintf(tmp, fmt, v);
+            j = snprintf(tmp, sizeof(tmp), fmt, v);
           else
-            j = sprintf(tmp, fmt, lv);
+            j = snprintf(tmp, sizeof(tmp), fmt, lv);
           tmp[2 + prec + 20] = '\0';
           for (i = prec + 2; tmp[i] != '\0'; i++) {
             if (tmp[i] != '0')
@@ -1672,9 +1672,9 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
         if (tmp[2 + prec] == '0') {
           writefmt(fmt, prec + 20, 'f', is_quad);
           if (!is_quad)
-            j = sprintf(tmp, fmt, v);
+            j = snprintf(tmp, sizeof(tmp), fmt, v);
           else
-            j = sprintf(tmp, fmt, lv);
+            j = snprintf(tmp, sizeof(tmp), fmt, lv);
         }
         tmp[2 + prec] = '\0';
         *decpt = 0;
