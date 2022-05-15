@@ -30,7 +30,7 @@ if(cpp_result EQUAL 0)
   # Skip all lines which starts with '#'
   list(FILTER UPPERILM_H_CONTENTS EXCLUDE REGEX "^#")
   list(JOIN UPPERILM_H_CONTENTS "\n" UPPERILM_H_CONTENTS_SORTED)
-  file(WRITE ${UTILS_UPPER_BIN_DIR}/upperilm.sort "${UPPERILM_H_CONTENTS_SORTED}")
+  file(WRITE ${UTILS_UPPER_BIN_DIR}/upperilm.sort "${UPPERILM_H_CONTENTS_SORTED}\n")
 else()
   message(FATAL_ERROR "Preprocessing of upperilm.in failed; aborting.")
 endif()
