@@ -1339,7 +1339,7 @@ lldbg_get_bounds_for_sdsc(LL_DebugInfo *db, int findex, SPTR sptr, int rank,
           ? ADDRESSG(SDSCG(sptr)) - ADDRESSG(sptr)
           : 0;
 
-  const int F90_Desc_byte_len = 8 * (DESC_HDR_BYTE_LEN - DESC_HDR_TAG);
+  const int F90_Desc_byte_len = DESC_HDR_INT_LEN * (DESC_HDR_BYTE_LEN - DESC_HDR_TAG);
   const int F90_DescDim_size = 8 * DESC_DIM_LEN;    /* sizeof(F90_DescDim)*/
   const int F90_Desc_dim_offset = 8 * DESC_HDR_LEN; /* offsetof(F90_Desc, dim)*/
   const int ubound_offset_wrt_lbound =
@@ -1399,7 +1399,7 @@ lldbg_get_bounds_for_assumed_rank_sdsc(LL_DebugInfo *db, SPTR sptr,
                                        LL_MDRef *ubnd_expr_mdnode,
                                        LL_MDRef *stride_expr_mdnode)
 {
-  const int F90_Desc_byte_len = 8 * (DESC_HDR_BYTE_LEN - DESC_HDR_TAG);
+  const int F90_Desc_byte_len = DESC_HDR_INT_LEN * (DESC_HDR_BYTE_LEN - DESC_HDR_TAG);
   const int F90_DescDim_size = 8 * DESC_DIM_LEN;    /* sizeof(F90_DescDim)*/
   const int F90_Desc_dim_offset = 8 * DESC_HDR_LEN; /* offsetof(F90_Desc, dim)*/
   const int ubound_offset_wrt_lbound =
@@ -2822,6 +2822,7 @@ lldbg_create_deferred_len_string_type_mdnode(LL_DebugInfo *db, SPTR sptr,
   LL_MDRef mdLenExp = ll_get_md_null();
   LLMD_Builder mdb = llmd_init(db->module);
   const char *name = "character(*)";
+  char gbl_arr_len[MAXIDLEN] = {0};
   const long long size = 32;
   const long long alignment = 0;
   const int encoding = 0;
@@ -2840,27 +2841,89 @@ lldbg_create_deferred_len_string_type_mdnode(LL_DebugInfo *db, SPTR sptr,
     LL_MDRef type_mdnode =
              lldbg_emit_type(db, DT_INT, sdscsptr, findex, false, false, false);
 
-    /* create a local variable to hold the string length */
-    mdLen = lldbg_create_local_variable_mdnode(
+    if (SCG(sptr) == SC_CMBLK) {
+      /* common blocks are global symbols */
+      /* create a new global variable that can be referred by string length AT
+       * of deferred length array.
+       * Length of an array is stored in array descriptor
+       * (SDSCG(REVMIDLNKG(sptr))) for local scope. A Local deferred array
+       * variable has two parts one each for array and its descriptor.
+
+       * %mdi_options$p_352 = alloca [1 x i8]*, align 8	==> array
+       * %mdi_options$sd_351 = alloca [16 x i64], align 8 ==> descriptor
+
+       * But module variables (considered as global variables) are
+       * in a single common block variable.
+
+       * %struct_modmdi_0_ = type < { [144 x i8]  } > ==> type of common block
+       * @_modmdi_0_=common global %struct_modmdi_0_  zeroinitializer,align 64,
+                               ==> global variable that holds array and descr
+
+       * Here, we find the offset of the descriptor(sdscsptr) in a common block
+       * structure and add it with the offset of len member of the
+       * descriptor's structure to get the array's length.
+       */
+      strcpy(gbl_arr_len, SYMNAME(sptr));
+      strcat(gbl_arr_len, "_len");
+      SPTR lensptr = getsymbol(gbl_arr_len);
+      /* byte at which length is stored in fortan array  descriptor */
+      const int F90_Desc_byte_len = DESC_HDR_INT_LEN
+                     * (DESC_HDR_BYTE_LEN - DESC_HDR_TAG);
+
+      /* find the offset of the descriptor in common block struct and
+         add it with len_off */
+      int len_offset = ADDRESSG(sdscsptr) + F90_Desc_byte_len;
+
+      mdLen = lldbg_create_global_variable_mdnode
+                 (db, db->cur_module_mdnode, SYMNAME(lensptr), NULL, NULL,
+                  ll_get_md_null(), 0, type_mdnode, 0, 1, NULL, -1,
+                  DIFLAG_ARTIFICIAL, len_offset, lensptr, ll_get_md_null());
+
+      /* The created global variable should be linked with the same common
+       * block variable as descriptor. So that location metadata  will be
+       * generated and use the same base addr as of descriptor
+       */
+      /* MIDNUMG: cmn_blk variable of the sptr
+       * CMEMLG: last element of cmn blk members linked list */
+      SYMLKP(CMEMLG(MIDNUMG(sdscsptr)), lensptr);
+      CMEMLP(MIDNUMG(sdscsptr), lensptr); //make it as last member
+
+      /* add it to global debug so that it will be added to debug reference of
+       * common block variable in "lldbg_create_cmblk_mem_mdnode_list"
+       */
+      ll_add_global_debug(db->module, lensptr, mdLen);
+
+      /* string length reference should be DIGlobalvariable, get it from
+       * DIGlobalExpression
+       */
+      LL_MDNode *node = db->module->mdnodes[LL_MDREF_value(mdLen) - 1];
+      mdLen = node->elem[0];
+    } else {
+      /* create a local variable to hold the string length */
+      mdLen = lldbg_create_local_variable_mdnode(
                         db, DW_TAG_auto_variable, blk_info->mdnode, NULL,
                         file_mdnode, 0, 0, type_mdnode, DIFLAG_ARTIFICIAL,
                         ll_get_md_null(), 1 /*distinct*/);
 
-    /* string length is preserved in DESC_HDR_BYTE_LEN or len field of Fortran
-     * descriptor. i.e. offsetof(F90_Desc, len), extract it using !DIExpression
-     */
-    const int F90_Desc_byte_len = 8 * (DESC_HDR_BYTE_LEN - DESC_HDR_TAG);
-    const int target_size_offset = F90_Desc_byte_len;
-    const unsigned v1 =
-      lldbg_encode_expression_arg(LL_DW_OP_int, target_size_offset);
-    const unsigned add = lldbg_encode_expression_arg(LL_DW_OP_plus_uconst, 0);
+      /* string length is preserved in DESC_HDR_BYTE_LEN or
+       * len field of Fortran descriptor. i.e. offsetof(F90_Desc, len),
+       * extract it using !DIExpression
+       */
+      const int F90_Desc_byte_len =
+                   DESC_HDR_INT_LEN * (DESC_HDR_BYTE_LEN - DESC_HDR_TAG);
+      const int target_size_offset = F90_Desc_byte_len;
+      const unsigned v1 =
+       lldbg_encode_expression_arg(LL_DW_OP_int, target_size_offset);
+      const unsigned add =
+       lldbg_encode_expression_arg(LL_DW_OP_plus_uconst, 0);
 
-    /* emit an @llvm.dbg.declare with required !DIExpression */
-    LL_MDRef expr_mdnode = lldbg_emit_expression_mdnode(db, 2, add, v1);
-    insert_llvm_dbg_declare(mdLen, sdscsptr, dataloctype,
+      /* emit an @llvm.dbg.declare with required !DIExpression */
+      LL_MDRef expr_mdnode = lldbg_emit_expression_mdnode(db, 2, add, v1);
+      insert_llvm_dbg_declare(mdLen, sdscsptr, dataloctype,
                             make_mdref_op(expr_mdnode), OPF_NONE);
 
-    mdLenExp = lldbg_emit_empty_expression_mdnode(db);
+      mdLenExp = lldbg_emit_empty_expression_mdnode(db);
+    }
   }
 
   llmd_set_class(mdb, LL_DIStringType);
@@ -2871,6 +2934,8 @@ lldbg_create_deferred_len_string_type_mdnode(LL_DebugInfo *db, SPTR sptr,
   llmd_add_i32(mdb, encoding);
   llmd_add_md(mdb, mdLen);
   llmd_add_md(mdb, mdLenExp);
+  // String length metadata is different for every new deferred array variable
+  llmd_set_distinct(mdb);
   return llmd_finish(mdb);
 }
 
@@ -3481,6 +3546,16 @@ lldbg_emit_global_variable(LL_DebugInfo *db, SPTR sptr, ISZ_T off, int findex,
   if (sptr && UPLEVELG(sptr))
     return;
 
+  /* A deferred array variable inside module will create a new
+     Global variable mdnode for array length and add it to end of
+     common block members while processing itself.
+     If it comes here as part of common block variables from
+     "add_debug_cmnblk_variables", exit
+  */
+
+  if (!LL_MDREF_IS_NULL(ll_get_global_debug(cpu_llvm_module, sptr)))
+    return;
+
   assert(db, "Debug info not enabled", 0, ERR_Fatal);
   if ((!sptr) || (!DTYPEG(sptr)))
     return;
@@ -3517,7 +3592,8 @@ lldbg_emit_global_variable(LL_DebugInfo *db, SPTR sptr, ISZ_T off, int findex,
   } else {
     fwd = ll_get_md_null();
   }
-  if (!ll_feature_debug_info_ver90(&db->module->ir)) {
+  if (!ll_feature_debug_info_ver90(&db->module->ir)
+        || pointer_scalar_need_debug_info(sptr)) {
     if (ftn_array_need_debug_info(sptr)) {
       SPTR array_sptr = (SPTR)REVMIDLNKG(sptr);
       /* Overwrite the display_name and flags to represent the user defined
