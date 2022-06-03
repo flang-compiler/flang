@@ -4,30 +4,30 @@
 
 ! RUN: %flang -S -emit-llvm %s
 
-MODULE dbcsr_operations
- PUBLIC :: dbcsr_norm
- INTERFACE dbcsr_norm
-  MODULE PROCEDURE dbcsr_norm_anytype
+MODULE dbcsr_public_operations
+ PUBLIC :: dbcsr_public_norm
+ INTERFACE dbcsr_public_norm
+  MODULE PROCEDURE dbcsr_public_norm_anytype
  END INTERFACE
  CONTAINS
- SUBROUTINE dbcsr_norm_anytype
+ SUBROUTINE dbcsr_public_norm_anytype
    print *, "hello world"
  END SUBROUTINE
-END MODULE dbcsr_operations
+END MODULE dbcsr_public_operations
 
-MODULE dbcsr_api
-use dbcsr_operations
- use dbcsr_operations, only: &
- dbcsr_norm_prv => dbcsr_norm
- public::dbcsr_norm
+MODULE dbcsr_public_api
+use dbcsr_public_operations
+ use dbcsr_public_operations, only: &
+ dbcsr_public_norm_prv => dbcsr_public_norm
+ public::dbcsr_public_norm
 private
  CONTAINS
- SUBROUTINE dbcsr_norm()
-  print *, "hellow world from dbcsr_api "
+ SUBROUTINE dbcsr_public_norm()
+  print *, "hellow world from dbcsr_public_api "
  end subroutine
 end module
 
 program main
-use dbcsr_api, only : dbcsr_norm
- call dbcsr_norm();
+use dbcsr_public_api, only : dbcsr_public_norm
+ call dbcsr_public_norm();
 end program
