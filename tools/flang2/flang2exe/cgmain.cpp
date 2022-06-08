@@ -53,6 +53,9 @@
 
 #include "upper.h"
 
+#ifdef TARGET_LLVM_ARM64
+#define FLANG_GEN_LLVM_ATOMIC_INTRINSICS 1
+#endif
 
 typedef enum SincosOptimizationFlags {
   /* used only for sincos() optimization */
