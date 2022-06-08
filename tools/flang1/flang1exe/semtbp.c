@@ -305,6 +305,8 @@ initFinalSub(tbpTask task, TBP *curr)
       STYPEP(curr->impSptr, ST_ENTRY);
       SCOPEP(curr->impSptr, stb.curr_scope);
     }
+    /* FINAL subroutine is always public. See Fortran 2018 7.5.6.1 NOTE 1. */
+    PRIVATEP(curr->impSptr, 0);
     if (task == TBP_COMPLETE_ENDMODULE || task == TBP_COMPLETE_FIN) {
       proc_arginfo(curr->impSptr, &paramct, &dpdsc, &sym);
       if (task == TBP_COMPLETE_FIN && (!sym || !dpdsc || !paramct ||
