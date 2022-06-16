@@ -29,6 +29,7 @@ elseif( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
   add_definitions(
    -DTARGET_LLVM_ARM64
    -DTARGET_${OS}_ARM
+   -DTARGET_${OS}_ARM64
   )
 elseif( ${TARGET_ARCHITECTURE} STREQUAL "ppc64le" )
   add_definitions(
