@@ -1726,30 +1726,49 @@ init_sptr_w_acl(int in_sptr, ACL *aclp)
     /* generate code to assign aclp values to the temporary */
     constructf90(acs.tmp, aclp);
 
-    /* If the function call returns a deferred-length array and appears in the
-     * loop body, the bounds of the function return array is uninitialized when
-     * used in the allocation of array temp. Here we set the function return
-     * array to be zero-sized before the allocation.
+    /* If the function call returns a deferred-length array or adjustable
+     * array, and it appears in the loop body, the bounds of the function
+     * return array is uninitialized when used in the allocation of array temp.
+     * Here we set the function return array to be zero-sized before the
+     * allocation.
      */
-    if (acs.func_in_do && sem.arrdim.ndefer &&
-        SDSCG(A_SPTRG(sem.arrfn.return_value))) {
-      int sdsc, dtype, i;
+    if (acs.func_in_do && sem.arrdim.ndefer && sem.arrfn.return_value) {
+      int ret_sptr, dtype, ndim, i;
 
-      sdsc = SDSCG(A_SPTRG(sem.arrfn.return_value));
-      dtype = A_DTYPEG(sem.arrfn.return_value);
-      for (i = 0; i < ADD_NUMDIM(dtype); i++) {
-        int lb = lbound_of(dtype, i);
-        int extnt = ADD_EXTNTAST(dtype, i);
-        assert(A_TYPEG(lb) == A_SUBSCR, "init_sptr_w_acl: lb not subs", lb,
-               ERR_Fatal);
-        assert(memsym_of_ast(lb) == sdsc, "init_sptr_w_acl: lb not sdsc", lb,
-               ERR_Fatal);
-        assert(A_TYPEG(extnt) == A_SUBSCR, "init_sptr_w_acl: extnt not subs",
-               extnt, ERR_Fatal);
-        assert(memsym_of_ast(extnt) == sdsc, "init_sptr_w_acl: extnt not sdsc",
-               extnt, ERR_Fatal);
-        (void)add_stmt_before(mk_assn_stmt(lb, astb.bnd.one, astb.bnd.dtype), std);
-        (void)add_stmt_before(mk_assn_stmt(extnt, astb.bnd.zero, astb.bnd.dtype), std);
+      ret_sptr = A_SPTRG(sem.arrfn.return_value);
+      dtype = DTYPEG(ret_sptr);
+      ndim = ADD_NUMDIM(dtype);
+      if (ADJARRG(ret_sptr)) {
+        for (i = 0; i < ndim; i++) {
+          int lb = ADD_LWBD(dtype, i);
+          int ub = ADD_UPBD(dtype, i);
+          assert(A_TYPEG(lb) == A_ID, "init_sptr_w_acl: lb not id", lb,
+                 ERR_Fatal);
+          assert(A_TYPEG(ub) == A_ID, "init_sptr_w_acl: ub not id", ub,
+                 ERR_Fatal);
+          (void)add_stmt_before(
+              mk_assn_stmt(lb, astb.bnd.one, astb.bnd.dtype), std);
+          (void)add_stmt_before(
+              mk_assn_stmt(ub, astb.bnd.zero, astb.bnd.dtype), std);
+        }
+      } else if (SDSCG(ret_sptr)) {
+        int sdsc = SDSCG(ret_sptr);
+        for (i = 0; i < ndim; i++) {
+          int lb = lbound_of(dtype, i);
+          int extnt = ADD_EXTNTAST(dtype, i);
+          assert(A_TYPEG(lb) == A_SUBSCR, "init_sptr_w_acl: lb not subs", lb,
+                 ERR_Fatal);
+          assert(memsym_of_ast(lb) == sdsc, "init_sptr_w_acl: lb not sdsc", lb,
+                 ERR_Fatal);
+          assert(A_TYPEG(extnt) == A_SUBSCR, "init_sptr_w_acl: extnt not subs",
+                 extnt, ERR_Fatal);
+          assert(memsym_of_ast(extnt) == sdsc,
+                 "init_sptr_w_acl: extnt not sdsc", extnt, ERR_Fatal);
+          (void)add_stmt_before(
+              mk_assn_stmt(lb, astb.bnd.one, astb.bnd.dtype), std);
+          (void)add_stmt_before(
+              mk_assn_stmt(extnt, astb.bnd.zero, astb.bnd.dtype), std);
+        }
       }
     }
     acs.tmp = sptr; /* if we recursed, asc.tmp may have changed */
@@ -3186,6 +3205,7 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
         int shpdest;
         int ndim;
         int iv;
+        int alloc_obj = 0; /* used to dealloc array function return variable */
 
         if (!in_array) {
           /* handle case where a (possibly multiple dimensioned
@@ -3217,29 +3237,43 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
          */
         if (acs.level && sem.arrfn.sptr > NOSYM &&
             sem.arrfn.return_value == SST_ASTG(stkp)) {
+          int ret_sptr = A_SPTRG(sem.arrfn.return_value);
           acs.func_in_do = TRUE;
-          if (sem.arrfn.call_std) {
-            /* The function call stmt generated in func_call2() was added
-             * outside the loop generated from implied-do loop, we should move
-             * the call stmt into loop.
-             */
-            ast = STD_AST(sem.arrfn.call_std);
-            ast = ast_rewrite_indices(ast);
-            (void)add_stmt(ast);
-            remove_stmt(sem.arrfn.call_std);
-            sem.arrfn.call_std = 0;
+          /* STDs generated in func_call2(semfunc.c) have been move in loop
+           * when processing AC_IDO. We do not need move in sem.arrfn.alloc_std
+           * and sem.arrfn.call_std again.
+           */
+          if (sem.arrfn.alloc_std) {
+            /* remove return variable from sem.p_dealloc */
+            ITEM *pre = NULL;
+            for (ITEM *itemp = sem.p_dealloc; itemp; itemp = itemp->next) {
+              if (A_SPTRG(itemp->ast) == ret_sptr) {
+                if (pre != NULL)
+                  pre->next = itemp->next;
+                else
+                  sem.p_dealloc = itemp->next;
+                alloc_obj = itemp->ast;
+                break;
+              }
+              pre = itemp;
+            }
           }
-          if (ADD_DEFER(SST_DTYPEG(stkp)) && SDSCG(A_SPTRG(SST_ASTG(stkp)))) {
-            /* If the function call returns deferred-length array, we use the
-             * sum of the current length of the array temp and the length of
-             * the array returned by the function as the length of the array
-             * temp after reallocation.
+          if (ADD_DEFER(SST_DTYPEG(stkp))) {
+            /* If the function call returns deferred-length array or adjustable
+             * array, we use the sum of the current length of the array temp
+             * and the length of the array returned by the function as the
+             * length of the array temp after reallocation.
              */
+            int src_array = memsym_of_ast(base_id);
+            if (!SDSCG(ret_sptr))
+              get_static_descriptor(ret_sptr);
             argt_count = 3;
             argt = mk_argt(argt_count);
-            ARGT_ARG(argt, 0) = mk_id(MIDNUMG(memsym_of_ast(base_id)));
-            ARGT_ARG(argt, 1) = mk_id(SDSCG(memsym_of_ast(base_id)));
-            ARGT_ARG(argt, 2) = mk_id(SDSCG(A_SPTRG(SST_ASTG(stkp))));
+            ARGT_ARG(argt, 0) = mk_id(MIDNUMG(src_array));
+            ARGT_ARG(argt, 1) = mk_id(SDSCG(src_array));
+            ARGT_ARG(argt, 2) = mk_id(SDSCG(ret_sptr));
+            DESCUSEDP(src_array, 1);
+            DESCUSEDP(ret_sptr, 1);
             ast = mk_func_node(A_CALL, mk_id(sym_mkfunc(mkRteRtnNm(
                 RTE_realloc_arr_in_impiled_do), DT_ADDR)), argt_count, argt);
             (void)add_stmt(ast);
@@ -3280,6 +3314,9 @@ _constructf90(int base_id, int in_indexast, bool in_array, ACL *aclp)
           (void)add_stmt(ast);
         }
 
+        /* dealloc array function return variable */
+        if (alloc_obj)
+          (void)gen_alloc_dealloc(TK_DEALLOCATE, alloc_obj, 0);
         clear_element_cnt();
         indexast = tmpid;
       } else {
