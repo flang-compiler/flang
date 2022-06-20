@@ -1274,7 +1274,7 @@ static const MDTemplate Tmpl_DIGlobalVariable4[] = {
   { "tag",                      DWTagField,    FlgHidden },
   { "unused",                   NodeField,     FlgHidden },
   { "scope",                    NodeField,     0 },
-  { "name",                     StringField,   FlgMandatory },
+  { "name",                     StringField,   0 },
   { "displayName",              StringField,   FlgHidden },
   { "linkageName",              StringField,   0 },
   { "file",                     NodeField,     0 },
@@ -1652,7 +1652,7 @@ write_mdfield(FILE *out, LL_Module *module, int needs_comma, LL_MDRef mdref,
            ERR_Fatal);
     if (!mandatory && strcmp(module->mdstrings[value], "!\"\"") == 0)
       return false;
-    /* The mdstrings[] entry is formatted as !"...". String the leading !. */
+    /* The mdstrings[] entry is formatted as !"...". Strip the leading !. */
     fprintf(out, "%s%s: %s", prefix, tmpl->name, module->mdstrings[value] + 1);
     break;
 
