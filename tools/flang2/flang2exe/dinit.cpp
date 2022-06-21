@@ -5824,8 +5824,7 @@ eval_init_expr_item(CONST *cur_e)
     }
     if (PARAMG(cur_e->sptr) || (DOVARG(cur_e->sptr) && DINITG(cur_e->sptr)) ||
         (CCSYMG(cur_e->sptr) && DINITG(cur_e->sptr))) {
-      if (!PARAMVALG(cur_e->sptr) && DTY(DTYPEG(cur_e->sptr)) == TY_CHAR
-          && SCG(cur_e->sptr) == SC_STATIC) {
+      if (!PARAMVALG(cur_e->sptr) && DTY(DTYPEG(cur_e->sptr)) == TY_CHAR) {
         new_e = get_static_str(cur_e->sptr);
         break;
       }
@@ -5834,6 +5833,15 @@ eval_init_expr_item(CONST *cur_e)
       if (cur_e->mbr) {
         new_e->sptr = cur_e->mbr;
       }
+      break;
+    }
+    if (SCG(cur_e->sptr) == SC_CMBLK &&
+        FROMMODG(MIDNUMG(cur_e->sptr)) && MODCMNG(MIDNUMG(cur_e->sptr))) {
+      /* The dinit flag will be removed when lowering if the variable is from an
+       * external module. The branch deals with those variables from module
+       * commons to directly return the original variable.
+       */
+      new_e = clone_init_const(cur_e, true);
     }
     break;
   case AC_CONST:
