@@ -221,6 +221,7 @@ DVFUNCA	num	num	sym	ilm	sym	ilms
 DIM	ilm	ilm
 DIMAG	ilm
 DINT	ilm
+DISNAN	ilm
 DLD	ilm
 DLOG	ilm
 DLOG10	ilm
@@ -522,6 +523,7 @@ RET
 RFLOOR	ilm
 RFUNC	num	sym	ilms
 RFUNCA	num	num	ilm	ilms
+RISNAN	ilm
 PRFUNCA	num	num	sym	ilm	ilms
 RVFUNCA	num	num	sym	ilm	sym	ilms
 RLD	ilm
