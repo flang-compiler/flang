@@ -49,6 +49,10 @@ number of the terminating ';'.
 stc2 - current source file index.  Default value is 1.
 stc3 - number of words for this ILM block (including the BOS).
 .AT spec trm
+.IL RISNAN arth lnk
+.AT spec trm
+.IL DISNAN arth lnk
+.AT spec trm
 .IL FLOAT arth lnk
 Convert integer to real number (REAL and FLOAT intrinsics).
 .OP FLOAT r p1

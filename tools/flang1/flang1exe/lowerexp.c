@@ -3083,6 +3083,7 @@ intrinsic_arg_dtype(int intr, int ast, int args, int nargs)
   case I_SET_EXPONENT:
   case I_VERIFY:
   case I_RAN:
+  case I_ISNAN:
     return -1;
 
   case I_ZEXT:
@@ -4211,6 +4212,14 @@ lower_intrinsic(int ast)
   case I_ILEN:
     /* just treat like a function call, with pghpf prefix */
     ilm = lower_function(ast);
+    A_ILMP(ast, ilm);
+    return ilm;
+
+  case I_ISNAN:
+    arg = ARGT_ARG(args,0);
+    lower_expression(arg);
+    ilm = plower("oi", styped("ISNAN", A_DTYPEG(arg)),
+                 lower_ilm(arg));
     A_ILMP(ast, ilm);
     return ilm;
 
