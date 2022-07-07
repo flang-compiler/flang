@@ -7,6 +7,9 @@
 
 #ifndef _PGOMP_H
 #define _PGOMP_H
+
+#include <stdint.h>
+
 /* simple lock */
 
 /* lock API functions */
