@@ -176,7 +176,7 @@ public:
 typedef void ident_t;
 
 #ifndef __WORDSIZE
-#ifdef _MSC_VER
+#ifdef _WIN32
 #ifdef _WIN64
 #define __WORDSIZE 64
 #else
