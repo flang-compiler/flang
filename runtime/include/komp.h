@@ -190,9 +190,9 @@ typedef void ident_t;
 typedef int kmp_int32;
 typedef long long kmp_int64;
 #if __WORDSIZE == 32
-typedef int kmp_critical_name[8];  /* must be 32 bytes */
+typedef kmp_int32 kmp_critical_name[8];  /* must be 32 bytes */
 #else
-typedef long kmp_critical_name[4]; /* must be 32 bytes and  8-byte aligned */
+typedef kmp_int64 kmp_critical_name[4];  /* must be 32 bytes and 8-byte aligned */
 #endif
 
 extern kmp_int32 __kmpc_global_thread_num(ident_t *);
