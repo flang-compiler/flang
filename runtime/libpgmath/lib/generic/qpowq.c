@@ -9,8 +9,8 @@
 
 #include "mthdecls.h"
 
-long double
-__mth_i_qpowq(long double x, long double y)
+float128_t
+__mth_i_qpowq(float128_t x, float128_t y)
 {
   return powl(x, y);
 }

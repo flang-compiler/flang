@@ -10,7 +10,7 @@
 #include "mthdecls.h"
 /* INT */
 #define LONG_LONG_MAX 9223372036854775807
-long long __mth_i_kiqnint(long double d)
+long long __mth_i_kiqnint(float128_t d)
 {
   if ((d > 0.0L) && (d > LONG_LONG_MAX))
     return LONG_LONG_MAX;

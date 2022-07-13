@@ -12,6 +12,7 @@
 #endif
 
 #include <complex.h>
+#include "float128.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,7 +21,7 @@ extern "C" {
 /*
  * Real.
  */
-typedef long double vrq1_t;
+typedef	float128_t vrq1_t;
 typedef	double	vrd1_t;
 typedef	double	vrd2_t	__attribute__((vector_size(2*sizeof(double))));
 typedef	double	vrd4_t	__attribute__((vector_size(4*sizeof(double))));

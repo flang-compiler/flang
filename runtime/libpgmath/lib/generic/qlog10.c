@@ -9,8 +9,8 @@
 
 #include "mthdecls.h"
 
-long double
-__mth_i_qlog10(long double d)
+float128_t
+__mth_i_qlog10(float128_t d)
 {
   return log10l(d);
 }

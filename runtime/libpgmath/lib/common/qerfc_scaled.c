@@ -16,15 +16,15 @@
 #define xchg 12.0l
 #define iteration 200
 
-long double
-__mth_i_qerfc_scaled(long double arg)
+float128_t
+__mth_i_qerfc_scaled(float128_t arg)
 {
   if (arg >= xchg) {
     int i;
-    long double presum;
-    long double nowsum = 0.0;
-    long double ps = 1.0;
-    long double n1_2xx = 1.0 / (2.0 * arg * arg);
+    float128_t presum;
+    float128_t nowsum = 0.0;
+    float128_t ps = 1.0;
+    float128_t n1_2xx = 1.0 / (2.0 * arg * arg);
 
     for (i = 1; i < iteration; i++) {
       ps *= (1 - (2 * i)) * n1_2xx;

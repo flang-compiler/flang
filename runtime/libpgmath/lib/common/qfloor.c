@@ -9,8 +9,8 @@
 
 #include "mthdecls.h"
 
-long double
-__mth_i_qfloor(long double x)
+float128_t
+__mth_i_qfloor(float128_t x)
 {
   return floorl(x);
 }

@@ -9,7 +9,7 @@
 
 #include "mthdecls.h"
 
-double __mth_i_dqanint(long double d)
+double __mth_i_dqanint(float128_t d)
 {
   return (double)roundl(d);
 }

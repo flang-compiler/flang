@@ -9,8 +9,8 @@
 
 #include "mthdecls.h"
 
-long double
-__mth_i_qatanh(long double d)
+float128_t
+__mth_i_qatanh(float128_t d)
 {
   return atanhl(d);
 }

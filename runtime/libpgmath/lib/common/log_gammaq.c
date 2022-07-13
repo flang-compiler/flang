@@ -9,9 +9,9 @@
 
 #include "mthdecls.h"
 
-long double
-__mth_i_qlog_gamma(long double arg)
+float128_t
+__mth_i_qlog_gamma(float128_t arg)
 {
-  long double q = lgammal(arg);
+  float128_t q = lgammal(arg);
   return q;
 }

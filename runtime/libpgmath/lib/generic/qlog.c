@@ -9,8 +9,8 @@
 
 #include "mthdecls.h"
 
-long double
-__mth_i_qlog(long double q)
+float128_t
+__mth_i_qlog(float128_t q)
 {
   return logl(q);
 }

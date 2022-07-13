@@ -5,9 +5,11 @@
  *
  */
 
+#include "float128.h"
+
 extern long double remainderl(long double, long double);
 
-long double __mth_i_qremainder(long double x, long double y)
+float128_t __mth_i_qremainder(float128_t x, float128_t y)
 {
   return remainderl(x, y);
 }

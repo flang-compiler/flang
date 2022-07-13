@@ -5,9 +5,11 @@
  *
  */
 
+#include "float128.h"
+
 extern long double roundl(long double);
 
-long double __mth_i_qround(long double x)
+float128_t __mth_i_qround(float128_t x)
 {
   return roundl(x);
 }

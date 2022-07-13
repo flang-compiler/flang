@@ -18,7 +18,7 @@
 #define CNVRTRAD(radians) ((radians)*RAD_TO_DEG)
 
 
-#if     defined(TARGET_LINUX)
+#if defined(TARGET_LINUX) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE 
 #endif
 #ifndef	MTH_NO_STD_MATH_HDRS
@@ -30,14 +30,13 @@
 #include <complex.h>
 #endif
 
-#ifdef TARGET_SUPPORTS_QUADFP
-#define I_SIZE 2 /* i[] has 2 elements and 128 bits */
-#define LITTLE_SIGN_MASK  0x7fffffff
-#define BIG_SIGN_MASK 0xffffff7f
-typedef long double float128_t;
+#include "float128.h"
+
+/* Select a mask for the sign bit according to the host endianness. */
 static const int g_one = 1;
-#define is_little_endian()    (*(const char *) & g_one != 0)
-#endif
+#define is_little_endian() (*(const char *)&g_one != 0)
+#define LITTLE_SIGN_MASK   0x7fffffff
+#define BIG_SIGN_MASK      0xffffff7f
 
 /*
  * Windows does not recognize the "_Complex" keyword for complex types but does
@@ -452,7 +451,9 @@ float __mth_i_bessel_yn(int n, float arg);
 float __f90_bessel_yn(int n1, int n2, float f);
 float __mth_i_ceil(float);
 float __mth_i_floor(float);
-float __mth_i_aqanint(long double d);
+#ifdef TARGET_SUPPORTS_QUADFP
+float __mth_i_aqanint(float128_t d);
+#endif
 
 int __mth_i_idnint(double d);
 int __mth_i_mod(int i, int j);
@@ -509,49 +510,49 @@ double __f90_dbessel_yn(int n1, int n, double d);
 double __mth_i_dceil(double);
 double __mth_i_dfloor(double);
 #ifdef TARGET_SUPPORTS_QUADFP
-double __mth_i_dqanint(long double d);
-int  __mth_i_iqnint(long double q);
-long long __mth_i_kiqnint(long double q);
-long double __mth_i_qpowq(long double x, long double y);
-long double __mth_i_qpowi(long double x, int i);
-long double __mth_i_qpowk(long double x, long long i);
-long double __mth_i_qacos(long double q);
-long double __mth_i_qexp(long double q);
-long double __mth_i_qlog(long double q);
-long double __mth_i_qatan(long double q);
-long double __mth_i_qcos(long double q);
-long double __mth_i_qsin(long double q);
-long double __mth_i_qsqrt(long double q);
-long double __mth_i_qabs(long double q);
-long double __mth_i_qfloor(long double q);
-long double __mth_i_qceil(long double q);
-long double __mth_i_qmod(long double f, long double g);
-long double __mth_i_qsign(long double f, long double g);
-long double __mth_i_qtan(long double q);
-long double __mth_i_qasin(long double q);
-long double __mth_i_qasind(long double q);
-long double __mth_i_qsind(long double q);
-long double __mth_i_qacosd(long double q);
-long double __mth_i_qcosd(long double q);
-long double __mth_i_qatand(long double q);
-long double __mth_i_qtand(long double q);
-long double __mth_i_qint(long double q);
-long double __mth_i_qanint(long double q);
-long double __mth_i_qerf(long double q);
-long double __mth_i_qerfc(long double q);
-long double __mth_i_qerfc_scaled(long double q);
-long double __mth_i_qasinh(long double q);
-long double __mth_i_qacosh(long double q);
-long double __mth_i_qatanh(long double q);
-long double __mth_i_qsinh(long double q);
-long double __mth_i_qcosh(long double q);
-long double __mth_i_qtanh(long double q);
-long double __mth_i_qlog10(long double q);
-long double __mth_i_qgamma(long double q);
-long double __mth_i_qlog_gamma(long double q);
-long double __mth_i_qatan2(long double x, long double y);
-long double __mth_i_qatan2d(long double f, long double g);
-long double __mth_i_qhypot(long double x, long double y);
+double __mth_i_dqanint(float128_t d);
+int  __mth_i_iqnint(float128_t q);
+long long __mth_i_kiqnint(float128_t q);
+float128_t __mth_i_qpowq(float128_t x, float128_t y);
+float128_t __mth_i_qpowi(float128_t x, int i);
+float128_t __mth_i_qpowk(float128_t x, long long i);
+float128_t __mth_i_qacos(float128_t q);
+float128_t __mth_i_qexp(float128_t q);
+float128_t __mth_i_qlog(float128_t q);
+float128_t __mth_i_qatan(float128_t q);
+float128_t __mth_i_qcos(float128_t q);
+float128_t __mth_i_qsin(float128_t q);
+float128_t __mth_i_qsqrt(float128_t q);
+float128_t __mth_i_qabs(float128_t q);
+float128_t __mth_i_qfloor(float128_t q);
+float128_t __mth_i_qceil(float128_t q);
+float128_t __mth_i_qmod(float128_t f, float128_t g);
+float128_t __mth_i_qsign(float128_t f, float128_t g);
+float128_t __mth_i_qtan(float128_t q);
+float128_t __mth_i_qasin(float128_t q);
+float128_t __mth_i_qasind(float128_t q);
+float128_t __mth_i_qsind(float128_t q);
+float128_t __mth_i_qacosd(float128_t q);
+float128_t __mth_i_qcosd(float128_t q);
+float128_t __mth_i_qatand(float128_t q);
+float128_t __mth_i_qtand(float128_t q);
+float128_t __mth_i_qint(float128_t q);
+float128_t __mth_i_qanint(float128_t q);
+float128_t __mth_i_qerf(float128_t q);
+float128_t __mth_i_qerfc(float128_t q);
+float128_t __mth_i_qerfc_scaled(float128_t q);
+float128_t __mth_i_qasinh(float128_t q);
+float128_t __mth_i_qacosh(float128_t q);
+float128_t __mth_i_qatanh(float128_t q);
+float128_t __mth_i_qsinh(float128_t q);
+float128_t __mth_i_qcosh(float128_t q);
+float128_t __mth_i_qtanh(float128_t q);
+float128_t __mth_i_qlog10(float128_t q);
+float128_t __mth_i_qgamma(float128_t q);
+float128_t __mth_i_qlog_gamma(float128_t q);
+float128_t __mth_i_qatan2(float128_t x, float128_t y);
+float128_t __mth_i_qatan2d(float128_t f, float128_t g);
+float128_t __mth_i_qhypot(float128_t x, float128_t y);
 #endif
 
 #if	! defined (TARGET_X8664) && ! defined(LINUX8664)

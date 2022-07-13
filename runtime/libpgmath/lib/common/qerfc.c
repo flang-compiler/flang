@@ -9,9 +9,9 @@
 
 #include "mthdecls.h"
 
-long double
-__mth_i_qerfc(long double arg)
+float128_t
+__mth_i_qerfc(float128_t arg)
 {
-  long double f = erfcl(arg);
+  float128_t f = erfcl(arg);
   return f;
 }
