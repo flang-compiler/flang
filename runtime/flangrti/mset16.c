@@ -5,11 +5,12 @@
  *
  */
 
+#include "float128.h"
 #include "memops.h"
 
 #if !defined(INLINE_MEMOPS)
 void
-__c_mset16(long double *dest, long double value, long cnt)
+__c_mset16(float128_t *dest, float128_t value, long cnt)
 {
   long i;
 

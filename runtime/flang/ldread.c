@@ -116,7 +116,7 @@ static void get_number(void);
 static void get_cmplx(void);
 static void get_infinity(void);
 static void get_nan(void);
-static __REAL16_T to_real16(AVAL *);
+static __BIGREAL_T to_bigreal(AVAL *);
 static void get_qstr(int);
 static void get_junk(void);
 static bool skip_spaces(void);
@@ -1201,7 +1201,7 @@ get_number(void)
   int type;
   union {
     __BIGINT_T i;
-    __REAL16_T d;
+    __BIGREAL_T d;
     __INT8_T i8v;
   } val;
   int len;
@@ -1217,7 +1217,7 @@ get_number(void)
     return;
   }
   if (type == 1) {
-    tknval.dtype = __REAL16;
+    tknval.dtype = __BIGREAL;
     tknval.val.d = val.d;
   }
   else if (type == 2) {
@@ -1250,12 +1250,12 @@ get_number(void)
 static void
 get_cmplx(void)
 {
-  static AVAL cmplx[2] = {{__REAL16, {0}}, {__REAL16, {0}}};
+  static AVAL cmplx[2] = {{__BIGREAL, {0}}, {__BIGREAL, {0}}};
 
   get_token();
   if (tkntyp != TK_VAL || tknval.dtype == __STR || tknval.dtype == __NCHAR)
     goto cmplx_err;
-  cmplx[0].val.d = to_real16(&tknval);
+  cmplx[0].val.d = to_bigreal(&tknval);
   if (gbl->decimal == FIO_COMMA) {
     if (!find_char(';')) /* leaves ptr at after ';' */
       goto cmplx_err;
@@ -1266,7 +1266,7 @@ get_cmplx(void)
   get_token();
   if (tkntyp != TK_VAL || tknval.dtype == __STR || tknval.dtype == __NCHAR)
     goto cmplx_err;
-  cmplx[1].val.d = to_real16(&tknval);
+  cmplx[1].val.d = to_bigreal(&tknval);
   tknval.dtype = __BIGCPLX;
   tknval.val.cmplx = cmplx;
   if (!find_char(')'))
@@ -1309,7 +1309,7 @@ get_infinity(void)
         c = *currc++;
         if (ISDELIMITER(c)) {
           currc--;
-          tknval.dtype = __REAL16;
+          tknval.dtype = __BIGREAL;
           tknval.val.d = ieee_v.d;
           tkntyp = TK_VAL;
           return;
@@ -1325,7 +1325,7 @@ get_infinity(void)
                 if (c == 'y' || c == 'Y') {
                   c = *currc;
                   if (ISDELIMITER(c)) {
-                    tknval.dtype = __REAL16;
+                    tknval.dtype = __BIGREAL;
                     tknval.val.d = ieee_v.d;
                     tkntyp = TK_VAL;
                     return;
@@ -1397,7 +1397,7 @@ get_nan(void)
           ieee_v.v.hm |= 0x80000; /* quiet */
         }
         if (ISDELIMITER(c)) {
-          tknval.dtype = __REAL16;
+          tknval.dtype = __BIGREAL;
           tknval.val.d = ieee_v.d;
           tkntyp = TK_VAL;
           return;
@@ -1410,15 +1410,15 @@ conv_nan_error:
   tkntyp = TK_ERROR;
 }
 
-static __REAL16_T
-to_real16(AVAL *valp)
+static __BIGREAL_T
+to_bigreal(AVAL *valp)
 {
-  if (valp->dtype == __REAL16)
+  if (valp->dtype == __BIGREAL)
     return valp->val.d;
   if (valp->dtype == __INT8 || valp->dtype == __LOG8)
     return valp->val.d;
   assert(valp->dtype == __BIGINT || valp->dtype == __BIGLOG);
-  return (__REAL16_T)valp->val.i;
+  return (__BIGREAL_T)valp->val.i;
 }
 
 /*  stuff for returning a string token */

@@ -10,6 +10,7 @@
 #if !defined(WIN64)
 #include <fenv.h>
 #endif
+#include "float128.h"
 #include "fioMacros.h"
 #include "stdioInterf.h"
 #include "fio_fcb_flags.h"
@@ -28,19 +29,23 @@ union ieee {
     unsigned int e : 11;
     unsigned int s : 1;
   } v;
-  int i[2];
+  int i[sizeof(double)/sizeof(int)];
 };
 
+/* The ieeeq union is invalid If float128_t is not really 128 bits wide,
+   so its declaration and uses are guarded with TARGET_SUPPORTS_QUADFP. */
+#ifdef TARGET_SUPPORTS_QUADFP
 union ieeeq {
-  long double q;
+  float128_t q;
   struct {
     unsigned int lm[3];
     unsigned int hm : 16;
     unsigned int e : 15;
     unsigned int s : 1;
   } v;
-  int i[4];
+  int i[sizeof(float128_t)/sizeof(int)];
 };
+#endif
 
 typedef long INT;
 typedef unsigned long UINT;
@@ -792,14 +797,16 @@ writefmt(char *fmt, int prec, char c, int is_quad)
 #define SUBSCRIPT_3 3      /* subscript is 3 */
 
 char *
-__fortio_ecvt(long double lvalue, int width, int ndigit, int *decpt, int *sign,
+__fortio_ecvt(__BIGREAL_T lvalue, int width, int ndigit, int *decpt, int *sign,
               int round, int is_quad)
 {
   void ufptosci();
   int i, j;
 
   union ieee ieee_v;
+#ifdef TARGET_SUPPORTS_QUADFP
   union ieeeq ieeeq_v;
+#endif
 
   static char tmp[512];
   static char fmt[16];
@@ -828,27 +835,8 @@ __fortio_ecvt(long double lvalue, int width, int ndigit, int *decpt, int *sign,
     /* Is there anything else? */
   }
 
-  if (!is_quad) {
-    ieee_v.d = value;
-    fexp = ieee_v.v.e - EXPONENT_BIAS_D;
-    if (fexp == EXPONENT_BIAS_D + 1) {
-      if (ieee_v.v.hm == 0 && ieee_v.v.lm == 0) {
-        strcpy(tmp, "Inf");
-        *sign = ieee_v.v.s;
-        *decpt = 0;
-        return tmp;
-      } else {
-        strcpy(tmp, "NaN");
-        *sign = 0;
-        *decpt = 0;
-        return tmp;
-      }
-    }
-
-    *sign = ieee_v.v.s;
-    ieee_v.v.s = 0;
-    value = ieee_v.d;
-  } else {
+#ifdef TARGET_SUPPORTS_QUADFP
+  if (is_quad) {
     ieeeq_v.q = lvalue;
     fexp = ieeeq_v.v.e - EXPONENT_BIAS_Q;
     if (fexp == EXPONENT_BIAS_Q + 1) {
@@ -872,6 +860,29 @@ __fortio_ecvt(long double lvalue, int width, int ndigit, int *decpt, int *sign,
     *sign = ieeeq_v.v.s;
     ieeeq_v.v.s = 0;
     lvalue = ieeeq_v.q;
+  } else
+#endif
+  {
+    ieee_v.d = value;
+    fexp = ieee_v.v.e - EXPONENT_BIAS_D;
+    if (fexp == EXPONENT_BIAS_D + 1) {
+      if (ieee_v.v.hm == 0 && ieee_v.v.lm == 0) {
+        strcpy(tmp, "Inf");
+        *sign = ieee_v.v.s;
+        *decpt = 0;
+        return tmp;
+      } else {
+        strcpy(tmp, "NaN");
+        *sign = 0;
+        *decpt = 0;
+        return tmp;
+      }
+    }
+
+    *sign = ieee_v.v.s;
+    ieee_v.v.s = 0;
+    /* Set lvalue = value for the snprintf calls below when is_quad is true. */
+    lvalue = value = ieee_v.d;
   }
 
   /* For compatible mode, round '5' away from zero */
@@ -1177,12 +1188,14 @@ __fortio_ecvt(long double lvalue, int width, int ndigit, int *decpt, int *sign,
 }
 
 char *
-__fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
+__fortio_fcvt(__BIGREAL_T lv, int width, int prec, int sf, int *decpt, int *sign,
               int round, int is_quad)
 {
 
   union ieee ieee_v;
+#ifdef TARGET_SUPPORTS_QUADFP
   union ieeeq ieeeq_v;
+#endif
   static char tmp[512];
   static char fmt[16];
   int idx, fexp, nexp, kdz, ldz;
@@ -1205,31 +1218,8 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
     /* Is there anything else? */
   }
 
-  if (!is_quad) {
-    ieee_v.d = v;
-    fexp = ieee_v.v.e - EXPONENT_BIAS_D;
-    if (fexp == EXPONENT_BIAS_D + 1) {
-      if (ieee_v.v.hm == 0 && ieee_v.v.lm == 0) {
-        strcpy(tmp, "Inf");
-        *sign = ieee_v.v.s;
-        *decpt = 0;
-        return tmp;
-      } else {
-        strcpy(tmp, "NaN");
-        *sign = 0;
-        *decpt = 0;
-        return tmp;
-      }
-    }
-
-    /* I've determined sprintf is FIO_NEAREST */
-    /* I've determined Intel seems to use PROCESSOR_DEFINED as NEAREST */
-    /* Use an sprintf implementation; this is probably the fastest path thru */
-
-    *sign = ieee_v.v.s;
-    ieee_v.v.s = 0;
-    v = ieee_v.d;
-  } else {
+#ifdef TARGET_SUPPORTS_QUADFP
+  if (is_quad) {
     ieeeq_v.q = lv;
     fexp = ieeeq_v.v.e - EXPONENT_BIAS_Q;
     if (fexp == EXPONENT_BIAS_Q + 1) {
@@ -1257,6 +1247,33 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
     *sign = ieeeq_v.v.s;
     ieeeq_v.v.s = 0;
     lv = ieeeq_v.q;
+  } else
+#endif
+  {
+    ieee_v.d = v;
+    fexp = ieee_v.v.e - EXPONENT_BIAS_D;
+    if (fexp == EXPONENT_BIAS_D + 1) {
+      if (ieee_v.v.hm == 0 && ieee_v.v.lm == 0) {
+        strcpy(tmp, "Inf");
+        *sign = ieee_v.v.s;
+        *decpt = 0;
+        return tmp;
+      } else {
+        strcpy(tmp, "NaN");
+        *sign = 0;
+        *decpt = 0;
+        return tmp;
+      }
+    }
+
+    /* I've determined sprintf is FIO_NEAREST */
+    /* I've determined Intel seems to use PROCESSOR_DEFINED as NEAREST */
+    /* Use an sprintf implementation; this is probably the fastest path thru */
+
+    *sign = ieee_v.v.s;
+    ieee_v.v.s = 0;
+    /* Set lv = v for the snprintf calls below when is_quad is true. */
+    lv = v = ieee_v.d;
   }
 
   if (fexp >= 0) {
@@ -1277,13 +1294,16 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
         128, 132, 136, 140, 144, 148, 152, 155, 159, 163, 167, 170, 174,
         178, 181, 185, 188, 192, 195, 198, 202, 205, 208, 212, 215, 218,
         221, 224, 228, 231, 234, 237, 240, 243, 246, 249, 252, 255};
-      if (!is_quad) {
-        nexp = ((ieee_v.i[1] & 0x7ff00000) >> 12) - 261881; // 261880 works too
-        idx = ((ieee_v.i[1] & 0xfc000) >> 14);
-      } else {
+#ifdef TARGET_SUPPORTS_QUADFP
+      if (is_quad) {
         nexp = ((ieeeq_v.i[SUBSCRIPT_3] & 0x7fff0000) >> 8) -
                4194041; // 4194040 works too
         idx = ((ieeeq_v.i[SUBSCRIPT_3] & 0xfc00) >> 10);
+      } else
+#endif
+      {
+        nexp = ((ieee_v.i[1] & 0x7ff00000) >> 12) - 261881; // 261880 works too
+        idx = ((ieee_v.i[1] & 0xfc000) >> 14);
       }
       nexp += lkup[idx];
       ldz = (nexp * 1233) >> 20;
@@ -1685,24 +1705,8 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
       /* Order is important in these cases below... */
       tmp[1] = '\0';
       *decpt = 1;
-      if (!is_quad) {
-        if ((ieee_v.i[1] == 0x0) && (ieee_v.i[0] == 0x0)) {
-          /* Always zero */
-          tmp[0] = '0';
-        } else if (round == FIO_UP) {
-          tmp[0] = (*sign) ? '0' : '1';
-        } else if (round == FIO_DOWN) {
-          tmp[0] = (*sign) ? '1' : '0';
-        } else if (round == FIO_ZERO) {
-          tmp[0] = '0';
-        } else if (round == FIO_COMPATIBLE) {
-          tmp[0] = (ieee_v.i[1] < 0x3fe00000) ? '0' : '1';
-        } else if ((ieee_v.i[1] == 0x3fe00000) && (ieee_v.i[0] == 0x0)) {
-          tmp[0] = '0';
-        } else {
-          tmp[0] = (ieee_v.i[1] < 0x3fe00000) ? '0' : '1';
-        }
-      } else {
+#ifdef TARGET_SUPPORTS_QUADFP
+      if (is_quad) {
         if ((ieeeq_v.i[SUBSCRIPT_3] == 0x0) &&
             (ieeeq_v.i[SUBSCRIPT_2] == 0x0) && (ieeeq_v.i[1] == 0x0) &&
             (ieeeq_v.i[0] == 0x0)) {
@@ -1722,6 +1726,25 @@ __fortio_fcvt(__REAL16_T lv, int width, int prec, int sf, int *decpt, int *sign,
           tmp[0] = '0';
         } else {
           tmp[0] = (ieeeq_v.i[SUBSCRIPT_3] < 0x3ffe0000) ? '0' : '1';
+        }
+      } else
+#endif
+      {
+        if ((ieee_v.i[1] == 0x0) && (ieee_v.i[0] == 0x0)) {
+          /* Always zero */
+          tmp[0] = '0';
+        } else if (round == FIO_UP) {
+          tmp[0] = (*sign) ? '0' : '1';
+        } else if (round == FIO_DOWN) {
+          tmp[0] = (*sign) ? '1' : '0';
+        } else if (round == FIO_ZERO) {
+          tmp[0] = '0';
+        } else if (round == FIO_COMPATIBLE) {
+          tmp[0] = (ieee_v.i[1] < 0x3fe00000) ? '0' : '1';
+        } else if ((ieee_v.i[1] == 0x3fe00000) && (ieee_v.i[0] == 0x0)) {
+          tmp[0] = '0';
+        } else {
+          tmp[0] = (ieee_v.i[1] < 0x3fe00000) ? '0' : '1';
         }
       }
       return tmp;

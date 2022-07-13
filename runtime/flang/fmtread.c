@@ -102,10 +102,10 @@ static int fr_readnum(int, char *, int);
 static int fr_init(__INT_T *, __INT_T *, __INT_T *, __INT_T *, __INT_T *,
                    __INT8_T *, char *, __CLEN_T);
 
-static int fr_assign(char *, int, __BIGINT_T, DBLINT64, __REAL16_T);
+static int fr_assign(char *, int, __BIGINT_T, DBLINT64, __BIGREAL_T);
 static int fr_OZreadnum(int, char *, int, int);
 static int fr_Breadnum(char *, int, int);
-static __REAL16_T fr_getreal(char *, int, int, int *);
+static __BIGREAL_T fr_getreal(char *, int, int, int *);
 static int fr_move_fwd(int);
 static int fr_read_record(void);
 static int malloc_obuff(G *, size_t);
@@ -1888,7 +1888,7 @@ static int
 fr_readnum(int code, char *item, int type)
 {
   __BIGINT_T ival;
-  __REAL16_T dval;
+  __BIGREAL_T dval;
 #undef IS_INT
   DBLINT64 i8val; /* always declare because of fr_assign() */
 #define IS_INT(t) (t == __INT || t == __INT8)
@@ -2310,7 +2310,7 @@ fr_readnum(int code, char *item, int type)
 /* ------------------------------------------------------------------ */
 
 static int
-fr_assign(char *item, int type, __BIGINT_T ival, DBLINT64 i8val, __REAL16_T dval)
+fr_assign(char *item, int type, __BIGINT_T ival, DBLINT64 i8val, __BIGREAL_T dval)
 {
   switch (type) {
   case __INT1:
@@ -2867,14 +2867,14 @@ fr_Bbyte(int c)
 
 /* ------------------------------------------------------------------- */
 
-static __REAL16_T
+static __BIGREAL_T
 fr_getreal(char *p, int w, int d, int *errflag)
 {
 #define MAXFLEN 400
   int expval = 0;
   int dotflag = -1;
   char *errp;
-  __REAL16_T dval;
+  __BIGREAL_T dval;
   char buff[MAXFLEN], buff2[MAXFLEN];
   int ipos = 0, jpos = 0;
   int c;

@@ -1760,7 +1760,7 @@ static bool call_format_quad(int *result, int width, int format_char,
                              bool explicit_plus, bool comma_radix,
                              bool elide_leading_spaces,
                              bool elide_trailing_spaces, int rounding_mode,
-                             long double x)
+                             float128_t x)
 {
   static int use_this_code_path = -1; /* unknown */
   static int no_minus_zero = -1; /* unknown */
@@ -1855,9 +1855,6 @@ fw_writenum(int code, char *item, int type)
 {
   __BIGINT_T ival;
   __BIGREAL_T dval;
-#ifdef TARGET_SUPPORTS_QUADFP
-  __REAL16_T ldval;
-#endif
 #undef IS_INT
   DBLINT64 i8val;
 #define IS_INT(t) (t == __BIGINT || t == __INT8)
@@ -1956,8 +1953,6 @@ fw_writenum(int code, char *item, int type)
 #ifdef TARGET_SUPPORTS_QUADFP
   case __REAL16:
     dval = *(__REAL16_T *)item;
-    /* to support the quad precision */
-    ldval = *(__REAL16_T *)item;
     ty = __REAL16;
     w = G_REAL16_W;
     d = G_REAL16_D;
@@ -2062,7 +2057,7 @@ fw_writenum(int code, char *item, int type)
         call_format_quad(&result, w, 'G', d, e, '\0',
                          g->scale_factor, g->plus_flag, dc_flag,
                          elide_leading_spaces, elide_trailing_spaces,
-                         g->round, ldval);
+                         g->round, dval);
       } else {
         int e1 = 0;
         /* compatible with ifort */
@@ -2071,7 +2066,7 @@ fw_writenum(int code, char *item, int type)
         call_format_quad(&result, w, 'G', d, e_flag ? e : e1, '\0',
                          g->scale_factor, g->plus_flag, dc_flag,
                          elide_leading_spaces, elide_trailing_spaces,
-                         g->round, ldval);
+                         g->round, dval);
       }
       return result;
     }
@@ -2098,12 +2093,8 @@ fw_writenum(int code, char *item, int type)
         break;
       case __REAL8:
       case __REAL16:
-#ifdef TARGET_SUPPORTS_QUADFP
-        /* Flang does not support integer*16, so it converts real*16 to integer*8. */
-        crc.r8 = (ty == __REAL8) ? dval : ldval;
-#else
+        /* integer*16 is not supported, so we convert real*16 to integer*8. */
         crc.r8 = dval;
-#endif
         i8val[0] = crc.i8v[0];
         i8val[1] = crc.i8v[1];
         ty = __INT8;
@@ -2130,12 +2121,8 @@ fw_writenum(int code, char *item, int type)
         break;
       case __REAL8:
       case __REAL16:
-#ifdef TARGET_SUPPORTS_QUADFP
-        /* Flang does not support integer*16, so it converts real*16 to integer*8. */
-        crc.r8 = (ty == __REAL8) ? dval : ldval;
-#else
+        /* integer*16 is not supported, so we convert real*16 to integer*8. */
         crc.r8 = dval;
-#endif
         i8val[0] = crc.i8v[0];
         i8val[1] = crc.i8v[1];
         ty = __INT8;
@@ -2195,12 +2182,8 @@ fw_writenum(int code, char *item, int type)
         break;
       case __REAL8:
       case __REAL16:
-#ifdef TARGET_SUPPORTS_QUADFP
-        /* Flang does not support integer*16, so it converts real*16 to integer*8. */
-        crc.r8 = (ty == __REAL8) ? dval : ldval;
-#else
+        /* integer*16 is not supported, so we convert real*16 to integer*8. */
         crc.r8 = dval;
-#endif
         i8val[0] = crc.i8v[0];
         i8val[1] = crc.i8v[1];
         ty = __INT8;
@@ -2240,7 +2223,7 @@ fw_writenum(int code, char *item, int type)
       if (ty == __REAL16) {
         call_format_quad(&result, w, 'F', d, 0, '\0', g->scale_factor,
                          g->plus_flag, dc_flag, TRUE, FALSE, g->round,
-                         ldval);
+                         dval);
         return result;
       }
 #endif
@@ -2263,7 +2246,7 @@ fw_writenum(int code, char *item, int type)
 #ifdef TARGET_SUPPORTS_QUADFP
     if (ty == __REAL16) {
       call_format_quad(&result, w, 'F', d, 0, '\0', g->scale_factor,
-                       g->plus_flag, dc_flag, FALSE, FALSE, g->round, ldval);
+                       g->plus_flag, dc_flag, FALSE, FALSE, g->round, dval);
       return result;
     }
 #endif
@@ -2297,7 +2280,7 @@ fw_writenum(int code, char *item, int type)
 #ifdef TARGET_SUPPORTS_QUADFP
     if (ty == __REAL16) {
       call_format_quad(&result, w, 'F', d, 0, '\0', g->scale_factor,
-                       g->plus_flag, dc_flag, FALSE, FALSE, g->round, ldval);
+                       g->plus_flag, dc_flag, FALSE, FALSE, g->round, dval);
       return result;
     }
 #endif
@@ -2345,7 +2328,7 @@ fw_writenum(int code, char *item, int type)
       call_format_quad(&result, w, 'E', d, e_flag ? e : 0,
                        code == FED_ESw_d ? 'S' : code == FED_ENw_d ? 'N' : '\0',
                        g->scale_factor, g->plus_flag, dc_flag, FALSE, FALSE,
-                       g->round, ldval);
+                       g->round, dval);
       return result;
     }
 #endif
@@ -2386,7 +2369,7 @@ fw_writenum(int code, char *item, int type)
     if (ty == __REAL16) {
       /* exponent compatible with ifort */
       call_format_quad(&result, w, 'E', d, IFORT_R16_EXPONENT, '\0', g->scale_factor,
-                       g->plus_flag, dc_flag, FALSE, FALSE, g->round, ldval);
+                       g->plus_flag, dc_flag, FALSE, FALSE, g->round, dval);
       return result;
     }
 #endif
@@ -2448,7 +2431,7 @@ fw_writenum(int code, char *item, int type)
       if (code == FED_D)
         e1 = IFORT_R16_EXPONENT;
       call_format_quad(&result, w, 'D', d, e1, '\0', g->scale_factor,
-                       g->plus_flag, dc_flag, FALSE, FALSE, g->round, ldval);
+                       g->plus_flag, dc_flag, FALSE, FALSE, g->round, dval);
       return result;
     }
 #endif
@@ -3029,7 +3012,7 @@ ENTF90IO(SC_D_FMT_WRITE, sc_d_fmt_write)(double item, int type)
 }
 
 #ifdef TARGET_SUPPORTS_QUADFP
-__INT_T ENTF90IO(SC_Q_FMT_WRITE, sc_q_fmt_write)(long double item, int type)
+__INT_T ENTF90IO(SC_Q_FMT_WRITE, sc_q_fmt_write)(float128_t item, int type)
 {
   return __f90io_fmt_write(type, 1, 0, (char *)&item, 0);
 }
@@ -3056,7 +3039,7 @@ ENTF90IO(SC_CD_FMT_WRITE, sc_cd_fmt_write)(double real, double imag, int type)
 }
 
 #ifdef TARGET_SUPPORTS_QUADFP
-__INT_T ENTF90IO(SC_CQ_FMT_WRITE, sc_cq_fmt_write)(long double real, long double imag, int type)
+__INT_T ENTF90IO(SC_CQ_FMT_WRITE, sc_cq_fmt_write)(float128_t real, float128_t imag, int type)
 {
   int err;
   err = __f90io_fmt_write(__REAL16, 1, 0, (char *)&real, 0);

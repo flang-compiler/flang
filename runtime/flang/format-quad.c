@@ -5,6 +5,7 @@
  *
  */
 
+#include "float128.h"
 #include "format-double.h"
 #include <string.h>
 #ifndef TARGET_WIN
@@ -17,6 +18,7 @@ typedef unsigned long long uint64_t;
 #endif
 
 typedef __uint128_t uint128_t;
+
 /*
  *  IEEE-754 quad precision parameters
  */
@@ -52,11 +54,11 @@ typedef __uint128_t uint128_t;
 #define MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS (16494 - 4931) /* 11563 */
 
 /*
- *  Get the raw binary representation of a long double by means of
+ *  Get the raw binary representation of a float128_t by means of
  *  a cast that eludes warnings from GCC -Wall.
  */
 union raw_fp {
-  long double q;
+  float128_t q;
   uint128_t i;
 };
 #define RAW_BITS(x) (((union raw_fp *)&(x))->i)
@@ -245,19 +247,19 @@ div_by_billion(uint32_t le_x[WORDS_NUM1], int *words)
 }
 
 static inline uint128_t
-quad_to_uint128(long double x)
+quad_to_uint128(float128_t x)
 {
   return (uint128_t)x;
 }
 
 /*
- *  Convert a nonnegative integer represented as a long double
+ *  Convert a nonnegative integer represented as a float128_t
  *  into a sequence of decimal digit characters ('0' to '9').
  *  Exact.  Returns the number of digits written.  No space fill.
  *  Nothing is written if the argument is zero.
  */
 static inline int
-format_int_part(char *buff, int width, long double x)
+format_int_part(char *buff, int width, float128_t x)
 {
   char *out = buff + width; /* just past last character */
 
@@ -376,13 +378,13 @@ decimal_increment(char *buff, int width)
 
 /*
  *  Generate the digits of the decimal representation of the fractional
- *  part of a nonnegative long double.  Exact up to width.  Returns the next
+ *  part of a nonnegative float128_t.  Exact up to width.  Returns the next
  * digit (as int, not decimal character) and a guard flag to guide rounding.
  */
 static inline void
 format_fraction(char buff[MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS],
                 int *next_digit_for_rounding, bool *is_inexact, int width,
-                long double absx)
+                float128_t absx)
 {
   uint128_t raw, frac;
   int biased_exponent, shift;
@@ -483,7 +485,7 @@ format_fraction(char buff[MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS],
 static inline int
 fraction_digits(char buff[MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS],
                 int *next_digit_for_rounding, bool *is_inexact, int width,
-                long double absx)
+                float128_t absx)
 {
   uint128_t raw, frac;
   int biased_exponent, shift;
@@ -598,8 +600,8 @@ fraction_digits(char buff[MAX_FRACTION_SIGNIFICANT_DECIMAL_DIGITS],
 static inline enum decimal_rounding
 discover_native_rounding_mode(void)
 {
-  static const long double big_pos = MAX_EXACTLY_REPRESENTABLE_UINT128;
-  long double big_neg = -big_pos;
+  static const float128_t big_pos = MAX_EXACTLY_REPRESENTABLE_UINT128;
+  float128_t big_neg = -big_pos;
   if (big_pos + 1 > big_pos)
     return DECIMAL_ROUND_UP;
   if (big_neg + 1 > big_neg)
@@ -674,12 +676,12 @@ all_zeroes(const char *p, int n)
  */
 static inline void
 F_format(char *output_buffer, int width,
-         const struct formatting_control *control, long double x)
+         const struct formatting_control *control, float128_t x)
 {
   char *out = output_buffer;
   uint128_t raw = RAW_BITS(x);
   bool is_negative = (raw & SIGN_BIT) != 0;
-  long double absx = is_negative ? -x : x;
+  float128_t absx = is_negative ? -x : x;
   int biased_exponent = (raw >> EXPLICIT_MANTISSA_BITS) & RJ_EXPONENT_MASK;
   int sign_char = is_negative ? '-' : control->plus_sign;
 
@@ -771,12 +773,12 @@ F_format(char *output_buffer, int width,
  */
 static void
 F_format_with_scaling(char *output_buffer, int width,
-                      const struct formatting_control *control, long double x)
+                      const struct formatting_control *control, float128_t x)
 {
   char *out = output_buffer;
   uint128_t raw = RAW_BITS(x);
   bool is_negative = (raw & SIGN_BIT) != 0;
-  long double absx = is_negative ? -x : x;
+  float128_t absx = is_negative ? -x : x;
   int biased_exponent = (raw >> EXPLICIT_MANTISSA_BITS) & RJ_EXPONENT_MASK;
   int sign_char = is_negative ? '-' : control->plus_sign;
 
@@ -869,12 +871,12 @@ F_format_with_scaling(char *output_buffer, int width,
  */
 static inline void
 ED_format(char *out_buffer, int width, const struct formatting_control *control,
-          int E_or_D_char, long double x)
+          int E_or_D_char, float128_t x)
 {
   char *out = out_buffer;
   uint128_t raw = RAW_BITS(x);
   bool is_negative = (raw & SIGN_BIT) != 0;
-  long double absx = is_negative ? -x : x;
+  float128_t absx = is_negative ? -x : x;
   int biased_exponent = (raw >> EXPLICIT_MANTISSA_BITS) & RJ_EXPONENT_MASK;
   int sign_char = is_negative ? '-' : control->plus_sign;
 
@@ -1122,11 +1124,11 @@ ED_format(char *out_buffer, int width, const struct formatting_control *control,
 /* Fortran Gw.d and Gw.dEe output edit descriptors */
 static inline void
 G_format(char *out, int width, const struct formatting_control *control,
-         long double x)
+         float128_t x)
 {
   uint128_t raw = RAW_BITS(x);
   bool is_negative = (raw & SIGN_BIT) != 0;
-  long double absx = is_negative ? -x : x;
+  float128_t absx = is_negative ? -x : x;
   int biased_exponent = (raw >> EXPLICIT_MANTISSA_BITS) & RJ_EXPONENT_MASK;
   int sign_char = is_negative ? '-' : control->plus_sign;
 
@@ -1221,7 +1223,7 @@ do_E_formatting:
 /* Entry point */
 void
 __fortio_format_quad(char *out, int width,
-                     const struct formatting_control *control, long double x)
+                     const struct formatting_control *control, float128_t x)
 {
   switch (control->format_char) {
   case 'E':

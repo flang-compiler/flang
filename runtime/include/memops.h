@@ -21,6 +21,8 @@ typedef SSIZE_T ssize_t;
 #include <sys/types.h>
 #endif
 
+#include "float128.h"
+
 static inline void
 __attribute__((always_inline))
 __c_mzero1(char *dest, long cnt)
@@ -51,9 +53,9 @@ __c_mzero8(long long *dest, long cnt)
 
 #ifdef TARGET_SUPPORTS_QUADFP
 static inline void __attribute__((always_inline))
-__c_mzero16(long double *dest, long cnt)
+__c_mzero16(float128_t *dest, long cnt)
 {
-  (void)__builtin_memset(dest, 0, (size_t)cnt * sizeof(long double));
+  (void)__builtin_memset(dest, 0, (size_t)cnt * sizeof(float128_t));
 }
 #endif
 
@@ -87,9 +89,9 @@ __c_mcopy8(long long *dest, long long *src, long cnt)
 
 #ifdef TARGET_SUPPORTS_QUADFP
 static inline void __attribute__((always_inline))
-__c_mcopy16(long double *dest, long double *src, long cnt)
+__c_mcopy16(float128_t *dest, float128_t *src, long cnt)
 {
-  (void)__builtin_memcpy(dest, src, (size_t)cnt * sizeof(long double));
+  (void)__builtin_memcpy(dest, src, (size_t)cnt * sizeof(float128_t));
 }
 #endif
 
@@ -131,7 +133,7 @@ __c_mset8(long long *dest, long long value, long cnt)
 
 #ifdef TARGET_SUPPORTS_QUADFP
 static inline void __attribute__((always_inline))
-__c_mset16(long double *dest, long double value, long cnt)
+__c_mset16(float128_t *dest, float128_t value, long cnt)
 {
   ssize_t i;
   for (i = 0; i < cnt; ++i)
@@ -144,19 +146,19 @@ void __c_mcopy1(char *dest, char *src, long cnt);
 void __c_mcopy2(short *dest, short *src, long cnt);
 void __c_mcopy4(int *dest, int *src, long cnt);
 void __c_mcopy8(long long *dest, long long *src, long cnt);
-void __c_mcopy16(long double *dest, long double *src, long cnt);
+void __c_mcopy16(float128_t *dest, float128_t *src, long cnt);
 
 void __c_mset1(char *dest, int value, long cnt);
 void __c_mset2(short *dest, int value, long cnt);
 void __c_mset4(int *dest, int value, long cnt);
 void __c_mset8(long long *dest, long long value, long cnt);
-void __c_mset16(long double *dest, long double value, long cnt);
+void __c_mset16(float128_t *dest, float128_t value, long cnt);
 
 void __c_mzero1(char *dest, long cnt);
 void __c_mzero2(short *dest, long cnt);
 void __c_mzero4(int *dest, long cnt);
 void __c_mzero8(long long *dest, long cnt);
-void __c_mzero16(long double *dest, long cnt);
+void __c_mzero16(float128_t *dest, long cnt);
 #endif
 
 #ifdef __cplusplus

@@ -1029,10 +1029,10 @@ get_token(void)
     token_buff[i] = '\0';
     currc--;
     {
-      int type; /* 0 - integer    1 - __REAL16 */
+      int type; /* 0 - integer    1 - __BIGREAL */
       union {
         __BIGINT_T i;
-        __REAL16_T d;
+        __BIGREAL_T d;
         __INT8_T i8v;
       } val;
       int len, errcode;
@@ -1062,7 +1062,7 @@ get_token(void)
           constval.val.i = val.i;
         }
       } else {
-        constval.dtype = __REAL16;
+        constval.dtype = __BIGREAL;
         constval.val.d = val.d;
       }
     }
