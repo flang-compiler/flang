@@ -287,7 +287,7 @@ static bool cgmain_init_call(int);
 static OPERAND *gen_call_llvm_intrinsic(const char *, OPERAND *, LL_Type *,
                                         INSTR_LIST *, LL_InstrName);
 static OPERAND *gen_call_llvm_fm_intrinsic(const char *, OPERAND *, LL_Type *,
-                                        INSTR_LIST *, LL_InstrName);
+                                           INSTR_LIST *, LL_InstrName);
 #ifdef FLANG_GEN_LLVM_ATOMIC_INTRINSICS
 static OPERAND *gen_llvm_atomicrmw_instruction(int, int, OPERAND *, DTYPE);
 #endif
@@ -4688,8 +4688,8 @@ gen_llvm_atomicrmw_instruction(int ilix, int pdnum, OPERAND *params,
 
 static OPERAND *
 gen_call_llvm_intrinsic_impl(const char *fname, OPERAND *params,
-                        LL_Type *return_ll_type, INSTR_LIST *Call_Instr,
-                        LL_InstrName i_name, LL_InstrListFlags MathFlag)
+                             LL_Type *return_ll_type, INSTR_LIST *Call_Instr,
+                             LL_InstrName i_name, LL_InstrListFlags MathFlag)
 {
   static char buf[MAXIDLEN];
 
@@ -13186,6 +13186,28 @@ write_external_function_declarations(int first_time)
   DBGTRACEOUT("");
 } /* write_external_function_declarations */
 
+INLINE static void
+write_target_features(void)
+{
+  if (flg.target_features) {
+    print_token(" \"target-features\"=\"");
+    print_token(flg.target_features);
+    print_token("\"");
+  }
+}
+
+INLINE static void
+write_vscale_range(void)
+{
+  if (flg.vscale_range_min && flg.vscale_range_max) {
+    char vsrange[64U];
+    snprintf(vsrange, sizeof vsrange, " vscale_range(%d,%d)",
+                                      flg.vscale_range_min,
+                                      flg.vscale_range_max);
+    print_token(vsrange);
+  }
+}
+
 /**
    \brief Emit function attributes in debugging mode output
 
@@ -13204,6 +13226,8 @@ write_function_attributes(void)
     print_token(" \"no-frame-pointer-elim-non-leaf\"");
     if (XBIT(216, 0x1000))
       print_token(" \"fp-contract\"=\"fast\"");
+    write_target_features();
+    write_vscale_range();
     print_token(" }\n");
   }
 }
@@ -13661,36 +13685,29 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
   print_token(")");
 
   /* Function attributes.  With debugging turned on, the debug attributes
-     contain "noinline", so there is no need to repeat it here. */
+     contain "noinline" (and others), so there is no need to repeat it here. */
   if (need_debug_info(SPTR_NULL)) {
     /* 'attributes #0 = { ... }' to be emitted later */
     print_token(" #0");
   } else {
-    if (!XBIT(183, 0x10) || XBIT(14, 0x8)) {
+    if (!XBIT(183, 0x10)) {
       /* Nobody sets -x 183 0x10, besides Flang. We're disabling LLVM inlining for
        * proprietary compilers. */
-      /* 2nd XBIT - Apply noinline attribute if the pragma "noinline" is given */
       print_token(" noinline");
-    }
-    if (XBIT(191, 0x2)) {
-      /* Apply alwaysinline attribute if the pragma "forceinline" is given */
-      print_token(" alwaysinline");
     }
     if (XBIT(216, 0x1000)) {
       print_token(" \"fp-contract\"=\"fast\"");
     }
+    write_target_features();
+    write_vscale_range();
   }
-  if (flg.target_features) {
-    print_token(" \"target-features\"=\"");
-    print_token(flg.target_features);
-    print_token("\"");
+  if (XBIT(14, 0x8)) {
+    /* Apply noinline attribute if the pragma "noinline" is given */
+    print_token(" noinline");
   }
-  if (flg.vscale_range_min && flg.vscale_range_max) {
-    char vsrange[64U];
-    snprintf(vsrange, sizeof vsrange, " vscale_range(%d,%d)",
-                                      flg.vscale_range_min,
-                                      flg.vscale_range_max);
-    print_token(vsrange);
+  if (XBIT(191, 0x2)) {
+    /* Apply alwaysinline attribute if the pragma "forceinline" is given */
+    print_token(" alwaysinline");
   }
 
   if (func_sptr > NOSYM) {
