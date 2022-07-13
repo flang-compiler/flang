@@ -10,12 +10,12 @@
 #include <stdint.h>
 #include "mthdecls.h"
 
-long double
-__mth_i_qsind(long double d)
+float128_t
+__mth_i_qsind(float128_t d)
 {
   union {
     float128_t q;
-    uint64_t i[I_SIZE];
+    ui64arr2_t i;
   } u;
 
   /* if the host is little endian */

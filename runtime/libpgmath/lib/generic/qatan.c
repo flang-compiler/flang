@@ -13,8 +13,8 @@
 long double atanl(long double q);
 #endif
 
-long double
-__mth_i_qatan(long double d)
+float128_t
+__mth_i_qatan(float128_t d)
 {
   return atanl(d);
 }

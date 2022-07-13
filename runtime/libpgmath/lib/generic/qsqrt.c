@@ -9,8 +9,8 @@
 
 #include "mthdecls.h"
 
-long double
-__mth_i_qsqrt(long double q)
+float128_t
+__mth_i_qsqrt(float128_t q)
 {
   return sqrtl(q);
 }

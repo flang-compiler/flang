@@ -20,13 +20,15 @@
      - Brent
 */
 
+#include "float128.h"
+
 float __mth_i_around(float x);
 float __mth_i_remainder(float x, float y);
 double __mth_i_dround(double x);
 double __mth_i_dremainder(double x, double y);
 #ifdef TARGET_SUPPORTS_QUADFP
-long double __mth_i_qround(long double x);
-long double __mth_i_qremainder(long double x, long double y);
+float128_t __mth_i_qround(float128_t x);
+float128_t __mth_i_qremainder(float128_t x, float128_t y);
 long double scalbnl(long double x, int i);
 #endif
 int __fenv_fegetzerodenorm(void);

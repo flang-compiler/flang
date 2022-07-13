@@ -11,7 +11,7 @@
 #include "mthdecls.h"
 
 typedef union {
-  long double f;
+  float128_t  f;
   __uint128_t i;
 } FPI;
 
@@ -22,11 +22,11 @@ const __int128_t BITS2 = 0x8000000000000000;
 #define SIGN_MASK (BITS2 << 64)
 #define GET_EXP(u) (__int128_t)(((u) & (BITS1 << 64)) >> MANTBITS)
 
-long double __mth_i_qint(long double xx)
+float128_t __mth_i_qint(float128_t xx)
 {
   __int128_t xexp;
   __uint128_t ux, mask;
-  long double x;
+  float128_t x;
   FPI fpi;
 
   x = xx;

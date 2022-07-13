@@ -10,7 +10,7 @@
 #include "mthdecls.h"
 /* INT */
 #define INT_MAX 2147483647
-int __mth_i_iqnint(long double d)
+int __mth_i_iqnint(float128_t d)
 {
   if ((d > 0.0L) && (d > INT_MAX))
     return INT_MAX;

@@ -10,13 +10,13 @@
 #include "mthdecls.h"
 
 union {
-  long double val;
+  float128_t val;
   unsigned int num[4];
 } tmp;
 
 
-long double
-__mth_i_qabs(long double arg)
+float128_t
+__mth_i_qabs(float128_t arg)
 {
   tmp.val = arg;
   /* little endian */

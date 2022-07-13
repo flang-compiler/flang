@@ -10,7 +10,7 @@
 #include "mthdecls.h"
 #include "stdio.h"
 
-float __mth_i_aqanint(long double d)
+float __mth_i_aqanint(float128_t d)
 {
   return roundl(d);
 }

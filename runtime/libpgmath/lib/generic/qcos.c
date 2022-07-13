@@ -9,8 +9,8 @@
 
 #include "mthdecls.h"
 
-long double
-__mth_i_qcos(long double d)
+float128_t
+__mth_i_qcos(float128_t d)
 {
   return cosl(d);
 }

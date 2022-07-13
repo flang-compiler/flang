@@ -7,9 +7,9 @@
 
 #include "mthdecls.h"
 
-long double
-__mth_i_qhypot(long double x, long double y)
+float128_t
+__mth_i_qhypot(float128_t x, float128_t y)
 {
-  long double f = hypotl(x, y);
+  float128_t f = hypotl(x, y);
   return f;
 }

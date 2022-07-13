@@ -9,8 +9,8 @@
 
 #include "mthdecls.h"
 
-long double
-__mth_i_qasin(long double d)
+float128_t
+__mth_i_qasin(float128_t d)
 {
   return asinl(d);
 }

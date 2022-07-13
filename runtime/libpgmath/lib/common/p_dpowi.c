@@ -16,21 +16,12 @@
  * Most likely used with -Kieee (precise).
  */
 
-/*
- * __float128 is not supported on all platforms so use GCC's long double
- * as a temporary workaround to get higher precision multiplies.
- */
-
-#if	defined (TARGET_LINUX_GENERIC) || defined (TARGET_LINUX_POWER) || defined (LINUX8664) || defined (TARGET_X8664) || defined(TARGET_ARM64)
-#define	__float128	long double
-#endif
-
 double
 __pmth_i_dpowk(double x8, long long i8)
 {
   long long k;
-  __float128 r16;
-  __float128 x16;
+  float128_t r16;
+  float128_t x16;
 
   r16 = 1.0;
   x16 = x8;

@@ -11,8 +11,8 @@
 long double atan2(long double x, long double y);
 #endif
 
-long double
-__mth_i_qatan2(long double x, long double y)
+float128_t
+__mth_i_qatan2(float128_t x, float128_t y)
 {
   return atan2l(x, y);
 }

@@ -9,8 +9,8 @@
 
 #include "mthdecls.h"
 
-long double
-__mth_i_qacosh(long double arg)
+float128_t
+__mth_i_qacosh(float128_t arg)
 {
   return acoshl(arg);
 }

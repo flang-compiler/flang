@@ -9,11 +9,11 @@
 
 #include "mthdecls.h"
 
-long double
-__mth_i_qpowk(long double x, long long i)
+float128_t
+__mth_i_qpowk(float128_t x, long long i)
 {
   long long k;
-  long double f;
+  float128_t f;
 
   f = 1;
   k = i;

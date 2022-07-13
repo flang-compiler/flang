@@ -15,11 +15,11 @@
 #define BITSDL(f) ((int *)&(f))[0]
 #define BSIGNF 0x80000000
 
-long double
-__mth_i_qsign(long double a, long double b)
+float128_t
+__mth_i_qsign(float128_t a, float128_t b)
 {
-  long double *pa = &a;
-  long double *pb = &b;
+  float128_t *pa = &a;
+  float128_t *pb = &b;
   *pa = fabsl(a);
   if (is_little_endian()) {
     if (BITSDH(*pb) & BSIGNF) {

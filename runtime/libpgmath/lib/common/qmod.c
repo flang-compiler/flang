@@ -10,8 +10,8 @@
 #include "mthdecls.h"
 
 #ifndef WIN64
-long double
-__mth_i_qmod(long double f, long double g)
+float128_t
+__mth_i_qmod(float128_t f, float128_t g)
 {
   return fmodl(f, g);
 }

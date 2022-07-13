@@ -12,12 +12,12 @@
 #define MYPI 180.0
 #define HFPI 90.0
 
-long double
-__mth_i_qtand(long double d)
+float128_t
+__mth_i_qtand(float128_t d)
 {
   union {
     float128_t q;
-    uint64_t i[I_SIZE];
+    ui64arr2_t i;
   } u, sp;
   if ((fmodl(fabsl(d), MYPI) - HFPI) == 0.0) {
     sp.i[0] = is_little_endian() ? 0x0 : 0x7fff000000000000;
