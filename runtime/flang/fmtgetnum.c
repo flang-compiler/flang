@@ -39,7 +39,7 @@ static int buf_size = sizeof(buf);
 int
 __fortio_getnum(
     char *currc, /* pointer to string to convert */
-    int *type,   /* 0 ==> integer, 1 ==> __BIGREAL_T (or __REAL16_T)
+    int *type,   /* 0 ==> integer, 1 ==> __BIGREAL_T
                   * 2 ==> integer*8 (TM_I8-only).
                   * 3 ==> VMS degenerate REAL (e.g., 'd6', '-d6', 'e',...)
                   */
@@ -59,7 +59,7 @@ __fortio_getnum(
   int itmp;
   union {
     __BIGINT_T i;
-    __REAL16_T d;
+    __BIGREAL_T d;
     DBLINT64 i8v;
   } * val; /* value of token to return */
 
@@ -162,7 +162,7 @@ state6: /* digits [ . [ digits ] ] { + | - } */
   }
   *bp = '\0';
   fcptr = NULL;
-  val->d = (__REAL16_T)__io_strtold(buf_p, &fcptr);
+  val->d = __io_strtold(buf_p, &fcptr);
   if (fcptr == buf_p) {
     /* illegal real constant */
     ret_err = FIO_EERR_DATA_CONVERSION;
@@ -208,7 +208,7 @@ return_integer:
 return_real:
   *type = 1;
   fcptr = NULL;
-  val->d = (__REAL16_T)__io_strtold(currc, &fcptr);
+  val->d = __io_strtold(currc, &fcptr);
   if (fcptr == currc)
     /* illegal real constant */
     ret_err = FIO_EERR_DATA_CONVERSION;
@@ -220,11 +220,7 @@ ret:
                  ret_err);
     __io_printf("   str:#%.*s#, val:", *len, currc);
     if (*type) {
-#ifdef TARGET_SUPPORTS_QUADFP
-      __fortio_printreal16(val->d);
-#else
       __fortio_printbigreal(val->d);
-#endif
       __io_printf("\n");
     } else
       __io_printf("%d\n", val->i);

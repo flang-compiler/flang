@@ -13,6 +13,8 @@
 #ifndef _PGHPF_TYPES_H_
 #define _PGHPF_TYPES_H_
 
+#include "float128.h"
+
 /** \typedef _DIST_TYPE
  *
  *  \brief Data type codes.
@@ -149,7 +151,7 @@ typedef float __REAL4_T; /* 27 __REAL4      real*4 */
 
 typedef double __REAL8_T; /* 28 __REAL8      real*8 */
 #ifdef TARGET_SUPPORTS_QUADFP
-typedef long double __REAL16_T; /* 29 __REAL16     real*16 */
+typedef float128_t __REAL16_T; /* 29 __REAL16     real*16 */
 #else
 typedef double __REAL16_T; /* 29 __REAL16     real*16 */
 #endif
@@ -249,10 +251,6 @@ typedef __CPLX16_T __DCPLX_T;
  * likely to be seen during list-directed/namelist/fmt read
  *
  * NOTE: changes here may require changes in format.h for BIGREALs
- *
- * BIGREAL_IS_LONGDOUBLE is used to decide between %f and %Lf in
- * debug print statements.  This is dependent on definition of underlying
- * c type used in pghpft.h
  */
 
 #define __BIGINT __INT4
@@ -260,11 +258,17 @@ typedef __CPLX16_T __DCPLX_T;
 typedef __INT4_T __BIGINT_T;
 typedef __LOG4_T __BIGLOG_T;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+#define __BIGREAL __REAL16
+#define __BIGCPLX __CPLX32
+typedef __REAL16_T __BIGREAL_T;
+typedef __CPLX32_T __BIGCPLX_T;
+#else
 #define __BIGREAL __REAL8
 #define __BIGCPLX __CPLX16
 typedef __REAL8_T __BIGREAL_T;
 typedef __CPLX16_T __BIGCPLX_T;
-#define BIGREAL_IS_LONGDOUBLE 0
+#endif
 
 /* pointer-sized integer */
 

@@ -578,10 +578,10 @@ void
 ENTFTN(CPU_TIMEQ, cpu_timeq)(__REAL16_T *x)
 {
   extern double __fort_second();
-  long double secs;
+  float128_t secs;
   __REAL16_T res;
 
-  secs = (long double)__fort_second();
+  secs = (float128_t)__fort_second();
   if (secs > TIME_THRESHOLD2)
     res = secs - TIME_THRESHOLD2;
   else if (secs > TIME_THRESHOLD1)
@@ -4635,8 +4635,8 @@ ENTF90(FRACQX, fracqx)(__REAL16_T q)
 
 __REAL16_T
 ENTF90(FRACQ, fracq)(__REAL16_T *q)
-{ 
-  return ENTF90(FRACQX, fracqx)(*q); 
+{
+  return ENTF90(FRACQX, fracqx)(*q);
 }
 #endif
 
@@ -4800,7 +4800,7 @@ __REAL16_T
 ENTF90(RRSPACINGQX, rrspacingqx)(__REAL16_T q)
 {
   __REAL16_SPLIT x, y;
-  
+
   x.q = q;
   if (x.q == 0)
     return 0;
@@ -5230,7 +5230,7 @@ _MSET(4, int)
 _MSET(8, long long)
 
 #ifdef TARGET_SUPPORTS_QUADFP
-_MSET(16, long double)
+_MSET(16, float128_t)
 #endif
 
 void
@@ -5274,11 +5274,11 @@ ENTF90(MSETZ32, msetz32)(void *d, void *v, SZ_T size)
 {
   if (d) {
     SZ_T i;
-    long double *pd;
-    long double v0, v1;
-    pd = (long double *)d;
-    v0 = ((long double *)v)[0];
-    v1 = ((long double *)v)[1];
+    float128_t *pd;
+    float128_t v0, v1;
+    pd = (float128_t *)d;
+    v0 = ((float128_t *)v)[0];
+    v1 = ((float128_t *)v)[1];
     for (i = 0; i < size; i++) {
       pd[0] = v0;
       pd[1] = v1;

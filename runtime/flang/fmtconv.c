@@ -76,16 +76,12 @@ static char *buff_pos;
 void
 __fortio_printbigreal(__BIGREAL_T val)
 {
-  __io_printf("(%f)", val);
-}
-
 #ifdef TARGET_SUPPORTS_QUADFP
-void
-__fortio_printreal16(__REAL16_T val)
-{
   __io_printf("(%Lf)", val);
-}
+#else
+  __io_printf("(%f)", val);
 #endif
+}
 
 /* ----------------------------------------------------------------- */
 
@@ -152,7 +148,7 @@ __fortio_default_convert(char *item, int type,
     break;
   case __REAL16:
     width = G_REAL16_W;
-    (void)__fortio_fmt_g((__REAL16_T)PP_REAL16(item), width, G_REAL16_D,
+    (void)__fortio_fmt_g((__BIGREAL_T)PP_REAL16(item), width, G_REAL16_D,
                          REAL16_E, 1, __REAL16, plus_flag, TRUE, dc_flag, round,
                          TRUE);
     break;
@@ -203,7 +199,7 @@ __fortio_default_convert(char *item, int type,
     p = cmplx_buf;
     *p++ = '(';
     width = G_REAL16_W;
-    (void)__fortio_fmt_g((__REAL16_T)PP_REAL16(item), width, G_REAL16_D,
+    (void)__fortio_fmt_g((__BIGREAL_T)PP_REAL16(item), width, G_REAL16_D,
                          REAL16_E, 1, __REAL16, plus_flag, TRUE, dc_flag, round,
                          TRUE);
     p = strip_blnk(p, conv_bufp);
@@ -211,7 +207,7 @@ __fortio_default_convert(char *item, int type,
       *p++ = ';';
     else
       *p++ = ',';
-    (void)__fortio_fmt_g((__REAL16_T)PP_REAL16(item + 16), width, G_REAL16_D,
+    (void)__fortio_fmt_g((__BIGREAL_T)PP_REAL16(item + 16), width, G_REAL16_D,
                          REAL16_E, 1, __REAL16, plus_flag, TRUE, dc_flag, round,
                          TRUE);
     p = strip_blnk(p, conv_bufp);
@@ -565,7 +561,7 @@ __fortio_fmt_d(__BIGREAL_T val, int w, int d, int sf, int type, bool plus_flag,
 }
 
 extern char *
-__fortio_fmt_g(__REAL16_T val, int w, int d, int e, int sf, int type,
+__fortio_fmt_g(__BIGREAL_T val, int w, int d, int e, int sf, int type,
                bool plus_flag, bool e_flag, bool dc_flag, int round,
                int is_quad) /* TRUE, if the value is quad precision. */
 {
@@ -578,7 +574,7 @@ __fortio_fmt_g(__REAL16_T val, int w, int d, int e, int sf, int type,
    * comparison will say val is identical to 0, but the bits of val will
    * indicate otherwise and the ensuing code may go down the wrong path.
    */
-  if ((__BIGREAL_T)val == fpdat.zero && !is_quad) {
+  if (val == fpdat.zero && !is_quad) {
     union {
       __BIGREAL_T vv;
       int ii[2];

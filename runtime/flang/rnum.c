@@ -8,6 +8,7 @@
 /* clang-format off */
 
 #include <time.h>
+#include "float128.h"
 #include "stdioInterf.h"
 #include "fioMacros.h"
 #include "llcrit.h"
@@ -61,10 +62,10 @@ rnum_abort(const char *file, int line, const char *mesg)
 #define DEFAULT_SEED_HI (R23 * 32.0)
 #define DEFAULT_SEED_LO (R46 * 3392727.0)
 
-static long double seed_hi = DEFAULT_SEED_HI;
-static long double seed_lo = DEFAULT_SEED_LO;
+static float128_t seed_hi = DEFAULT_SEED_HI;
+static float128_t seed_lo = DEFAULT_SEED_LO;
 
-static long double table[32][2] = {
+static float128_t table[32][2] = {
     {4354965.0, T23 * 145.0},     {210105.0, T23 * 6909540.0},
     {3255729.0, T23 * 1196310.0}, {1750113.0, T23 * 3474515.0},
     {5016769.0, T23 * 2330923.0}, {8104321.0, T23 * 1946261.0},
@@ -84,12 +85,12 @@ static long double table[32][2] = {
 
 MP_SEMAPHORE(static, sem);
 
-static long double
+static float128_t
 advance_seed_npb(__INT_T n)
 {
   int itmp;
-  long double tmp1, tmp2;
-  long double(*tp)[2];
+  float128_t tmp1, tmp2;
+  float128_t(*tp)[2];
 
 #ifdef DEBUG
   /*
@@ -124,7 +125,7 @@ static void I8(prng_loop_d_npb)(__REAL8_T *hb, F90_Desc *harvest, __INT_T li,
   __INT_T cl, clof, cn, current, i, il, iu, lo, n;
   __INT_T hi, tcl, tcn, tclof;
   int itmp;
-  long double tmp1, tmp2;
+  float128_t tmp1, tmp2;
 
   SET_DIM_PTRS(hdd, harvest, dim - 1);
   cl = DIST_DPTR_CL_G(hdd);
@@ -232,7 +233,7 @@ static void I8(prng_loop_q_npb)(__REAL16_T *hb, F90_Desc *harvest, __INT_T li,
   __INT_T cl, clof, cn, current, i, il, iu, lo, n;
   __INT_T hi, tcl, tcn, tclof;
   int itmp;
-  long double tmp1, tmp2;
+  float128_t tmp1, tmp2;
 
   SET_DIM_PTRS(hdd, harvest, dim - 1);
   cl = DIST_DPTR_CL_G(hdd);
@@ -340,7 +341,7 @@ static void I8(prng_loop_r_npb)(__REAL4_T *hb, F90_Desc *harvest, __INT_T li,
   __INT_T cl, cn, current, i, il, iu, lo, clof, n;
   __INT_T hi, tcl, tcn, tclof;
   int itmp;
-  long double tmp1, tmp2;
+  float128_t tmp1, tmp2;
 
   SET_DIM_PTRS(hdd, harvest, dim - 1);
   cl = DIST_DPTR_CL_G(hdd);
@@ -446,7 +447,7 @@ static void I8(prng_loop_r_npb)(__REAL4_T *hb, F90_Desc *harvest, __INT_T li,
  */
 
 typedef struct {
-  long double lo, hi;
+  float128_t lo, hi;
 } Seed;
 
 #define NBITS 2
@@ -469,11 +470,11 @@ typedef struct {
  * Implement modulo 2^46 multiplication.
  */
 
-static long double
-mul46(const Seed *xp, long double ylo, long double yhi)
+static float128_t
+mul46(const Seed *xp, float128_t ylo, float128_t yhi)
 {
   int i;
-  long double z;
+  float128_t z;
 
   z = xp->hi * ylo + xp->lo * yhi;
   i = z;
@@ -493,7 +494,7 @@ static time_t start_time;
  * initial values of seed_lf[].
  */
 
-static const long double default_seed_lf[LONG_LAG] = {
+static const float128_t default_seed_lf[LONG_LAG] = {
     21443106311501.0, 5197437683097.0,  3622043880426.0,  53312694480426.0,
     54665542338115.0, 51292272760733.0, 28013141389639.0, 6466909594288.0,
     36631377956900.0, 45800305729322.0, 1486199964658.0,  1320339397524.0,
@@ -501,7 +502,7 @@ static const long double default_seed_lf[LONG_LAG] = {
     1440485417884.0,
 };
 
-static long double seed_lf[CYCLE] = {
+static float128_t seed_lf[CYCLE] = {
     21443106311501.0 / T46, 5197437683097.0 / T46,  3622043880426.0 / T46,
     53312694480426.0 / T46, 54665542338115.0 / T46, 51292272760733.0 / T46,
     28013141389639.0 / T46, 6466909594288.0 / T46,  36631377956900.0 / T46,
@@ -514,7 +515,7 @@ static int offset = LONG_LAG - 1;
 
 #define SEED(x, y)                                                             \
   {                                                                            \
-    (long double) x, T23 *(long double)y                                       \
+    (float128_t)x, T23 * (float128_t)y                                         \
   }
 
 static const Seed table_lf[NDIGITS][DIGIT][LONG_LAG][LONG_LAG] = {
@@ -5917,13 +5918,13 @@ static const Seed table_lf[NDIGITS][DIGIT][LONG_LAG][LONG_LAG] = {
  * table corresponding to each bit set in n beyond CUTMASK.
  */
 
-static long double
+static float128_t
 advance_seed_lf(__INT_T n)
 {
   __INT_T i, j, m, old_offset;
   const Seed *t0;
-  long double *t1;
-  long double yhi, ylo;
+  float128_t *t1;
+  float128_t yhi, ylo;
 
 #ifdef DEBUG
   /*
@@ -6328,7 +6329,7 @@ static void I8(prng_loop_r_lf)(__REAL4_T *hb, F90_Desc *harvest, __INT_T li,
 
 static int fibonacci = 1;
 
-static long double (*advance_seed)(__INT_T) = advance_seed_lf;
+static float128_t (*advance_seed)(__INT_T) = advance_seed_lf;
 #ifdef TARGET_SUPPORTS_QUADFP
 static void (*prng_loop_q)(__REAL16_T *, F90_Desc *, __INT_T, int, __INT_T,
                            __INT_T) = I8(prng_loop_q_lf);
@@ -6396,7 +6397,7 @@ void ENTFTN(RNUM, rnum)(__REAL4_T *hb, F90_Desc *harvest)
 {
   __INT_T final, i;
   int itmp;
-  long double tmp1, tmp2;
+  float128_t tmp1, tmp2;
 
   MP_P(sem);
   if (F90_TAG_G(harvest) == __DESC) {
@@ -6453,7 +6454,7 @@ void ENTFTN(RNUMD, rnumd)(__REAL8_T *hb, F90_Desc *harvest)
 {
   __INT_T final, i;
   int itmp, tmp3[2];
-  long double tmp1, tmp2;
+  float128_t tmp1, tmp2;
 
   MP_P(sem);
   if (F90_TAG_G(harvest) == __DESC) {
@@ -6511,7 +6512,7 @@ void ENTFTN(RNUMQ, rnumq)(__REAL16_T *hb, F90_Desc *harvest)
 {
   __INT_T final, i;
   int itmp, tmp3[4];
-  long double tmp1, tmp2;
+  float128_t tmp1, tmp2;
 
   MP_P(sem);
   if (F90_TAG_G(harvest) == __DESC) {
@@ -6545,12 +6546,12 @@ void ENTFTN(RNUMQ, rnumq)(__REAL16_T *hb, F90_Desc *harvest)
       /* According to standard, *hb should >= 0 and < 1,
        * when *hb == 1.0, assign number that
        * is nearest to 1 and less than 1 to *hb */
-      if (*hb == (long double)1.0) {
+      if (*hb == (float128_t)1.0) {
         tmp3[3] = 0x3FFEFFFF;
         tmp3[2] = 0xFFFFFFFF;
         tmp3[1] = 0xFFFFFFFF;
         tmp3[0] = 0xFFFFFFFF;
-        *hb = *(long double *)&tmp3;
+        *hb = *(float128_t *)&tmp3;
       }
     } else {
       tmp1 = seed_lo * table[0][0];

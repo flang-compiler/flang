@@ -9,7 +9,7 @@
 
 #if !defined(INLINE_MEMOPS)
 void
-__c_mzero16(long double *dest, long cnt)
+__c_mzero16(float128_t *dest, long cnt)
 {
   long i;
 

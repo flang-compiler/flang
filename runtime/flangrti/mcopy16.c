@@ -5,11 +5,12 @@
  *
  */
 
+#include "float128.h"
 #include "memops.h"
 
 #if !defined(INLINE_MEMOPS)
 void
-__c_mcopy16(long double *dest, long double *src, long cnt)
+__c_mcopy16(float128_t *dest, float128_t *src, long cnt)
 {
   long i;
 
