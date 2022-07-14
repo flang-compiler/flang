@@ -20,7 +20,7 @@ jobs:
         target: [X86]
         cc: [clang, gcc]
         version: [10, 11]
-        llvm_branch: [release_12x, release_13x]
+        llvm_branch: [release_13x, release_14x]
         include:
           - target: X86
             cc: gcc
@@ -84,7 +84,9 @@ jobs:
         run: sudo apt install gcc-11 g++-11
 
       - name: Build and install flang & libpgmath
-        run: ./build-flang.sh -t ${{ matrix.target }} -p ${{ env.install_prefix }} -n $(nproc) -c -s
+        run: |
+          ${{ env.install_prefix }}/bin/clang --version
+          ./build-flang.sh -t ${{ matrix.target }} -p ${{ env.install_prefix }} -n $(nproc) -c -s
 
       - name: Copy llvm-lit
         run: |
