@@ -26,7 +26,7 @@ jobs:
         cc: [gcc]
         cpp: [g++]
         version: [10]
-        llvm_branch: [release_11x, release_12x]
+        llvm_branch: [release_13x, release_14x]
 
     steps:
       - name: Check tools
@@ -34,6 +34,7 @@ jobs:
           git --version
           cmake --version
           make --version
+          ${{ env.install_prefix }}/bin/clang --version
 
       - name: Manual checkout to build in user's home dir (push)
         if: github.ref == 'refs/heads/master'
