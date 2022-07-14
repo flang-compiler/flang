@@ -11,12 +11,13 @@
 
 #ifndef WINNT
 #include <signal.h>
+#include <unistd.h>
 #include "ent3f.h"
 
 /*
 extern void (*signal(int, void (*)(int)))(int);
-*/
 extern int alarm();
+*/
 
 int ENT3F(ALARM, alarm)(int *time, void (*proc)())
 {
