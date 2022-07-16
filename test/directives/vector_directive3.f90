@@ -4,7 +4,7 @@
 !CHECK: !llvm.access.group ![[ACCGRP:[0-9]+]]
 !CHECK: vector.ph:
 !CHECK: vector.body:
-!CHECK: add nsw <2 x i32>
+!CHECK: add nsw <{{[0-9]+}} x i32>
 !CHECK: "llvm.loop.parallel_accesses", ![[ACCGRP]]}
 !CHECK: "llvm.loop.isvectorized", i32 1
 !CHECK: "llvm.loop.unroll.runtime.disable"
