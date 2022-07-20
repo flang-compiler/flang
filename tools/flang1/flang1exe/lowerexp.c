@@ -2895,9 +2895,6 @@ intrinsic_arg_dtype(int intr, int ast, int args, int nargs)
 
   case I_CONJG:
   case I_DCONJG:
-#ifdef TARGET_SUPPORTS_QUADFP
-  case I_QCONJG:
-#endif
 
   case I_IIDIM:
   case I_JIDIM:
@@ -3621,9 +3618,6 @@ lower_intrinsic(int ast)
   /* conjg family */
   case I_CONJG:
   case I_DCONJG:
-#ifdef TARGET_SUPPORTS_QUADFP
-  case I_QCONJG:
-#endif
     ilm = intrin_name("CONJG", ast, in_c_cD_cQ);
     break;
 

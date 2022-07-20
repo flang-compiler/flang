@@ -509,8 +509,6 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental z
 .IN .QCONJG 1 CQ CQ QCONJG * V
 .AT elemental x
-.IN QCONJG 1 CQ CQ QCONJG * V
-.AT elemental z
 
 .IN DPROD 2 R D DPROD * V
 .AT elemental x y
@@ -925,7 +923,7 @@ Convert any numeric data type to double complex.
 .sp
 
 .ul
-sptr	name	siname	iname	rname	dname	cname	cdname	i8name
+sptr	name	siname	iname	rname	dname	cname	cdname	i8name	qname	cqname
 .GN IAND IIAND JIAND - - - - .KIAND - -
 .AT elemental i j
 .GN IOR IIOR JIOR - - - - .KIOR - -
@@ -950,7 +948,7 @@ sptr	name	siname	iname	rname	dname	cname	cdname	i8name
 .AT elemental z
 .GN AIMAG - - - - .AIMAG DIMAG - - .QIMAG
 .AT elemental z
-.GN CONJG - - - - .CONJG DCONJG - - .QCONJG QCONJG -
+.GN CONJG - - - - .CONJG DCONJG - .QCONJG -
 .AT elemental z
 .GN ININT - - .ININT IIDNNT - - - - -
 .AT elemental a
@@ -976,7 +974,7 @@ sptr	name	siname	iname	rname	dname	cname	cdname	i8name
 .AT elemental x
 .GN LOG10 - - ALOG10 DLOG10 - - - QLOG10 -
 .AT elemental x
-.GN SIN - - .SIN DSIN CSIN CDSIN - QSIN CQSIN
+.GN SIN - - .SIN DSIN CSIN CDSIN - QSIN .CQSIN
 .AT elemental x
 .GN SIND - - .SIND DSIND - - - QSIND
 .AT elemental x
