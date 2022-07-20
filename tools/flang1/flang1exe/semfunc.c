@@ -4680,13 +4680,6 @@ ref_intrin(SST *stktop, ITEM *list)
         con2 = CONVAL2G(con1);
         res[1] = const_fold(OP_SUB, (INT)stb.dbl0, con2, DT_REAL8);
         goto const_getcon;
-#ifdef IM_QCONJG
-      case IM_QCONJG:
-        res[0] = CONVAL1G(con1);
-        con2 = CONVAL2G(con1);
-        res[1] = const_fold(OP_SUB, (INT)stb.quad0, con2, DT_QUAD);
-        goto const_getcon;
-#endif
 #ifdef IM_DPROD
       case IM_DPROD:
         con2 = GET_CVAL_ARG(1);
