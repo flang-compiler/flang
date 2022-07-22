@@ -3587,7 +3587,7 @@ getict(lzhandle *fdlz, const char *file_name, int ipa)
   do {
     int op;
     int init_ast, limit_ast, step_ast;
-    int sptr, dtype, ptrdtype, repeatc, is_const, ast;
+    int sptr, dtype, ptrdtype, repeatc, is_const, ast, nosubc;
     ACL *subone;
     READ_LZLINE;
     if (p == NULL) {
@@ -3749,7 +3749,8 @@ getict(lzhandle *fdlz, const char *file_name, int ipa)
       ptrdtype = get_num(10);
       repeatc = get_num(10);
       more = get_num(10);
-      subone = getict(fdlz, file_name, ipa);
+      nosubc = get_num(10);
+      subone = nosubc ? NULL : getict(fdlz, file_name, ipa);
       thisone = GET_ACL(PERM_AREA);
       memset(thisone, 0, sizeof(ACL));
       thisone->id = AC_SCONST;

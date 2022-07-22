@@ -1174,9 +1174,11 @@ static void
 export_ict(ACL *ict)
 {
   for (; ict != NULL; ict = ict->next) {
-    int more = 0;
+    int more = 0, nosubc = 0;
     if (ict->next)
       more = 1;
+    if (ict->subc == NULL)
+      nosubc = 1;
     switch (ict->id) {
     case AC_IDENT:
       lzprintf(outlz, "I %d %d %d %d %d %d\n", ict->sptr, ict->dtype,
@@ -1197,8 +1199,8 @@ export_ict(ACL *ict)
       export_ict(ict->subc);
       break;
     case AC_SCONST:
-      lzprintf(outlz, "S %d %d %d %d %d\n", ict->sptr, ict->dtype,
-               ict->ptrdtype, ict->repeatc, more);
+      lzprintf(outlz, "S %d %d %d %d %d %d\n", ict->sptr, ict->dtype,
+               ict->ptrdtype, ict->repeatc, more, nosubc);
       export_ict(ict->subc);
       break;
     case AC_IDO:
