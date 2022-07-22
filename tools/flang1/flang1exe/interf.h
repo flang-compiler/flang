@@ -105,7 +105,7 @@ void ipa_export_close(void);                 /* exterf.c */
 #define MOD_PG  0x40 /* compilers' own module files */
 
 #undef IVSN
-#define IVSN 34
+#define IVSN 35
 #undef IVSN_24
 #define IVSN_24 24
 #undef IVSN_27
@@ -139,6 +139,7 @@ void ipa_export_close(void);                 /* exterf.c */
  *          It is set if it is compiler module file.
  *     33 - Add MP_TASKLOOP[REG] for taskloop
  *     34 - half precision and half-complex datatypes
+ *     35 - Add flag for null subc in typedef initializer
  */
 
 /*
