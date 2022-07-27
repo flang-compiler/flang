@@ -7,9 +7,6 @@
 
 #ifndef _PGOMP_H
 #define _PGOMP_H
-
-#include <stdint.h>
-
 /* simple lock */
 
 /* lock API functions */
@@ -175,25 +172,9 @@ public:
  */
 typedef void ident_t;
 
-#ifndef __WORDSIZE
-#ifdef _MSC_VER
-#ifdef _WIN64
-#define __WORDSIZE 64
-#else
-#define __WORDSIZE 32
-#endif
-#else
-#error "Unknown word size!"
-#endif
-#endif
-
 typedef int kmp_int32;
 typedef long long kmp_int64;
-#if __WORDSIZE == 32
-typedef int kmp_critical_name[8];  /* must be 32 bytes */
-#else
-typedef long kmp_critical_name[4]; /* must be 32 bytes and  8-byte aligned */
-#endif
+typedef kmp_int32 kmp_critical_name[8];  /* must be 32 bytes */
 
 extern kmp_int32 __kmpc_global_thread_num(ident_t *);
 extern void __kmpc_critical(ident_t *, kmp_int32, kmp_critical_name *);
