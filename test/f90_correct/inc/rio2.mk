@@ -5,7 +5,7 @@
 #
 
 build: $(SRC)/rio2.f90
-	-$(FC) $(FFLAGS) $(LDFLAGS) $(SRC)/rio2.f90 -o rio2
+	-$(FC) $(FFLAGS) $(LDFLAGS) -fopenmp $(SRC)/rio2.f90 -o rio2
 run:
 	-./rio2 
 verify: ;
