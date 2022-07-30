@@ -5,7 +5,7 @@
 #
 
 build: $(SRC)/rio3.f90
-	-$(FC) $(FFLAGS) $(LDFLAGS) $(SRC)/rio3.f90 -o rio3
+	-$(FC) $(FFLAGS) $(LDFLAGS) -fopenmp $(SRC)/rio3.f90 -o rio3
 run:
 	-./rio3 
 verify: ;
