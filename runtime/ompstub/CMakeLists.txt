@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 
-set(OMPSTUB_SRC init_nomp.c  ompstubs.c)
+set(OMPSTUB_SRC ompstubs.c)
 
 add_flang_library(ompstub_static ${OMPSTUB_SRC})
 if (MSVC)

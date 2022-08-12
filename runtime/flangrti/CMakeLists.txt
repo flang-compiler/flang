@@ -59,6 +59,7 @@ SET(PGC_SRC_FILES
   mpmalloc.c
   # src-mp files
   llcrit.c
+  init_nomp.c
   )
 
 SET(PGC_SRC_FILES_QUADFP
