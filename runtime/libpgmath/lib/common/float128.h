@@ -15,7 +15,7 @@
 
 #include <stdint.h>
 
-#if defined(TARGET_LINUX_POWER) || defined(LINUX8664) || defined(TARGET_X8664)
+#if defined(TARGET_LINUX_POWER) || defined(LINUX8664) || (defined(TARGET_X8664) && !defined(TARGET_WIN))
 typedef __float128 float128_t;
 #else
 /* __float128 is not available on AArch64 or other generic targets;
