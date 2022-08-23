@@ -303,6 +303,8 @@ if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=unused-but-set-variable")
      endif()
   endif ()
+elseif(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xclang -mlong-double-128")
 endif ()
 
 if (APPLE)
