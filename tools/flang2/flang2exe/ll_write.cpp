@@ -1447,8 +1447,9 @@ static const MDTemplate Tmpl_DISubrange_pre11[] = {
 };
 
 static const MDTemplate Tmpl_DISubrange[] = {
-  { "DISubrange", TF, 4 },
+  { "DISubrange", TF, 5 },
   { "tag",                      DWTagField,      FlgHidden },
+  { "count",                    SignedOrMDField, 0 },
   { "lowerBound",               SignedOrMDField, 0 },
   { "upperBound",               SignedOrMDField, 0 },
   { "stride",                   SignedOrMDField, 0 }
