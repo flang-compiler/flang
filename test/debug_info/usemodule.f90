@@ -11,10 +11,11 @@
 !CHECK: !DIImportedEntity(tag: DW_TAG_imported_declaration, scope: [[USE_RESTRICTED:![0-9]+]], entity: [[VAR1]]
 !CHECK: [[USE_RESTRICTED]] = distinct !DISubprogram(name: "use_restricted"
 
-!CHECK: !DIImportedEntity(tag: DW_TAG_imported_declaration, scope: [[USE_RENAMED:![0-9]+]], entity: [[VAR3]]
+!CHECK: !DIImportedEntity(tag: DW_TAG_imported_module, scope: [[USE_RENAMED:![0-9]+]], entity: [[MYMOD]]
+!CHECK-SAME: elements: [[RENAMES:![0-9]+]]
 !CHECK: [[USE_RENAMED]] = distinct !DISubprogram(name: "use_renamed"
-!CHECK: !DIImportedEntity(tag: DW_TAG_imported_declaration, scope: [[USE_RENAMED:![0-9]+]], entity: [[VAR2]]
-!CHECK: !DIImportedEntity(tag: DW_TAG_imported_declaration, name: "var4", scope: [[USE_RENAMED:![0-9]+]], entity: [[VAR1]]
+!CHECK: [[RENAMES]] = !{[[RENAME1:![0-9]+]]}
+!CHECK: [[RENAME1]] = !DIImportedEntity(tag: DW_TAG_imported_declaration, name: "var4", scope: [[USE_RENAMED]], entity: [[VAR1]]
 
 !CHECK: !DIImportedEntity(tag: DW_TAG_imported_declaration, name: "var4", scope: [[USE_RESTRICTED_RENAMED:![0-9]+]], entity: [[VAR1]]
 !CHECK: [[USE_RESTRICTED_RENAMED]] = distinct !DISubprogram(name: "use_restricted_renamed"

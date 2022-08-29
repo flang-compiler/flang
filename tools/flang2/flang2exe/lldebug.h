@@ -171,6 +171,16 @@ LL_MDRef lldbg_emit_common_block_mdnode(LL_DebugInfo *db, SPTR sptr);
 void lldbg_create_cmblk_mem_mdnode_list(SPTR sptr, SPTR gblsym);
 
 /**
+   \brief Add symbol to the CHILD field of pending import entity.
+   \param db      the debug info object
+   \param entity  the symbol of module or variable to be imported
+   \param entity_type  0 indicates DECLARATION, 1 indicates MODULE, 
+   2 indicates UNIT.
+ */
+void lldbg_add_pending_import_entity_to_child(LL_DebugInfo *db, SPTR entity,
+                                             IMPORT_TYPE entity_type);
+
+/**
    \brief Add one symbol to the list of pending import entities.
    \param db      the debug info object
    \param entity  the symbol of module or variable to be imported

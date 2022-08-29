@@ -115,6 +115,7 @@ typedef struct import_entity {
   IMPORT_TYPE entity_type;     /**< 0 for DECLARATION; 1 for MODULE; 2 for UNIT */
   SPTR func;                   /**< sptr of function import to */
   struct import_entity *next;  /**< pointer to the next node */
+  struct import_entity *child; /**< pointer to the child node */
 } import_entity;
 
 #define BLK_STACK_SIZE 1024
@@ -184,8 +185,13 @@ static LL_MDRef lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr,
                                 SPTR data_sptr = SPTR_NULL);
 static LL_MDRef lldbg_fwd_local_variable(LL_DebugInfo *db, int sptr, int findex,
                                          int emit_dummy_as_local);
+static LL_MDRef lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr,
+                                             SPTR func_sptr,
+                                             IMPORT_TYPE entity_type,
+                                             LL_MDRef elements_mdnode);
 static void lldbg_emit_imported_entity(LL_DebugInfo *db, SPTR entity_sptr,
-                                       SPTR func_sptr, IMPORT_TYPE entity_type);
+                                       SPTR func_sptr, IMPORT_TYPE entity_type,
+                                       LL_MDRef elements);
 static LL_MDRef lldbg_create_subrange_mdnode(LL_DebugInfo *db, LL_MDRef count,
                                              LL_MDRef lb, LL_MDRef ub,
                                              LL_MDRef st);
@@ -1725,6 +1731,17 @@ lldbg_init(LL_Module *module)
     db->llvm_dbg_lv_array = NULL;
 }
 
+void lldbg_free_import_entity_list(import_entity *import_entity_list) {
+  while (import_entity_list != NULL) {
+    import_entity *node = import_entity_list;
+    if (node->child)
+      lldbg_free_import_entity_list(node->child);
+    node->child = NULL;
+    import_entity_list = node->next;
+    free(node);
+  }
+}
+
 void
 lldbg_free(LL_DebugInfo *db)
 {
@@ -1739,11 +1756,8 @@ lldbg_free(LL_DebugInfo *db)
     db->sptrs_to_mdnodes = nsp->next;
     free(nsp);
   }
-  while (db->import_entity_list != NULL) {
-    import_entity *node = db->import_entity_list;
-    db->import_entity_list = node->next;
-    free(node);
-  }
+  lldbg_free_import_entity_list(db->import_entity_list);
+  db->import_entity_list = NULL;
   free(db);
 }
 
@@ -2460,9 +2474,19 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
   scopeData = (hash_data_t)(unsigned long)db->cur_subprogram_mdnode;
   hashmap_replace(db->subroutine_mdnodes, INT2HKEY(sptr), &scopeData);
   while (db->import_entity_list) {
+    import_entity *child = db->import_entity_list->child;
+    LL_MDRef elements_mdnode =
+        (child ? ll_create_flexible_md_node(db->module) : (LL_MDRef) NULL);
     /* There are pending entities to be imported into this func */
     lldbg_emit_imported_entity(db, db->import_entity_list->entity, sptr,
-                               db->import_entity_list->entity_type);
+                               db->import_entity_list->entity_type,
+                               elements_mdnode);
+    while (child) {
+      LL_MDRef element = lldbg_create_imported_entity(db, child->entity, sptr,
+                                                      child->entity_type, (LL_MDRef) NULL);
+      ll_extend_md_node(db->module, elements_mdnode, element);
+      child = child->next;
+    }
     db->import_entity_list = db->import_entity_list->next;
   }
   db->cur_subprogram_null_loc =
@@ -4086,11 +4110,12 @@ lldbg_function_end(LL_DebugInfo *db, int func)
 
 static LL_MDRef
 lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
-                             IMPORT_TYPE entity_type)
+                             IMPORT_TYPE entity_type, LL_MDRef elements_mdnode)
 {
   LLMD_Builder mdb;
   LL_MDRef entity_mdnode, scope_mdnode = 0, file_mdnode, cur_mdnode;
   unsigned tag;
+  bool has_name = false;
 
   switch (entity_type) {
   case IMPORTED_DECLARATION: {
@@ -4132,9 +4157,14 @@ lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
   llmd_add_i32(mdb, FUNCLINEG(func_sptr)); // line? no accurate line number yet
   if (entity_type == IMPORTED_DECLARATION) {
     const char *alias_name = lookup_modvar_alias(entity_sptr);
-    if (alias_name && strcmp(alias_name, SYMNAME(entity_sptr)))
+    if (alias_name && strcmp(alias_name, SYMNAME(entity_sptr))) {
       llmd_add_string(mdb, alias_name);    // variable renamed
+      has_name = true;
+    }
   }
+  if (!has_name)
+    llmd_add_string(mdb, NULL);
+  llmd_add_md(mdb, elements_mdnode); // elements
 
   cur_mdnode = llmd_finish(mdb);
   ll_extend_md_node(db->module, db->llvm_dbg_imported, cur_mdnode);
@@ -4142,8 +4172,9 @@ lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
 }
 
 static void
-lldbg_emit_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
-                           IMPORT_TYPE entity_type)
+lldbg_emit_imported_entity(LL_DebugInfo *db, SPTR entity_sptr,
+                           SPTR func_sptr, IMPORT_TYPE entity_type,
+                           LL_MDRef elements_mdnode)
 {
   static hashset_t entity_func_added;
   const char *entity_func;
@@ -4156,7 +4187,8 @@ lldbg_emit_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
   if (hashset_lookup(entity_func_added, entity_func))
     return;
   hashset_insert(entity_func_added, entity_func);
-  lldbg_create_imported_entity(db, entity_sptr, func_sptr, entity_type);
+  lldbg_create_imported_entity(db, entity_sptr, func_sptr, entity_type,
+                               elements_mdnode);
 }
 
 void
@@ -4229,7 +4261,23 @@ lldbg_emit_common_block_mdnode(LL_DebugInfo *db, SPTR sptr)
 }
 
 void
-lldbg_add_pending_import_entity(LL_DebugInfo *db, SPTR entity, IMPORT_TYPE entity_type)
+lldbg_add_pending_import_entity_to_child(LL_DebugInfo *db, SPTR entity,
+                                         IMPORT_TYPE entity_type)
+{
+  import_entity *new_node;
+
+  new_node = (import_entity *)lldbg_alloc(sizeof *new_node);
+  new_node->entity = entity;
+  new_node->entity_type = entity_type;
+  new_node->func = gbl.currsub;
+  new_node->next = db->import_entity_list->child;
+  new_node->child = NULL;
+  db->import_entity_list->child = new_node;
+}
+
+void
+lldbg_add_pending_import_entity(LL_DebugInfo *db, SPTR entity,
+                                IMPORT_TYPE entity_type)
 {
   import_entity *node_ptr, *new_node;
 
@@ -4250,6 +4298,7 @@ lldbg_add_pending_import_entity(LL_DebugInfo *db, SPTR entity, IMPORT_TYPE entit
   new_node->entity_type = entity_type;
   new_node->func = gbl.currsub;
   new_node->next = db->import_entity_list;
+  new_node->child = NULL;
   db->import_entity_list = new_node;
 }
 
