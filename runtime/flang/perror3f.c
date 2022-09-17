@@ -9,14 +9,11 @@
 
 /*	perror3f.c - Implements LIB3F perror subprogram.  */
 
+#include <string.h>
 /* must include ent3f.h AFTER io3f.h */
 #include "io3f.h"
 #include "ent3f.h"
-
-#if !defined(WIN64) && !defined(WIN32)
-extern char *strerror(); /* SVR4 only ? */
-#endif
-extern FILE *__getfile3f();
+#include "utils3f.h"
 
 void ENT3F(PERROR, perror)(DCHAR(str) DCLEN(str))
 {

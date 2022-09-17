@@ -9,12 +9,9 @@
 
 /*	putenv3f.c - Implements LIB3F putenv subprogram.  */
 
+#include <stdlib.h>
 #include "ent3f.h"
-
-extern char *__fstr2cstr();
-extern void __cstr_free();
-
-extern int putenv();
+#include "utils3f.h"
 
 int ENT3F(PUTENV, putenv)(DCHAR(str) DCLEN(str))
 {

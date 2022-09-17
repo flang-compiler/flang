@@ -11,12 +11,11 @@
 
 #ifndef WINNT
 
+#include <unistd.h>
 /* must include ent3f.h AFTER io3f.h */
 #include "io3f.h"
 #include "ent3f.h"
 #include "utils3f.h"
-
-extern char *ttyname();
 
 /* ttynam is a character function */
 void ENT3F(TTYNAM, ttynam)(DCHAR(nm) DCLEN(nm), int *lu)

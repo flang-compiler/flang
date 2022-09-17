@@ -24,7 +24,8 @@ union ieee {
   int i[2];
 };
 
-extern void *__fort_sbrk(int);
+/* defined in xfer_heap_dum.c */
+void *__fort_sbrk(int);
 
 /* these little routines had to go somewhere, so here they are. */
 

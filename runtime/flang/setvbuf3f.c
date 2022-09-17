@@ -20,8 +20,7 @@
 
 #include <stdio.h>
 #include "ent3f.h"
-
-extern FILE *__getfile3f();
+#include "utils3f.h"
 
 int ENT3F(SETVBUF3F, setvbuf3f)(int *lu, int *type, int *size)
 {

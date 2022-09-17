@@ -10,8 +10,7 @@
 /*	isatty3f.c - Implements LIB3F isatty subprogram.  */
 
 #include "ent3f.h"
-
-extern int __isatty3f();
+#include "utils3f.h"
 
 int ENT3F(ISATTY, isatty)(int *lu)
 {

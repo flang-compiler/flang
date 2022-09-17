@@ -16,6 +16,7 @@
 /* must include ent3f.h AFTER io3f.h */
 #include "io3f.h"
 #include "ent3f.h"
+#include "utils3f.h"
 
 #define FILE$FIRST -1
 #define FILE$LAST -2
@@ -23,7 +24,6 @@
 #define FILE$CURTIME -1
 
 #if defined(WIN64) || defined(WIN32)
-extern char *__fstr2cstr();
 extern void __UnpackTime(unsigned int secsSince1970, ULARGE_INTEGER *fileTime);
 extern int __GETFILEINFOQQ(DCHAR(ffiles), char *buffer,
                            int *handle DCLEN(ffiles));

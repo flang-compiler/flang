@@ -14,10 +14,10 @@
 /* must include ent3f.h AFTER io3f.h */
 #include "io3f.h"
 #include "ent3f.h"
+#include "utils3f.h"
 
 #if defined(WIN64) || defined(WIN32)
 
-extern char *__fstr2cstr();
 int ENT3F(FULLPATHQQ, fullpathqq)(DCHAR(fname),
                                   DCHAR(fpath) DCLEN(fname) DCLEN(fpath))
 {

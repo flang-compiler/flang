@@ -13,9 +13,6 @@
 #include <stdlib.h>
 #include "stdioInterf.h"
 
-
-extern char *__fort_getenv();
-
 /* WARNING: cnfg.c generates two objects, cnfg.o and pgfcnfg.o
  * define global variable which contains the configurable items:
  *
@@ -74,7 +71,6 @@ void
 __fortio_scratch_name(char *filename, int unit)
 /* generate the name of an unnamed scracth file */
 {
-  extern char *__io_tempnam();
   char *nm;
 
 #if defined(WINNT)

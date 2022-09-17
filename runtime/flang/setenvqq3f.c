@@ -9,12 +9,9 @@
 
 /*	setenvqq3f.c - Implements DFLIB setenvqq subprogram.  */
 
+#include <stdlib.h>
 #include "ent3f.h"
-
-extern char *__fstr2cstr();
-extern void __cstr_free();
-
-extern int putenv();
+#include "utils3f.h"
 
 int ENT3F(SETENVQQ, setenvqq)(DCHAR(str) DCLEN(str))
 {

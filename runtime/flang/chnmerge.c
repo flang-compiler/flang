@@ -7,8 +7,7 @@
 
 #include "stdioInterf.h"
 #include "fioMacros.h"
-
-extern struct chdr *__fort_allchn();
+#include "xfer.h"
 
 /* merge ent structures */
 

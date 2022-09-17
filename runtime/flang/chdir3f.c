@@ -17,13 +17,11 @@
 #endif
 #include "io3f.h"
 #include "ent3f.h"
+#include "utils3f.h"
 
 #ifdef _WIN64
 #define chdir _chdir
 #endif
-
-extern char *__fstr2cstr();
-extern void __cstr_free();
 
 int ENT3F(CHDIR, chdir)(DCHAR(path) DCLEN(path))
 {

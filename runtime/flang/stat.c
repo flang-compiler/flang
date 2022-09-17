@@ -17,7 +17,8 @@
 #define write _write
 #endif
 
-extern void __fort_gettb();
+/* defined in stat_linux.c */
+void __fort_gettb(struct tb *);
 
 static struct tb tb0 = {/* stats at beginning of program */
                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,

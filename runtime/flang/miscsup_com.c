@@ -3910,8 +3910,6 @@ ENTF90(AMIN1, amin1)(__REAL_T *a, __REAL_T *b) { return (*a < *b) ? *a : *b; }
 __DBLE_T
 ENTF90(DMIN1, dmin1)(__DBLE_T *a, __DBLE_T *b) { return (*a < *b) ? *a : *b; }
 
-double fmod();
-
 __REAL_T
 ENTF90(AMOD, amod)(__REAL_T *a, __REAL_T *b) { return fmod(*a, *b); }
 

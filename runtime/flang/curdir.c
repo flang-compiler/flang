@@ -22,8 +22,6 @@
 #define getcwd _getcwd
 #endif
 
-extern char *getcwd();
-
 WIN_MSVCRT_IMP char *WIN_CDECL getenv(const char *);
 
 /* fix pathname for "funny" NFS mount points */

@@ -15,11 +15,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "fioMacros.h"
-#include "mpalloc.h"
+#include "utils3f.h"
 
 extern int __io_get_argc();
 extern char **__io_get_argv();
-extern char *__fstr2cstr();
 
 static void store_int_kind(void *, __INT_T *, int);
 

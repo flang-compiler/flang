@@ -9,12 +9,11 @@
 
 /*	random3f.c - Implements LIB3F random subprogram.  */
 
+#include <stdlib.h>
 #include "ent3f.h"
 
 /* drand48, srand48 are not currently available on win64 */
 #if defined(WIN64) || defined(WIN32)
-
-#include <stdlib.h>
 
 float ENT3F(RANDOM, random)(int *flag)
 {
@@ -29,9 +28,6 @@ float ENT3F(RANDOM, random)(int *flag)
 }
 
 #else
-
-extern double drand48();
-extern void srand48();
 
 float ENT3F(RANDOM, random)(int *flag)
 {

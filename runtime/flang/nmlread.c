@@ -579,7 +579,7 @@ ENTF90IO(NML_READ, nml_read)( __INT_T *unit,
  *  \param iostat same as for ENTF90IO(open)
  *  \param nmldesc) namelist group descr
  */
-extern int
+int
 ENTCRF90IO(NML_READ, nml_read)(__INT_T *unit, 
                                __INT_T *bitv, 
                                __INT_T *iostat, 
@@ -967,7 +967,6 @@ get_token(void)
       goto do_numeric_token;
 
     if (c == '*') { /* REPEAT COUNT */
-      extern long atol();
       long k = atol(token_buff);
       if (recur)
         return __fortio_error(FIO_ELEX); /* unknown token */

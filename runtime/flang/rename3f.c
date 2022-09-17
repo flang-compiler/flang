@@ -12,10 +12,7 @@
 /* must include ent3f.h AFTER io3f.h */
 #include "io3f.h"
 #include "ent3f.h"
-
-extern int rename();
-extern char *__fstr2cstr();
-extern void __cstr_free();
+#include "utils3f.h"
 
 int ENT3F(RENAME, rename)(DCHAR(from), DCHAR(to) DCLEN(from) DCLEN(to))
 {

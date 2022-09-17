@@ -13,10 +13,6 @@
 #include "ent3f.h"
 #include "utils3f.h"
 
-extern char *getenv();
-extern char *__fstr2cstr();
-extern void __cstr_free();
-
 int ENT3F(GETENVQQ, getenvqq)(DCHAR(en), DCHAR(ev) DCLEN(en) DCLEN(ev))
 {
   char *p, *q;

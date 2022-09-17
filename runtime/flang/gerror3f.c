@@ -9,6 +9,7 @@
 
 /*	gerror3f.c - Implements LIB3F gerror subprogram.  */
 
+#include <string.h>
 /* must include ent3f.h AFTER io3f.h */
 #include "io3f.h"
 #include "ent3f.h"
@@ -16,10 +17,6 @@
 #include "error.h"
 
 #define Ftn_errmsg __fortio_errmsg
-
-#if !defined(WIN64) && !defined(WIN32)
-extern char *strerror(); /* SVR4 only ? */
-#endif
 
 void ENT3F(GERROR, gerror)(DCHAR(str) DCLEN(str))
 {
