@@ -434,7 +434,6 @@ find_bivs(void)
      */
     PSI_P pred;
     Q_ITEM *p;
-    extern LOGICAL bv_mem();
     int rdef;
 
     for (ind = 1; ind < induc.indb.stg_avail; ind++) {
@@ -514,7 +513,6 @@ def_in_out(int fgx, int def)
   int ret;
   int tempfgx;
   PSI_P pred;
-  extern LOGICAL bv_mem();
 
   if (FG_OUT(fgx) != NULL) {
     return bv_mem(FG_OUT(fgx), def);

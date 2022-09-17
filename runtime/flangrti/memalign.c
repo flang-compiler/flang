@@ -9,10 +9,8 @@
 #include <stdlib.h>
 
 #if (defined(WIN32) || defined(WIN64))
-extern void *_aligned_malloc();
-extern void _aligned_free();
-#else
-extern int posix_memalign();
+extern void *_aligned_malloc(size_t, size_t);
+extern void _aligned_free(void *);
 #endif
 
 void *

@@ -19,10 +19,6 @@
   fprintf(stderr, "%d: toktyp=%c(%d);  tokval=%s; line=%d\n", __LINE__, \
           toktyp, toktyp, tokval, cur_line);
 
-/*  external functions referenced by this module:  */
-
-extern void list_line();
-
 /* structures and data local to this module : */
 
 /* char classification macros */

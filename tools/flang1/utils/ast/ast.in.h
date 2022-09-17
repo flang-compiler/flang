@@ -326,10 +326,10 @@ extern ASTB  astb;
 extern int   intast_sym[];
 
 /** \brief Type of function passed to ast_traverse() and ast_traverse_all() */
-typedef LOGICAL (*ast_preorder_fn) ();
+typedef LOGICAL (*ast_preorder_fn) (int, int *);
 
 /** \brief Type of function passed to ast_visit(), ast_traverse() and ast_traverse_all() */
-typedef void (*ast_visit_fn) ();
+typedef void (*ast_visit_fn) (int, int *);
 
 /*   declare external functions from ast.c:  */
 
