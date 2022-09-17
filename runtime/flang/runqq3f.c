@@ -12,10 +12,7 @@
 #include <string.h>
 #include "ent3f.h"
 #include "mpalloc.h"
-
-extern char *__fstr2cstr();
-extern void __cstr_free();
-extern void *_mp_malloc();
+#include "utils3f.h"
 
 short ENT3F(RUNQQ, runqq)(DCHAR(fname), DCHAR(cline) DCLEN(fname) DCLEN(cline))
 {

@@ -16,9 +16,7 @@
 
 #include "io3f.h"
 #include "ent3f.h"
-
-extern char *__fstr2cstr();
-extern void __cstr_free();
+#include "utils3f.h"
 
 int ENT3F(ACCESS, access)(DCHAR(fil), DCHAR(mode) DCLEN(fil) DCLEN(mode))
 {

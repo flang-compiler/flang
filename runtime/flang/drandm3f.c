@@ -9,12 +9,11 @@
 
 /*	drandm3f.c - Implements LIB3F drandm subprogram.  */
 
+#include <stdlib.h>
 #include "ent3f.h"
 
 /* drand48, srand48 are not currently available on win64 */
 #if defined(WIN64) || defined(WIN32)
-
-#include <stdlib.h>
 
 double ENT3F(DRANDM, drandm)(int *flag)
 {
@@ -34,9 +33,6 @@ double ENT3F(DRAND, drand)(int *flag)
 }
 
 #else
-
-extern double drand48();
-extern void srand48();
 
 double ENT3F(DRANDM, drandm)(int *flag)
 {

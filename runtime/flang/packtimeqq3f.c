@@ -18,7 +18,6 @@
 #include "ent3f.h"
 
 #if defined(WIN64) || defined(WIN32)
-extern char *__fstr2cstr();
 extern void __GetTimeToSecondsSince1970(ULARGE_INTEGER *fileTime,
                                         unsigned int *out);
 

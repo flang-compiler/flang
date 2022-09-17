@@ -16,13 +16,13 @@
 /* must include ent3f.h AFTER io3f.h */
 #include "io3f.h"
 #include "ent3f.h"
+#include "utils3f.h"
 
 #define FILE$FIRST -1
 #define FILE$LAST -2
 #define FILE$ERROR -3
 
 #if defined(WIN64) || defined(WIN32)
-extern char *__fstr2cstr();
 extern void __GetTimeToSecondsSince1970(ULARGE_INTEGER *fileTime,
                                         unsigned int *out);
 int ENT3F(GETFILEINFOQQI8, getfileinfoqqi8)(DCHAR(ffiles), char *buffer,

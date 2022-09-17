@@ -21,8 +21,6 @@
 #define GETCWDM getcwd
 #endif
 
-extern char *GETCWDM();
-
 int ENT3F(GETCWD, getcwd)(DCHAR(dir) DCLEN(dir))
 {
   char *p;

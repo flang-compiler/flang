@@ -9,6 +9,7 @@
 
 /*	irandm3f.c - Implements LIB3F irandm subprogram.  */
 
+#include <stdlib.h>
 #include "ent3f.h"
 
 #ifdef WINNT
@@ -21,9 +22,6 @@ int ENT3F(IRANDM, irandm)(int *flag)
 }
 
 #else
-
-extern int lrand48();
-extern void srand48();
 
 int ENT3F(IRANDM, irandm)(int *flag)
 {

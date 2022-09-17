@@ -8,8 +8,6 @@
 #include "stdioInterf.h"
 #include "fioMacros.h"
 
-extern void *__fort_malloc();
-
 int __fort_minxfer = 0;
 
 /* receive data items */

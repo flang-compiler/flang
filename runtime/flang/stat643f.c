@@ -13,9 +13,7 @@
 #include <sys/stat.h>
 #include "io3f.h"
 #include "ent3f.h"
-
-extern char *__fstr2cstr();
-extern void __cstr_free();
+#include "utils3f.h"
 
 int ENT3F(STAT64, stat64)(DCHAR(nm), long long *statb DCLEN(nm))
 {

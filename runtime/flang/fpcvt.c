@@ -258,7 +258,6 @@ ufpnorm(UFP *u)
 static void
 ufprnd(UFP *u, int bits)
 {
-  void ufpnorm();
   ufpnorm(u);
   manrnd(u->fman, bits + 12);
   ufpnorm(u);
@@ -643,7 +642,6 @@ atoui64(char *s, INT *m, /* m[2] */
 static void
 atoxufp(char *s, UFP *u, char **p)
 {
-  void atoui64();
   INT exp;
   int sign;
   int err;
@@ -727,8 +725,6 @@ double
 __fortio_strtod(char *s, char **p)
 {
   IEEE64 d;
-  void atoxufp();
-  void ufpxten();
   UFP u;
   int exp;
   char *q;
@@ -800,7 +796,6 @@ char *
 __fortio_ecvt(__BIGREAL_T lvalue, int width, int ndigit, int *decpt, int *sign,
               int round, int is_quad)
 {
-  void ufptosci();
   int i, j;
 
   union ieee ieee_v;

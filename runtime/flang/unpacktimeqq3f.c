@@ -19,7 +19,6 @@
 #include "ent3f.h"
 
 #if defined(WIN64) || defined(WIN32)
-extern char *__fstr2cstr();
 extern void __UnpackTime(unsigned int secsSince1970, ULARGE_INTEGER *fileTime);
 
 void ENT3F(UNPACKTIMEQQ, unpacktimeqq)(unsigned int *timedate, int *year,

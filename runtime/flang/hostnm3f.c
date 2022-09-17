@@ -11,11 +11,10 @@
 
 #ifndef WINNT
 
+#include <unistd.h>
 /* must include ent3f.h AFTER io3f.h */
 #include "io3f.h"
 #include "ent3f.h"
-
-extern int gethostname();
 
 int ENT3F(HOSTNM, hostnm)(DCHAR(nm) DCLEN(nm))
 {

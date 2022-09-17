@@ -7,9 +7,8 @@
 
 #include "stdioInterf.h"
 #include "fioMacros.h"
-
-extern struct cgrp *__fort_genlist();
-extern struct chdr *__fort_allchn();
+#include "genlist.h"
+#include "xfer.h"
 
 /* 1toN */
 

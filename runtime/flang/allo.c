@@ -18,7 +18,6 @@
 #include "type.h"
 #define DEBUG 1
 #include "llcrit.h"
-#include "mpalloc.h"
 #include "f90alloc.h"
 
 MP_SEMAPHORE(static, sem);

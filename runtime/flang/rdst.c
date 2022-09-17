@@ -13,9 +13,7 @@
 
 #include "stdioInterf.h"
 #include "fioMacros.h"
-#include "mpalloc.h" /* for __cstr_free */
-
-extern char *__fstr2cstr();
+#include "utils3f.h" /* for __cstr_free */
 
 void
 ENTFTN(TEMPLATE, template)(F90_Desc *dd, __INT_T *p_rank,

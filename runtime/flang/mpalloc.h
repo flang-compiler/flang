@@ -16,5 +16,3 @@ extern void * _mp_calloc(size_t n, size_t);
 extern void * _mp_realloc(void *p, size_t n);
 extern void * _mp_realloc(void *p, size_t n);
 extern void _mp_free(void *p);
-
-void __cstr_free(char *from);

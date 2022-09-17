@@ -15,10 +15,10 @@
 /* must include ent3f.h AFTER io3f.h */
 #include "io3f.h"
 #include "ent3f.h"
+#include "utils3f.h"
 
 #if defined(WIN64) || defined(WIN32)
 
-extern char *__fstr2cstr();
 int ENT3F(FINDFILEQQ, findfileqq)(DCHAR(fname), DCHAR(fvarname),
                                   DCHAR(fpath) DCLEN(fname) DCLEN(fvarname)
                                       DCLEN(fpath))
