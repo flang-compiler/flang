@@ -16,6 +16,36 @@
 #define SMALL_ROWSB 10
 #define SMALL_COLSB 10
 
+/* C prototypes for external Fortran functions */
+void ftn_mvmul_cmplx16_(int *, int *, __POINT_T *, __POINT_T *,
+                        DOUBLE_COMPLEX_TYPE *, DOUBLE_COMPLEX_TYPE *,
+                        __POINT_T *, DOUBLE_COMPLEX_TYPE *,
+                        DOUBLE_COMPLEX_TYPE *, DOUBLE_COMPLEX_TYPE *);
+void ftn_vmmul_cmplx16_(int *, int *, __POINT_T *, __POINT_T *,
+                        DOUBLE_COMPLEX_TYPE *, DOUBLE_COMPLEX_TYPE *,
+                        DOUBLE_COMPLEX_TYPE *, __POINT_T *,
+                        DOUBLE_COMPLEX_TYPE *, DOUBLE_COMPLEX_TYPE *);
+void ftn_mnaxnb_cmplx16_(__POINT_T *, __POINT_T *, __POINT_T *,
+                         DOUBLE_COMPLEX_TYPE *, DOUBLE_COMPLEX_TYPE *,
+                         __POINT_T *, DOUBLE_COMPLEX_TYPE *, __POINT_T *,
+                         DOUBLE_COMPLEX_TYPE *, DOUBLE_COMPLEX_TYPE *,
+                         __POINT_T *);
+void ftn_mnaxtb_cmplx16_(__POINT_T *, __POINT_T *, __POINT_T *,
+                         DOUBLE_COMPLEX_TYPE *, DOUBLE_COMPLEX_TYPE *,
+                         __POINT_T *, DOUBLE_COMPLEX_TYPE *, __POINT_T *,
+                         DOUBLE_COMPLEX_TYPE *, DOUBLE_COMPLEX_TYPE *,
+                         __POINT_T *);
+void ftn_mtaxnb_cmplx16_(__POINT_T *, __POINT_T *, __POINT_T *,
+                         DOUBLE_COMPLEX_TYPE *, DOUBLE_COMPLEX_TYPE *,
+                         __POINT_T *, DOUBLE_COMPLEX_TYPE *, __POINT_T *,
+                         DOUBLE_COMPLEX_TYPE *, DOUBLE_COMPLEX_TYPE *,
+                         __POINT_T *);
+void ftn_mtaxtb_cmplx16_(__POINT_T *, __POINT_T *, __POINT_T *,
+                         DOUBLE_COMPLEX_TYPE *, DOUBLE_COMPLEX_TYPE *,
+                         __POINT_T *, DOUBLE_COMPLEX_TYPE *, __POINT_T *,
+                         DOUBLE_COMPLEX_TYPE *, DOUBLE_COMPLEX_TYPE *,
+                         __POINT_T *);
+
 void ENTF90(MMUL_CMPLX16,
             mmul_cmplx16)(int ta, int tb, __POINT_T mra, __POINT_T ncb,
                           __POINT_T kab, DOUBLE_COMPLEX_TYPE *alpha,
@@ -55,9 +85,6 @@ void ENTF90(MMUL_CMPLX16,
   DOUBLE_COMPLEX_TYPE buffera[SMALL_ROWSA * SMALL_ROWSB];
   DOUBLE_COMPLEX_TYPE bufferb[SMALL_COLSB * SMALL_ROWSB];
   DOUBLE_COMPLEX_TYPE temp;
-  void ftn_mvmul_cmplx16_(), ftn_vmmul_cmplx16_();
-  void ftn_mnaxnb_cmplx16_(), ftn_mnaxtb_cmplx16_();
-  void ftn_mtaxnb_cmplx16_(), ftn_mtaxtb_cmplx16_();
   DOUBLE_COMPLEX_TYPE calpha, cbeta;
   /*
    * Small matrix multiply variables

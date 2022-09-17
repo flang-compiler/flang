@@ -16,6 +16,36 @@
 #define SMALL_ROWSB 10
 #define SMALL_COLSB 10
 
+/* C prototypes for external Fortran functions */
+void ftn_mvmul_cmplx8_(int *, int *, __POINT_T *, __POINT_T *,
+                       FLOAT_COMPLEX_TYPE *, FLOAT_COMPLEX_TYPE *,
+                       __POINT_T *, FLOAT_COMPLEX_TYPE *,
+                       FLOAT_COMPLEX_TYPE *, FLOAT_COMPLEX_TYPE *);
+void ftn_vmmul_cmplx8_(int *, int *, __POINT_T *, __POINT_T *,
+                       FLOAT_COMPLEX_TYPE *, FLOAT_COMPLEX_TYPE *,
+                       FLOAT_COMPLEX_TYPE *, __POINT_T *,
+                       FLOAT_COMPLEX_TYPE *, FLOAT_COMPLEX_TYPE *);
+void ftn_mnaxnb_cmplx8_(__POINT_T *, __POINT_T *, __POINT_T *,
+                        FLOAT_COMPLEX_TYPE *, FLOAT_COMPLEX_TYPE *,
+                        __POINT_T *, FLOAT_COMPLEX_TYPE *, __POINT_T *,
+                        FLOAT_COMPLEX_TYPE *, FLOAT_COMPLEX_TYPE *,
+                        __POINT_T *);
+void ftn_mnaxtb_cmplx8_(__POINT_T *, __POINT_T *, __POINT_T *,
+                        FLOAT_COMPLEX_TYPE *, FLOAT_COMPLEX_TYPE *,
+                        __POINT_T *, FLOAT_COMPLEX_TYPE *, __POINT_T *,
+                        FLOAT_COMPLEX_TYPE *, FLOAT_COMPLEX_TYPE *,
+                        __POINT_T *);
+void ftn_mtaxnb_cmplx8_(__POINT_T *, __POINT_T *, __POINT_T *,
+                        FLOAT_COMPLEX_TYPE *, FLOAT_COMPLEX_TYPE *,
+                        __POINT_T *, FLOAT_COMPLEX_TYPE *, __POINT_T *,
+                        FLOAT_COMPLEX_TYPE *, FLOAT_COMPLEX_TYPE *,
+                        __POINT_T *);
+void ftn_mtaxtb_cmplx8_(__POINT_T *, __POINT_T *, __POINT_T *,
+                        FLOAT_COMPLEX_TYPE *, FLOAT_COMPLEX_TYPE *,
+                        __POINT_T *, FLOAT_COMPLEX_TYPE *, __POINT_T *,
+                        FLOAT_COMPLEX_TYPE *, FLOAT_COMPLEX_TYPE *,
+                        __POINT_T *);
+
 void ENTF90(MMUL_CMPLX8,
             mmul_cmplx8)(int ta, int tb, __POINT_T mra, __POINT_T ncb,
                          __POINT_T kab, FLOAT_COMPLEX_TYPE *alpha, FLOAT_COMPLEX_TYPE a[],
@@ -54,9 +84,6 @@ void ENTF90(MMUL_CMPLX8,
   FLOAT_COMPLEX_TYPE buffera[SMALL_ROWSA * SMALL_ROWSB];
   FLOAT_COMPLEX_TYPE bufferb[SMALL_COLSB * SMALL_ROWSB];
   FLOAT_COMPLEX_TYPE temp;
-  void ftn_mvmul_cmplx8_(), ftn_vmmul_cmplx8_();
-  void ftn_mnaxnb_cmplx8_(), ftn_mnaxtb_cmplx8_();
-  void ftn_mtaxnb_cmplx8_(), ftn_mtaxtb_cmplx8_();
   FLOAT_COMPLEX_TYPE calpha, cbeta;
   /*
    * Small matrix multiply variables
