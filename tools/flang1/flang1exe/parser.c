@@ -174,7 +174,7 @@ parser(void)
 static void
 _parser(void)
 {
-  int tkntyp, newtop, rednum, get_token(), endflg;
+  int tkntyp, newtop, rednum, endflg;
   int t;
   int start, end, nstate;
   int jstart, jend, ptr, i;

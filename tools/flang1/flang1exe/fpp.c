@@ -15,10 +15,6 @@
 #include "machar.h"
 #include "version.h"
 
-/*  external functions referenced by this module:  */
-
-extern void list_line();
-
 /* structures and data local to this module : */
 
 /* char classification macros */
