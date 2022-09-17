@@ -16,6 +16,24 @@
 #define SMALL_ROWSB 10
 #define SMALL_COLSB 10
 
+/* C prototypes for external Fortran functions */
+void ftn_mvmul_real4_(int *, __POINT_T *, __POINT_T *, float *, float *,
+                      __POINT_T *, float *, float *, float *);
+void ftn_vmmul_real4_(int *, __POINT_T *, __POINT_T *, float *, float *,
+                      float *, __POINT_T *, float *, float *);
+void ftn_mnaxnb_real4_(__POINT_T *, __POINT_T *, __POINT_T *, float *, float *,
+                       __POINT_T *, float *, __POINT_T *, float *, float *,
+                       __POINT_T *);
+void ftn_mnaxtb_real4_(__POINT_T *, __POINT_T *, __POINT_T *, float *, float *,
+                       __POINT_T *, float *, __POINT_T *, float *, float *,
+                       __POINT_T *);
+void ftn_mtaxnb_real4_(__POINT_T *, __POINT_T *, __POINT_T *, float *, float *,
+                       __POINT_T *, float *, __POINT_T *, float *, float *,
+                       __POINT_T *);
+void ftn_mtaxtb_real4_(__POINT_T *, __POINT_T *, __POINT_T *, float *, float *,
+                       __POINT_T *, float *, __POINT_T *, float *, float *,
+                       __POINT_T *);
+
 void ENTF90(MMUL_REAL4, mmul_real4)(int ta, int tb, __POINT_T mra,
                                     __POINT_T ncb, __POINT_T kab, float *alpha,
                                     float a[], __POINT_T lda, float b[],
@@ -55,9 +73,6 @@ void ENTF90(MMUL_REAL4, mmul_real4)(int ta, int tb, __POINT_T mra,
   float buffera[SMALL_ROWSA * SMALL_ROWSB];
   float bufferb[SMALL_COLSB * SMALL_ROWSB];
   float temp;
-  void ftn_mvmul_real4_(), ftn_vmmul_real4_();
-  void ftn_mnaxnb_real4_(), ftn_mnaxtb_real4_();
-  void ftn_mtaxnb_real4_(), ftn_mtaxtb_real4_();
   float calpha, cbeta;
   /*
    * Small matrix multiply variables

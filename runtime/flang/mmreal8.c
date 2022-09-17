@@ -16,6 +16,24 @@
 #define SMALL_ROWSB 10
 #define SMALL_COLSB 10
 
+/* C prototypes for external Fortran functions */
+void ftn_mvmul_real8_(int *, __POINT_T *, __POINT_T *, double *, double *,
+                      __POINT_T *, double *, double *, double *);
+void ftn_vmmul_real8_(int *, __POINT_T *, __POINT_T *, double *, double *,
+                      double *, __POINT_T *, double *, double *);
+void ftn_mnaxnb_real8_(__POINT_T *, __POINT_T *, __POINT_T *, double *,
+                       double *, __POINT_T *, double *, __POINT_T *,
+                       double *, double *, __POINT_T *);
+void ftn_mnaxtb_real8_(__POINT_T *, __POINT_T *, __POINT_T *, double *,
+                       double *, __POINT_T *, double *, __POINT_T *,
+                       double *, double *, __POINT_T *);
+void ftn_mtaxnb_real8_(__POINT_T *, __POINT_T *, __POINT_T *, double *,
+                       double *, __POINT_T *, double *, __POINT_T *,
+                       double *, double *, __POINT_T *);
+void ftn_mtaxtb_real8_(__POINT_T *, __POINT_T *, __POINT_T *, double *,
+                       double *, __POINT_T *, double *, __POINT_T *,
+                       double *, double *, __POINT_T *);
+
 void ENTF90(MMUL_REAL8, mmul_real8)(int ta, int tb, __POINT_T mra,
                                     __POINT_T ncb, __POINT_T kab, double *alpha,
                                     double a[], __POINT_T lda, double b[],
@@ -55,9 +73,6 @@ void ENTF90(MMUL_REAL8, mmul_real8)(int ta, int tb, __POINT_T mra,
   double buffera[SMALL_ROWSA * SMALL_ROWSB];
   double bufferb[SMALL_COLSB * SMALL_ROWSB];
   double temp;
-  void ftn_mvmul_real8_(), ftn_vmmul_real8_();
-  void ftn_mnaxnb_real8_(), ftn_mnaxtb_real8_();
-  void ftn_mtaxnb_real8_(), ftn_mtaxtb_real8_();
   double calpha, cbeta;
   /*
    * Small matrix multiply variables
