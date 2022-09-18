@@ -1288,6 +1288,17 @@ struct sked {
   sked_free_fn free;   /* function called by ENTFTN(comm_free) */
 };
 
+/* overloaded reduction function types; keep in sync with red.h */
+
+typedef void (*local_reduc_fn)(void *, __INT_T, void *, __INT_T, __LOG_T *,
+                               __INT_T, __INT_T *, __INT_T, __INT_T, __INT_T);
+
+typedef void (*local_reduc_back_fn)(void *, __INT_T, void *, __INT_T, __LOG_T *,
+                                    __INT_T, __INT_T *, __INT_T, __INT_T,
+                                    __INT_T, __LOG_T);
+
+typedef void (*global_reduc_fn)(__INT_T, void *, void *, void *, void *, __INT_T);
+
 
 #if defined(DEBUG)
 /***** The following are internal to the HPF runtime library *****/
@@ -1558,8 +1569,8 @@ int __fort_exchange_counts(int *counts);
 void I8(__fort_get_scalar)(void *temp, void *b, F90_Desc *d, __INT_T *gidx);
 
 void I8(__fort_reduce_section)(void *vec1, dtype typ1, int siz1, void *vec2,
-                              dtype typ2, int siz2, int cnt, void (*fn_g)(),
-                              int dim, F90_Desc *d);
+                               dtype typ2, int siz2, int cnt,
+                               global_reduc_fn fn_g, int dim, F90_Desc *d);
 
 void I8(__fort_replicate_result)(void *vec1, dtype typ1, int siz1, void *vec2,
                                 dtype typ2, int siz2, int cnt, F90_Desc *d);
