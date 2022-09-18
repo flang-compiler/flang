@@ -61,12 +61,11 @@ sked *I8(__fort_comm_sked)(chdr *ch, char *rb, char *sb, dtype kind, int len)
   return &sk->sked;
 }
 
-void *ENTFTN(COMM_START, comm_start)(sked **skp, void *rb, F90_Desc *rd,
+void *ENTFTN(COMM_START, comm_start)(void **skp, void *rb, F90_Desc *rd,
                                      void *sb, F90_Desc *sd)
 {
-  sked *sk;
+  sked *sk = (sked *)*skp;
 
-  sk = *skp;
   if (sk != NULL) {
 #if defined(DEBUG)
     if (sk->tag != __SKED)

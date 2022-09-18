@@ -43,9 +43,10 @@ typedef struct {
 
 /* ENTFTN(comm_start) function: adjust base addresses and call doit */
 
-static void I8(olap_start)(olap_sked *o, char *rb, char *sb, F90_Desc *rs,
+static void I8(olap_start)(void *op, char *rb, char *sb, F90_Desc *rs,
                            F90_Desc *ss)
 {
+  olap_sked *o = (olap_sked *)op;
   __INT_T i;
 
 #if defined(DEBUG)
@@ -72,8 +73,9 @@ static void I8(olap_start)(olap_sked *o, char *rb, char *sb, F90_Desc *rs,
 /* olap_free function: free channels and schedule structure */
 
 static void
-olap_free(olap_sked *o)
+olap_free(void *op)
 {
+  olap_sked *o = (olap_sked *)op;
   int i;
 
   for (i = 0; i < o->rank; ++i) {

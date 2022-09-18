@@ -97,9 +97,9 @@ void __fort_gathscat_abort(char *what, char *msg);
 
 sked *I8(__fort_gathscat)(gathscat_parm *z);
 
-void *ENTFTN(COMM_START, comm_start)();
-void ENTFTN(COMM_FINISH, comm_finish)();
-void ENTFTN(COMM_FREE, comm_free)();
+void *ENTFTN(COMM_START, comm_start)(sked **, void *, F90_Desc *, void *, F90_Desc *);
+void ENTFTN(COMM_FINISH, comm_finish)(void *);
+void ENTFTN(COMM_FREE, comm_free)(__INT_T *ns, ...);
 
 void *I8(__fort_adjust_index_array)(const char *what, char *idx_array,
                                     char *src, int dim, F90_Desc *is,

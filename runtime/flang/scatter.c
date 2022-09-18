@@ -87,9 +87,10 @@ typedef struct {
 
 /* ENTFTN(comm_start) function: gather, transfer, scatter */
 
-static void I8(gathscat_start)(gathscat_sked *sk, char *rb, char *sb,
-                               F90_Desc *rd, F90_Desc *sd)
+static void I8(gathscat_start)(void *skp, char *rb, char *sb, F90_Desc *rd,
+                               F90_Desc *sd)
 {
+  gathscat_sked *sk = (gathscat_sked *)skp;
   char *rp, *sp, *bufr, *bufs;
   int cpu, j, k, lcpu, m, nr, ns, tcpus;
 
@@ -200,8 +201,9 @@ static void I8(gathscat_start)(gathscat_sked *sk, char *rb, char *sb,
 /* ENTFTN(comm_free) function: free channels, vectors, schedule structures */
 
 static void
-gathscat_free(gathscat_sked *sk)
+gathscat_free(void *skp)
 {
+  gathscat_sked *sk = (gathscat_sked *)skp;
   if (sk->repchn)
     __fort_frechn(sk->repchn);
   if (sk->countbuf)
