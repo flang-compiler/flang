@@ -33,13 +33,9 @@ typedef enum {
 /* parameter struct for intrinsic reductions */
 
 typedef struct {
-  void (*l_fn)(void *, __INT_T, void *, __INT_T, __LOG_T *, __INT_T, __INT_T *,
-               __INT_T, __INT_T, __INT_T); /* local reduction function */
-  void (*l_fn_b)(void *, __INT_T, void *, __INT_T, __LOG_T *, __INT_T,
-                 __INT_T *, __INT_T, __INT_T, __INT_T, __LOG_T);
-  /* local reduction function with "back" arg */
-  void (*g_fn)(__INT_T, void *, void *, void *, void *, __INT_T);
-  /* global reduction function */
+  local_reduc_fn      l_fn;   /* local reduction function */
+  local_reduc_back_fn l_fn_b; /* local reduction function with "back" arg */
+  global_reduc_fn     g_fn;   /* global reduction function */
   char *rb, *ab; /* result, array base addresses */
   void *zb;      /* null value */
   __LOG_T *mb;   /* mask base address */
@@ -97,8 +93,8 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
 
 /* prototype local reduction function (name beginning with l_):
 
-   void l_NAME(void *r, __INT_T n, void *v, __INT_T vs,
-               __LOG_T *m, __INT_T ms, __INT_T *loc, __INT_T li, __INT_T ls);
+   void l_NAME(void *r, __INT_T n, void *v, __INT_T vs, __LOG_T *m,
+               __INT_T ms, __INT_T *loc, __INT_T li, __INT_T ls, __INT_T len);
    where
       r   = result address (scalar)
       n   = vector length
@@ -150,8 +146,9 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
     *r = x;                                                                    \
   }
 
-#define ARITHFNG(OP, NAME, RTYP, ATYP)                                        \
-  static void g_##NAME(__INT_T n, RTYP *lr, RTYP *rr, void *lv, void *rv)      \
+#define ARITHFNG(OP, NAME, RTYP, ATYP)                                         \
+  static void g_##NAME(__INT_T n, RTYP *lr, RTYP *rr, void *lv, void *rv,      \
+                       __INT_T len)                                            \
   {                                                                            \
     __INT_T i;                                                                 \
     for (i = 0; i < n; i++) {                                                  \

@@ -100,7 +100,8 @@ global_reduce_abort(const char *what, const char *msg)
 }
 
 void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
-                             F90_Desc *hd, const char *what, void (*fn[__NTYPES])())
+                              F90_Desc *hd, const char *what,
+                              global_reduc_fn fn[__NTYPES])
 {
   DECL_HDR_PTRS(ht); /* align-target */
   DECL_DIM_PTRS(hdd);
@@ -197,7 +198,7 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
         if (it < np) {
           cpu = I8(map_to_processor)(it, pl, pr, pe, ps);
           __fort_rrecvl(cpu, tmp, cnt, 1, kind, len);
-          fn[kind](cnt, rb, tmp);
+          fn[kind](cnt, rb, tmp, /* optional args */ NULL, NULL, 0);
         }
       }
       bit >>= 1;
@@ -337,8 +338,8 @@ void I8(__fort_global_reduce)(char *rb, char *hb, int dims, F90_Desc *rd,
    from all other processors to produce the final result. */
 
 void I8(__fort_reduce_section)(void *vec1, dtype typ1, int len1, void *vec2,
-                              dtype typ2, int len2, int cnt, void (*fn_g)(),
-                              int dim, F90_Desc *a)
+                               dtype typ2, int len2, int cnt,
+                               global_reduc_fn fn_g, int dim, F90_Desc *a)
 {
   DECL_DIM_PTRS(ad);
   char *tmp1, *tmp2; /* temporary buffer pointers */
@@ -421,7 +422,7 @@ void I8(__fort_reduce_section)(void *vec1, dtype typ1, int len1, void *vec2,
         __fort_rrecvl(cpu, tmp1, cnt, 1, typ1, len1);
         if (tmp2 != NULL)
           __fort_rrecvl(cpu, tmp2, cnt, 1, typ2, len2);
-        fn_g(cnt, vec1, tmp1, vec2, tmp2);
+        fn_g(cnt, vec1, tmp1, vec2, tmp2, /* optional arg */ 0);
       }
     }
     bit >>= 1;
