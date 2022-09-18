@@ -846,8 +846,6 @@ static void uneg64(DBLUINT64 arg, DBLUINT64 result)
 }
 
 static void ushf64(DBLUINT64 arg, int count, DBLINT64 result)
-int count;
-DBLINT64 result;
 {
   DBLUINT64 u_arg; /* 'copy-in' unsigned value of arg */
 

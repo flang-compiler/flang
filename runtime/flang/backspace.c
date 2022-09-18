@@ -127,9 +127,7 @@ _f90io_backspace(__INT_T *unit, __INT_T *bitv, __INT_T *iostat, int swap_bytes)
 }
 
 __INT_T
-ENTF90IO(BACKSPACE, backspace)(unit, bitv, iostat) __INT_T *unit;
-__INT_T *bitv;
-__INT_T *iostat;
+ENTF90IO(BACKSPACE, backspace)(__INT_T *unit, __INT_T *bitv, __INT_T *iostat)
 {
   int s = 0;
 
@@ -141,9 +139,7 @@ __INT_T *iostat;
 }
 
 __INT_T
-ENTCRF90IO(BACKSPACE, backspace)(unit, bitv, iostat) __INT_T *unit;
-__INT_T *bitv;
-__INT_T *iostat;
+ENTCRF90IO(BACKSPACE, backspace)(__INT_T *unit, __INT_T *bitv, __INT_T *iostat)
 {
   int s = 0;
   s = _f90io_backspace(unit, bitv, iostat, 0);
@@ -152,9 +148,7 @@ __INT_T *iostat;
 }
 
 __INT_T
-ENTF90IO(SWBACKSPACE, swbackspace)(unit, bitv, iostat) __INT_T *unit;
-__INT_T *bitv;
-__INT_T *iostat;
+ENTF90IO(SWBACKSPACE, swbackspace)(__INT_T *unit, __INT_T *bitv, __INT_T *iostat)
 {
   int s = 0;
 
@@ -166,9 +160,7 @@ __INT_T *iostat;
 }
 
 __INT_T
-ENTCRF90IO(SWBACKSPACE, swbackspace)(unit, bitv, iostat) __INT_T *unit;
-__INT_T *bitv;
-__INT_T *iostat;
+ENTCRF90IO(SWBACKSPACE, swbackspace)(__INT_T *unit, __INT_T *bitv, __INT_T *iostat)
 {
   int s = _f90io_backspace(unit, bitv, iostat, 1);
   __fortio_errend03();

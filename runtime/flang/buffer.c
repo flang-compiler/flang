@@ -84,8 +84,7 @@ __fort_zopen(char *path)
 
 /* write */
 
-void __fort_zwrite(adr, len) char *adr;
-int len;
+void __fort_zwrite(char *adr, int len)
 {
   int ioproc;
   int s;

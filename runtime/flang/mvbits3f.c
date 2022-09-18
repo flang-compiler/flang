@@ -13,12 +13,11 @@
 #include "enames.h"
 #include "ftnbitsup.h"
 
-void ENT3F(MVBITS, mvbits)(src, pos, len, dest,
-                           posd) int *src; /* source field */
-int *pos;                                  /* start position in source field */
-int *len;                                  /* number of bits to move */
-int *dest;                                 /* destination field */
-int *posd;                                 /* start position in dest field */
+void ENT3F(MVBITS, mvbits)(int *src,  /* source field */
+                           int *pos,  /* start position in source field */
+                           int *len,  /* number of bits to move */
+                           int *dest, /* destination field */
+                           int *posd) /* start position in dest field */
 {
   Ftn_jmvbits(*src, *pos, *len, dest, *posd);
 }

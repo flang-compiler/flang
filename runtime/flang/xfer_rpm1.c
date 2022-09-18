@@ -12,24 +12,21 @@ int __fort_minxfer = 0;
 
 /* receive data items */
 
-void __fort_erecv(cpu, e) int cpu;
-struct ents *e;
+void __fort_erecv(int cpu, struct ents *e)
 {
   __fort_abort("__fort_erecv: not implemented");
 }
 
 /* send data items */
 
-void __fort_esend(cpu, e) int cpu;
-struct ents *e;
+void __fort_esend(int cpu, struct ents *e)
 {
   __fort_abort("__fort_esend: not implemented");
 }
 
 /* bcopy data items */
 
-void __fort_ebcopys(ed, es) struct ents *ed;
-struct ents *es;
+void __fort_ebcopys(struct ents *ed, struct ents *es)
 {
   struct ent *p;
   struct ent *q;
@@ -57,7 +54,7 @@ struct ents *es;
 
 /* execute structure */
 
-void __fort_doit(c) struct chdr *c;
+void __fort_doit(struct chdr *c)
 {
   struct ccpu *cp;
   int n;

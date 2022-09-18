@@ -25,7 +25,7 @@ static void readln();
 static void header();
 static void footer();
 static int scan();
-static void error();
+static void error(char *);
 static void init();
 static void output();
 
@@ -190,7 +190,7 @@ scan()
   return token;
 }
 
-static void error(p) char *p;
+static void error(char *p)
 {
   printf("%s, line %d\n", p, lineno);
   return;

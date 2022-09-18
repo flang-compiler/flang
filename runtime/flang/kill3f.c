@@ -19,8 +19,7 @@
 #include "io3f.h"
 #include "ent3f.h"
 
-int ENT3F(KILL, kill)(pid, sig) int *pid;
-int *sig;
+int ENT3F(KILL, kill)(int *pid, int *sig)
 {
   int i;
 

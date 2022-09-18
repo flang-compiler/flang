@@ -26,11 +26,10 @@
  */
 /*************************************************************************/
 _LONGLONG_T
-ftn_str_kindex(a1, a2, a1_len,
-               a2_len) char *a1; /* pointer to string being searched */
-char *a2;                        /* pointer to string being searched for */
-int a1_len;                      /* length of a1 */
-int a2_len;                      /* length of a2 */
+ftn_str_kindex(char *a1,   /* pointer to string being searched */
+               char *a2,   /* pointer to string being searched for */
+               int a1_len, /* length of a1 */
+               int a2_len) /* length of a2 */
 {
   int idx1, idx2, match;
   for (idx1 = 0; idx1 < a1_len; idx1++) {
@@ -62,11 +61,10 @@ int a2_len;                      /* length of a2 */
  * padded with blanks.
  */
 /*************************************************************************/
-int Ftn_kstrcmp(a1, a2, a1_len,
-                a2_len) char *a1; /* first string to be compared */
-char *a2;                         /* second string to be compared */
-int a1_len;                       /* length of a1 */
-int a2_len;                       /* length of a2 */
+int Ftn_kstrcmp(char *a1,   /* first string to be compared */
+                char *a2,   /* second string to be compared */
+                int a1_len, /* length of a1 */
+                int a2_len) /* length of a2 */
 {
   int ret_val, idx1;
   if (a1_len == a2_len) {
@@ -136,11 +134,10 @@ int a2_len;                       /* length of a2 */
  */
 /*************************************************************************/
 _LONGLONG_T
-ftn_str_kindex_klen(a1, a2, a1_len,
-                   a2_len) char *a1; /* pointer to string being searched */
-char *a2;                            /* pointer to string being searched for */
-_LONGLONG_T a1_len;                      /* length of a1 */
-_LONGLONG_T a2_len;                      /* length of a2 */
+ftn_str_kindex_klen(char *a1, /* pointer to string being searched */
+                    char *a2, /* pointer to string being searched for */
+                    _LONGLONG_T a1_len, /* length of a1 */
+                    _LONGLONG_T a2_len) /* length of a2 */
 {
   _LONGLONG_T idx1, idx2;
   int match;
@@ -173,11 +170,10 @@ _LONGLONG_T a2_len;                      /* length of a2 */
  * padded with blanks.
  */
 /*************************************************************************/
-int Ftn_kstrcmp_klen(a1, a2, a1_len,
-                     a2_len) char *a1; /* first string to be compared */
-char *a2;                              /* second string to be compared */
-_LONGLONG_T a1_len;                       /* length of a1 */
-_LONGLONG_T a2_len;                       /* length of a2 */
+int Ftn_kstrcmp_klen(char *a1,           /* first string to be compared */
+                     char *a2,           /* second string to be compared */
+                     _LONGLONG_T a1_len, /* length of a1 */
+                     _LONGLONG_T a2_len) /* length of a2 */
 {
   _LONGLONG_T idx1;
   int ret_val;

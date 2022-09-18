@@ -18,12 +18,12 @@
 
 #include <windows.h>
 
-void ENT3F(SLEEPQQ, sleepqq)(t) unsigned int *t;
+void ENT3F(SLEEPQQ, sleepqq)(unsigned int *t)
 {
   Sleep(*t); /* MS Sleep() is in terms of milliseconds */
 }
 #else
-void ENT3F(SLEEPQQ, sleepqq)(t) unsigned int *t;
+void ENT3F(SLEEPQQ, sleepqq)(unsigned int *t)
 {
   sleep((*t) / 1000);
 }

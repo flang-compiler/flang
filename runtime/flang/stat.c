@@ -111,7 +111,7 @@ scale_kbytes(double d, double *ds)
 
 /* print cpu info */
 
-static void cpu(tbp) struct tb *tbp;
+static void cpu(struct tb *tbp)
 {
   int i, quiet, tcpus;
   struct tb n, a, x, e;
@@ -171,7 +171,7 @@ static void cpu(tbp) struct tb *tbp;
 
 /* print memory info */
 
-static void mem(tbp) struct tb *tbp;
+static void mem(struct tb *tbp)
 {
   double tmaxrss; /* total max set size */
   double tminflt; /* total minor fault */
@@ -228,7 +228,7 @@ static void mem(tbp) struct tb *tbp;
 
 /* print message info */
 
-static void msg(tbp) struct tb *tbp;
+static void msg(struct tb *tbp)
 {
   int i, quiet, tcpus;
   double ds, dr, dc, dst, drt, dct;

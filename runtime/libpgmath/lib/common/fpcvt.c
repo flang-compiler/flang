@@ -51,10 +51,7 @@ typedef struct {
 
 #define IEEE64_SUBNORMAL(a) (a.v.e == 0 && (a.v.hm != 0L || a.v.lm != 0L))
 
-static void ui64toa(m, s, n, decpl) INT m[2];
-char *s;
-int n;
-int decpl;
+static void ui64toa(INT m[2], char *s, int n, int decpl)
 {
   int i, j;
   INT lo, hi;
@@ -87,8 +84,7 @@ int decpl;
   s[j] = '\0';
 }
 
-static void manshftr(m, n) INT m[4];
-int n;
+static void manshftr(INT m[4], int n)
 {
   int i;
   int j;
@@ -109,8 +105,7 @@ int n;
   }
 }
 
-static void manshftl(m, n) register INT m[4];
-int n;
+static void manshftl(register INT m[4], int n)
 {
   register int i;
   register int j;
@@ -131,8 +126,7 @@ int n;
   }
 }
 
-static void manadd(m1, m2) register INT m1[4];
-register INT m2[4];
+static void manadd(register INT m1[4], register INT m2[4])
 {
   INT t1, t2, carry;
   INT lo, hi;
@@ -153,8 +147,7 @@ register INT m2[4];
   }
 }
 
-static void manrnd(m, bits) INT m[4];
-int bits;
+static void manrnd(INT m[4], int bits)
 {
   int rndwrd, rndbit;
   int oddwrd, oddbit;
@@ -183,7 +176,7 @@ int bits;
   manshftl(m, 128 - bits);
 }
 
-static void manneg(m) register INT m[4];
+static void manneg(register INT m[4])
 {
   void manadd();
   static INT one[4] = {0L, 0L, 0L, 1L};
@@ -193,8 +186,7 @@ static void manneg(m) register INT m[4];
   manadd(m, one);
 }
 
-static void manmul(m1, m2) register INT m1[4];
-register INT m2[4];
+static void manmul(register INT m1[4], register INT m2[4])
 {
   register INT carry;
   register int i, j, k;
@@ -224,7 +216,7 @@ register INT m2[4];
     m1[i] = (p[j] << 16) | p[j + 1];
 }
 
-static void ufpnorm(u) register UFP *u;
+static void ufpnorm(register UFP *u)
 {
   if (u->fman[0] == 0 && u->fman[1] == 0 && u->fman[2] == 0 && u->fman[3] == 0)
     return;
@@ -240,8 +232,7 @@ static void ufpnorm(u) register UFP *u;
   }
 }
 
-static int ufpdnorm(u, bias) UFP *u;
-int bias;
+static int ufpdnorm(UFP *u, int bias)
 {
   /*  adjust the denormalized number, unset the implicit bit, and
       report true underflow condition */
@@ -262,14 +253,14 @@ int bias;
   return 1;
 }
 
-static void ufprnd(u, bits) UFP *u;
-int bits;
+static void ufprnd(UFP *u, int bits)
 {
   void ufpnorm();
   ufpnorm(u);
   manrnd(u->fman, bits + 12);
   ufpnorm(u);
 }
+
 static INT ftab1[29][3] = {
     {0xA05C0DD7, 0x0F6E1619, -1162}, {0xA5CED43B, 0x7E3E9188, -1079},
     {0xAB70FE17, 0xC79AC6CA, -996},  {0xB1442798, 0xF49FFB4A, -913},
@@ -287,6 +278,7 @@ static INT ftab1[29][3] = {
     {0xBF21E440, 0x03ACDD2C, 997},   {0xC5A05277, 0x621BE293, 1080},
     {0xCC573C2A, 0x0ECCDAA6, 1163},
 };
+
 static INT ftab2[25][3] = {
     {0x80000000, 0x00000000, 1},  {0xA0000000, 0x00000000, 4},
     {0xC8000000, 0x00000000, 7},  {0xFA000000, 0x00000000, 10},
@@ -302,8 +294,8 @@ static INT ftab2[25][3] = {
     {0x87867832, 0x6EAC9000, 74}, {0xA968163F, 0x0A57B400, 77},
     {0xD3C21BCE, 0xCCEDA100, 80},
 };
-static void ufpxten(u, exp) UFP *u;
-int exp;
+
+static void ufpxten(UFP *u, int exp)
 {
   int i, j;
   if (exp < -350) {
@@ -324,11 +316,7 @@ int exp;
   u->fexp += ftab1[i][2] + ftab2[j][2];
 }
 
-static void ufptosci(u, s, dp, decpt, sign) UFP *u;
-char *s;
-int dp;
-int *decpt;
-int *sign;
+static void ufptosci(UFP *u, char *s, int dp, int *decpt, int *sign)
 {
   INT man[2];
   int exp10, exp2;
@@ -369,8 +357,7 @@ again:
   *decpt = exp10;
 }
 
-static void dtoufp(d, u) IEEE64 d;
-register UFP *u;
+static void dtoufp(IEEE64 d, register UFP *u)
 {
   union ieee v;
 
@@ -402,8 +389,7 @@ register UFP *u;
     u->fman[0] |= 0x00100000L;
 }
 
-static void ufptod(u, r) register UFP *u;
-IEEE64 *r;
+static void ufptod(register UFP *u, IEEE64 *r)
 {
   union ieee v;
   int bias = 1023;
@@ -458,10 +444,7 @@ IEEE64 *r;
   *r = v.d;
 }
 
-static int atoxi(s, i, n, base) register char *s;
-INT *i;
-int n;
-int base;
+static int atoxi(register char *s, INT *i, int n, int base)
 {
   register char *end;
   register INT value;
@@ -550,10 +533,7 @@ ovflo:
   return -2;
 }
 
-static void atoui64(s, m, n, exp) char *s;
-INT m[2];
-int n;
-INT *exp;
+static void atoui64(char *s, INT m[2], int n, INT *exp)
 {
   char *end;
   int dp;
@@ -602,9 +582,7 @@ INT *exp;
   *exp -= dp;
 }
 
-static void atoxufp(s, u, p) char *s;
-UFP *u;
-char **p;
+static void atoxufp(char *s, UFP *u, char **p)
 {
   void atoui64();
   INT exp;
@@ -686,7 +664,7 @@ ret:
 }
 
 #if defined(PGI_FPCVT)
-double atof(s) char *s;
+double atof(char *s)
 {
   double strtod();
   int save_errno;
@@ -698,15 +676,7 @@ double atof(s) char *s;
   return d;
 }
 
-double strtod(s, p)
-{
-  double __strtod();
-
-  return __strtod(s, p);
-}
-
-double __strtod(s, p) char *s;
-char **p;
+double __strtod(char *s, char **p)
 {
   IEEE64 d;
   void atoxufp();
@@ -724,6 +694,11 @@ char **p;
   ufptod(&u, &d);
   return d;
 }
+
+double strtod(char *s, char **p)
+{
+  return __strtod(s, p);
+}
 #endif
 
 /*
@@ -733,8 +708,7 @@ char **p;
 #define NDIG 25
 
 #if defined(PGI_FPCVT) || defined(INTERIX86)
-char *ecvt(value, ndigit, decpt, sign) double value;
-int ndigit, *decpt, *sign;
+char *ecvt(double value, int ndigit, int *decpt, int *sign)
 {
   char *__ecvt();
 
@@ -828,8 +802,7 @@ ret0:
 }
 #endif
 
-char *__ecvt(value, ndigit, decpt, sign) double value;
-int ndigit, *decpt, *sign;
+char *__ecvt(double value, int ndigit, int *decpt, int *sign)
 {
   static char buf[64];
   char *s;
@@ -925,8 +898,7 @@ int ndigit, *decpt, *sign;
 }
 
 #if defined(PGI_FPCVT)
-char *fcvt(value, ndigit, decpt, sign) double value;
-int ndigit, *decpt, *sign;
+char *fcvt(double value, int ndigit, int *decpt, int *sign)
 {
   char *__fcvt();
 
@@ -934,9 +906,7 @@ int ndigit, *decpt, *sign;
 }
 #endif
 
-char *__fcvt(v, prec, decpt, sign) double v;
-int prec;
-int *decpt, *sign;
+char *__fcvt(double v, int prec, int *decpt, int *sign)
 {
   char *__ecvt();
   static char tmp[512];

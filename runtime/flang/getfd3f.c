@@ -18,7 +18,7 @@
 #include "utils3f.h"
 
 int
-ENT3F(GETFD, getfd)(lu) int *lu;
+ENT3F(GETFD, getfd)(int *lu)
 {
   FILE *f;
 

@@ -12,17 +12,15 @@
 
 /* 1toN */
 
-struct chdr *
-    __fort_chn_1toN(cp, dnd, dlow, dcnts, dstrs, snd, slow, scnts,
-                   sstrs) struct chdr *cp; /* previous structure in list */
-int dnd;                                   /* destination cpu dimensions */
-int dlow;                                  /* destination lowest numbered cpu */
-int *dcnts;                                /* destination number of cpus */
-int *dstrs;                                /* destination cpu stride */
-int snd;                                   /* source cpu dimensions */
-int slow;                                  /* source lowest numbered cpu */
-int *scnts;                                /* source number of cpus */
-int *sstrs;                                /* source cpu stride */
+struct chdr *__fort_chn_1toN(struct chdr *cp, /* previous structure in list */
+                             int dnd,         /* destination cpu dimensions */
+                             int dlow,   /* destination lowest numbered cpu */
+                             int *dcnts, /* destination number of cpus */
+                             int *dstrs, /* destination cpu stride */
+                             int snd,    /* source cpu dimensions */
+                             int slow,   /* source lowest numbered cpu */
+                             int *scnts, /* source number of cpus */
+                             int *sstrs) /* source cpu stride */
 {
   int dnstrs[MAXDIMS];
   int dncnts[MAXDIMS];

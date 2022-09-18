@@ -13,7 +13,7 @@
 #include "utils3f.h"
 #include "stdioInterf.h"
 
-void ENT3F(FSYNC, fsync)(lu) int *lu;
+void ENT3F(FSYNC, fsync)(int *lu)
 {
   FILE *f;
 
