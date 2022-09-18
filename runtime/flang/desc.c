@@ -10,12 +10,11 @@
 /* desc.c - Fortran90 descriptor IO */
 
 #include "global.h"
+#include "descRW.h"
 #include "feddesc.h"
 #include "format.h"
 #include "unf.h"
 #include "list_io.h"
-
-extern int I8(__fortio_main)(char *, F90_Desc *, int, int (*)());
 
 __INT_T
 ENTFTNIO(FMT_READ, fmt_read)
