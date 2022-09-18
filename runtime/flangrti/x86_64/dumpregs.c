@@ -44,7 +44,7 @@ dumpregs(void *regs)
 
 #else
 
-#if defined(LINUX8664)
+#if defined(TARGET_LINUX_X8664)
 /*
  * greg2u64: convert value of typedef greg_t to uint64_t.
  * Avoids recasting through pointers.
@@ -65,7 +65,7 @@ static inline uint64_t greg2u64(greg_t r)
 void
 dumpregs(gregset_t *regs)
 {
-#if defined(LINUX8664)
+#if defined(TARGET_LINUX_X8664)
 
 /*
  * Using "0x%016" PRIx64 instead of "%#016" PRIx64 to keep output

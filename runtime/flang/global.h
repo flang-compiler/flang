@@ -42,10 +42,12 @@ typedef unsigned short WCHAR;
 
 #define VOID void
 
+#ifdef WIN64
 WIN_MSVCRT_IMP char *WIN_CDECL getenv(const char *);
 WIN_MSVCRT_IMP long WIN_CDECL strtol(const char *, char **, int);
 WIN_MSVCRT_IMP char *WIN_CDECL strerror(int);
 WIN_MSVCRT_IMP char *WIN_CDECL strstr(const char *, const char *);
+#endif
 
 typedef int32_t INT;       /* native integer at least 32 bits */
 typedef uint32_t UINT; /* unsigned 32 bit native integer */

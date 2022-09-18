@@ -148,7 +148,7 @@ int Ftn_nstrcmp(WCHAR *a1,  /* first string to be compared */
 
 #define __HAVE_LONGLONG_T
 
-#if defined(LINUX8664) || defined(OSX8664) || defined(TARGET_LLVM_ARM64)
+#if defined(OSX8664) || defined(TARGET_LLVM_ARM64)
 typedef long _LONGLONG_T;
 typedef unsigned long _ULONGLONG_T;
 #else
