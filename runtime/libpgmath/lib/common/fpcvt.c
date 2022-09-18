@@ -418,18 +418,18 @@ IEEE64 *r;
     u->fexp = 1024;
     u->fman[0] = ~0L;
     u->fman[1] = ~0L;
-    __io_set_errno(ERANGE);
+    errno = ERANGE;
   }
   if (u->fval == INFIN || u->fval == BIG || u->fval == DIVZ) {
     u->fexp = 1024;
     u->fman[0] = 0L;
     u->fman[1] = 0L;
-    __io_set_errno(ERANGE);
+    errno = ERANGE;
   }
   if (u->fval == NORMAL && u->fexp <= -1023) {
     if (ufpdnorm(u, 1022) < 0) {
       u->fval = NIL;
-      __io_set_errno(ERANGE);
+      errno = ERANGE;
     } else
       u->fval = SUBNORMAL;
   } else if (u->fval == SUBNORMAL)
@@ -692,9 +692,9 @@ double atof(s) char *s;
   int save_errno;
   double d;
 
-  save_errno = __io_errno();
+  save_errno = errno;
   d = strtod(s, (char **)0);
-  __io_set_errno(save_errno);
+  errno = save_errno;
   return d;
 }
 
