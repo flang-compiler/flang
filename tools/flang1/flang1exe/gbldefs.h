@@ -66,6 +66,7 @@
 
 /* maximum number of array subscripts */
 #define MAXSUBS 7
+#define MAXDIMS 7
 
 typedef int8_t INT8;
 typedef int16_t INT16;

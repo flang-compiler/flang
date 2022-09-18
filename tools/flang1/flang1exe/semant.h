@@ -886,7 +886,6 @@ void mod_end_subprogram_two(void);
 /* semantio.c */
 int get_nml_array(int);
 
-#define MAXDIMS 7
 typedef struct {
   struct _sem_bounds {
     int lowtype;

@@ -78,7 +78,7 @@ void rt_outvalue(void);
 int mk_ftb(void);
 void init_ftb(void);
 void init_bnd(void);
-LOGICAL is_ordered(int, int, int, int[7], int *);
+LOGICAL is_ordered(int, int, int, int[MAXDIMS], int *);
 LOGICAL is_duplicate(int, int);
 int delete_astli(int list, int);
 void forall_lhs_indirection(int);
