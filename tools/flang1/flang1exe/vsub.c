@@ -709,7 +709,7 @@ is_vector_subscript(int a, int list)
 /* order2: used for pghpf_permute_section */
 /* no: number of elements returned in order2 */
 LOGICAL
-is_ordered(int lhs, int rhs, int list, int order2[], int *no)
+is_ordered(int lhs, int rhs, int list, int order2[MAXDIMS], int *no)
 {
   int asd, ndim;
   int i, j, r, l;

@@ -132,7 +132,6 @@ static struct {
 #define _LEN_ZERO 3
 #define _LEN_ADJ 4
 #define _LEN_DEFER 5
-#define MAXDIMS 7
 
 /** \brief Subprogram prefix struct defintions for RECURESIVE, PURE,
            IMPURE, ELEMENTAL, and MODULE. 

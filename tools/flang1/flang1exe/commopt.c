@@ -530,7 +530,7 @@ same_forall_bnds(int lp1, int lp2, int nested)
   int i, k;
   int asd1, asd2;
   int ndim1, ndim2;
-  int order2[7];
+  int order2[MAXDIMS];
   int no;
   int lhs1, lhs2, newlhs2, l, l2;
   int sptr1, sptr2;

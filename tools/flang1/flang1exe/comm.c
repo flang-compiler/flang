@@ -1759,7 +1759,7 @@ emit_copy_section(int a, int std)
   int nd;
   int sptr;
   int allocast;
-  int order2[7];
+  int order2[MAXDIMS];
   int no;
   int header;
   int lhssec;
@@ -1912,7 +1912,7 @@ emit_permute_section(int a, int std)
   int list;
   int lhs;
   LOGICAL use_lhs;
-  int order2[7];
+  int order2[MAXDIMS];
   int no;
   int func;
   int new_a;
