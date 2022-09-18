@@ -9,12 +9,15 @@
 
 /* mmul.c -- DOT_PRODUCT and MATMUL intrinsics */
 
+#include <memory.h>
 #include "stdioInterf.h"
 #include "fioMacros.h"
-#include <memory.h>
-
-
 #include "fort_vars.h"
+
+/* Declare pointer-type parameters in overloaded function pointer types
+   as void *, then cast the function pointers during function selection. */
+typedef void (*mmul_fn)(void *, int, void *, int, int, void *, int, int);
+
 extern void (*I8(__fort_g_sum)[__NTYPES])();
 extern void (*__fort_scalar_copy[__NTYPES])(void *rp, void *sp, int len);
 
@@ -222,7 +225,7 @@ void ENTFTN(DOTPR, dotpr)(char *cb, char *ab0, char *bb0, F90_Desc *cs,
   DECL_DIM_PTRS(ajd);
   DECL_DIM_PTRS(bjd);
   __INT_T flags, kind, len;
-  void (*dotp)();
+  mmul_fn dotp;
   __INT_T al, alof, an, aoff, astr, au, bl, blof, bn, boff, bstr, bu, acl, bcl,
       cn;
   int copy_required;
@@ -271,40 +274,40 @@ void ENTFTN(DOTPR, dotpr)(char *cb, char *ab0, char *bb0, F90_Desc *cs,
 
   switch (kind) {
   case __REAL4:
-    dotp = dotp_real4;
+    dotp = (mmul_fn)dotp_real4;
     break;
   case __REAL8:
-    dotp = dotp_real8;
+    dotp = (mmul_fn)dotp_real8;
     break;
   case __CPLX8:
-    dotp = dotp_cplx8;
+    dotp = (mmul_fn)dotp_cplx8;
     break;
   case __CPLX16:
-    dotp = dotp_cplx16;
+    dotp = (mmul_fn)dotp_cplx16;
     break;
   case __INT1:
-    dotp = dotp_int1;
+    dotp = (mmul_fn)dotp_int1;
     break;
   case __INT2:
-    dotp = dotp_int2;
+    dotp = (mmul_fn)dotp_int2;
     break;
   case __INT4:
-    dotp = dotp_int4;
+    dotp = (mmul_fn)dotp_int4;
     break;
   case __LOG1:
-    dotp = dotp_log1;
+    dotp = (mmul_fn)dotp_log1;
     break;
   case __LOG2:
-    dotp = dotp_log2;
+    dotp = (mmul_fn)dotp_log2;
     break;
   case __LOG4:
-    dotp = dotp_log4;
+    dotp = (mmul_fn)dotp_log4;
     break;
   case __INT8:
-    dotp = dotp_int8;
+    dotp = (mmul_fn)dotp_int8;
     break;
   case __LOG8:
-    dotp = dotp_log8;
+    dotp = (mmul_fn)dotp_log8;
     break;
   default:
     __fort_abort("DOT_PRODUCT: unimplemented for data type");
@@ -393,7 +396,7 @@ static void I8(mmul_mxm)(char *cb0, char *ab0, char *bb0, F90_Desc *cs0,
   DECL_DIM_PTRS(cid);
   DECL_DIM_PTRS(ckd);
   __INT_T flags, kind, len;
-  void (*mmul)();
+  mmul_fn mmul;
   __INT_T a0, ai, ais, ajs, b0, bjs, bk, bks, c0, cik, cis, ck, cks, icl, icn,
       il, ilof, in, iu, kcl, kcn, kl, klof, kn, ku, jn;
   int copy_required;
@@ -452,40 +455,40 @@ static void I8(mmul_mxm)(char *cb0, char *ab0, char *bb0, F90_Desc *cs0,
 
   switch (kind) {
   case __REAL4:
-    mmul = dotp_real4;
+    mmul = (mmul_fn)dotp_real4;
     break;
   case __REAL8:
-    mmul = dotp_real8;
+    mmul = (mmul_fn)dotp_real8;
     break;
   case __CPLX8:
-    mmul = mmul_cplx8;
+    mmul = (mmul_fn)mmul_cplx8;
     break;
   case __CPLX16:
-    mmul = mmul_cplx16;
+    mmul = (mmul_fn)mmul_cplx16;
     break;
   case __INT1:
-    mmul = dotp_int1;
+    mmul = (mmul_fn)dotp_int1;
     break;
   case __INT2:
-    mmul = dotp_int2;
+    mmul = (mmul_fn)dotp_int2;
     break;
   case __INT4:
-    mmul = dotp_int4;
+    mmul = (mmul_fn)dotp_int4;
     break;
   case __LOG1:
-    mmul = dotp_log1;
+    mmul = (mmul_fn)dotp_log1;
     break;
   case __LOG2:
-    mmul = dotp_log2;
+    mmul = (mmul_fn)dotp_log2;
     break;
   case __LOG4:
-    mmul = dotp_log4;
+    mmul = (mmul_fn)dotp_log4;
     break;
   case __INT8:
-    mmul = dotp_int8;
+    mmul = (mmul_fn)dotp_int8;
     break;
   case __LOG8:
-    mmul = dotp_log8;
+    mmul = (mmul_fn)dotp_log8;
     break;
   default:
     __fort_abort("MATMUL: unimplemented for data type");
@@ -619,7 +622,7 @@ static void I8(mmul_vxm)(char *cb0, char *ab0, char *bb0, F90_Desc *cs0,
   DECL_DIM_PTRS(bkd);
   DECL_DIM_PTRS(ckd);
   __INT_T flags, kind, len;
-  void (*mmul)();
+  mmul_fn mmul;
   __INT_T a0, aj, ajcl, ajclof, ajclos, ajcn, ajcs, ajcu, ajl, ajn, ajs, aju,
       b0, bj, bjcl, bjclof, bjcn, bjk, bjl, bjn, bjs, bju, bkcl, bkclof, bkcn,
       bkl, bkn, bks, bku, c0, ck, ckcl, ckclof, ckclos, ckcn, ckcs, ckcu, ckl,
@@ -676,40 +679,40 @@ static void I8(mmul_vxm)(char *cb0, char *ab0, char *bb0, F90_Desc *cs0,
 
   switch (kind) {
   case __REAL4:
-    mmul = dotp_real4;
+    mmul = (mmul_fn)dotp_real4;
     break;
   case __REAL8:
-    mmul = dotp_real8;
+    mmul = (mmul_fn)dotp_real8;
     break;
   case __CPLX8:
-    mmul = mmul_cplx8;
+    mmul = (mmul_fn)mmul_cplx8;
     break;
   case __CPLX16:
-    mmul = mmul_cplx16;
+    mmul = (mmul_fn)mmul_cplx16;
     break;
   case __INT1:
-    mmul = dotp_int1;
+    mmul = (mmul_fn)dotp_int1;
     break;
   case __INT2:
-    mmul = dotp_int2;
+    mmul = (mmul_fn)dotp_int2;
     break;
   case __INT4:
-    mmul = dotp_int4;
+    mmul = (mmul_fn)dotp_int4;
     break;
   case __LOG1:
-    mmul = dotp_log1;
+    mmul = (mmul_fn)dotp_log1;
     break;
   case __LOG2:
-    mmul = dotp_log2;
+    mmul = (mmul_fn)dotp_log2;
     break;
   case __LOG4:
-    mmul = dotp_log4;
+    mmul = (mmul_fn)dotp_log4;
     break;
   case __INT8:
-    mmul = dotp_int8;
+    mmul = (mmul_fn)dotp_int8;
     break;
   case __LOG8:
-    mmul = dotp_log8;
+    mmul = (mmul_fn)dotp_log8;
     break;
   default:
     __fort_abort("MATMUL: unimplemented for data type");
@@ -855,7 +858,7 @@ static void I8(mmul_mxv)(char *cb0, char *ab0, char *bb0, F90_Desc *cs0,
   DECL_DIM_PTRS(bjd);
   DECL_DIM_PTRS(cid);
   __INT_T flags, kind, len;
-  void (*mmul)();
+  mmul_fn mmul;
   __INT_T a0, aicl, aicn, aij, ail, aiclof, ain, ais, aiu, aj, ajcl, ajcn, ajl,
       ajclof, ajn, ajs, aju, b0, bj, bjcl, bjclof, bjclos, bjcn, bjcs, bjcu,
       bjl, bjn, bjs, bju, c0, ci, cicl, ciclof, ciclos, cicn, cics, cicu, cil,
@@ -924,40 +927,40 @@ static void I8(mmul_mxv)(char *cb0, char *ab0, char *bb0, F90_Desc *cs0,
 
   switch (kind) {
   case __REAL4:
-    mmul = dotp_real4;
+    mmul = (mmul_fn)dotp_real4;
     break;
   case __REAL8:
-    mmul = dotp_real8;
+    mmul = (mmul_fn)dotp_real8;
     break;
   case __CPLX8:
-    mmul = mmul_cplx8;
+    mmul = (mmul_fn)mmul_cplx8;
     break;
   case __CPLX16:
-    mmul = mmul_cplx16;
+    mmul = (mmul_fn)mmul_cplx16;
     break;
   case __INT1:
-    mmul = dotp_int1;
+    mmul = (mmul_fn)dotp_int1;
     break;
   case __INT2:
-    mmul = dotp_int2;
+    mmul = (mmul_fn)dotp_int2;
     break;
   case __INT4:
-    mmul = dotp_int4;
+    mmul = (mmul_fn)dotp_int4;
     break;
   case __LOG1:
-    mmul = dotp_log1;
+    mmul = (mmul_fn)dotp_log1;
     break;
   case __LOG2:
-    mmul = dotp_log2;
+    mmul = (mmul_fn)dotp_log2;
     break;
   case __LOG4:
-    mmul = dotp_log4;
+    mmul = (mmul_fn)dotp_log4;
     break;
   case __INT8:
-    mmul = dotp_int8;
+    mmul = (mmul_fn)dotp_int8;
     break;
   case __LOG8:
-    mmul = dotp_log8;
+    mmul = (mmul_fn)dotp_log8;
     break;
   default:
     __fort_abort("MATMUL: unimplemented for data type");
