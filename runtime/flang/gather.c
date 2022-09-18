@@ -7,122 +7,151 @@
 
 #include "stdioInterf.h"
 #include "fioMacros.h"
+#include "scatter.h"
 
 /* local gather functions */
 
 static void
-local_gather_INT1(int n, __INT1_T *dst, __INT1_T *src, int *gv)
+local_gather_INT1(int n, void *dstp, void *srcp, int *gv)
 {
+  __INT1_T *dst = (__INT1_T *)dstp;
+  __INT1_T *src = (__INT1_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[i] = src[gv[i]];
 }
 
 static void
-local_gather_INT2(int n, __INT2_T *dst, __INT2_T *src, int *gv)
+local_gather_INT2(int n, void *dstp, void *srcp, int *gv)
 {
+  __INT2_T *dst = (__INT2_T *)dstp;
+  __INT2_T *src = (__INT2_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[i] = src[gv[i]];
 }
 
 static void
-local_gather_INT4(int n, __INT4_T *dst, __INT4_T *src, int *gv)
+local_gather_INT4(int n, void *dstp, void *srcp, int *gv)
 {
+  __INT4_T *dst = (__INT4_T *)dstp;
+  __INT4_T *src = (__INT4_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[i] = src[gv[i]];
 }
 
 static void
-local_gather_INT8(int n, __INT8_T *dst, __INT8_T *src, int *gv)
+local_gather_INT8(int n, void *dstp, void *srcp, int *gv)
 {
+  __INT8_T *dst = (__INT8_T *)dstp;
+  __INT8_T *src = (__INT8_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[i] = src[gv[i]];
 }
 
 static void
-local_gather_LOG1(int n, __LOG1_T *dst, __LOG1_T *src, int *gv)
+local_gather_LOG1(int n, void *dstp, void *srcp, int *gv)
 {
+  __LOG1_T *dst = (__LOG1_T *)dstp;
+  __LOG1_T *src = (__LOG1_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[i] = src[gv[i]];
 }
 
 static void
-local_gather_LOG2(int n, __LOG2_T *dst, __LOG2_T *src, int *gv)
+local_gather_LOG2(int n, void *dstp, void *srcp, int *gv)
 {
+  __LOG2_T *dst = (__LOG2_T *)dstp;
+  __LOG2_T *src = (__LOG2_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[i] = src[gv[i]];
 }
 
 static void
-local_gather_LOG4(int n, __LOG4_T *dst, __LOG4_T *src, int *gv)
+local_gather_LOG4(int n, void *dstp, void *srcp, int *gv)
 {
+  __LOG4_T *dst = (__LOG4_T *)dstp;
+  __LOG4_T *src = (__LOG4_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[i] = src[gv[i]];
 }
 
 static void
-local_gather_LOG8(int n, __LOG8_T *dst, __LOG8_T *src, int *gv)
+local_gather_LOG8(int n, void *dstp, void *srcp, int *gv)
 {
+  __LOG8_T *dst = (__LOG8_T *)dstp;
+  __LOG8_T *src = (__LOG8_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[i] = src[gv[i]];
 }
 
 static void
-local_gather_REAL4(int n, __REAL4_T *dst, __REAL4_T *src, int *gv)
+local_gather_REAL4(int n, void *dstp, void *srcp, int *gv)
 {
+  __REAL4_T *dst = (__REAL4_T *)dstp;
+  __REAL4_T *src = (__REAL4_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[i] = src[gv[i]];
 }
 
 static void
-local_gather_REAL8(int n, __REAL8_T *dst, __REAL8_T *src, int *gv)
+local_gather_REAL8(int n, void *dstp, void *srcp, int *gv)
 {
+  __REAL8_T *dst = (__REAL8_T *)dstp;
+  __REAL8_T *src = (__REAL8_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[i] = src[gv[i]];
 }
 
 static void
-local_gather_REAL16(int n, __REAL16_T *dst, __REAL16_T *src, int *gv)
+local_gather_REAL16(int n, void *dstp, void *srcp, int *gv)
 {
+  __REAL16_T *dst = (__REAL16_T *)dstp;
+  __REAL16_T *src = (__REAL16_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[i] = src[gv[i]];
 }
 
 static void
-local_gather_CPLX8(int n, __CPLX8_T *dst, __CPLX8_T *src, int *gv)
+local_gather_CPLX8(int n, void *dstp, void *srcp, int *gv)
 {
+  __CPLX8_T *dst = (__CPLX8_T *)dstp;
+  __CPLX8_T *src = (__CPLX8_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[i] = src[gv[i]];
 }
 
 static void
-local_gather_CPLX16(int n, __CPLX16_T *dst, __CPLX16_T *src, int *gv)
+local_gather_CPLX16(int n, void *dstp, void *srcp, int *gv)
 {
+  __CPLX16_T *dst = (__CPLX16_T *)dstp;
+  __CPLX16_T *src = (__CPLX16_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[i] = src[gv[i]];
 }
 
 static void
-local_gather_CPLX32(int n, __CPLX32_T *dst, __CPLX32_T *src, int *gv)
+local_gather_CPLX32(int n, void *dstp, void *srcp, int *gv)
 {
+  __CPLX32_T *dst = (__CPLX32_T *)dstp;
+  __CPLX32_T *src = (__CPLX32_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[i] = src[gv[i]];
 }
 
-void (*__fort_local_gather[__NTYPES])() = {
+static gatherfn_t __fort_local_gather[__NTYPES] = {
     NULL,                /*     no type (absent optional argument) */
     NULL,                /* C   signed short */
     NULL,                /* C   unsigned short */
@@ -158,3 +187,9 @@ void (*__fort_local_gather[__NTYPES])() = {
     local_gather_INT1,   /*   F integer*1 */
     NULL                 /*   F derived type */
 };
+
+void
+local_gather_WRAPPER(int n, void *dst, void *src, int *gv, __INT_T kind)
+{
+  __fort_local_gather[kind](n, dst, src, gv);
+}

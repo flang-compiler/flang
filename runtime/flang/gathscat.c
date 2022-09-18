@@ -7,132 +7,151 @@
 
 #include "stdioInterf.h"
 #include "fioMacros.h"
-
-extern void (*__fort_local_scatter[__NTYPES])();
-extern void (*__fort_local_gathscat[__NTYPES])();
+#include "scatter.h"
 
 /* local scatter functions */
 
-void
-local_scatter_WRAPPER(int n, void *dst, int *sv, void *src, __INT_T kind)
-{
-
-  __fort_local_scatter[kind](n, dst, sv, src);
-}
-
 static void
-local_scatter_INT1(int n, __INT1_T *dst, int *sv, __INT1_T *src)
+local_scatter_INT1(int n, void *dstp, int *sv, void *srcp)
 {
+  __INT1_T *dst = (__INT1_T *)dstp;
+  __INT1_T *src = (__INT1_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[i];
 }
 
 static void
-local_scatter_INT2(int n, __INT2_T *dst, int *sv, __INT2_T *src)
+local_scatter_INT2(int n, void *dstp, int *sv, void *srcp)
 {
+  __INT2_T *dst = (__INT2_T *)dstp;
+  __INT2_T *src = (__INT2_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[i];
 }
 
 static void
-local_scatter_INT4(int n, __INT4_T *dst, int *sv, __INT4_T *src)
+local_scatter_INT4(int n, void *dstp, int *sv, void *srcp)
 {
+  __INT4_T *dst = (__INT4_T *)dstp;
+  __INT4_T *src = (__INT4_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[i];
 }
 
 static void
-local_scatter_INT8(int n, __INT8_T *dst, int *sv, __INT8_T *src)
+local_scatter_INT8(int n, void *dstp, int *sv, void *srcp)
 {
+  __INT8_T *dst = (__INT8_T *)dstp;
+  __INT8_T *src = (__INT8_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[i];
 }
 
 static void
-local_scatter_LOG1(int n, __LOG1_T *dst, int *sv, __LOG1_T *src)
+local_scatter_LOG1(int n, void *dstp, int *sv, void *srcp)
 {
+  __LOG1_T *dst = (__LOG1_T *)dstp;
+  __LOG1_T *src = (__LOG1_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[i];
 }
 
 static void
-local_scatter_LOG2(int n, __LOG2_T *dst, int *sv, __LOG2_T *src)
+local_scatter_LOG2(int n, void *dstp, int *sv, void *srcp)
 {
+  __LOG2_T *dst = (__LOG2_T *)dstp;
+  __LOG2_T *src = (__LOG2_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[i];
 }
 
 static void
-local_scatter_LOG4(int n, __LOG4_T *dst, int *sv, __LOG4_T *src)
+local_scatter_LOG4(int n, void *dstp, int *sv, void *srcp)
 {
+  __LOG4_T *dst = (__LOG4_T *)dstp;
+  __LOG4_T *src = (__LOG4_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[i];
 }
 
 static void
-local_scatter_LOG8(int n, __LOG8_T *dst, int *sv, __LOG8_T *src)
+local_scatter_LOG8(int n, void *dstp, int *sv, void *srcp)
 {
+  __LOG8_T *dst = (__LOG8_T *)dstp;
+  __LOG8_T *src = (__LOG8_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[i];
 }
 
 static void
-local_scatter_REAL4(int n, __REAL4_T *dst, int *sv, __REAL4_T *src)
+local_scatter_REAL4(int n, void *dstp, int *sv, void *srcp)
 {
+  __REAL4_T *dst = (__REAL4_T *)dstp;
+  __REAL4_T *src = (__REAL4_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[i];
 }
 
 static void
-local_scatter_REAL8(int n, __REAL8_T *dst, int *sv, __REAL8_T *src)
+local_scatter_REAL8(int n, void *dstp, int *sv, void *srcp)
 {
+  __REAL8_T *dst = (__REAL8_T *)dstp;
+  __REAL8_T *src = (__REAL8_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[i];
 }
 
 static void
-local_scatter_REAL16(int n, __REAL16_T *dst, int *sv, __REAL16_T *src)
+local_scatter_REAL16(int n, void *dstp, int *sv, void *srcp)
 {
+  __REAL16_T *dst = (__REAL16_T *)dstp;
+  __REAL16_T *src = (__REAL16_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[i];
 }
 
 static void
-local_scatter_CPLX8(int n, __CPLX8_T *dst, int *sv, __CPLX8_T *src)
+local_scatter_CPLX8(int n, void *dstp, int *sv, void *srcp)
 {
+  __CPLX8_T *dst = (__CPLX8_T *)dstp;
+  __CPLX8_T *src = (__CPLX8_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[i];
 }
 
 static void
-local_scatter_CPLX16(int n, __CPLX16_T *dst, int *sv, __CPLX16_T *src)
+local_scatter_CPLX16(int n, void *dstp, int *sv, void *srcp)
 {
+  __CPLX16_T *dst = (__CPLX16_T *)dstp;
+  __CPLX16_T *src = (__CPLX16_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[i];
 }
 
 static void
-local_scatter_CPLX32(int n, __CPLX32_T *dst, int *sv, __CPLX32_T *src)
+local_scatter_CPLX32(int n, void *dstp, int *sv, void *srcp)
 {
+  __CPLX32_T *dst = (__CPLX32_T *)dstp;
+  __CPLX32_T *src = (__CPLX32_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[i];
 }
 
-void (*__fort_local_scatter[__NTYPES])() = {
+static scatterfn_t __fort_local_scatter[__NTYPES] = {
     NULL,                 /*     no type (absent optional argument) */
     NULL,                 /* C   signed short */
     NULL,                 /* C   unsigned short */
@@ -169,129 +188,155 @@ void (*__fort_local_scatter[__NTYPES])() = {
     NULL                  /*   F derived type */
 };
 
+void
+local_scatter_WRAPPER(int n, void *dst, int *sv, void *src, __INT_T kind)
+{
+  __fort_local_scatter[kind](n, dst, sv, src);
+}
+
 /* local gather-scatter functions */
 
-void
-local_gathscat_WRAPPER(int n, void *dst, int *sv, void *src, int *gv,
-                       __INT_T kind)
-{
-
-  __fort_local_gathscat[kind](n, dst, sv, src, gv);
-}
-
 static void
-local_gathscat_INT1(int n, __INT1_T *dst, int *sv, __INT1_T *src, int *gv)
+local_gathscat_INT1(int n, void *dstp, int *sv, void *srcp, int *gv)
 {
+  __INT1_T *dst = (__INT1_T *)dstp;
+  __INT1_T *src = (__INT1_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[gv[i]];
 }
 
 static void
-local_gathscat_INT2(int n, __INT2_T *dst, int *sv, __INT2_T *src, int *gv)
+local_gathscat_INT2(int n, void *dstp, int *sv, void *srcp, int *gv)
 {
+  __INT2_T *dst = (__INT2_T *)dstp;
+  __INT2_T *src = (__INT2_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[gv[i]];
 }
 
 static void
-local_gathscat_INT4(int n, __INT4_T *dst, int *sv, __INT4_T *src, int *gv)
+local_gathscat_INT4(int n, void *dstp, int *sv, void *srcp, int *gv)
 {
+  __INT4_T *dst = (__INT4_T *)dstp;
+  __INT4_T *src = (__INT4_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[gv[i]];
 }
 
 static void
-local_gathscat_INT8(int n, __INT8_T *dst, int *sv, __INT8_T *src, int *gv)
+local_gathscat_INT8(int n, void *dstp, int *sv, void *srcp, int *gv)
 {
+  __INT8_T *dst = (__INT8_T *)dstp;
+  __INT8_T *src = (__INT8_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[gv[i]];
 }
 
 static void
-local_gathscat_LOG1(int n, __LOG1_T *dst, int *sv, __LOG1_T *src, int *gv)
+local_gathscat_LOG1(int n, void *dstp, int *sv, void *srcp, int *gv)
 {
+  __LOG1_T *dst = (__LOG1_T *)dstp;
+  __LOG1_T *src = (__LOG1_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[gv[i]];
 }
 
 static void
-local_gathscat_LOG2(int n, __LOG2_T *dst, int *sv, __LOG2_T *src, int *gv)
+local_gathscat_LOG2(int n, void *dstp, int *sv, void *srcp, int *gv)
 {
+  __LOG2_T *dst = (__LOG2_T *)dstp;
+  __LOG2_T *src = (__LOG2_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[gv[i]];
 }
 
 static void
-local_gathscat_LOG4(int n, __LOG4_T *dst, int *sv, __LOG4_T *src, int *gv)
+local_gathscat_LOG4(int n, void *dstp, int *sv, void *srcp, int *gv)
 {
+  __LOG4_T *dst = (__LOG4_T *)dstp;
+  __LOG4_T *src = (__LOG4_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[gv[i]];
 }
 
 static void
-local_gathscat_LOG8(int n, __LOG8_T *dst, int *sv, __LOG8_T *src, int *gv)
+local_gathscat_LOG8(int n, void *dstp, int *sv, void *srcp, int *gv)
 {
+  __LOG8_T *dst = (__LOG8_T *)dstp;
+  __LOG8_T *src = (__LOG8_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[gv[i]];
 }
 
 static void
-local_gathscat_REAL4(int n, __REAL4_T *dst, int *sv, __REAL4_T *src, int *gv)
+local_gathscat_REAL4(int n, void *dstp, int *sv, void *srcp, int *gv)
 {
+  __REAL4_T *dst = (__REAL4_T *)dstp;
+  __REAL4_T *src = (__REAL4_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[gv[i]];
 }
 
 static void
-local_gathscat_REAL8(int n, __REAL8_T *dst, int *sv, __REAL8_T *src, int *gv)
+local_gathscat_REAL8(int n, void *dstp, int *sv, void *srcp, int *gv)
 {
+  __REAL8_T *dst = (__REAL8_T *)dstp;
+  __REAL8_T *src = (__REAL8_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[gv[i]];
 }
 
 static void
-local_gathscat_REAL16(int n, __REAL16_T *dst, int *sv, __REAL16_T *src, int *gv)
+local_gathscat_REAL16(int n, void *dstp, int *sv, void *srcp, int *gv)
 {
+  __REAL16_T *dst = (__REAL16_T *)dstp;
+  __REAL16_T *src = (__REAL16_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[gv[i]];
 }
 
 static void
-local_gathscat_CPLX8(int n, __CPLX8_T *dst, int *sv, __CPLX8_T *src, int *gv)
+local_gathscat_CPLX8(int n, void *dstp, int *sv, void *srcp, int *gv)
 {
+  __CPLX8_T *dst = (__CPLX8_T *)dstp;
+  __CPLX8_T *src = (__CPLX8_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[gv[i]];
 }
 
 static void
-local_gathscat_CPLX16(int n, __CPLX16_T *dst, int *sv, __CPLX16_T *src, int *gv)
+local_gathscat_CPLX16(int n, void *dstp, int *sv, void *srcp, int *gv)
 {
+  __CPLX16_T *dst = (__CPLX16_T *)dstp;
+  __CPLX16_T *src = (__CPLX16_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[gv[i]];
 }
 
 static void
-local_gathscat_CPLX32(int n, __CPLX32_T *dst, int *sv, __CPLX32_T *src, int *gv)
+local_gathscat_CPLX32(int n, void *dstp, int *sv, void *srcp, int *gv)
 {
+  __CPLX32_T *dst = (__CPLX32_T *)dstp;
+  __CPLX32_T *src = (__CPLX32_T *)srcp;
   int i;
   for (i = 0; i < n; ++i)
     dst[sv[i]] = src[gv[i]];
 }
 
-void (*__fort_local_gathscat[__NTYPES])() = {
+static gathscatfn_t __fort_local_gathscat[__NTYPES] = {
     NULL,                  /*     no type (absent optional argument) */
     NULL,                  /* C   signed short */
     NULL,                  /* C   unsigned short */
@@ -327,3 +372,10 @@ void (*__fort_local_gathscat[__NTYPES])() = {
     local_gathscat_INT1,   /*   F integer*1 */
     NULL                   /*   F derived type */
 };
+
+void
+local_gathscat_WRAPPER(int n, void *dst, int *sv, void *src, int *gv,
+                       __INT_T kind)
+{
+  __fort_local_gathscat[kind](n, dst, sv, src, gv);
+}
