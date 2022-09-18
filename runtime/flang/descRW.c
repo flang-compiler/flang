@@ -88,10 +88,10 @@ static void I8(__io_write)(fio_parm *z)
                           F90_LEN_G(ac));
 }
 
-int I8(__fortio_main)(char *ab,          /* base address */
-                     F90_Desc *ac,      /* array descriptor */
-                     int rw,            /* 0 => read, 1 => write */
-                     int (*f90io_rw)()) /* f90io function */
+int I8(__fortio_main)(char *ab,             /* base address */
+                      F90_Desc *ac,         /* array descriptor */
+                      int rw,               /* 0 => read, 1 => write */
+                      f90io_rw_fn f90io_rw) /* f90io function */
 {
   int ioproc, size_of_kind;
   fio_parm z;
