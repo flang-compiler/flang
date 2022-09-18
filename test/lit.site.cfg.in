@@ -19,7 +19,10 @@ config.lit_tools_dir = "@LLVM_LIT_TOOLS_DIR@"
 config.flang_obj_root = "@FLANG_BINARY_DIR@"
 config.flang_tools_dir = "@FLANG_TOOLS_DIR@"
 config.host_triple = "@LLVM_HOST_TRIPLE@"
-config.target_triple = "@TARGET_TRIPLE@"
+if "@LLVM_TARGET_TRIPLE@":
+    config.target_triple = "@LLVM_TARGET_TRIPLE@"
+else:
+    config.target_triple = "@TARGET_TRIPLE@"
 config.llvm_use_sanitizer = "@LLVM_USE_SANITIZER@"
 config.have_zlib = "@HAVE_LIBZ@"
 config.enable_shared = @ENABLE_SHARED@
