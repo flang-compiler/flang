@@ -1272,14 +1272,20 @@ struct repl_t {
   int gstr[MAXDIMS]; /* replication group index strides */
 };
 
+/* overloaded schedule start/free function types */
+
+typedef void (*sked_start_fn)(void *schedule, char *rb, char *sb, F90_Desc *rd,
+                              F90_Desc *sd);
+typedef void (*sked_free_fn)(void *schedule);
+
 /* communication schedule */
 
 typedef struct sked sked;
 struct sked {
-  dtype tag;       /* structure type tag == __SKED */
-  void *arg;       /* unspecified pointer argument */
-  void (*start)(); /* function called by ENTFTN(comm_start) */
-  void (*free)();  /* function called by ENTFTN(comm_free) */
+  dtype tag;           /* structure type tag == __SKED */
+  void *arg;           /* unspecified pointer argument */
+  sked_start_fn start; /* function called by ENTFTN(comm_start) */
+  sked_free_fn free;   /* function called by ENTFTN(comm_free) */
 };
 
 
