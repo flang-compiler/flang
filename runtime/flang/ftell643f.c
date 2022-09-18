@@ -15,7 +15,7 @@
 #include "ent3f.h"
 #include "utils3f.h"
 
-long long ENT3F(FTELL64, ftell64)(lu) int *lu;
+long long ENT3F(FTELL64, ftell64)(int *lu)
 {
   FILE *f;
 

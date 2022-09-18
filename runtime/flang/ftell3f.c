@@ -15,7 +15,7 @@
 #include "ent3f.h"
 #include "utils3f.h"
 
-int ENT3F(FTELL, ftell)(lu) int *lu;
+int ENT3F(FTELL, ftell)(int *lu)
 {
   FILE *f;
 

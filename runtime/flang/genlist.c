@@ -77,11 +77,10 @@ int __fort_findndx( int cpu, /* cpu whose index is wanted */
 
 /* generate list of cpu numbers */
 
-struct cgrp *__fort_genlist(nd, low, cnts,
-                           strs) int nd; /* number of dimensions */
-int low;                                 /* lowest cpu number */
-int cnts[];                              /* counts per dimension */
-int strs[];                              /* strides per dimension */
+struct cgrp *__fort_genlist(int nd,     /* number of dimensions */
+                            int low,    /* lowest cpu number */
+                            int cnts[], /* counts per dimension */
+                            int strs[]) /* strides per dimension */
 {
 
   int dim;

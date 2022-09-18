@@ -21,10 +21,7 @@
 /* ------------------------------------------------------------------ */
 
 __INT_T
-ENTF90IO(WAIT, wait)(unit, bitv, iostat, id) __INT_T *unit; /* unit number */
-__INT_T *bitv;
-__INT_T *iostat;
-__INT_T *id;
+ENTF90IO(WAIT, wait)(__INT_T *unit, __INT_T *bitv, __INT_T *iostat, __INT_T *id)
 {
   FIO_FCB *f;
   int s = 0;

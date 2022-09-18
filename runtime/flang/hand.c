@@ -58,8 +58,7 @@ static struct sigs sigs[] = {
 
 /* print signal message */
 
-void __fort_psignal(lcpu, s) int lcpu;
-int s;
+void __fort_psignal(int lcpu, int s)
 {
   char buf[256];
   int n;
@@ -79,7 +78,7 @@ int s;
 
 /* handler for signals */
 
-static void sighand(s) int s;
+static void sighand(int s)
 {
   int lcpu;
 

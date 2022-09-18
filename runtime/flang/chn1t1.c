@@ -12,17 +12,15 @@
 
 /* allocate 1 to 1 channel structure */
 
-struct chdr *
-    __fort_chn_1to1(cp, dnd, dlow, dcnts, dstrs, snd, slow, scnts,
-                   sstrs) struct chdr *cp; /* previous structure in list */
-int dnd;                                   /* source cpu DImenSIons */
-int dlow;                                  /* source lowest numbered cpu */
-int *dcnts;                                /* source number of cpus */
-int *dstrs;                                /* source cpu stride */
-int snd;                                   /* destination cpu DImenSIons */
-int slow;                                  /* destination lowest numbered cpu */
-int *scnts;                                /* destination number of cpus */
-int *sstrs;                                /* destination cpu stride */
+struct chdr *__fort_chn_1to1(struct chdr *cp, /* previous structure in list */
+                             int dnd,         /* source cpu DImenSIons */
+                             int dlow,        /* source lowest numbered cpu */
+                             int *dcnts,      /* source number of cpus */
+                             int *dstrs,      /* source cpu stride */
+                             int snd,         /* destination cpu DImenSIons */
+                             int slow,   /* destination lowest numbered cpu */
+                             int *scnts, /* destination number of cpus */
+                             int *sstrs) /* destination cpu stride */
 {
   int snstrs[MAXDIMS];
   int sncnts[MAXDIMS];

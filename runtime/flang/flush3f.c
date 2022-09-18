@@ -16,7 +16,7 @@
 #include "utils3f.h"
 #include "stdioInterf.h"
 
-void ENT3F(FLUSH, flush)(lu) int *lu;
+void ENT3F(FLUSH, flush)(int *lu)
 {
   FILE *f;
 

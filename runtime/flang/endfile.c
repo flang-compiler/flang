@@ -35,9 +35,7 @@ _f90io_endfile(__INT_T *unit, __INT_T *bitv, __INT_T *iostat)
 }
 
 __INT_T
-ENTF90IO(ENDFILE, endfile)(unit, bitv, iostat) __INT_T *unit;
-__INT_T *bitv;
-__INT_T *iostat;
+ENTF90IO(ENDFILE, endfile)(__INT_T *unit, __INT_T *bitv, __INT_T *iostat)
 {
   int s = 0;
 
@@ -49,9 +47,7 @@ __INT_T *iostat;
 }
 
 __INT_T
-ENTCRF90IO(ENDFILE, endfile)(unit, bitv, iostat) __INT_T *unit;
-__INT_T *bitv;
-__INT_T *iostat;
+ENTCRF90IO(ENDFILE, endfile)(__INT_T *unit, __INT_T *bitv, __INT_T *iostat)
 {
   int s = 0;
   s = _f90io_endfile(unit, bitv, iostat);

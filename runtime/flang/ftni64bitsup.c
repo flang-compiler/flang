@@ -24,10 +24,9 @@ static void ushf64();
 /*************************************************************************/
 
 __I8RET_T
-ftn_i_kishftc(op, sc,
-              rc) _LONGLONG_T op; /* value containing field to be shifted */
-int sc;                           /* shift count and direction */
-int rc;                           /* # of rightmost val bits to be shifted */
+ftn_i_kishftc(_LONGLONG_T op, /* value containing field to be shifted */
+              int sc,         /* shift count and direction */
+              int rc)         /* # of rightmost val bits to be shifted */
 {
   DBLUINT64 i8neg1, mask, field, tmp1, tmp2, val;
   int norm;
@@ -121,11 +120,11 @@ int rc;                           /* # of rightmost val bits to be shifted */
  * moves len bits from pos in src to posd in dest
  */
 /*************************************************************************/
-void Ftn_kmvbits(src, pos, len, dest, posd) int *src; /* source field */
-int pos;   /* start position in source field */
-int len;   /* number of bits to move */
-int *dest; /* destination field */
-int posd;  /* start position in dest field */
+void Ftn_kmvbits(int *src,  /* source field */
+                 int pos,   /* start position in source field */
+                 int len,   /* number of bits to move */
+                 int *dest, /* destination field */
+                 int posd)  /* start position in dest field */
 {
   int mask;
   int tmp;
@@ -212,8 +211,8 @@ int posd;  /* start position in dest field */
  */
 /*************************************************************************/
 __I8RET_T
-ftn_i_kibclr(arg1, arg2, bit) int arg1, arg2; /* value to be cleared */
-int bit;                                      /* bit to clear        */
+ftn_i_kibclr(int arg1, int arg2, /* value to be cleared */
+             int bit)            /* bit to clear        */
 {
   DBLINT64 result;
   DBLUINT64 i81, tmp;
@@ -235,10 +234,9 @@ int bit;                                      /* bit to clear        */
  */
 /*************************************************************************/
 __I8RET_T
-ftn_i_kibits(arg1, arg2, bitpos, numbits) int arg1,
-    arg2;    /* value to be extracted from    */
-int bitpos;  /* position of bit to start from */
-int numbits; /* number of bits to extract     */
+ftn_i_kibits(int arg1, int arg2, /* value to be extracted from    */
+             int bitpos,         /* position of bit to start from */
+             int numbits)        /* number of bits to extract     */
 {
   DBLINT64 result;
   DBLUINT64 i8neg1, tmp, maski8, u_arg;
@@ -267,8 +265,8 @@ int numbits; /* number of bits to extract     */
  */
 /*************************************************************************/
 __I8RET_T
-ftn_i_kibset(arg1, arg2, bit) int arg1, arg2; /* value to be set   */
-int bit;                                      /* bit to set        */
+ftn_i_kibset(int arg1, int arg2, /* value to be set   */
+             int bit)            /* bit to set        */
 {
   DBLINT64 i8one, result;
   DBLUINT64 tmp;
@@ -291,8 +289,8 @@ int bit;                                      /* bit to set        */
  */
 /*************************************************************************/
 __I8RET_T
-ftn_i_bktest(arg1, arg2, bit) int arg1, arg2; /* value to be tested  */
-int bit;                                      /* bit to test         */
+ftn_i_bktest(int arg1, int arg2, /* value to be tested  */
+             int bit)            /* bit to test         */
 {
   DBLINT64 i8one, result;
   DBLUINT64 tmp;
@@ -329,9 +327,7 @@ int bit;                                      /* bit to test         */
  *	Return value:
  *	    none.
  */
-static void shf64(arg, count, result) DBLINT64 arg;
-int count;
-DBLINT64 result;
+static void shf64(DBLINT64 arg, int count, DBLINT64 result)
 {
   DBLUINT64 u_arg; /* 'copy-in' unsigned value of arg */
 
@@ -378,9 +374,7 @@ DBLINT64 result;
  *	Return value:
  *	    none.
  */
-static void ushf64(arg, count, result) DBLUINT64 arg;
-int count;
-DBLUINT64 result;
+static void ushf64(DBLUINT64 arg, int count, DBLUINT64 result)
 {
   DBLUINT64 u_arg; /* 'copy-in' value of arg */
 

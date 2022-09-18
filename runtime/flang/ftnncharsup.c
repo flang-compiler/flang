@@ -70,11 +70,10 @@ exit_return:
  * value according to the INDEX intrinsic.
  */
 /* ***********************************************************************/
-int Ftn_nstr_index(a1, a2, a1_len,
-                   a2_len) WCHAR *a1; /* pointer to string being searched */
-WCHAR *a2;                            /* pointer to string being searched for */
-int a1_len;                           /* length of a1 */
-int a2_len;                           /* length of a2 */
+int Ftn_nstr_index(WCHAR *a1,  /* pointer to string being searched */
+                   WCHAR *a2,  /* pointer to string being searched for */
+                   int a1_len, /* length of a1 */
+                   int a2_len) /* length of a2 */
 {
   int i, j, match;
 
@@ -105,11 +104,10 @@ int a2_len;                           /* length of a2 */
  * padded with blanks.
  */
 /* ***********************************************************************/
-int Ftn_nstrcmp(a1, a2, a1_len,
-                a2_len) WCHAR *a1; /* first string to be compared */
-WCHAR *a2;                         /* second string to be compared */
-int a1_len;                        /* length of a1 */
-int a2_len;                        /* length of a2 */
+int Ftn_nstrcmp(WCHAR *a1,  /* first string to be compared */
+                WCHAR *a2,  /* second string to be compared */
+                int a1_len, /* length of a1 */
+                int a2_len) /* length of a2 */
 {
   int i, k;
 
@@ -207,11 +205,11 @@ exit_return:
  * value according to the INDEX intrinsic.
  */
 /* **********************************************************************/
-_LONGLONG_T Ftn_nstr_index_klen(a1, a2, a1_len,
-                   a2_len) WCHAR *a1; /* pointer to string being searched */
-WCHAR *a2;                            /* pointer to string being searched for */
-_LONGLONG_T a1_len;                           /* length of a1 */
-_LONGLONG_T a2_len;                           /* length of a2 */
+_LONGLONG_T
+Ftn_nstr_index_klen(WCHAR *a1, /* pointer to string being searched */
+                    WCHAR *a2, /* pointer to string being searched for */
+                    _LONGLONG_T a1_len, /* length of a1 */
+                    _LONGLONG_T a2_len) /* length of a2 */
 {
   _LONGLONG_T i, j;
   int match;
@@ -243,11 +241,10 @@ _LONGLONG_T a2_len;                           /* length of a2 */
  * padded with blanks.
  */
 /* ***********************************************************************/
-int Ftn_nstrcmp_klen(a1, a2, a1_len,
-                a2_len) WCHAR *a1; /* first string to be compared */
-WCHAR *a2;                         /* second string to be compared */
-_LONGLONG_T a1_len;                        /* length of a1 */
-_LONGLONG_T a2_len;                        /* length of a2 */
+int Ftn_nstrcmp_klen(WCHAR *a1,          /* first string to be compared */
+                     WCHAR *a2,          /* second string to be compared */
+                     _LONGLONG_T a1_len, /* length of a1 */
+                     _LONGLONG_T a2_len) /* length of a2 */
 {
   _LONGLONG_T i, k;
 
@@ -285,4 +282,3 @@ _LONGLONG_T a2_len;                        /* length of a2 */
 
   return 0;
 }
-

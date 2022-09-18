@@ -14,9 +14,7 @@
 #include "global.h"
 #include "async.h"
 
-int ENTF90IO(FLUSH, flush)(unit, bitv, iostat) __INT_T *unit;
-__INT_T *bitv;
-__INT_T *iostat;
+int ENTF90IO(FLUSH, flush)(__INT_T *unit, __INT_T *bitv, __INT_T *iostat)
 {
   FIO_FCB *f;
   int s = 0;

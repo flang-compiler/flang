@@ -686,8 +686,7 @@ static bool ef_getnum(
 
 /* ---------------------------------------------------------------- */
 
-static int ef_nextchar(p, len) char *p;
-int *len;
+static int ef_nextchar(char *p, int *len)
 {
   char *begin = p, c;
 
@@ -706,10 +705,8 @@ int *len;
 /* ---------------------------------------------------------------- */
 
 #ifdef FLANG_ENCODEFMT_UNUSED
-static int ef_nextdtchar(p, len)
-    /* call after encounter DT */
-    char *p;
-int *len;
+/* call after encounter DT */
+static int ef_nextdtchar(char *p, int *len)
 {
   char *begin = p, c;
 

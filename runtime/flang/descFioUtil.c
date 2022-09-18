@@ -56,8 +56,7 @@ static __INT_T *fio_iostat;
 
 /* init bitv and iostat */
 
-void __fort_status_init(bitv, iostat) __INT_T *bitv;
-__INT_T *iostat;
+void __fort_status_init(__INT_T *bitv, __INT_T *iostat)
 {
   fio_bitv = *bitv;
   fio_iostat = iostat;
@@ -67,7 +66,7 @@ __INT_T *iostat;
 
 #undef DIST_STATUS_BCST
 __INT_T
-__fort_status_bcst(s) __INT_T s;
+__fort_status_bcst(__INT_T s)
 {
   __INT_T msg[2];
   int ioproc, lcpu;

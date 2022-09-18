@@ -14,7 +14,7 @@
 #include "ent3f.h"
 #include "utils3f.h"
 
-int ENT3F(COMMITQQ, commitqq)(lu) int *lu;
+int ENT3F(COMMITQQ, commitqq)(int *lu)
 {
   FILE *f;
   int i;

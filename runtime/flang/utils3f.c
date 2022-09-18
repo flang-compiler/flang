@@ -56,7 +56,7 @@ __fcp_cstr(char *to, int to_len, char *from)
 
 /* --------------------------------------------------------------- */
 
-extern bool __isatty3f(unit) int unit;
+bool __isatty3f(int unit)
 {
   void *p;
   int fd;
@@ -83,7 +83,7 @@ extern bool __isatty3f(unit) int unit;
 
 /* --------------------------------------------------------------- */
 
-extern FILE *__getfile3f(unit) int unit;
+FILE *__getfile3f(int unit)
 {
   void *p;
 

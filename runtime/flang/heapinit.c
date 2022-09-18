@@ -11,7 +11,7 @@
 
 /* handler for bus error */
 
-static void sighand(s) int s;
+static void sighand(int s)
 {
   int lcpu;
 
@@ -23,9 +23,7 @@ static void sighand(s) int s;
 
 /* init global heap (maybe) */
 
-void __fort_heapinit(beg, end, val) char *beg;
-char *end;
-int val;
+void __fort_heapinit(char *beg, char *end, int val)
 {
   void (*save)();
   int *pi;
