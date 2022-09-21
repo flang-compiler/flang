@@ -16,14 +16,14 @@
  */
 int __ftn_32in64_;
 
-extern void __utl_i_add64(), __utl_i_sub64();
-extern void __utl_i_div64(), __utl_i_mul64();
-static void neg64(), shf64();
-static int toi64(), ucmp64();
+static void neg64(DBLINT64, DBLINT64);
+static void uneg64(DBLUINT64, DBLUINT64);
+static int toi64(char *, DBLINT64, char *, int);
+static int ucmp64(DBLUINT64, DBLUINT64);
 
-extern int __fort_atoxi32();
-extern int __fort_atoxi64();
-extern void __fort_i64toax();
+/* defined in ftni64bitsup.c */
+void shf64(DBLINT64, int, DBLINT64);
+void ushf64(DBLUINT64, int, DBLUINT64);
 
 /* has native support for 8-byte integers*/
 #if !defined(WIN64)
@@ -410,12 +410,12 @@ static int toi64(char *s, DBLINT64 toi, char *end, int radix)
 {
   DBLINT64 base; /* 64 bit integer equal to radix */
   DBLINT64 num;  /* numerical value of a particular digit */
-  DBLINT64 to;
+  DBLUINT64 to;
   int negate;
   int ch;
 
   /* 64-bit integer with only its sign bit on */
-  static DBLINT64 sign_bit = {0x80000000, 0};
+  static DBLUINT64 sign_bit = {0x80000000, 0};
 
   /* maximum 64-bit signed integer */
   static DBLINT64 max_int = {0x7fffffff, 0xffffffff};
@@ -447,7 +447,7 @@ static int toi64(char *s, DBLINT64 toi, char *end, int radix)
       if (to[0] & 0x80000000L)
         goto ovflo;
 
-      shf64(to, 1, to);
+      ushf64(to, 1, to);
 
       if (*s < '0' || *s > '1')
         return -1;
@@ -461,7 +461,7 @@ static int toi64(char *s, DBLINT64 toi, char *end, int radix)
       if (to[0] & 0xE0000000L)
         goto ovflo;
 
-      shf64(to, 3, to);
+      ushf64(to, 3, to);
 
       if (*s < '0' || *s > '7')
         return -1;
@@ -473,7 +473,7 @@ static int toi64(char *s, DBLINT64 toi, char *end, int radix)
     for (; s < end; s++) {
       if (to[0] & 0xF0000000L)
         goto ovflo;
-      shf64(to, 4, to);
+      ushf64(to, 4, to);
       ch = *s & 0xff;
       if (ch < '0')
         return (-1);
@@ -517,7 +517,7 @@ static int toi64(char *s, DBLINT64 toi, char *end, int radix)
   if (negate) {
     if (ucmp64(to, sign_bit) == 1)
       return -2;
-    neg64(to, to);
+    uneg64(to, to);
   }
 
   I64_MSH(toi) = to[0];
@@ -538,33 +538,18 @@ static void neg64(DBLINT64 arg, DBLINT64 result)
     result[0]++;
 }
 
-static void shf64(DBLINT64 arg1, INT arg2, DBLINT64 result)
+static void uneg64(DBLUINT64 arg, DBLUINT64 result)
 {
-  DBLUINT64 u_arg; /* 'copy-in' unsigned value of arg */
+  int sign; /* sign of the low-order word of arg prior to
+             * being complemented */
 
-  if (arg2 >= 64 || arg2 <= -64) {
-    result[0] = 0;
-    result[1] = 0;
-    return;
-  }
-  u_arg[0] = arg1[0];
-  u_arg[1] = arg1[1];
-  if (arg2 >= 0) {
-    if (arg2 < 32) {
-      result[0] = (u_arg[0] << arg2) | (u_arg[1] >> (32 - arg2));
-      result[1] = u_arg[1] << arg2;
-    } else {
-      result[0] = u_arg[1] << (arg2 - 32);
-      result[1] = 0;
-    }
-  } else if (arg2 > -32) {
-    result[0] = arg1[0] >> -arg2; /* sign extend */
-    result[1] = (u_arg[1] >> -arg2) | (u_arg[0] << (arg2 + 32));
-  } else {
-    result[0] = arg1[0] >> 31; /* sign extend */
-    result[1] = arg1[0] >> (-arg2 - 32);
-  }
+  sign = (unsigned)arg[1] >> 31;
+  result[0] = ~arg[0];
+  result[1] = (~arg[1]) + 1;
+  if (sign == 0 && (int)result[1] >= 0)
+    result[0]++;
 }
+
 
 static int ucmp64(DBLUINT64 arg1, DBLUINT64 arg2)
 {
@@ -581,8 +566,11 @@ static int ucmp64(DBLUINT64 arg1, DBLUINT64 arg2)
 }
 
 #ifdef MTHI64
-static void __utl_i_mul128();
-static void neg128(), uneg64(), ushf64(), shf128();
+static void __utl_i_mul128(DBLINT64, DBLINT64, INT[4]);
+static void neg128(INT[4], INT[4]);
+static void uneg64(DBLUINT64, DBLUINT64);
+static void ushf64(DBLUINT64, int, DBLINT64);
+static void shf128(INT[4], int, INT[4]);
 
 /*
  *  Add 2 64-bit integers

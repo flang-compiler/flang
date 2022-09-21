@@ -11,8 +11,9 @@
 #include "dattype.h"
 #include "ftni64.h"
 
-static void shf64();
-static void ushf64();
+/* forward declarations */
+void shf64(DBLINT64, int, DBLINT64);
+void ushf64(DBLUINT64, int, DBLUINT64);
 
 /*************************************************************************/
 /* function: ftn_i_kishftc
@@ -192,9 +193,9 @@ void Ftn_kmvbits(int *src,  /* source field */
     i8neg1[0] = -1;
     i8neg1[1] = -1;
     ushf64(i8neg1, -(maxlen - len), maski8);
-    shf64(maski8, posd, maski8);
+    ushf64(maski8, posd, maski8);
     ushf64(u_arg, -pos, tmpi8);
-    shf64(tmpi8, posd, tmpi8);
+    ushf64(tmpi8, posd, tmpi8);
     tmpi8[0] &= maski8[0];
     tmpi8[1] &= maski8[1];
     I64_MSH(dest) = (I64_MSH(dest) & (~maski8[0])) | tmpi8[0];
@@ -219,7 +220,7 @@ ftn_i_kibclr(int arg1, int arg2, /* value to be cleared */
   result[0] = result[1] = 0;
   i81[0] = 0;
   i81[1] = 1;
-  shf64(i81, bit, tmp);
+  ushf64(i81, bit, tmp);
   result[0] = arg2 & ~tmp[0];
   result[1] = arg1 & ~tmp[1];
 
@@ -244,7 +245,7 @@ ftn_i_kibits(int arg1, int arg2, /* value to be extracted from    */
   u_arg[1] = arg1;
 
   result[0] = result[1] = 0;
-  shf64(u_arg, -bitpos, tmp);
+  ushf64(u_arg, -bitpos, tmp);
 
   i8neg1[0] = -1;
   i8neg1[1] = -1;
@@ -269,7 +270,7 @@ ftn_i_kibset(int arg1, int arg2, /* value to be set   */
              int bit)            /* bit to set        */
 {
   DBLINT64 i8one, result;
-  DBLUINT64 tmp;
+  DBLINT64 tmp;
   result[0] = result[1] = 0;
   i8one[0] = 0;
   i8one[1] = 1;
@@ -293,7 +294,7 @@ ftn_i_bktest(int arg1, int arg2, /* value to be tested  */
              int bit)            /* bit to test         */
 {
   DBLINT64 i8one, result;
-  DBLUINT64 tmp;
+  DBLINT64 tmp;
   result[0] = result[1] = 0;
   i8one[0] = 0;
   i8one[1] = 1;
@@ -327,7 +328,7 @@ ftn_i_bktest(int arg1, int arg2, /* value to be tested  */
  *	Return value:
  *	    none.
  */
-static void shf64(DBLINT64 arg, int count, DBLINT64 result)
+void shf64(DBLINT64 arg, int count, DBLINT64 result)
 {
   DBLUINT64 u_arg; /* 'copy-in' unsigned value of arg */
 
@@ -374,7 +375,7 @@ static void shf64(DBLINT64 arg, int count, DBLINT64 result)
  *	Return value:
  *	    none.
  */
-static void ushf64(DBLUINT64 arg, int count, DBLUINT64 result)
+void ushf64(DBLUINT64 arg, int count, DBLUINT64 result)
 {
   DBLUINT64 u_arg; /* 'copy-in' value of arg */
 
