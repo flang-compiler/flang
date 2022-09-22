@@ -7004,6 +7004,9 @@ check_ccon(void)
 {
   char c, *save_currc, *nextc;
   INT num[4], val[4];
+#ifdef TARGET_SUPPORTS_QUADFP
+  INT val1[2];
+#endif
   int tok1;
   int rdx, idx;
   INT swp;
@@ -7150,10 +7153,36 @@ check_ccon(void)
 #endif
     }
   } else {
+#ifdef TARGET_SUPPORTS_QUADFP
+    if (tok1 == TK_QCON) {
+      if (tkntyp == TK_RCON) { /* (quad, real)  */
+        xftoq(num[1], val);
+        num[1] = getcon(val, DT_QUAD);
+      } else if (tkntyp == TK_DCON) { /* (quad, double)  */
+        val1[0] = CONVAL1G(num[1]);
+        val1[1] = CONVAL2G(num[1]);
+        xdtoq(val1, val);
+        num[1] = getcon(val, DT_QUAD);
+      }
+      tkntyp = TK_QCCON;
+      tknval = getcon(num, DT_QCMPLX);
+      return;
+    } else
+#endif
     if (tok1 == TK_DCON) {
       if (tkntyp == TK_RCON) { /* (double, real)  */
         xdble(num[1], val);
         num[1] = getcon(val, DT_DBLE);
+#ifdef TARGET_SUPPORTS_QUADFP
+      } else if (tkntyp == TK_QCON) { /* (double, quad)  */
+        val1[0] = CONVAL1G(num[0]);
+        val1[1] = CONVAL2G(num[0]);
+        xdtoq(val1, val);
+        num[0] = getcon(val, DT_QUAD);
+        tkntyp = TK_QCCON;
+        tknval = getcon(num, DT_QCMPLX);
+        return;
+#endif
       }
     } else if (tkntyp == TK_RCON) { /* (real, real)  */
       tkntyp = TK_CCON;
@@ -7161,6 +7190,14 @@ check_ccon(void)
       /**  NOTE:  "name" includes parens **/
       NMPTRP(tknval, putsname(save_currc - 1, currc - save_currc + 1));
       return;
+#ifdef TARGET_SUPPORTS_QUADFP
+    } else if (tkntyp == TK_QCON) { /* (real, quad) */
+      xftoq(num[0], val);
+      num[0] = getcon(val, DT_QUAD);
+      tkntyp = TK_QCCON;
+      tknval = getcon(num, DT_QCMPLX);
+      return;
+#endif
     } else { /* (real, double)  */
       xdble(num[0], val);
       num[0] = getcon(val, DT_DBLE);
