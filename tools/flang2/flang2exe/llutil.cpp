@@ -289,6 +289,7 @@ ll_convert_basic_dtype_with_addrspace(LL_Module *module, DTYPE dtype, int addrsp
     break;
 #ifdef TARGET_SUPPORTS_QUADFP
   case TY_QUAD:
+  case TY_QCMPLX:
     /* TY_QUAD maps to an IEEE128 quad precision. */
 #endif
   case TY_FLOAT128:
@@ -786,6 +787,9 @@ llis_struct_kind(DTYPE dtype)
   case TY_CMPLX128:
   case TY_CMPLX:
   case TY_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+#endif
   case TY_STRUCT:
   case TY_UNION:
     return true;
@@ -820,6 +824,9 @@ is_struct_kind(DTYPE dtype, bool check_return,
   case TY_CMPLX:
     return check_return;
   case TY_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+#endif
   case TY_CMPLX128:
     return true;
   default:
@@ -2173,6 +2180,9 @@ should_preserve_param(const DTYPE dtype)
   case TY_DWORD:
   case TY_HOLL:
   case TY_NCHAR:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+#endif
     return false;
   default:
     assert(0, "should_preserve_param(dtype): unexpected DTYPE", 0, ERR_Fatal);
@@ -2666,6 +2676,9 @@ llvm_fc_type(DTYPE dtype)
     retc = "fp128";
     break;
   case TY_CMPLX128:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+#endif
     retc = "{fp128, fp128}";
     break;
   case TY_INT8:
