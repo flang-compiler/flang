@@ -1094,6 +1094,10 @@ again:
       break;
     case TY_DCMPLX:
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+      break;
+#endif
     case TY_CHAR:
       break;
     case TY_NCHAR:
@@ -6672,7 +6676,9 @@ _xtok(INT conval1, BIGINT64 count, int dtype)
   INT one;
   int isneg;
 #ifdef TARGET_SUPPORTS_QUADFP
-  IEEE128 qnum1, qresult;
+  IEEE128 qtemp, qnum1, qresult;
+  IEEE128 qreal1, qrealrs, qimag1, qimagrs;
+  IEEE128 qrealpv, qtemp1;
 #endif
   DBLE dtemp, dresult, num1;
   DBLE dreal1, drealrs, dimag1, dimagrs;
@@ -6824,6 +6830,43 @@ _xtok(INT conval1, BIGINT64 count, int dtype)
     num1[1] = getcon(dimagrs, DT_REAL8);
     conval = getcon(num1, DT_CMPLX16);
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    qreal1[0] = CONVAL1G(CONVAL1G(conval1));
+    qreal1[1] = CONVAL2G(CONVAL1G(conval1));
+    qreal1[2] = CONVAL3G(CONVAL1G(conval1));
+    qreal1[3] = CONVAL4G(CONVAL1G(conval1));
+    qimag1[0] = CONVAL1G(CONVAL2G(conval1));
+    qimag1[1] = CONVAL2G(CONVAL2G(conval1));
+    qimag1[2] = CONVAL3G(CONVAL2G(conval1));
+    qimag1[3] = CONVAL4G(CONVAL2G(conval1));
+    qrealrs[0] = CONVAL1G(CONVAL1G(one));
+    qrealrs[1] = CONVAL2G(CONVAL1G(one));
+    qrealrs[2] = CONVAL3G(CONVAL1G(one));
+    qrealrs[3] = CONVAL4G(CONVAL1G(one));
+    qimagrs[0] = CONVAL1G(CONVAL2G(one));
+    qimagrs[1] = CONVAL2G(CONVAL2G(one));
+    qimagrs[2] = CONVAL3G(CONVAL2G(one));
+    qimagrs[3] = CONVAL4G(CONVAL2G(one));
+    while (count--) {
+      /* (a + bi) * (c + di) ==> (ac-bd) + (ad+cb)i */
+      qrealpv[0] = qrealrs[0];
+      qrealpv[1] = qrealrs[1];
+      qrealpv[2] = qrealrs[2];
+      qrealpv[3] = qrealrs[3];
+      xqmul(qreal1, qrealrs, qtemp1);
+      xqmul(qimag1, qimagrs, qtemp);
+      xqsub(qtemp1, qtemp, qrealrs);
+      xqmul(qreal1, qimagrs, qtemp1);
+      xqmul(qrealpv, qimag1, qtemp);
+      xqadd(qtemp1, qtemp, qimagrs);
+    }
+    num1[0] = getcon(qrealrs, DT_QUAD);
+    num1[1] = getcon(qimagrs, DT_QUAD);
+    conval = getcon(num1, DT_QCMPLX);
+    break;
+#endif
 
   case TY_BLOG:
   case TY_SLOG:

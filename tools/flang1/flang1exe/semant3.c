@@ -6261,6 +6261,13 @@ chk_and_rewrite_cmplxpart_assn(SST *lhs, SST *rhs)
       i_imagnm = "dimag";
       i_cmplxnm = "dcmplx";
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QUAD:
+      i_realnm = "qreal";
+      i_imagnm = "qimag";
+      i_cmplxnm = "qcmplx";
+      break;
+#endif
     default:
       interr("chk_and_rewrite_cmplxpart_assn: unexpected type", DTY(dtype), 3);
     }
