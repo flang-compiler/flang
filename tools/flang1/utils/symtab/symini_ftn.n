@@ -269,6 +269,8 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .AT elemental x
 .IN .CQSIN 1 CQ CQ none * V
 .AT elemental x
+.IN CQSIN 1 CQ CQ none * V
+.AT elemental x
 
 .IN ..SIND 1 R R none * V
 .AT elemental x
@@ -985,7 +987,7 @@ sptr	name	siname	iname	rname	dname	cname	cdname	i8name	qname	cqname
 .AT elemental x
 .GN LOG10 - - ALOG10 DLOG10 - - - QLOG10 -
 .AT elemental x
-.GN SIN - - .SIN DSIN CSIN CDSIN - QSIN .CQSIN
+.GN SIN - - .SIN DSIN CSIN CDSIN - QSIN CQSIN
 .AT elemental x
 .GN SIND - - .SIND DSIND - - - QSIND
 .AT elemental x

@@ -90,6 +90,7 @@ sptr	name	pcnt	atyp	dtype	ILM	pname
 .IN DSIN 1 D D DSIN ftn_dsin 
 .IN CSIN 1 C C CSIN ftn_csin 
 .IN CDSIN 1 CD CD CDSIN ftn_cdsin 
+.IN CQSIN 1 CQ CQ CQSIN ftn_cqsin
 .IN QSIN 1 Q Q QSIN ftn_qsin
 .IN .SIND 1 R R SIND ftn_sind
 .IN DSIND 1 D D DSIND ftn_dsind
@@ -378,7 +379,7 @@ sptr	name	siname	iname	rname	dname	cname	cdname	i8name	qname   cqname
 .GN EXP - - .EXP DEXP CEXP CDEXP - QEXP -
 .GN LOG - - ALOG DLOG CLOG CDLOG - QLOG -
 .GN LOG10 - - ALOG10 DLOG10 - - -
-.GN SIN - - .SIN DSIN CSIN CDSIN - QSIN -
+.GN SIN - - .SIN DSIN CSIN CDSIN - QSIN CQSIN
 .GN SIND - - .SIND DSIND - - - QSIND -
 .GN COS - - .COS DCOS CCOS CDCOS - QCOS -
 .GN COSD - - .COSD DCOSD - - - QCOSD -

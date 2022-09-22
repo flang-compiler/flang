@@ -470,6 +470,8 @@ Sine of a single precision value
 .AT spec
 .IL CDSIN arth lnk
 .AT spec dcmplx
+.IL CQSIN arth lnk
+.AT spec qcmplx
 .IL COS arth lnk
 Cosine of a single precision number
 .OP FCOS r p1
