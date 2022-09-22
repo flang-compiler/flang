@@ -482,7 +482,11 @@ eval_ilm(int ilmx)
      * For each operand which is a link to another ilm, recurse (evaluate it)
      * if not already evaluated
      */
-    if (opcx == IM_DCMPLX || opcx == IM_CMPLX) {
+    if (opcx == IM_DCMPLX || opcx == IM_CMPLX
+#ifdef TARGET_SUPPORTS_QUADFP
+        || opcx == IM_QCMPLX
+#endif
+       ) {
       for (tmp = 1, noprs = 1; noprs <= ilms[opcx].oprs; ++tmp, ++noprs) {
         if (IM_OPRFLAG(opcx, noprs) == OPR_LNK) {
           eval_ilm_argument1(noprs, ilmpx, ilmx);
@@ -1147,7 +1151,22 @@ exp_load(ILM_OP opc, ILM *ilmp, int curilm)
       ILM_RESTYPE(curilm) = ILM_ISDCMPLX;
       return;
     }
-
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IM_CQLD:
+    if (XBIT(70, 0x40000000)) {
+      CHECK_NME(nme, dt_nme(nme) != DT_QCMPLX);
+      load = ad3ili(IL_LDQCMPLX, addr, nme, MSZ_F32);
+      goto cand_load;
+    } else {
+      imag = ad3ili(IL_AADD, addr, ad_aconi(size_of(DT_QUAD)), 0);
+      tmp = addnme(NT_MEM, SPTR_NULL, nme, 0);
+      ILM_RRESULT(curilm) = ad3ili(IL_LDQP, addr, tmp, MSZ_F16);
+      tmp = addnme(NT_MEM, NOSYM, nme, 16);
+      ILM_IRESULT(curilm) = ad3ili(IL_LDQP, imag, tmp, MSZ_F16);
+      ILM_RESTYPE(curilm) = ILM_ISQCMPLX;
+      return;
+    }
+#endif
   case IM_ILD:
   case IM_LLD:
     confl = false;
@@ -1812,6 +1831,42 @@ exp_store(ILM_OP opc, ILM *ilmp, int curilm)
                      nme, MSZ_F8);
       ILM_RESTYPE(curilm) = ILM_ISDCMPLX;
     }
+#ifdef TARGET_SUPPORTS_QUADFP
+    goto cmplx_shared;
+
+  case IM_CQST:
+    if (XBIT(70, 0x40000000)) {
+      if (NME_TYPE(nme) == NT_VAR && DTY(DTYPEG(NME_SYM(nme))) == TY_ARRAY)
+        nme =
+            add_arrnme(NT_ARR, SPTR_NULL, nme, 0, ad_icon(0), NME_INLARR(nme));
+      CHECK_NME(nme, dt_nme(nme) != DT_QCMPLX);
+      store = ad4ili(IL_STQCMPLX, ILI_OF(op2), ILI_OF(op1), nme, MSZ_F32);
+      goto cand_store;
+    } else {
+      tmp = expb.curilt;
+      store = ad1ili(IL_FREEQP, (int)ILM_RRESULT(op2));
+      chk_block(store);
+      if (tmp != expb.curilt)
+        ILT_CPLX(expb.curilt) = 1;
+
+      nme = addnme(NT_MEM, NOSYM, NME_OF(op1), 16);
+      imag = ad3ili(IL_AADD, ILI_OF(op1), ad_aconi(size_of(DT_QUAD)), 0);
+      store = ad4ili(IL_STQP, ILM_IRESULT(op2), imag, nme, MSZ_F16);
+      tmp = expb.curilt;
+      chk_block(store);
+      if (tmp != expb.curilt)
+        ILT_CPLX(expb.curilt) = 1;
+      ILM_IRESULT(curilm) = store;
+      if (EXPDBG(8, 16))
+        fprintf(gbl.dbgfil, "store imag: ilm %d, block %d, ili %d\n", curilm,
+                expb.curbih, store);
+
+      nme = addnme(NT_MEM, SPTR_NULL, NME_OF(op1), 0);
+      store = ad4ili(IL_STQP, ad1ili(IL_CSEQP, ILM_RRESULT(op2)), ILI_OF(op1),
+                     nme, MSZ_F16);
+      ILM_RESTYPE(curilm) = ILM_ISQCMPLX;
+    }
+#endif
   cmplx_shared:
     SET_ASSN(NME_OF(op1));
     tmp = expb.curilt;

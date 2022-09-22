@@ -120,6 +120,7 @@ typedef struct {
 #define ILM_ISX87CMPLX 5
 #define ILM_ISDOUBLEDOUBLECMPLX 6
 #define ILM_ISFLOAT128CMPLX 7
+#define ILM_ISQCMPLX 8
 
 /* character stuff */
 #define ILM_MXLEN(i) (expb.ilmb.stg_base[i].w5)

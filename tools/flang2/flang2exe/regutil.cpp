@@ -866,7 +866,7 @@ static struct {        /* Register temporary information */
     {'x', "xa", DT_CMPLX128, 0, 0, -1}, /*10: float128 complex temps */
 #elif defined(TARGET_SUPPORTS_QUADFP)
     {'X', "Xa", DT_QUAD, 0, 0, -1},   /* 9: quad precision temps  */
-    {'x', "xa", DT_NONE, 0, 0, -1}, /* 9 and 10: filler */
+    {'x', "xa", DT_QCMPLX, 0, 0, -1}, /* 10: quad complex temps */
 #else
     {'X', "Xa", DT_NONE, 0, 0, -1}, /* 9 and 10: filler */
     {'x', "xa", DT_NONE, 0, 0, -1}, /* 9 and 10: filler */
@@ -1008,6 +1008,10 @@ mkrtemp_arg1_sc(DTYPE dtype, SC_KIND sc)
     type = 5;
   else if (dtype == DT_DCMPLX)
     type = 6;
+#ifdef TARGET_SUPPORTS_QUADFP
+  else if (dtype == DT_QCMPLX)
+    type = 10;
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
   else if (dtype == DT_CMPLX128)
     type = 6;

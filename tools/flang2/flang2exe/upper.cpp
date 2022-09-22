@@ -127,7 +127,8 @@ static const namelist IPAtypes[] = {
 /* list of datatype keywords */
 static const namelist Datatypes[] = {
   { "Array",     "A",   TY_ARRAY },  { "Complex8",   "C8", TY_CMPLX },
-  { "Complex16", "C16", TY_DCMPLX }, { "Derived",    "D",  TY_STRUCT },
+  { "Complex16", "C16", TY_DCMPLX },
+  { "Complex32", "C32", TY_QCMPLX }, { "Derived",    "D",  TY_STRUCT },
   { "Hollerith", "H",   TY_HOLL },   { "Integer1",   "I1", TY_BINT },
   { "Integer2",  "I2",  TY_SINT },   { "Integer4",   "I4", TY_INT },
   { "Integer8",  "I8",  TY_INT8 },   { "Logical1",   "L1", TY_BLOG },
@@ -1643,6 +1644,9 @@ read_datatype(void)
   case TY_DCMPLX:
     datatypexref[dtype] = DT_DCMPLX;
     break;
+  case TY_QCMPLX:
+    datatypexref[dtype] = DT_QCMPLX;
+    break;
   case TY_HOLL:
     datatypexref[dtype] = DT_HOLL;
     break;
@@ -2489,6 +2493,7 @@ read_symbol(void)
       newsptr = getcon(val, dtype);
       break;
     case TY_DCMPLX:
+    case TY_QCMPLX:
       val[0] = getval("sym");
       val[1] = getval("sym");
       /* always add a new symbol; don't use getcon()
@@ -3778,6 +3783,7 @@ fix_symbol(void)
         CONVAL1P(sptr, symbolxref[val]);
         break;
       case TY_DCMPLX:
+      case TY_QCMPLX:
         val = CONVAL1G(sptr);
         CONVAL1P(sptr, symbolxref[val]);
         val = CONVAL2G(sptr);
