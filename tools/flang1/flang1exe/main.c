@@ -897,8 +897,10 @@ init(int argc, char *argv[])
 
 #ifdef TARGET_SUPPORTS_QUADFP
   if (flg.qp) {
-    /* set -y 57 0x4, enable quad precision REAL and COMPLEX */
+    /* set -y 57 0x4, enable quad-precision real */
     set_yflag(57, 0x4);
+    /* set -y 57 0x8, enable quad-precision complex */
+    set_yflag(57, 0x8);
   }
 #endif
 
