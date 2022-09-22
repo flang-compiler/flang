@@ -165,6 +165,15 @@ enum fold_status fold_real128_exp(float128_t *res, const float128_t *arg);
 enum fold_status fold_real128_log(float128_t *res, const float128_t *arg);
 enum fold_status fold_real128_log10(float128_t *res, const float128_t *arg);
 
+enum fold_status fold_complex32_pow(float complex *res, const float complex *x,
+                                    const float complex *y);
+enum fold_status fold_complex64_pow(double complex *res,
+                                    const double complex *x,
+                                    const double complex *y);
+enum fold_status fold_complex128_pow(long double complex *res,
+                                     const long double complex *x,
+                                     const long double complex *y);
+
 #ifdef __cplusplus
 }
 #endif

@@ -2432,3 +2432,72 @@ cprintf(char *buffer, const char *format, INT *val)
     }
   }
 }
+
+void
+xcfpow(IEEE32 r1, IEEE32 i1, IEEE32 r2, IEEE32 i2, IEEE32 *rr, IEEE32 *ir)
+{
+  float complex x, y, z;
+  float32_t rx, ix, ry, iy, rz, iz;
+  unwrap_f(&rx, &r1);
+  unwrap_f(&ix, &i1);
+  unwrap_f(&ry, &r2);
+  unwrap_f(&iy, &i2);
+  if (rx == 0.0 && ix == 0.0 && ry == 0.0 && iy == 0.0) {
+    rz = 1.0;
+    iz = 0.0;
+  } else {
+    x = rx + ix * I;
+    y = ry + iy * I;
+    check(fold_complex32_pow(&z, &x, &y));
+    rz = crealf(z);
+    iz = cimagf(z);
+  }
+  wrap_f(rr, &rz);
+  wrap_f(ir, &iz);
+}
+
+void
+xcdpow(IEEE64 r1, IEEE64 i1, IEEE64 r2, IEEE64 i2, IEEE64 rr, IEEE64 ir)
+{
+  double complex x, y, z;
+  float64_t rx, ix, ry, iy, rz, iz;
+  unwrap_d(&rx, r1);
+  unwrap_d(&ix, i1);
+  unwrap_d(&ry, r2);
+  unwrap_d(&iy, i2);
+  if (rx == 0.0 && ix == 0.0 && ry == 0.0 && iy == 0.0) {
+    rz = 1.0;
+    iz = 0.0;
+  } else {
+    x = rx + ix * I;
+    y = ry + iy * I;
+    check(fold_complex64_pow(&z, &x, &y));
+    rz = creal(z);
+    iz = cimag(z);
+  }
+  wrap_d(rr, &rz);
+  wrap_d(ir, &iz);
+}
+
+void
+xcqpow(IEEE128 r1, IEEE128 i1, IEEE128 r2, IEEE128 i2, IEEE128 rr, IEEE128 ir)
+{
+  long double complex x, y, z;
+  float128_t rx, ix, ry, iy, rz, iz;
+  unwrap_q(&rx, r1);
+  unwrap_q(&ix, i1);
+  unwrap_q(&ry, r2);
+  unwrap_q(&iy, i2);
+  if (rx == 0.0 && ix == 0.0 && ry == 0.0 && iy == 0.0) {
+    rz = 1.0;
+    iz = 0.0;
+  } else {
+    x = rx + ix * I;
+    y = ry + iy * I;
+    check(fold_complex128_pow(&z, &x, &y));
+    rz = creall(z);
+    iz = cimagl(z);
+  }
+  wrap_q(rr, &rz);
+  wrap_q(ir, &iz);
+}
