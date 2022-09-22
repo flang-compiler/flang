@@ -4487,6 +4487,8 @@ get_ac_op(int ast)
 #ifdef TARGET_SUPPORTS_QUADFP
     case DT_QUAD:
     case DT_CMPLX8:
+    case DT_CMPLX16:
+    case DT_QCMPLX:
 #endif
       ac_op = AC_EXPX;
       break;

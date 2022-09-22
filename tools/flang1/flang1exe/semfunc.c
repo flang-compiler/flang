@@ -4508,7 +4508,11 @@ ref_intrin(SST *stktop, ITEM *list)
        * real/dble
        */
 
-      dtype = dtype == DT_CMPLX ? stb.user.dt_real : DT_DBLE;
+      dtype = dtype == DT_CMPLX  ? stb.user.dt_real
+#ifdef TARGET_SUPPORTS_QUADFP
+            : dtype == DT_QCMPLX ? DT_QUAD
+#endif
+                                 : DT_DBLE;
 
     else /* treat like typical type conversion intrinsic */
       paramct = 1;
@@ -4711,6 +4715,9 @@ ref_intrin(SST *stktop, ITEM *list)
         goto const_return;
       case IM_IMAG:
       case IM_DIMAG:
+#ifdef IM_QIMAG
+      case IM_QIMAG:
+#endif
         conval = CONVAL2G(con1);
         goto const_return;
       case IM_CONJG:
@@ -4723,6 +4730,13 @@ ref_intrin(SST *stktop, ITEM *list)
         con2 = CONVAL2G(con1);
         res[1] = const_fold(OP_SUB, (INT)stb.dbl0, con2, DT_REAL8);
         goto const_getcon;
+#ifdef IM_QCONJG
+      case IM_QCONJG:
+        res[0] = CONVAL1G(con1);
+        con2 = CONVAL2G(con1);
+        res[1] = const_fold(OP_SUB, (INT)stb.quad0, con2, DT_QUAD);
+        goto const_getcon;
+#endif
 #ifdef IM_DPROD
       case IM_DPROD:
         con2 = GET_CVAL_ARG(1);
@@ -9141,7 +9155,11 @@ ref_pd(SST *stktop, ITEM *list)
 
     if (stkp2) { /* kind */
       dtyper = set_kind_result(stkp2, DT_CMPLX, TY_CMPLX);
-      dtype1 = dtyper == DT_CMPLX16 ? DT_REAL8 : DT_REAL4;
+      dtype1 = (dtyper == DT_CMPLX16) ? DT_REAL8
+#ifdef TARGET_SUPPORTS_QUADFP
+             : (dtyper == DT_QCMPLX)  ? DT_QUAD
+#endif
+                                      : DT_REAL4;
       if (!dtyper) {
         E74_ARG(pdsym, 1, NULL);
         goto call_e74_arg;
@@ -9481,6 +9499,9 @@ ref_pd(SST *stktop, ITEM *list)
         conval = 15;
       break;
     case TY_QUAD:
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+#endif
       if (XBIT(49, 0x40000)) /* C90 */
         conval = 28;
       else

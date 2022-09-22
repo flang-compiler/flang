@@ -1167,6 +1167,9 @@ semantio(int rednum, SST *top)
                     dtype == DT_SLOG || dtype == DT_BLOG || dtype == DT_REAL4 ||
                     dtype == DT_REAL8 || dtype == DT_QUAD || dtype == DT_CMPLX8 ||
                     dtype == DT_CMPLX16 ||
+#ifdef TARGET_SUPPORTS_QUADFP
+                    dtype == DT_QCMPLX ||
+#endif
                     (DTY(dtype) == TY_CHAR && fmttyp == FT_LIST_DIRECTED))) {
 
           i = sym_mkfunc_nodesc(mkRteRtnNm(getWriteByDtypeRtn(dtype, fmttyp)),
@@ -6158,6 +6161,12 @@ getWriteByDtypeRtn(int dtype, FormatType fmttyp)
     rtlRtn = (fmttyp == FT_LIST_DIRECTED) ? RTE_f90io_sc_cd_ldw
                                           : RTE_f90io_sc_cd_fmt_write;
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case DT_QCMPLX:
+    rtlRtn = (fmttyp == FT_LIST_DIRECTED) ? RTE_f90io_sc_cq_ldw
+                                          : RTE_f90io_sc_cq_fmt_write;
+    break;
+#endif
   default:
     if (DTY(dtype) == TY_CHAR) {
       rtlRtn = (fmttyp == FT_LIST_DIRECTED) ? RTE_f90io_sc_ch_ldw
