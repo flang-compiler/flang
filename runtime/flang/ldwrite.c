@@ -1061,6 +1061,20 @@ ENTF90IO(SC_CD_LDW, sc_cd_ldw)(double real, double imag, int type)
   return __f90io_ldw(type, 1, 0, (char *)&dum, 0);
 }
 
+#ifdef TARGET_SUPPORTS_QUADFP
+__INT_T
+ENTF90IO(SC_CQ_LDW, sc_cq_ldw)(float128_t real, float128_t imag, int type)
+{
+  struct {
+    float128_t real;
+    float128_t imag;
+  } dum;
+  dum.real = real;
+  dum.imag = imag;
+  return __f90io_ldw(type, 1, 0, (char *)&dum, 0);
+}
+#endif
+
 __INT_T
 ENTF90IO(SC_CH_LDW, sc_ch_ldw)(char *item, int type, int len)
 {
