@@ -228,6 +228,16 @@ set(MTH_CMPLX_SRCS
   ctan.c
   ctanh.c)
 
+set(MTH_CMPLX_SRCS_QUADFP
+  cqdiv.c
+  cqpowcq.c
+  cqpowi.c
+  cqpowk.c)
+
+if(TARGET_SUPPORTS_QUADFP)
+  LIST(APPEND MTH_CMPLX_SRCS ${MTH_CMPLX_SRCS_QUADFP})
+endif()
+
 set(SRCS
   ${SRCS}
   acosd.c

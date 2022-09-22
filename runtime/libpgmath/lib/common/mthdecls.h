@@ -50,11 +50,13 @@ static const int g_one = 1;
  * complex variables with constant values (not variables).
  *
  * Assignment to complex variables from float/double real/imaginary values
- * contained in variables should use either:
+ * contained in variables should use one of the following:
+ *
  * float_complex_t  pgmath_cmplxf(float r, float i);
- * or
- * double_complex_t  pgmath_cmplx(double r, double i);
- * 
+ *
+ * double_complex_t pgmath_cmplx(double r, double i);
+ *
+ * quad_complex_t   pgmath_cmplxl(float128_t r, float128_t i);
  */
 
 #if defined(TARGET_WIN) && defined(__clang__)
@@ -76,6 +78,11 @@ typedef struct {
   double real;
   double imag;
 } dcmplx_t;
+
+typedef struct {
+  float128_t real;
+  float128_t imag;
+} qcmplx_t;
 
 #if defined(__PGIC__)
 #undef	creal
@@ -107,17 +114,18 @@ float __builtin_cimagf(float _Complex);
  * Common method across all platforms.  Does not use "real + I*imag".
  */
 
-static inline __attribute__((always_inline)) float_complex_t  pgmath_cmplxf(float r, float i)
+static inline __attribute__((always_inline))
+float_complex_t pgmath_cmplxf(float r, float i)
 {
-    struct {
-        union {
-            float_complex_t _c;
-            float _f[2];
-        };
-    } _cf ;
-    _cf._f[0] = r;
-    _cf._f[1] = i;
-    return _cf._c;
+  struct {
+    union {
+      float_complex_t _c;
+      float _f[2];
+    };
+  } _cf;
+  _cf._f[0] = r;
+  _cf._f[1] = i;
+  return _cf._c;
 }
 
 /*
@@ -126,18 +134,41 @@ static inline __attribute__((always_inline)) float_complex_t  pgmath_cmplxf(floa
  * Common method across all platforms.  Does not use "real + I*imag".
  */
 
-static inline __attribute__((always_inline)) double_complex_t  pgmath_cmplx(double r, double i)
+static inline __attribute__((always_inline))
+double_complex_t pgmath_cmplx(double r, double i)
 {
-    struct {
-        union {
-            double_complex_t _z;
-            double _d[2];
-        };
-    } _zd ;
-    _zd._d[0] = r;
-    _zd._d[1] = i;
-    return _zd._z;
+  struct {
+    union {
+      double_complex_t _z;
+      double _d[2];
+    };
+  } _zd;
+  _zd._d[0] = r;
+  _zd._d[1] = i;
+  return _zd._z;
 }
+
+/*
+ * \brief  pgmath_cmplxl - return type quad_complex_t from quad precision arguments.
+ *
+ * Common method across all platforms.  Does not use "real + I*imag".
+ */
+
+#ifdef TARGET_SUPPORTS_QUADFP
+static inline __attribute__((always_inline))
+quad_complex_t pgmath_cmplxl(float128_t r, float128_t i)
+{
+  struct {
+    union {
+      quad_complex_t _lz;
+      float128_t _q[2];
+    };
+  } _lzq;
+  _lzq._q[0] = r;
+  _lzq._q[1] = i;
+  return _lzq._lz;
+}
+#endif
 
 /*
  * Complex ABI conventions.
@@ -167,7 +198,7 @@ static inline __attribute__((always_inline)) double_complex_t  pgmath_cmplx(doub
         void _f(cmplx_t *cmplx, float real, float imag)
 #define	CMPLXFUNC_C_C_(_f)  \
         void _f(cmplx_t *cmplx, float real1, float imag1, \
-                                  float real2, float imag2)
+                                float real2, float imag2)
 #define	CMPLXFUNC_C_F_(_f)  \
         void _f(cmplx_t *cmplx, float real, float imag, float r)
 #define	CMPLXFUNC_C_I_(_f)  \
@@ -179,13 +210,25 @@ static inline __attribute__((always_inline)) double_complex_t  pgmath_cmplx(doub
         void _f(dcmplx_t *dcmplx, double real, double imag)
 #define	ZMPLXFUNC_Z_Z_(_f)  \
         void _f(dcmplx_t *dcmplx, double real1, double imag1, \
-                                    double real2, double imag2)
+                                  double real2, double imag2)
 #define	ZMPLXFUNC_Z_D_(_f)  \
         void _f(dcmplx_t *dcmplx, double real, double imag, double d)
 #define	ZMPLXFUNC_Z_I_(_f)  \
         void _f(dcmplx_t *dcmplx, double real, double imag, int i)
 #define	ZMPLXFUNC_Z_K_(_f)  \
         void _f(dcmplx_t *dcmplx, double real, double imag, long long i)
+
+#define	LZMPLXFUNC_LZ_(_f)    \
+        void _f(qcmplx_t *qcmplx, float128_t real, float128_t imag)
+#define	LZMPLXFUNC_LZ_LZ_(_f)  \
+        void _f(qcmplx_t *qcmplx, float128_t real1, float128_t imag1, \
+                                  float128_t real2, float128_t imag2)
+#define	LZMPLXFUNC_LZ_Q_(_f)  \
+        void _f(qcmplx_t *qcmplx, float128_t real, float128_t imag, float128_t q)
+#define	LZMPLXFUNC_LZ_I_(_f)  \
+        void _f(qcmplx_t *qcmplx, float128_t real, float128_t imag, int i)
+#define	LZMPLXFUNC_LZ_K_(_f)  \
+        void _f(qcmplx_t *qcmplx, float128_t real, float128_t imag, long long i)
 
 /* C99 complex ABI */
 #define	FLTFUNC_C_C99_(_f)    \
@@ -227,6 +270,22 @@ static inline __attribute__((always_inline)) double_complex_t  pgmath_cmplx(doub
         double_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
         (double_complex_t zarg, long long i)
 
+#define	LZMPLXFUNC_LZ_C99_(_f)    \
+        quad_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (quad_complex_t lzarg)
+#define	LZMPLXFUNC_LZ_LZ_C99_(_f)  \
+        quad_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (quad_complex_t lzarg1, quad_complex_t lzarg2)
+#define	LZMPLXFUNC_LZ_Q_C99_(_f)  \
+        quad_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (quad_complex_t lzarg, double q)
+#define	LZMPLXFUNC_LZ_I_C99_(_f)  \
+        quad_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (quad_complex_t lzarg, int i)
+#define	LZMPLXFUNC_LZ_K_C99_(_f)  \
+        quad_complex_t MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX) \
+        (quad_complex_t lzarg, long long i)
+
 #ifndef	MTH_CMPLX_C99_ABI
 
 #define	FLTFUNC_C(_f)		FLTFUNC_C_(_f)
@@ -244,10 +303,18 @@ static inline __attribute__((always_inline)) double_complex_t  pgmath_cmplx(doub
 #define	ZMPLXFUNC_Z_I(_f)	ZMPLXFUNC_Z_I_(_f)
 #define	ZMPLXFUNC_Z_K(_f)	ZMPLXFUNC_Z_K_(_f)
 
+#define	LZMPLXFUNC_LZ(_f)	LZMPLXFUNC_LZ_(_f)
+#define	LZMPLXFUNC_LZ_LZ(_f)	LZMPLXFUNC_LZ_LZ_(_f)
+#define	LZMPLXFUNC_LZ_Q(_f)	LZMPLXFUNC_LZ_Q_(_f)
+#define	LZMPLXFUNC_LZ_I(_f)	LZMPLXFUNC_LZ_I_(_f)
+#define	LZMPLXFUNC_LZ_K(_f)	LZMPLXFUNC_LZ_K_(_f)
+
 #define CMPLXARGS_C		float_complex_t                                \
 				carg = pgmath_cmplxf(real, imag)
 #define ZMPLXARGS_Z		double_complex_t                               \
 				zarg = pgmath_cmplx(real, imag)
+#define LZMPLXARGS_LZ		quad_complex_t                               \
+				lzarg = pgmath_cmplxl(real, imag)
 #define CMPLXARGS_C_C		float_complex_t                                \
 				carg1 = pgmath_cmplxf(real1, imag1),\
 				carg2 = pgmath_cmplxf(real2, imag2)
@@ -261,12 +328,22 @@ static inline __attribute__((always_inline)) double_complex_t  pgmath_cmplx(doub
 #define ZMPLXARGS_Z_I
 #define ZMPLXARGS_Z_K
 
+#define LZMPLXARGS_LZ_Q
+#define LZMPLXARGS_LZ_I
+#define LZMPLXARGS_LZ_K
+#define LZMPLXARGS_LZ_LZ	quad_complex_t                               \
+				lzarg1 = pgmath_cmplxl(real1, imag1),\
+				lzarg2 = pgmath_cmplxl(real2, imag2)
+
 #define	CRETURN_F_F(_r, _i) do { cmplx->real = (_r); cmplx->imag = (_i); return; } while (0)
 #define	ZRETURN_D_D(_r, _i) do { dcmplx->real = (_r); dcmplx->imag = (_i); return; } while (0)
+#define	LZRETURN_Q_Q(_r, _i) do { qcmplx->real = (_r); qcmplx->imag = (_i); return; } while (0)
 #define CRETURN_C(_c)       do { (*cmplx = *((cmplx_t *)&(_c))); return; } while (0)
 #define ZRETURN_Z(_z)       do { (*dcmplx = *((dcmplx_t *)&(_z))); return; } while (0)
+#define LZRETURN_LZ(_lz)       do { (*qcmplx = *((qcmplx_t *)&(_lz))); return; } while (0)
 #define CRETURN_F(_f)       return (_f)
 #define ZRETURN_D(_d)       return (_d)
+#define LZRETURN_Q(_q)      return (_q)
 
 #define CMPLX_CALL_CR_C_C(_f,_cr,_c1,_c2) \
 { _f(cmplx, crealf(_c1), cimagf(_c1), crealf(_c2), cimagf(_c2)); \
@@ -274,6 +351,9 @@ static inline __attribute__((always_inline)) double_complex_t  pgmath_cmplx(doub
 #define ZMPLX_CALL_ZR_Z_Z(_f,_zr,_z1,_z2) \
 { _f(dcmplx, creal(_z1), cimag(_z1), creal(_z2), cimag(_z2)); \
   *(dcmplx_t *)&_zr = *dcmplx; }
+#define LZMPLX_CALL_LZR_LZ_LZ(_f,_lzr,_lz1,_lz2) \
+{ _f(qcmplx, creall(_lz1), cimagl(_lz1), creall(_lz2), cimagl(_lz2)); \
+  *(qcmplx_t *)&_lzr = *qcmplx; }
 
 #else		/* #ifdef MTH_CMPLX_C99_ABI */
 
@@ -292,6 +372,12 @@ static inline __attribute__((always_inline)) double_complex_t  pgmath_cmplx(doub
 #define	ZMPLXFUNC_Z_I(_f)	ZMPLXFUNC_Z_I_C99_(_f)
 #define	ZMPLXFUNC_Z_K(_f)	ZMPLXFUNC_Z_K_C99_(_f)
 
+#define	LZMPLXFUNC_LZ(_f)	LZMPLXFUNC_LZ_C99_(_f)
+#define	LZMPLXFUNC_LZ_LZ(_f)	LZMPLXFUNC_LZ_LZ_C99_(_f)
+#define	LZMPLXFUNC_LZ_Q(_f)	LZMPLXFUNC_LZ_Q_C99_(_f)
+#define	LZMPLXFUNC_LZ_I(_f)	LZMPLXFUNC_LZ_I_C99_(_f)
+#define	LZMPLXFUNC_LZ_K(_f)	LZMPLXFUNC_LZ_K_C99_(_f)
+
 #define CMPLXARGS_C     float real = crealf(carg), imag = cimagf(carg)
 #define CMPLXARGS_C_C   float real1 = crealf(carg1), imag1 = cimagf(carg1), \
                               real2 = crealf(carg2), imag2 = cimagf(carg2)
@@ -306,17 +392,29 @@ static inline __attribute__((always_inline)) double_complex_t  pgmath_cmplx(doub
 #define	ZMPLXARGS_Z_I	ZMPLXARGS_Z
 #define	ZMPLXARGS_Z_K	ZMPLXARGS_Z
 
+#define LZMPLXARGS_LZ      float128_t real = creall(lzarg), imag = cimagl(lzarg)
+#define LZMPLXARGS_LZ_LZ   float128_t real1 = creall(lzarg1), imag1 = cimagl(lzarg1), \
+                                      real2 = creall(lzarg2), imag2 = cimagl(lzarg2)
+#define	LZMPLXARGS_LZ_Q	LZMPLXARGS_LZ
+#define	LZMPLXARGS_LZ_I	LZMPLXARGS_LZ
+#define	LZMPLXARGS_LZ_K	LZMPLXARGS_LZ
+
 #define        CRETURN_F_F(_r, _i) { float_complex_t __r = pgmath_cmplxf(_r, _i); return __r; }
 #define        ZRETURN_D_D(_r, _i) { double_complex_t __r = pgmath_cmplx(_r, _i); return __r; }
+#define        LZRETURN_Q_Q(_r, _i) { quad_complex_t __r = pgmath_cmplxl(_r, _i); return __r; }
 #define CRETURN_C(_c)       return (_c)
 #define ZRETURN_Z(_z)       return (_z)
+#define LZRETURN_LZ(_lz)    return (_lz)
 #define CRETURN_F(_f)       return (_f)
 #define ZRETURN_D(_d)       return (_d)
+#define LZRETURN_Q(_q)      return (_q)
 
 #define CMPLX_CALL_CR_C_C(_f,_cr,_c1,_c2) \
 {_cr = MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX)(_c1, _c2); }
 #define ZMPLX_CALL_ZR_Z_Z(_f,_zr,_z1,_z2) \
 {_zr = MTHCONCAT__(_f,__MTH_C99_CMPLX_SUFFIX)(_z1, _z2); }
+#define LZMPLX_CALL_LZR_LZ_LZ(_f,_lzr,_lz1,_lz2) \
+{_lzr = MTHCONCAT__(_f, __MTH_C99_CMPLX_SUFFIX)(_lz1, _lz2); }
 
 #endif		/* #ifdef MTH_CMPLX_C99_ABI */
 
@@ -341,6 +439,12 @@ static inline __attribute__((always_inline)) double_complex_t  pgmath_cmplx(doub
 #define	ZMPLXDECL_Z_D(_f)	ZMPLXFUNC_Z_D_(_f) ; ZMPLXFUNC_Z_D_C99_(_f);
 #define	ZMPLXDECL_Z_I(_f)	ZMPLXFUNC_Z_I_(_f) ; ZMPLXFUNC_Z_I_C99_(_f);
 #define	ZMPLXDECL_Z_K(_f)	ZMPLXFUNC_Z_K_(_f) ; ZMPLXFUNC_Z_K_C99_(_f);
+
+#define	LZMPLXDECL_LZ(_f)	LZMPLXFUNC_LZ_(_f)   ; LZMPLXFUNC_LZ_C99_(_f);
+#define	LZMPLXDECL_LZ_LZ(_f)	LZMPLXFUNC_LZ_LZ_(_f) ; LZMPLXFUNC_LZ_LZ_C99_(_f);
+#define	LZMPLXDECL_LZ_Q(_f)	LZMPLXFUNC_LZ_Q_(_f) ; LZMPLXFUNC_LZ_Q_C99_(_f);
+#define	LZMPLXDECL_LZ_I(_f)	LZMPLXFUNC_LZ_I_(_f) ; LZMPLXFUNC_LZ_I_C99_(_f);
+#define	LZMPLXDECL_LZ_K(_f)	LZMPLXFUNC_LZ_K_(_f) ; LZMPLXFUNC_LZ_K_C99_(_f);
 
 /*
  * Universal set of CPP object macros that map the Bessel functions
@@ -615,6 +719,10 @@ ZMPLXDECL_Z(__mth_i_cdtan);
 ZMPLXDECL_Z(__mth_i_cdtanh);
 
 
+__CDECL LZMPLXDECL_LZ_LZ(__mth_i_cqdiv);
+__CDECL LZMPLXDECL_LZ_LZ(__mth_i_cqpowcq);
+LZMPLXDECL_LZ_I(__mth_i_cqpowi);
+LZMPLXDECL_LZ_K(__mth_i_cqpowk);
 
 #if defined(TARGET_WIN)
 #if	! defined(_C_COMPLEX_T)
@@ -644,24 +752,25 @@ extern double_complex_t ctan(double_complex_t);
  * It is an attempt to standardize the math library source code across
  * architectures.
  *
- * For example: cexp.c was coded as:
+ * For example, cexp.c was coded as:
+ *
  * #include "mthdecls.h"
  *
  * 	void
  * 	__mth_i_cexp(cmplx_t *cmplx, float real, float imag)
- *	 {
- *	   float x, y, z;
+ *	{
+ *	    float x, y, z;
  *	    x = EXPF(real);
- *	 #ifndef LINUX8664
+ *	#ifndef LINUX8664
  *	    y = COSF(imag);
  *	    z = SINF(imag);
- *	  #else
+ *	#else
  *	    __mth_sincos(imag, &z, &y);
- *	  #endif
+ *	#endif
  *	    y *= x;
  *	    z *= x;
  *	    r_dummy(y, z);
- *	  }
+ *	}
  *
  * The special casing of whether __mth_sincos() is available for
  * individual source files is not scalable.  A better alternative is to
@@ -670,12 +779,15 @@ extern double_complex_t ctan(double_complex_t);
  */
 
 #if	defined(TARGET_WIN)
-static inline __attribute__((always_inline)) void __mth_sincos(float angle, float *s, float *c)
+static inline __attribute__((always_inline))
+void __mth_sincos(float angle, float *s, float *c)
 {
   *s = sinf(angle);
   *c = cosf(angle);
 }
-static inline void __attribute__((always_inline)) __mth_dsincos(double angle, double *s, double *c)
+
+static inline void __attribute__((always_inline))
+__mth_dsincos(double angle, double *s, double *c)
 {
   *s = sin(angle);
   *c = cos(angle);
