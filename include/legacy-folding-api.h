@@ -284,6 +284,10 @@ int xdcmp(IEEE64 d1, IEEE64 d2);
 int xfcmp(IEEE32 f1, IEEE32 f2);
 int xucmp(INT a, INT b);
 
+void xcfpow(IEEE32 r1, IEEE32 i1, IEEE32 r2, IEEE32 i2, IEEE32 *rr, IEEE32 *ir);
+void xcdpow(IEEE64 r1, IEEE64 i1, IEEE64 r2, IEEE64 i2, IEEE64 rr, IEEE64 ir);
+void xcqpow(IEEE128 r1, IEEE128 i1, IEEE128 r2, IEEE128 i2, IEEE128 rr, IEEE128 ir);
+
 #ifdef __cplusplus
 }
 #endif

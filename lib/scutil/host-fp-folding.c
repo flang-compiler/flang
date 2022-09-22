@@ -907,3 +907,32 @@ fold_real128_log10(float128_t *res, const float128_t *arg)
   *res = log10l(*arg);
   return check_and_restore_floating_point_environment(&saved_fenv);
 }
+
+enum fold_status
+fold_complex32_pow(float complex *res, const float complex *x, const float complex *y)
+{
+  fenv_t saved_fenv;
+  set_up_floating_point_environment(&saved_fenv);
+  /* use 'cpow' to improve precision of result. */
+  *res = (float complex)cpow((double complex)*x, (double complex)*y);
+  return check_and_restore_floating_point_environment(&saved_fenv);
+}
+
+enum fold_status
+fold_complex64_pow(double complex *res, const double complex *x, const double complex *y)
+{
+  fenv_t saved_fenv;
+  set_up_floating_point_environment(&saved_fenv);
+  /* use 'cpowl' to improve precision of result. */
+  *res = (double complex)cpowl((long double complex)*x, (long double complex)*y);
+  return check_and_restore_floating_point_environment(&saved_fenv);
+}
+
+enum fold_status
+fold_complex128_pow(long double complex *res, const long double complex *x, const long double complex *y)
+{
+  fenv_t saved_fenv;
+  set_up_floating_point_environment(&saved_fenv);
+  *res = cpowl(*x, *y);
+  return check_and_restore_floating_point_environment(&saved_fenv);
+}
