@@ -659,6 +659,9 @@ gen_return_operand(int ilix)
       (dty != TY_NONE) && (dty != TY_CHAR) && (dty != TY_NCHAR)
 #if !defined(TARGET_LLVM_POWER)
       && (dty != TY_CMPLX) && (dty != TY_DCMPLX)
+#ifdef TARGET_SUPPORTS_QUADFP
+      && (dty != TY_QCMPLX)
+#endif
 #endif
   ) {
     LL_Type *rtype = make_lltype_from_dtype(dtype);
@@ -4281,6 +4284,12 @@ make_stmt(STMT_Type stmt_type, int ilix, bool deletable, SPTR next_bih_label,
           LL_Type *ty = make_lltype_from_dtype(DT_DCMPLX);
           op1 = gen_llvm_expr(rhs_ili, ty);
           store_flags = ldst_instr_flags_from_dtype(DT_DCMPLX);
+#ifdef TARGET_SUPPORTS_QUADFP
+        } else if (ILI_OPC(ilix) == IL_STQCMPLX) {
+          LL_Type *ty = make_lltype_from_dtype(DT_QCMPLX);
+          op1 = gen_llvm_expr(rhs_ili, ty);
+          store_flags = ldst_instr_flags_from_dtype(DT_QCMPLX);
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
         } else if (ILI_OPC(ilix) == IL_FLOAT128ST) {
           LL_Type *ty = make_lltype_from_dtype(DT_FLOAT128);
@@ -5035,6 +5044,9 @@ gen_const_expr(int ilix, LL_Type *expected_type)
     break;
   case IL_SCMPLXCON:
   case IL_DCMPLXCON:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCMPLXCON:
+#endif
     operand->ll_type = make_lltype_from_dtype(DTYPEG(sptr));
     operand->val.sptr = sptr;
     break;
@@ -7877,9 +7889,13 @@ gen_cmplx_math(int ilix, DTYPE dtype, LL_InstrName itype)
 {
   OPERAND *r1, *r2, *i1, *i2, *rmath, *imath, *res, *c1, *c2, *cse1, *cse2;
   LL_Type *cmplx_type, *cmpnt_type;
-  const DTYPE cmpnt = (dtype == DT_CMPLX) ? DT_FLOAT : DT_DBLE;
+  const DTYPE cmpnt = (dtype == DT_CMPLX)  ? DT_FLOAT
+#ifdef TARGET_SUPPORTS_QUADFP
+                    : (dtype == DT_QCMPLX) ? DT_QUAD
+#endif
+                                           : DT_DBLE;
 
-  assert(DT_ISCMPLX(dtype), "gen_cmplx_math: Expected DT_CMPLX or DT_DCMPLX",
+  assert(DT_ISCMPLX(dtype), "gen_cmplx_math: Expected DT_CMPLX, DT_DCMPLX or DT_QCMPLX",
          dtype, ERR_Fatal);
 
   cmplx_type = make_lltype_from_dtype(dtype);
@@ -7916,7 +7932,11 @@ gen_cmplx_math(int ilix, DTYPE dtype, LL_InstrName itype)
 static OPERAND *
 gen_cmplx_mul(int ilix, DTYPE dtype)
 {
-  const DTYPE elt_dt = (dtype == DT_CMPLX) ? DT_FLOAT : DT_DBLE;
+  const DTYPE elt_dt = (dtype == DT_CMPLX)  ? DT_FLOAT
+#ifdef TARGET_SUPPORTS_QUADFP
+                     : (dtype == DT_QCMPLX) ? DT_QUAD
+#endif
+                                            : DT_DBLE;
   LL_Type *cmpnt_type = make_lltype_from_dtype(elt_dt);
   OPERAND *a, *bi, *c, *di, *cse1, *cse2;
   OPERAND *r1, *r2, *r3, *r4, *imag, *real, *res, *c1, *c2;
@@ -8536,12 +8556,20 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     }
   } break;
   case IL_LDSCMPLX:
-  case IL_LDDCMPLX: {
+  case IL_LDDCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_LDQCMPLX:
+#endif
+  {
     unsigned flags;
     ld_ili = ILI_OPND(ilix, 1);
     nme_ili = ILI_OPND(ilix, 2);
     msz = (MSZ)ILI_OPND(ilix, 3);
-    flags = opc == IL_LDSCMPLX ? DT_CMPLX : DT_DCMPLX;
+    flags = opc == IL_LDSCMPLX ? DT_CMPLX
+#ifdef TARGET_SUPPORTS_QUADFP
+          : opc == IL_LDQCMPLX ? DT_QCMPLX
+#endif
+                               : DT_DCMPLX;
     operand = gen_address_operand(ld_ili, nme_ili, false,
                                   make_ptr_lltype(expected_type), (MSZ)-1);
     assert(operand->ll_type->data_type == LL_PTR,
@@ -8626,6 +8654,9 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
 #endif
   case IL_SCMPLXCON:
   case IL_DCMPLXCON:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCMPLXCON:
+#endif
 #ifdef LONG_DOUBLE_FLOAT128
   case IL_FLOAT128CON:
 #endif
@@ -8721,6 +8752,11 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_DCMPLXADD:
     operand = gen_cmplx_math(ilix, DT_DCMPLX, I_FADD);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCMPLXADD:
+    operand = gen_cmplx_math(ilix, DT_QCMPLX, I_FADD);
+    break;
+#endif
   case IL_VSUB:
     operand = gen_binary_vexpr(ilix, I_SUB, I_SUB, I_FSUB);
     break;
@@ -8746,6 +8782,11 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_DCMPLXSUB:
     operand = gen_cmplx_math(ilix, DT_DCMPLX, I_FSUB);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCMPLXSUB:
+    operand = gen_cmplx_math(ilix, DT_QCMPLX, I_FSUB);
+    break;
+#endif
   case IL_VMUL:
     operand = gen_binary_vexpr(ilix, I_MUL, I_MUL, I_FMUL);
     break;
@@ -8775,6 +8816,11 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   case IL_DCMPLXMUL:
     operand = gen_cmplx_mul(ilix, DT_DCMPLX);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCMPLXMUL:
+    operand = gen_cmplx_mul(ilix, DT_QCMPLX);
+    break;
+#endif
   case IL_VDIV:
     operand = gen_binary_vexpr(ilix, I_SDIV, I_UDIV, I_FDIV);
     break;
@@ -9404,13 +9450,29 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     operand = gen_binary_expr(ilix, I_FSUB);
     break;
   case IL_SCMPLXNEG:
-  case IL_DCMPLXNEG: {
+  case IL_DCMPLXNEG:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCMPLXNEG:
+#endif
+  {
     OPERAND *res, *op_rneg, *op_ineg, *c1, *cse1;
     LL_Type *cmpnt_ty;
-    const DTYPE dt = opc == IL_SCMPLXNEG ? DT_CMPLX : DT_DCMPLX;
-    const DTYPE et = opc == IL_SCMPLXNEG ? DT_FLOAT : DT_DBLE;
+    const DTYPE dt = opc == IL_SCMPLXNEG ? DT_CMPLX
+#ifdef TARGET_SUPPORTS_QUADFP
+                   : opc == IL_QCMPLXNEG ? DT_QCMPLX
+#endif
+                                         : DT_DCMPLX;
+    const DTYPE et = opc == IL_SCMPLXNEG ? DT_FLOAT
+#ifdef TARGET_SUPPORTS_QUADFP
+                   : opc == IL_QCMPLXNEG ? DT_QUAD
+#endif
+                                         : DT_DBLE;
 
-    cmpnt_ty = make_lltype_from_dtype(dt == DT_CMPLX ? DT_FLOAT : DT_DBLE);
+    cmpnt_ty = make_lltype_from_dtype(dt == DT_CMPLX ? DT_FLOAT
+#ifdef TARGET_SUPPORTS_QUADFP
+                                   : dt == DT_QCMPLX ? DT_QUAD
+#endif
+                                                     : DT_DBLE);
 
     c1 = gen_eval_cmplx_value(ILI_OPND(ilix, 1), dt);
     cse1 = gen_copy_operand(c1);
@@ -9513,6 +9575,12 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     dt = DT_DCMPLX;
     cmpnt = DT_NONE;
     goto component;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCMPLX2REAL:
+    dt = DT_QCMPLX;
+    cmpnt = DT_NONE;
+    goto component;
+#endif
   case IL_SCMPLX2IMAG:
     dt = DT_CMPLX;
     cmpnt = (DTYPE)1;
@@ -9521,17 +9589,36 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     dt = DT_DCMPLX;
     cmpnt = (DTYPE)1;
     goto component;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCMPLX2IMAG:
+    dt = DT_QCMPLX;
+    cmpnt = (DTYPE)1;
+    goto component;
+#endif
   component:
     c1 = gen_eval_cmplx_value(ILI_OPND(ilix, 1), dt);
-    operand =
-        gen_extract_value(c1, dt, dt == DT_CMPLX ? DT_FLOAT : DT_DBLE, cmpnt);
+    operand = gen_extract_value(c1, dt,
+                                dt == DT_CMPLX  ? DT_FLOAT
+#ifdef TARGET_SUPPORTS_QUADFP
+                              : dt == DT_QCMPLX ? DT_QUAD
+#endif
+                                                : DT_DBLE, cmpnt);
     break;
   case IL_SPSP2SCMPLX:
-  case IL_DPDP2DCMPLX: {
+  case IL_DPDP2DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QPQP2QCMPLX:
+#endif
+  {
     LL_Type *dt, *et;
     if (opc == IL_SPSP2SCMPLX) {
       dt = make_lltype_from_dtype(DT_CMPLX);
       et = make_lltype_from_dtype(DT_FLOAT);
+#ifdef TARGET_SUPPORTS_QUADFP
+    } else if (opc == IL_QPQP2QCMPLX) {
+      dt = make_lltype_from_dtype(DT_QCMPLX);
+      et = make_lltype_from_dtype(DT_QUAD);
+#endif
     } else {
       dt = make_lltype_from_dtype(DT_DCMPLX);
       et = make_lltype_from_dtype(DT_DBLE);
@@ -9550,9 +9637,16 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     dt = DT_DCMPLX;
     cmpnt = DT_DBLE;
     goto component_zero;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QPQP2QCMPLXI0:
+    dt = DT_QCMPLX;
+    cmpnt = DT_QUAD;
+    goto component_zero;
+#endif
   component_zero: /* Set imaginary value to 0 */
     cc_op1 = gen_llvm_expr(ILI_OPND(ilix, 1), make_lltype_from_dtype(cmpnt));
-    cc_op2 = make_constval_op(make_lltype_from_dtype(cmpnt), 0, 0);
+    cc_op2 = (cmpnt == DT_QUAD) ? make_constval_opL(make_lltype_from_dtype(cmpnt), 0, 0, 0, 0) :
+	    make_constval_op(make_lltype_from_dtype(cmpnt), 0, 0);
     operand = make_undef_op(make_lltype_from_dtype(dt));
     operand = gen_insert_value(operand, cc_op1, 0);
     operand = gen_insert_value(operand, cc_op2, 1);
@@ -9565,6 +9659,12 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     dt = DT_DCMPLX;
     cmpnt = DT_DBLE;
     goto cmplx_conj;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IL_QCMPLXCONJG:
+    dt = DT_QCMPLX;
+    cmpnt = DT_QUAD;
+    goto cmplx_conj;
+#endif
   cmplx_conj:
     /* result = {real , 0 - imag} */
     c1 = gen_eval_cmplx_value(ILI_OPND(ilix, 1), dt);
