@@ -618,6 +618,11 @@ exp_ac(ILM_OP opc, ILM *ilmp, int curilm)
   case IM_CDSIN:
     exp_qjsr("__mth_i_cdsin", DT_DCMPLX, ilmp, curilm);
     return;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case IM_CQSIN:
+    exp_qjsr("__mth_i_cqsin", DT_QCMPLX, ilmp, curilm);
+    return;
+#endif
   case IM_CCOS:
     exp_qjsr("__mth_i_ccos", DT_CMPLX, ilmp, curilm);
     return;

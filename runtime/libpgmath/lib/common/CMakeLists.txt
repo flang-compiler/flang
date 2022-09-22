@@ -232,7 +232,8 @@ set(MTH_CMPLX_SRCS_QUADFP
   cqdiv.c
   cqpowcq.c
   cqpowi.c
-  cqpowk.c)
+  cqpowk.c
+  cqsin.c)
 
 if(TARGET_SUPPORTS_QUADFP)
   LIST(APPEND MTH_CMPLX_SRCS ${MTH_CMPLX_SRCS_QUADFP})

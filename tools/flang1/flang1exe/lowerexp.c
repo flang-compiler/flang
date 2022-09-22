@@ -2982,7 +2982,7 @@ intrinsic_arg_dtype(int intr, int ast, int args, int nargs)
   case I_CSIN:
   case I_CDSIN:
 #ifdef TARGET_SUPPORTS_QUADFP
-
+  case I_CQSIN:
   case I_QSIN:
 #endif
 
@@ -4281,6 +4281,7 @@ lower_intrinsic(int ast)
 #endif
   case I_CSIN:
   case I_CDSIN:
+  case I_CQSIN:
     ilm = intrin_name("SIN", ast, in_r_D_Q_C_CD_CQ);
     break;
   case I_SIND:
