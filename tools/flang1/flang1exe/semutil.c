@@ -487,6 +487,9 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_DBLE:
       break;
 #ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+      mkexpr1(old);
+      FLANG_FALLTHROUGH;
     case TY_QUAD:
       break;
 #endif
@@ -525,6 +528,9 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_DBLE:
       break;
 #ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+      mkexpr1(old);
+      FLANG_FALLTHROUGH;
     case TY_QUAD:
       break;
 #endif
@@ -559,6 +565,9 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_DBLE:
       break;
 #ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+      mkexpr1(old);
+      FLANG_FALLTHROUGH;
     case TY_QUAD:
       break;
 #endif
@@ -594,6 +603,9 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_REAL:
       break;
 #ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+      mkexpr1(old);
+      FLANG_FALLTHROUGH;
     case TY_QUAD:
       break;
 #endif
@@ -621,6 +633,8 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
     case TY_INT:
     case TY_LOG8:
     case TY_INT8:
+      break;
+    case TY_QCMPLX:
       break;
     case TY_DCMPLX:
       mkexpr1(old);
@@ -671,6 +685,9 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
       goto done;
 
     case TY_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+#endif
       mkexpr1(old);
       SST_IDP(old, S_EXPR);
       goto done;
@@ -713,6 +730,9 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
       goto done;
 
     case TY_CMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+#endif
       mkexpr1(old);
       SST_IDP(old, S_EXPR);
       goto done;
@@ -733,6 +753,48 @@ cngtyp2(SST *old, DTYPE newtyp, bool allowPolyExpr)
       goto type_error;
     }
     break;
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    switch (from) {
+    case TY_BINT:
+    case TY_BLOG:
+    case TY_SINT:
+    case TY_SLOG:
+      cngtyp(old, DT_INT);
+      SST_DTYPEP(old, DT_INT);
+      FLANG_FALLTHROUGH;
+    /* fall thru ... */
+    case TY_REAL:
+    case TY_DBLE:
+    case TY_LOG:
+    case TY_INT:
+    case TY_LOG8:
+    case TY_INT8:
+      cngtyp(old, DT_QUAD);
+      FLANG_FALLTHROUGH;
+    /* fall thru ... */
+    case TY_QUAD:
+      mkexpr1(old);
+      SST_IDP(old, S_EXPR);
+      goto done;
+
+    case TY_CMPLX:
+    case TY_DCMPLX:
+      mkexpr1(old);
+      SST_IDP(old, S_EXPR);
+      goto done;
+
+    case TY_CHAR:
+    case TY_NCHAR:
+    case TY_STRUCT:
+    case TY_DERIVED:
+    /* fall thru ... */
+
+    default:
+      goto type_error;
+    }
+#endif
 
   case TY_STRUCT:
     if (DDTG(newtyp) != DDTG(oldtyp)) {
@@ -806,7 +868,7 @@ done:
          from == TY_INT8 || from == TY_REAL || from == TY_DCMPLX ||
          from == TY_DBLE || from == TY_CMPLX
 #ifdef TARGET_SUPPORTS_QUADFP
-         || from == TY_QUAD
+         || from == TY_QUAD || from == TY_QCMPLX
 #endif
          ))
       goto type_error;
@@ -815,7 +877,7 @@ done:
         (to == TY_BINT || to == TY_SINT || to == TY_INT || to == TY_INT8 ||
          to == TY_REAL || to == TY_DCMPLX || to == TY_DBLE || to == TY_CMPLX
 #ifdef TARGET_SUPPORTS_QUADFP
-         || to == TY_QUAD
+         || to == TY_QUAD || to == TY_QCMPLX
 #endif
          ))
       goto type_error;
