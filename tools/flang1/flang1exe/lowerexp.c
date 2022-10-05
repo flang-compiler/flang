@@ -99,6 +99,13 @@ conv_bint_ilm(int ast, int ilm, int dtype)
     ilm = plower("oi", "DFIX", ilm);
     ilm = plower("oi", "ITOSC", ilm);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ilm = plower("oi", "QREAL", ilm);
+    ilm = plower("oi", "QFIX", ilm);
+    ilm = plower("oi", "ITOSC", ilm);
+    break;
+#endif
   case TY_WORD:
     if (ast && A_TYPEG(ast) == A_CNST) {
       s = lower_getintcon(cngcon(CONVAL2G(A_SPTRG(ast)), DTYG(dtype), DT_INT4));
@@ -202,6 +209,13 @@ conv_sint_ilm(int ast, int ilm, int dtype)
     ilm = plower("oi", "DFIX", ilm);
     ilm = plower("oi", "ITOS", ilm);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ilm = plower("oi", "QREAL", ilm);
+    ilm = plower("oi", "QFIX", ilm);
+    ilm = plower("oi", "ITOS", ilm);
+    break;
+#endif
   case TY_WORD:
     if (ast && A_TYPEG(ast) == A_CNST) {
       s = lower_getintcon(cngcon(CONVAL2G(A_SPTRG(ast)), DTYG(dtype), DT_INT4));
@@ -305,6 +319,12 @@ conv_int_ilm(int ast, int ilm, int dtype)
     ilm = plower("oi", "DREAL", ilm);
     ilm = plower("oi", "DFIX", ilm);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ilm = plower("oi", "QREAL", ilm);
+    ilm = plower("oi", "QFIX", ilm);
+    break;
+#endif
   case TY_WORD:
     if (ast && A_TYPEG(ast) == A_CNST) {
       s = lower_getintcon(cngcon(CONVAL2G(A_SPTRG(ast)), DTYG(dtype), DT_INT4));
@@ -400,6 +420,12 @@ conv_int8_ilm(int ast, int ilm, int dtype)
     ilm = plower("oi", "DREAL", ilm);
     ilm = plower("oi", "KDFIX", ilm);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ilm = plower("oi", "QREAL", ilm);
+    ilm = plower("oi", "KQFIX", ilm);
+    break;
+#endif
   case TY_WORD:
     if (ast && A_TYPEG(ast) == A_CNST) {
       s = cngcon(CONVAL2G(A_SPTRG(ast)), DTYG(dtype), DT_INT8);
@@ -502,6 +528,12 @@ conv_word_ilm(int ast, int ilm, int dtype)
     ilm = plower("oi", "CDTOUDI", ilm);
     ilm = plower("oi", "UDITOUI", ilm);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ilm = plower("oi", "CQTOUDI", ilm);
+    ilm = plower("oi", "UDITOUI", ilm);
+    break;
+#endif
   case TY_WORD:
     break;
   case TY_DWORD:
@@ -576,6 +608,13 @@ conv_dword_ilm(int ast, int ilm, int dtype)
     ilm = plower("oi", "UDITOD", ilm);
     ilm = plower("oi", "D2K", ilm);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ilm = plower("oi", "CQTOUDI", ilm);
+    ilm = plower("oi", "UDITOD", ilm);
+    ilm = plower("oi", "D2K", ilm);
+    break;
+#endif
   case TY_WORD:
     ilm = plower("oi", "UI2K", ilm);
     break;
@@ -788,6 +827,9 @@ conv_log_ilm(int ast, int ilm, int dtype)
   case TY_INT8:
   case TY_CMPLX:
   case TY_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+#endif
     ilm = conv_int_ilm(ast, ilm, dtype);
     break;
   case TY_CHAR:
@@ -866,6 +908,9 @@ conv_log8_ilm(int ast, int ilm, int dtype)
 #endif
   case TY_CMPLX:
   case TY_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+#endif
     ilm = conv_int8_ilm(ast, ilm, dtype);
     break;
   case TY_CHAR:
@@ -930,6 +975,12 @@ conv_real_ilm(int ast, int ilm, int dtype)
     ilm = plower("oi", "DREAL", ilm);
     ilm = plower("oi", "SNGL", ilm);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ilm = plower("oi", "QREAL", ilm);
+    ilm = plower("oi", "SNGQ", ilm);
+    break;
+#endif
   case TY_WORD:
     if (ast && A_TYPEG(ast) == A_CNST) {
       s = lower_getrealcon(
@@ -1012,6 +1063,12 @@ conv_dble_ilm(int ast, int ilm, int dtype)
   case TY_DCMPLX:
     ilm = plower("oi", "DREAL", ilm);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ilm = plower("oi", "QREAL", ilm);
+    ilm = plower("oi", "DBLEQ", ilm);
+    break;
+#endif
   case TY_WORD:
     /* convert by padding with blanks or truncating */
     if (ast && A_TYPEG(ast) == A_CNST) {
@@ -1093,7 +1150,10 @@ static int conv_quad_ilm(int ast, int ilm, int dtype)
     /* convert the double to quad precision */
     ilm = plower("oi", "DQUAD", ilm);
     break;
-
+  case TY_QCMPLX:
+    /* get the real part from the complex */
+    ilm = plower("oi", "QREAL", ilm);
+    break;
   case TY_WORD:
     /* convert by padding with blanks or truncating */
     if (ast && A_TYPEG(ast) == A_CNST) {
@@ -1185,6 +1245,15 @@ conv_cmplx_ilm(int ast, int ilm, int dtype)
     ilmreal = plower("oi", "SNGL", ilmreal);
     ilm = plower("oii", "CMPLX", ilmreal, ilmimag);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ilmimag = plower("oi", "QIMAG", ilm);
+    ilmimag = plower("oi", "SNGQ", ilmimag);
+    ilmreal = plower("oi", "QREAL", ilm);
+    ilmreal = plower("oi", "SNGQ", ilmreal);
+    ilm = plower("oii", "CMPLX", ilmreal, ilmimag);
+    break;
+#endif
   case TY_WORD:
     if (ast && A_TYPEG(ast) == A_CNST) {
       s = lower_getrealcon(
@@ -1267,6 +1336,15 @@ conv_dcmplx_ilm(int ast, int ilm, int dtype)
     ilmreal = plower("oi", "DBLE", ilmreal);
     ilm = plower("oii", "DCMPLX", ilmreal, ilmimag);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ilmimag = plower("oi", "QIMAG", ilm);
+    ilmimag = plower("oi", "DBLEQ", ilmimag);
+    ilmreal = plower("oi", "QREAL", ilm);
+    ilmreal = plower("oi", "DBLEQ", ilmreal);
+    ilm = plower("oii", "DCMPLX", ilmreal, ilmimag);
+    break;
+#endif
   case TY_DCMPLX:
     break;
   case TY_WORD:
@@ -1311,6 +1389,103 @@ conv_dcmplx(int ast)
 {
   return conv_dcmplx_ilm(ast, lower_ilm(ast), A_NDTYPEG(ast));
 } /* conv_dcmplx */
+
+#ifdef TARGET_SUPPORTS_QUADFP
+/* convert whatever type ilm is to QCMPLX */
+static int conv_qcmplx_ilm(int ast, int ilm, int dtype)
+{
+  int ilmimag, ilmreal, s;
+  switch (DTYG(dtype)) {
+  case TY_BINT:
+  case TY_BLOG:
+  case TY_SINT:
+  case TY_SLOG:
+    ilm = conv_int_ilm(ast, ilm, dtype);
+    FLANG_FALLTHROUGH;
+  case TY_LOG:
+  case TY_INT:
+    ilm = plower("oi", "QFLOAT", ilm);
+    ilmimag = plower("oS", "QCON", lowersym.quadzero);
+    ilm = plower("oii", "QCMPLX", ilm, ilmimag);
+    break;
+  case TY_LOG8:
+  case TY_INT8:
+    ilm = plower("oi", "QFLOATK", ilm);
+    ilmimag = plower("oS", "QCON", lowersym.quadzero);
+    ilm = plower("oii", "QCMPLX", ilm, ilmimag);
+    break;
+  case TY_REAL:
+    ilm = plower("oi", "RQUAD", ilm);
+    ilmimag = plower("oS", "QCON", lowersym.quadzero);
+    ilm = plower("oii", "QCMPLX", ilm, ilmimag);
+    break;
+  case TY_DBLE:
+    ilm = plower("oi", "DQUAD", ilm);
+    ilmimag = plower("oS", "QCON", lowersym.quadzero);
+    ilm = plower("oii", "QCMPLX", ilm, ilmimag);
+    break;
+  case TY_QUAD:
+    ilmimag = plower("oS", "QCON", lowersym.quadzero);
+    ilm = plower("oii", "QCMPLX", ilm, ilmimag);
+    break;
+  case TY_CMPLX:
+    ilmimag = plower("oi", "IMAG", ilm);
+    ilmimag = plower("oi", "RQUAD", ilmimag);
+    ilmreal = plower("oi", "REAL", ilm);
+    ilmreal = plower("oi", "RQUAD", ilmreal);
+    ilm = plower("oii", "QCMPLX", ilmreal, ilmimag);
+    break;
+  case TY_DCMPLX:
+    ilmimag = plower("oi", "DIMAG", ilm);
+    ilmimag = plower("oi", "DQUAD", ilmimag);
+    ilmreal = plower("oi", "DREAL", ilm);
+    ilmreal = plower("oi", "DQUAD", ilmreal);
+    ilm = plower("oii", "QCMPLX", ilmreal, ilmimag);
+    break;
+  case TY_QCMPLX:
+    break;
+  case TY_WORD:
+    if (ast && A_TYPEG(ast) == A_CNST) {
+      s = cngcon(CONVAL2G(A_SPTRG(ast)), DTYG(dtype), DT_QUAD);
+      ilmreal = plower("oS", "QCON", s);
+    } else {
+      ilmreal = plower("oi", "UITOQ", ilm);
+    }
+    ilmimag = plower("oS", "QCON", lowersym.quadzero);
+    ilm = plower("oii", "QCMPLX", ilmreal, ilmimag);
+    break;
+  case TY_DWORD:
+    if (ast && A_TYPEG(ast) == A_CNST) {
+      s = cngcon(A_SPTRG(ast), DTYG(dtype), DT_QUAD);
+      ilmreal = plower("oS", "QCON", s);
+    } else {
+      ilmreal = plower("oi", "K2Q", ilm);
+    }
+    ilmimag = plower("oS", "QCON", lowersym.quadzero);
+    ilm = plower("oii", "QCMPLX", ilmreal, ilmimag);
+    break;
+  case TY_HOLL:
+    /* convert by padding with blanks or truncating */
+    if (ast && A_TYPEG(ast) == A_CNST) {
+      s = cngcon(A_SPTRG(ast), DTYG(dtype), DT_QCMPLX);
+      ilm = plower("oS", "CQCON", s);
+    } else {
+      ast_error("unknown hollerith type for conversion to complex*32", ast);
+    }
+    break;
+  default:
+    ast_error("unknown source type for conversion to complex*32", ast);
+    break;
+  }
+  return ilm;
+} /* conv_qcmplx_ilm */
+
+/* convert whatever type ast is to QCMPLX */
+static int conv_qcmplx(int ast)
+{
+  return conv_qcmplx_ilm(ast, lower_ilm(ast), A_NDTYPEG(ast));
+} /* conv_qcmplx */
+#endif
 
 int
 lower_conv_ilm(int ast, int ilm, int fromdtype, int todtype)
@@ -1357,6 +1532,11 @@ lower_conv_ilm(int ast, int ilm, int fromdtype, int todtype)
   case TY_DCMPLX:
     ilm = conv_dcmplx_ilm(ast, ilm, fromdtype);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ilm = conv_qcmplx_ilm(ast, ilm, fromdtype);
+    break;
+#endif
   case TY_WORD:
     ilm = conv_word_ilm(ast, ilm, fromdtype);
     break;
@@ -1423,6 +1603,11 @@ lower_conv(int ast, int dtype)
   case TY_DCMPLX:
     ilm = conv_dcmplx(ast);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ilm = conv_qcmplx(ast);
+    break;
+#endif
   case TY_WORD:
     ilm = conv_word(ast);
     break;
@@ -1480,6 +1665,11 @@ ltyped(const char *opname, int dtype)
   case TY_DCMPLX:
     strcpy(OP, "CD");
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    strcpy(OP, "CQ");
+    break;
+#endif
   case TY_BLOG:
   case TY_SLOG:
   case TY_LOG:
@@ -1531,6 +1721,11 @@ styped(const char *opname, int dtype)
   case TY_DCMPLX:
     strcpy(OP, "CD");
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    strcpy(OP, "CQ");
+    break;
+#endif
   case TY_BLOG:
   case TY_SLOG:
   case TY_LOG:
@@ -1576,6 +1771,9 @@ lower_bin_arith(int ast, const char *opname, int ldtype, int rdtype)
 #endif
   case TY_CMPLX:
   case TY_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+#endif
   case TY_WORD:
   case TY_DWORD:
     /* OK */
@@ -1590,7 +1788,6 @@ lower_bin_arith(int ast, const char *opname, int ldtype, int rdtype)
   case TY_NCHAR:
     ast_error("character result for arithmetic operation", ast);
     return 0;
-  case TY_QCMPLX:
   default:
     ast_error("unknown result for arithmetic operation", ast);
     return 0;
@@ -1708,6 +1905,9 @@ lower_bin_comparison(int ast, const char *op)
 #endif
   case TY_CMPLX:
   case TY_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+#endif
     break;
   case TY_BLOG:
     dtype = DT_BINT;
@@ -1727,6 +1927,10 @@ lower_bin_comparison(int ast, const char *op)
   case TY_NCHAR:
     base = 1;
     break;
+#ifndef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+  case TY_QCMPLX:
+#endif
   default:
     ast_error("unknown operand type for comparison operation", ast);
     return 0;
@@ -2119,6 +2323,9 @@ lower_function(int ast)
   switch (DTYG(dtype)) {
   case TY_CMPLX:
   case TY_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+#endif
     functmpinc = 1; /* count the function temp as an extra argument */
     ++functmpcount;
     functmp = lower_scalar_temp(dtype);
@@ -2536,6 +2743,9 @@ intrin_name(const char *name, int ast, int options)
 #define prefixcD 0x0000004
 #define allowchar 0x1000000
 #define allownchar 0x2000000
+#define allowCQ 0x4000000
+#define prefixCQ 0x8000000
+#define prefixcQ 0x0000008
 
   int dtype, ok, ilm;
   const char *prefix;
@@ -2612,6 +2822,16 @@ intrin_name(const char *name, int ast, int options)
       prefix = "D";
     }
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ok = options & allowCQ;
+    if (options & prefixCQ) {
+      prefix = "CQ";
+    } else if (options & prefixcQ) {
+      prefix = "Q";
+    }
+    break;
+#endif
   case TY_CHAR:
     ok = options & allowchar;
     break;
@@ -2677,13 +2897,20 @@ nearest_real_type(int dtype)
 {
   switch (DTY(dtype)) {
   case TY_DWORD:
+#ifndef TARGET_SUPPORTS_QUADFP
+  case TY_QUAD:
+#endif
   case TY_INT8:
   case TY_DBLE:
   case TY_DCMPLX:
+#ifndef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+#endif
   case TY_LOG8:
     return DT_DBLE;
 #ifdef TARGET_SUPPORTS_QUADFP
   case TY_QUAD:
+  case TY_QCMPLX:
     return DT_QUAD;
 #endif
   default:
@@ -2895,6 +3122,9 @@ intrinsic_arg_dtype(int intr, int ast, int args, int nargs)
 
   case I_CONJG:
   case I_DCONJG:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QCONJG:
+#endif
 
   case I_IIDIM:
   case I_JIDIM:
@@ -3082,10 +3312,17 @@ intrinsic_arg_dtype(int intr, int ast, int args, int nargs)
   case I_DBLE:
     return -1;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QIMAG:
+#endif
   case I_DIMAG:
   case I_AIMAG:
   case I_IMAG:
     /* return imaginary part */
+#ifdef TARGET_SUPPORTS_QUADFP
+    if (A_NDTYPEG(ast) == DT_QUAD)
+      return DT_QCMPLX;
+#endif
     if (A_NDTYPEG(ast) == DT_REAL8)
       return DT_CMPLX16;
     return DT_CMPLX8;
@@ -3580,6 +3817,9 @@ lower_intrinsic(int ast)
   /* cmplx */
   case I_CMPLX:
   case I_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QCMPLX:
+#endif
     arg1 = ARGT_ARG(args, 0);
     arg2 = 0;
     if (nargs >= 2)
@@ -3592,6 +3832,11 @@ lower_intrinsic(int ast)
       case TY_DCMPLX:
         ilm = lower_conv(arg1, DT_CMPLX16);
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QCMPLX:
+        ilm = lower_conv(arg1, DT_QCMPLX);
+        break;
+#endif
       default:
         break;
       }
@@ -3609,6 +3854,13 @@ lower_intrinsic(int ast)
         ilm2 = lower_conv(arg2, DT_REAL8);
         ilm = plower("oii", "DCMPLX", ilm, ilm2);
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QCMPLX:
+        ilm = lower_conv(arg1, DT_QUAD);
+        ilm2 = lower_conv(arg2, DT_QUAD);
+        ilm = plower("oii", "QCMPLX", ilm, ilm2);
+        break;
+#endif
       default:
         break;
       }
@@ -3619,6 +3871,9 @@ lower_intrinsic(int ast)
   /* conjg family */
   case I_CONJG:
   case I_DCONJG:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QCONJG:
+#endif
     ilm = intrin_name("CONJG", ast, in_c_cD_cQ);
     break;
 
@@ -3763,7 +4018,10 @@ lower_intrinsic(int ast)
   /* imag family */
   case I_AIMAG:
   case I_DIMAG:
-    ilm = intrin_name("IMAG", ast, in_r_D);
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QIMAG:
+#endif
+    ilm = intrin_name("IMAG", ast, in_r_D_Q);
     break;
 
   /* int family */
@@ -3977,6 +4235,9 @@ lower_intrinsic(int ast)
     ilm = intrin_name("OR", ast, in_i_K);
     break;
 
+#ifdef TARGET_SUPPORTS_QUADFP
+  case I_QREAL:
+#endif
   case I_DREAL:
   case I_REAL:
     arg = ARGT_ARG(args, 0);
@@ -3991,6 +4252,12 @@ lower_intrinsic(int ast)
       ilm = plower("oi", "DREAL", ilm);
       argdtype = DT_REAL8;
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+      ilm = plower("oi", "QREAL", ilm);
+      argdtype = DT_QUAD;
+      break;
+#endif
     default:
       break;
     }
@@ -4338,8 +4605,11 @@ lower_intrinsic(int ast)
     default:
       /* just treat like a function call */
 
-      if ((DTY(A_DTYPEG(ast)) == TY_CMPLX || DTY(A_DTYPEG(ast)) == TY_DCMPLX) &&
-          (XBIT(70, 0x40000000))) {
+      if ((DTY(A_DTYPEG(ast)) == TY_CMPLX || DTY(A_DTYPEG(ast)) == TY_DCMPLX
+#ifdef TARGET_SUPPORTS_QUADFP
+           || DTY(A_DTYPEG(ast)) == TY_QCMPLX
+#endif
+           ) && (XBIT(70, 0x40000000))) {
         for (i = 0; i < 2; i++) {
           arg = ARGT_ARG(args, i);
           lower_expression(arg);
@@ -5058,6 +5328,11 @@ lower_ast(int ast, int *unused)
       case TY_DCMPLX:
         ilm = lower_bin_arith(ast, "TOCD", dtype, dtype);
         break;
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QCMPLX:
+        ilm = lower_bin_arith(ast, "TOCQ", dtype, dtype);
+        break;
+#endif
       case TY_REAL:
         ilm = lower_bin_arith(ast, "TOR", dtype, dtype);
         break;
@@ -5126,6 +5401,13 @@ lower_ast(int ast, int *unused)
       rilm = lower_conv(A_ROPG(ast), DT_REAL8);
       ilm = plower("oii", "DCMPLX", lilm, rilm);
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+      lilm = lower_conv(A_LOPG(ast), DT_QUAD);
+      rilm = lower_conv(A_ROPG(ast), DT_QUAD);
+      ilm = plower("oii", "QCMPLX", lilm, rilm);
+      break;
+#endif
     default:
       ast_error("unknown operand type for (real,imag)", ast);
       break;
@@ -5178,6 +5460,12 @@ lower_ast(int ast, int *unused)
       ilm = plower("oS", "CDCON", sptr);
       base = ilm;
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+      ilm = plower("oS", "CQCON", sptr);
+      base = ilm;
+      break;
+#endif
     case TY_BLOG:
     case TY_SLOG:
     case TY_LOG:
@@ -5282,6 +5570,11 @@ lower_ast(int ast, int *unused)
         case TY_DCMPLX:
           ilm = conv_dcmplx(lop);
           break;
+#ifdef TARGET_SUPPORTS_QUADFP
+        case TY_QCMPLX:
+          ilm = conv_qcmplx(lop);
+          break;
+#endif
         case TY_CHAR:
         case TY_NCHAR:
           ilm = lower_ilm(lop);

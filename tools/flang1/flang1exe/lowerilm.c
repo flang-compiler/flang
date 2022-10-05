@@ -3797,6 +3797,11 @@ lower_stmt(int std, int ast, int lineno, int label)
     case TY_DCMPLX:
       plower("oii", "CDST", lilm, rilm);
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+      plower("oii", "CQST", lilm, rilm);
+      break;
+#endif
     case TY_CHAR:
       plower("oii", "SST", lilm, rilm);
       break;
@@ -4578,6 +4583,9 @@ lower_stmt(int std, int ast, int lineno, int label)
       case TY_QUAD:
       case TY_CMPLX:
       case TY_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QCMPLX:
+#endif
       case TY_BLOG:
       case TY_SLOG:
       case TY_LOG:
@@ -5875,6 +5883,11 @@ lower_typeload(int dtype, int base)
   case TY_DCMPLX:
     ilm = plower("oi", "CDLD", base);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ilm = plower("oi", "CQLD", base);
+    break;
+#endif
   case TY_PTR:
     if (!XBIT(49, 0x20000000)) {
       ilm = plower("oir", "PLD", base, 0);
@@ -5944,6 +5957,11 @@ lower_typestore(int dtype, int base, int rhs)
   case TY_DCMPLX:
     ilm = plower("oii", "CDST", base, rhs);
     break;
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+    ilm = plower("oii", "CQST", base, rhs);
+    break;
+#endif
   case TY_PTR:
     if (!XBIT(49, 0x20000000)) {
       ilm = plower("oii", "PST", base, rhs);

@@ -76,7 +76,7 @@ sym_init_first(void)
 #if defined(PGHPF) && !defined(PGF90)
     stb.n_size = 7011;
 #else
-    stb.n_size = 5024;
+    stb.n_size = STB_NSIZE;
 #endif
     NEW(stb.n_base, char, stb.n_size);
     assert(stb.n_base, "sym_init: no room for namtab", stb.n_size, ERR_Fatal);
