@@ -497,7 +497,9 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .IN DIMAG 1 CD D DIMAG * V
 .AT elemental z
 .IN .QIMAG 1 CQ Q QIMAG * V
-.AT elemental x
+.AT elemental z
+.IN QIMAG 1 CQ Q QIMAG * V
+.AT elemental z
 
 .IN ..CONJG 1 C C CONJG * V
 .AT elemental z
@@ -508,7 +510,9 @@ sptr	name	pcnt	atyp	dtype	ILM	pname	arrayf native?
 .IN DCONJG 1 CD CD DCONJG * V
 .AT elemental z
 .IN .QCONJG 1 CQ CQ QCONJG * V
-.AT elemental x
+.AT elemental z
+.IN QCONJG 1 CQ CQ QCONJG * V
+.AT elemental z
 
 .IN DPROD 2 R D DPROD * V
 .AT elemental x y
@@ -869,6 +873,8 @@ Extension to Fortran-77.
 .AT elemental a
 .IN DREAL 1 CD D tc
 .AT elemental a
+.IN QREAL 1 CQ Q tc
+.AT elemental a
 Converts complex*16 to double.
 .IN .2D 1 N D tc
 Convert any numeric data type to double precision.
@@ -878,6 +884,9 @@ Convert any numeric data type to complex.
 .AT elemental a
 .IN .2CD 11 N CD tc
 Convert any numeric data type to double complex.
+.AT elemental a
+.IN .2CQ 11 N CQ tc
+Convert any numeric data type to quad complex.
 .AT elemental a
 .IN DINT 1 D D none * V
 .AT elemental a
@@ -944,11 +953,13 @@ sptr	name	siname	iname	rname	dname	cname	cdname	i8name	qname	cqname
 .AT elemental a
 .GN DCMPLX .2CD .2CD .2CD .2CD .2CD .2CD .2CD .2CD .2CD
 .AT elemental x *y
-.GN IMAG - - - - .AIMAG DIMAG - - .QIMAG
+.GN QCMPLX .2CQ .2CQ .2CQ .2CQ .2CQ .2CQ .2CQ .2CQ .2CQ
+.AT elemental x *y
+.GN IMAG - - - - .AIMAG DIMAG - - QIMAG
 .AT elemental z
-.GN AIMAG - - - - .AIMAG DIMAG - - .QIMAG
+.GN AIMAG - - - - .AIMAG DIMAG - - QIMAG
 .AT elemental z
-.GN CONJG - - - - .CONJG DCONJG - .QCONJG -
+.GN CONJG - - - - .CONJG DCONJG - - QCONJG
 .AT elemental z
 .GN ININT - - .ININT IIDNNT - - - - -
 .AT elemental a

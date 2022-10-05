@@ -2674,7 +2674,11 @@ lower_put_datatype(int dtype, int usage)
     putwhich("Complex16", "C16");
     break;
   case TY_QCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+    putwhich("Complex32", "C32");
+#else
     putwhich("Complex16", "C16");
+#endif
     break;
 
   case TY_BLOG:
@@ -4216,6 +4220,9 @@ lower_symbol(int sptr)
       switch (DTY(dtype)) {
       case TY_CMPLX:
       case TY_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QCMPLX:
+#endif
         if (!CMPLXFUNC_C && FVALG(sptr))
           fvallast = 1;
         break;
@@ -4571,6 +4578,9 @@ lower_symbol(int sptr)
         switch (DTY(dtype)) {
         case TY_CMPLX:
         case TY_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+        case TY_QCMPLX:
+#endif
           if (FVALG(sptr))
             fvallast = 1;
           break;
@@ -5574,17 +5584,29 @@ llvm_check_retval_inargs(int sptr)
         return;
       }
       goto pointer_check;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case TY_QCMPLX:
+      if (DTY(ent_dtype) != TY_QCMPLX) {
+        return;
+      }
+      goto pointer_check;
+#endif
 
     default:
-      if (DTY(ent_dtype) == TY_DCMPLX || DTY(ent_dtype) == TY_CHAR ||
-          DTY(ent_dtype) == TY_NCHAR)
+      if (DTY(ent_dtype) == TY_DCMPLX ||
+#ifdef TARGET_SUPPORTS_QUADFP
+          DTY(ent_dtype) == TY_QCMPLX ||
+#endif
+          DTY(ent_dtype) == TY_CHAR || DTY(ent_dtype) == TY_NCHAR)
         return;
 
     pointer_check:
       if (aux.dpdsc_base[DPDSCG(sptr)] != fval &&
-          (POINTERG(sptr) || ALLOCATTRG(fval) || (DTY(ent_dtype) == TY_DCMPLX))
-
-      ) {
+          (POINTERG(sptr) || ALLOCATTRG(fval) || (DTY(ent_dtype) == TY_DCMPLX)
+#ifdef TARGET_SUPPORTS_QUADFP
+          || (DTY(ent_dtype) == TY_QCMPLX)
+#endif
+      )) {
         if (DPDSCG(sptr) && DTYPEG(sptr) != DT_NONE) {
 
           DPDSCP(sptr, DPDSCG(sptr) - 1);

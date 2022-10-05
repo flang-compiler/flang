@@ -219,6 +219,7 @@ Convert any numeric data type to double complex.
 .IN DIMAG 1 CD D DIMAG ftn_dimag
 .IN .CONJG 1 C C CONJG ftn_conjg
 .IN DCONJG 1 CD CD DCONJG ftn_dconjg
+.IN QCONJG 1 CQ CQ QCONJG ftn_qconjg
 .IN DPROD 2 R D DPROD ftn_dprod
 .IN IMAX0 12 SI SI IMAX -
 .IN MAX0 12 I I IMAX -
@@ -360,7 +361,7 @@ sptr	name	siname	iname	rname	dname	cname	cdname	i8name	qname   cqname
 .GN CMPLX .2C .2C .2C .2C .2C .2C .2C 
 .GN DCMPLX .2CD .2CD .2CD .2CD .2CD .2CD .2CD 
 .GN AIMAG - - - - .AIMAG DIMAG - 
-.GN CONJG - - - - .CONJG DCONJG -
+.GN CONJG - - - - .CONJG DCONJG QCONJG -
 .GN AINT - - .AINT DINT - - - QINT
 .GN ANINT - - .ANINT DNINT - - - QANINT
 .GN ININT - - .ININT IIDNNT - - -

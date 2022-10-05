@@ -15,7 +15,8 @@ struct SYM;
 #include "symtab.h"
 #include "sharedefs.h"
 
-#define STB_NSIZE 5060
+/* Keep in sync with INIT_NAMES_SIZE, in syminidf.h. */
+#define STB_NSIZE 5063
 #define STR_LEN 4
 
 /**
