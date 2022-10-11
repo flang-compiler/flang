@@ -3967,14 +3967,22 @@ rewrite_calls(void)
         }
         sptr_lhs = memsym_of_ast(A_SRCG(ast));
         if (allocatable_member(sptr_lhs)) {
-          rewrite_deallocate(A_SRCG(ast), false, std);
-          if (!ALLOCG(sptr_lhs) && !ALLOCATTRG(sptr_lhs) &&
-              !POINTERG(sptr_lhs)) {
-            /* Has allocatable members but item itself is not
-             * allocatable nor pointer
-             */
+          /* Has allocatable members but item itself is not
+           * allocatable nor pointer
+           */
+          bool lhs_not_allocatable =
+            !ALLOCG(sptr_lhs) && !ALLOCATTRG(sptr_lhs) && !POINTERG(sptr_lhs);
+          /* HCCSYMG() checks if sptr_lhs is a compiler-generated temporary
+           * variable or not. It is used inside rewrite_allocatable_assignment()
+           * to guard handle_allocatable_members() which performs rewriting.
+           * As a result, compiler-generated temporary allocatable variables
+           * will only undergo shallow copying. HCCSYMG() is used here to
+           * prevent deep deallocation for temporary allocatable variables.
+           */
+          if (!HCCSYMG(sptr_lhs) || lhs_not_allocatable)
+            rewrite_deallocate(A_SRCG(ast), false, std);
+          if (lhs_not_allocatable)
             nop_dealloc(sptr_lhs, ast);
-          }
         }
       } else if (A_TKNG(ast) == TK_ALLOCATE) {
         int a, sptr2, astmem;
