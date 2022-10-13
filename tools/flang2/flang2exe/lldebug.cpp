@@ -4088,7 +4088,6 @@ lldbg_function_end(LL_DebugInfo *db, int func)
       LLTYPE(i) = cache;
     } else if ((!SNAME(i)) && REFG(i)) {
       // add referenced variables not discovered as yet
-      const char *sname;
       const char *name;
       char *buff;
       LL_Type *cache = LLTYPE(i);
@@ -4097,10 +4096,8 @@ lldbg_function_end(LL_DebugInfo *db, int func)
       type = ll_get_pointer_type(make_lltype_from_dtype(dtype));
       name = get_llvm_name(i);
       // Hack: splice in the LLVM user-defined IR type name
-      sname = getsname(i); // temporary pointer
-      buff = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + strlen(sname) +
-                                                     strlen(type->str) + 25);
-      sprintf(buff, "bitcast (%%struct%s* @%s to %s)", sname, name, type->str);
+      buff = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + 6);
+      sprintf(buff, "ptr @%s", name);
       value = ll_create_value_from_type(db->module, type, (const char *)buff);
       lldbg_emit_global_variable(db, i, 0, 1, value);
       LLTYPE(i) = cache;

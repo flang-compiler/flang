@@ -538,7 +538,7 @@ llassem_struct_needs_cast(int sptr)
 
    The struct type is built as follows:
      - Combine all non-pointer together as an array of bytes,
-     - Each pointer type emitted as i8*
+     - Each pointer type emitted as ptr
 
    All callers must call <tt>free()</tt> on the returned string.
  */
@@ -688,7 +688,7 @@ get_struct_from_dsrt2(SPTR sptr, DSRT *dsrtp, ISZ_T size, int *align8,
           } else {
             first_data = 0;
           }
-          strcat(buf, "i8* ");
+          strcat(buf, "ptr ");
         }
         al = alignment(DT_CPTR);
         addr = ALIGN(addr, al);
@@ -722,7 +722,7 @@ get_struct_from_dsrt2(SPTR sptr, DSRT *dsrtp, ISZ_T size, int *align8,
         addr = ALIGN(addr, al);
         ptrcnt++;
         if (p->dtype != DINIT_PROC || type_only)
-          strcat(buf, "i8* ");
+          strcat(buf, "ptr ");
         addr += size_of(DT_CPTR);
         first_data = 0;
         break;
@@ -791,7 +791,7 @@ get_struct_from_dsrt2(SPTR sptr, DSRT *dsrtp, ISZ_T size, int *align8,
             }
             if (!first_data)
               strcat(buf, ", ");
-            strcat(buf, "i8* ");
+            strcat(buf, "ptr ");
             ptrcnt++;
           } else if (size_of_item) {
             if (ptrcnt || !i8cnt) {
@@ -1101,8 +1101,8 @@ write_libomtparget(void)
 @.omp_offloading.img_start.nvptx64-nvidia-cuda = external constant i8 \n\
 @.omp_offloading.entries_end = external constant %%struct.__tgt_offload_entry_ \n\
 @.omp_offloading.entries_begin = external constant %%struct.__tgt_offload_entry_ \n\
-@.omp_offloading.device_images = internal unnamed_addr constant [1 x %%struct.__tgt_device_image] [%%struct.__tgt_device_image { i8* @.omp_offloading.img_start.nvptx64-nvidia-cuda, i8* @.omp_offloading.img_end.nvptx64-nvidia-cuda, %%struct.__tgt_offload_entry_* @.omp_offloading.entries_begin, %%struct.__tgt_offload_entry_* @.omp_offloading.entries_end }], align 8\n\
-@.omp_offloading.descriptor_ = internal constant %%struct.__tgt_bin_desc { i64 1, %%struct.__tgt_device_image* getelementptr inbounds ([1 x %%struct.__tgt_device_image], [1 x %%struct.__tgt_device_image]* @.omp_offloading.device_images, i32 0, i32 0), %%struct.__tgt_offload_entry_* @.omp_offloading.entries_begin, %%struct.__tgt_offload_entry_* @.omp_offloading.entries_end }, align 8\n\n");
+@.omp_offloading.device_images = internal unnamed_addr constant [1 x %%struct.__tgt_device_image] [%%struct.__tgt_device_image { ptr @.omp_offloading.img_start.nvptx64-nvidia-cuda, ptr @.omp_offloading.img_end.nvptx64-nvidia-cuda, ptr @.omp_offloading.entries_begin, ptr @.omp_offloading.entries_end }], align 8\n\
+@.omp_offloading.descriptor_ = internal constant %%struct.__tgt_bin_desc { i64 1, ptr getelementptr inbounds ([1 x %%struct.__tgt_device_image], ptr @.omp_offloading.device_images, i32 0, i32 0), ptr @.omp_offloading.entries_begin, ptr @.omp_offloading.entries_end }, align 8\n\n");
       isOmptargetInitialized = true;
     }
   }
@@ -1468,8 +1468,8 @@ write_extern_inits(void)
         alTy = typed;
         alSep = ", ";
       }
-      fprintf(ASMFIL, " }>\n@%s = alias %s%sbitcast (<{%s}>* @%s.%d to %s*)",
-              getsname(sptr), alTy, alSep, bare, getsname(sptr), sptr, typed);
+      fprintf(ASMFIL, " }>\n@%s = alias %s%sptr @%s.%d",
+              getsname(sptr), alTy, alSep, getsname(sptr), sptr);
       free(bare);
     } else {
       fprintf(ASMFIL, "%%struct%s = type <{ %s }>\n@%s = %s%%struct%s <{ ",
@@ -1644,9 +1644,9 @@ write_statics(void)
    */
   if (count > 1) {
     if (count) {
-      fprintf(ASMFIL, "@llvm.used = appending global [%d x i8*] [\n", count);
+      fprintf(ASMFIL, "@llvm.used = appending global [%d x ptr] [\n", count);
       if (lcl_inits) {
-        fprintf(ASMFIL, "i8* bitcast (%%struct%s* @%s to i8*)", static_nm,
+        fprintf(ASMFIL, "ptr @%s",
                 static_nm);
         if (section_inits)
           fputc(',', ASMFIL);
@@ -1658,7 +1658,7 @@ write_statics(void)
           continue;
 #endif
         sptr = dsrtp->sptr;
-        fprintf(ASMFIL, "i8* bitcast (%%struct%s* @%s to i8*)", getsname(sptr),
+        fprintf(ASMFIL, "ptr @%s",
                 getsname(sptr));
         if (dsrtp->next)
           fputc(',', ASMFIL);
@@ -1885,7 +1885,7 @@ begin_layout_desc(SPTR sptr, DTYPE dtype)
 
     if (!layout_desc.wrote_tname) {
       /* First time, write the layout type: Each member is a struct */
-      fprintf(ASMFIL, "%s = type < { [6 x i%d], i8* } >\n", layout_desc.tname,
+      fprintf(ASMFIL, "%s = type < { [6 x i%d], ptr } >\n", layout_desc.tname,
               subscript_size);
       layout_desc.wrote_tname = true;
     }
@@ -1969,11 +1969,11 @@ write_layout_desc_entry(char tag, int offset, SPTR member, int length,
   fprintf(ASMFIL, "i%d 0],\n", subscript_size);
 
   if (sdsc == 0) {
-    fprintf(ASMFIL, "      i8* null\n");
+    fprintf(ASMFIL, "      ptr null\n");
   } else { /* Else a pointer to the typedef which is of type: struct<name> */
     process_sptr(sdsc);
-    fprintf(ASMFIL, "      i8* bitcast(%%struct%s* @%s to i8*)\n",
-            getsname(sdsc), getsname(sdsc));
+    fprintf(ASMFIL, "      ptr @%s\n",
+            getsname(sdsc));
   }
   fprintf(ASMFIL, "    } >");
   if (++layout_desc.entries < layout_desc.expected_entries)
@@ -2064,8 +2064,8 @@ write_parent_pointers(int parent, int level)
   member = DTyAlgTyMember(dtype);
   tag = DTyAlgTyTag(dtype);
   desc = SDSCG(tag);
-  fprintf(ASMFIL, "    i8* bitcast(%%struct%s* @%s to i8*)",
-          get_llvm_name(SDSCG(tag)), get_llvm_name(SDSCG(tag)));
+  fprintf(ASMFIL, "    ptr @%s",
+          get_llvm_name(SDSCG(tag)));
 
   if (SCG(desc) == SC_EXTERN && CLASSG(desc) && DESCARRAYG(desc)) {
     sprintf(tdtname, "struct%s", get_llvm_name(desc));
@@ -2131,7 +2131,7 @@ write_final_table(SPTR sptr, DTYPE dtype)
       return 0;
 
     /* Add type name to ag table and define this table */
-    sprintf(tname, "[%d x i8*]", FINAL_TABLE_SZ);
+    sprintf(tname, "[%d x ptr]", FINAL_TABLE_SZ);
     if ((gblsym = get_typedef_ag(getsname(sptr), tname)) ||
         (gblsym = find_ag(getsname(sptr))))
       AG_DEFD(gblsym) = 1;
@@ -2144,11 +2144,11 @@ write_final_table(SPTR sptr, DTYPE dtype)
         LL_ABI_Info *abi = ll_proto_get_abi(ll_proto_key(entry));
         gblsym = get_ag(entry);
         AG_DEFD(gblsym) = 1;
-        fntype = abi ? ll_abi_function_type(abi)->str : "(i8*)";
-        fprintf(ASMFIL, "i8* bitcast(%s* @%s to i8*)", fntype,
+        fntype = abi ? ll_abi_function_type(abi)->str : "(ptr)";
+        fprintf(ASMFIL, "ptr @%s",
                 get_llvm_name(entry));
       } else
-        fprintf(ASMFIL, "i8* null");
+        fprintf(ASMFIL, "ptr null");
 
       if (i < FINAL_TABLE_SZ - 1)
         fprintf(ASMFIL, ", ");
@@ -2293,7 +2293,7 @@ write_vft(int sptr, DTYPE dtype)
     return 0;
 
   sprintf(name, "%s$vft", SYMNAME(sptr));
-  sprintf(tname, "[%d x i8*]", vft_sz);
+  sprintf(tname, "[%d x ptr]", vft_sz);
   fprintf(ASMFIL, "@%s = global %s [", name, tname);
 
   /* Add to ag table */
@@ -2319,7 +2319,7 @@ write_vft(int sptr, DTYPE dtype)
         nmptr = AG_NAME(gblsym);
         sprintf(tname, "struct%s", nmptr);
         if (!find_ag(tname)) {
-          fntype = "i8* null";
+          fntype = "ptr null";
           continue;
         }
         sprintf(tname, "%%struct%s", nmptr);
@@ -2328,9 +2328,9 @@ write_vft(int sptr, DTYPE dtype)
 
     /* Emit the vft entry */
     if (vf && fntype)
-      fprintf(ASMFIL, "i8* bitcast(%s* @%s to i8*)", fntype, getsname(vf));
+      fprintf(ASMFIL, "ptr @%s", getsname(vf));
     else
-      fprintf(ASMFIL, "i8* null");
+      fprintf(ASMFIL, "ptr null");
 
     if (i < (vft_sz - 1))
       fprintf(ASMFIL, ", ");
@@ -2370,19 +2370,17 @@ put_ll_table_addr(const char *name, const char *suffix, bool is_struct,
 
   if (n_elts && gblsym)
     fprintf(ASMFIL,
-            "i8* bitcast(i8* getelementptr("
-            "%si8* bitcast(%s* @%s to i8*), i32 0) to i8*)",
-            elem_type, AG_TYPENAME(gblsym), AG_NAME(gblsym));
+            "ptr getelementptr(%sptr @%s, i32 0)",
+            elem_type, AG_NAME(gblsym));
   else if (n_elts && !gblsym) /* Usually the case for finalizers */
     fprintf(ASMFIL,
-            "i8* bitcast(i8* getelementptr("
-            "%si8* bitcast([%d x i8*]* @%s%s to i8*), i32 0) to i8*)",
-            elem_type, n_elts, name, suffix ? suffix : "");
+            "ptr getelementptr(%sptr @%s%s, i32 0)",
+            elem_type, name, suffix ? suffix : "");
   else if (is_struct)
-    fprintf(ASMFIL, "i8* bitcast(%s* @%s to i8*)", AG_TYPENAME(gblsym),
+    fprintf(ASMFIL, "ptr @%s",
             AG_NAME(gblsym));
   else
-    fprintf(ASMFIL, "i8* null");
+    fprintf(ASMFIL, "ptr null");
 }
 
 static void
@@ -2503,7 +2501,7 @@ write_typedescs(void)
       gs = find_ag(ftname);
       if (!gs) {
         char typeName[20];
-        sprintf(typeName, "[%d x i8*]", FINAL_TABLE_SZ);
+        sprintf(typeName, "[%d x ptr]", FINAL_TABLE_SZ);
         get_typedef_ag(ftname, typeName);
         gs = find_ag(ftname);
         AG_FINAL(gs) = 1;
@@ -2517,11 +2515,11 @@ write_typedescs(void)
 
     /* Array of pointers: the types this inherits/extends (parents) */
     if (level) {
-      fprintf(ASMFIL, "%%struct%s$parents = type < { [%d x i8*] } >\n", name,
+      fprintf(ASMFIL, "%%struct%s$parents = type < { [%d x ptr] } >\n", name,
               level);
       fprintf(ASMFIL, "@%s$parents = global %%struct%s$parents < {\n", name,
               name);
-      fprintf(ASMFIL, "  [%d x i8*] [\n", level);
+      fprintf(ASMFIL, "  [%d x ptr] [\n", level);
       write_parent_pointers(member, level);
       fprintf(ASMFIL, "  ]\n");
       fprintf(ASMFIL, "} >, align 8\n");
@@ -2541,7 +2539,7 @@ write_typedescs(void)
       char typeName[100];
       LL_Type *llt;
 
-      sprintf(typeName, "[8 x i%d], i%d, [5 x i8*], [%d x i8]", subscript_size,
+      sprintf(typeName, "[8 x i%d], i%d, [5 x ptr], [%d x i8]", subscript_size,
               integer_size, (int)strlen(sname));
 
       ptr = tdtname + 1; /* move past first letter '%' */
@@ -2552,7 +2550,7 @@ write_typedescs(void)
       set_ag_lltype(gs, llt);
     }
 
-    fprintf(ASMFIL, "< { [8 x i%d], [6 x i8*], [%d x i8] } >\n", subscript_size,
+    fprintf(ASMFIL, "< { [8 x i%d], [6 x ptr], [%d x i8] } >\n", subscript_size,
             strlen(sname));
 
     /* Create the global instance of the type descriptor */
@@ -2568,19 +2566,18 @@ write_typedescs(void)
             subscript_size, subscript_size, subscript_size);
 
     /* Pointer array: symbol address and tables (vft, ft, layout) */
-    fprintf(ASMFIL, "  [6 x i8*] [\n");
+    fprintf(ASMFIL, "  [6 x ptr] [\n");
     if (TYPDEF_INITG(tag) > NOSYM) {
       /* pointer to initialized prototype */
       const char *initname = getsname(TYPDEF_INITG(tag));
       fprintf(ASMFIL,
-              "     i8* bitcast(i8* getelementptr(i8, i8* "
-              "bitcast(%%struct%s* @%s to i8*), i32 %ld) to i8*),\n",
-              initname, initname, ADDRESSG(TYPDEF_INITG(tag)));
+              "     ptr getelementptr(i8, ptr @%s, i32 %ld),\n",
+              initname, ADDRESSG(TYPDEF_INITG(tag)));
     } else {
-      fprintf(ASMFIL, "     i8* null,\n");
+      fprintf(ASMFIL, "     ptr null,\n");
     }
 
-    fprintf(ASMFIL, "    i8* bitcast(%s* @%s to i8*),\n", tdtname,
+    fprintf(ASMFIL, "    ptr @%s,\n",
             getsname(sptr));
 
     /* Pointer to vft */
@@ -2592,11 +2589,10 @@ write_typedescs(void)
     /* Pointer to parent list */
     if (level > 0) {
       fprintf(ASMFIL,
-              "     i8* bitcast(i8* getelementptr(i8, i8* "
-              "bitcast(%%struct%s$parents* @%s$parents to i8*), i32 0) to i8*)"
-              ",\n", name, name);
+              "     ptr getelementptr(i8, ptr @%s$parents, i32 0)"
+              ",\n", name);
     } else {
-      fprintf(ASMFIL, "    i8* null,\n"); /* 0 */
+      fprintf(ASMFIL, "    ptr null,\n"); /* 0 */
     }
  
 
@@ -2616,7 +2612,7 @@ write_typedescs(void)
       put_ll_table_addr(sname, "$ld", true, 0,
           ll_feature_explicit_gep_load_type(&cpu_llvm_module->ir));
     else
-      fprintf(ASMFIL, "i8* null");
+      fprintf(ASMFIL, "ptr null");
     fprintf(ASMFIL, "\n");
 
     /* Third array (string symbol name) */
@@ -5208,7 +5204,7 @@ write_ftn_type(LL_Type *ll_type, char *argptr, int byval)
   case LL_STRUCT:
   case LL_FUNCTION:
   case LL_VOID:
-    sprintf(argptr, "i8*");
+    sprintf(argptr, "ptr");
     break;
   case LL_I1:
   case LL_I8:

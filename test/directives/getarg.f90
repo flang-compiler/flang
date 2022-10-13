@@ -8,5 +8,5 @@ subroutine test()
 
   call getarg(pos, arg)
 end subroutine
-! CHECK: bitcast void ({{.*}})* @f90_getarga to void (i8*, i8*, i8*, i64{{.*}})*,
-! CHECK-NOT: bitcast void ({{.*}})* @getarg_ to void (i8, i8, i64{{.*}})*,
+! CHECK: bitcast ptr @f90_getarga to ptr,
+! CHECK-NOT: bitcast ptr @getarg_ to ptr,

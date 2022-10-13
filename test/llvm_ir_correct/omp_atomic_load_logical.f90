@@ -24,7 +24,7 @@ subroutine sub8
   do
 !$OMP ATOMIC READ
     v = l8
-! //CHECK: load atomic i8, i8*
+! //CHECK: load atomic i8, ptr
     if (v) exit
   end do
 end subroutine
@@ -37,7 +37,7 @@ subroutine sub16
   do
 !$OMP ATOMIC READ
     v = l16
-! //CHECK: load atomic i16, i16*
+! //CHECK: load atomic i16, ptr
     if (v) exit
   end do
 end subroutine
@@ -50,7 +50,7 @@ subroutine sub32
   do
 !$OMP ATOMIC READ
     v = l32
-! //CHECK: load atomic i32, i32*
+! //CHECK: load atomic i32, ptr
     if (v) exit
   end do
 end subroutine
@@ -63,7 +63,7 @@ subroutine sub64
   do
 !$OMP ATOMIC READ
     v = l64
-! //CHECK: load atomic i64, i64*
+! //CHECK: load atomic i64, ptr
     if (v) exit
   end do
 end subroutine
