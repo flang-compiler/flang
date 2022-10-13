@@ -14,9 +14,9 @@ program msave
   implicit none
 ! NOSAVE: alloca i32
   integer :: x
-! NOSAVE: store i32 5, i32* %x
-! SAVE: bitcast %struct.BSS1* @.BSS1 to i32*
-! SAVE: store i32 5, i32*
+! NOSAVE: store i32 5, ptr %x
+! SAVE: bitcast ptr @.BSS1 to ptr
+! SAVE: store i32 5, ptr
   x = 5
 end program
 

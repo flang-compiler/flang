@@ -1,6 +1,6 @@
 !RUN: %flang -g -S -emit-llvm %s -o - | FileCheck %s
 
-!CHECK: call void @llvm.dbg.declare(metadata i32* %rvar_{{[0-9]+}}, metadata [[RESULT:![0-9]+]], metadata !DIExpression())
+!CHECK: call void @llvm.dbg.declare(metadata ptr %rvar_{{[0-9]+}}, metadata [[RESULT:![0-9]+]], metadata !DIExpression())
 !CHECK: [[RESULT]] = !DILocalVariable(name: "rvar"
 
 function func(arg) result(rvar)

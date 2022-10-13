@@ -4,8 +4,8 @@
 ! operation using them are well formed.
 !CHECK: sub_(i32 [[PREFIXED_ARG_NAME:%_V_arg_abc.arg]])
 !CHECK: [[PREFIXED_LOCAL_NAME:%_V_arg_abc.addr]] = alloca i32, align 4
-!CHECK: call void @llvm.dbg.declare(metadata i32* [[PREFIXED_LOCAL_NAME]]
-!CHECK: store i32 [[PREFIXED_ARG_NAME]], i32* [[PREFIXED_LOCAL_NAME]], align 4
+!CHECK: call void @llvm.dbg.declare(metadata ptr [[PREFIXED_LOCAL_NAME]]
+!CHECK: store i32 [[PREFIXED_ARG_NAME]], ptr [[PREFIXED_LOCAL_NAME]], align 4
 
 !Verify the DebugInfo metadata contains prefix _V_ truncated names.
 !CHECK: DILocalVariable(name: "arg_abc"

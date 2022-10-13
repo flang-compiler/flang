@@ -1,7 +1,7 @@
 !RUN: %flang -g -S -emit-llvm %s -o - | FileCheck %s
 
-!CHECK: call void @llvm.dbg.value(metadata i64* %array, metadata [[ARRAYDL:![0-9]+]], metadata !DIExpression())
-!CHECK: call void @llvm.dbg.declare(metadata i64* %"array$sd", metadata [[ARRAY:![0-9]+]], metadata !DIExpression())
+!CHECK: call void @llvm.dbg.value(metadata ptr %array, metadata [[ARRAYDL:![0-9]+]], metadata !DIExpression())
+!CHECK: call void @llvm.dbg.declare(metadata ptr %"array$sd", metadata [[ARRAY:![0-9]+]], metadata !DIExpression())
 !CHECK-LABEL: distinct !DICompileUnit(language: DW_LANG_Fortran90,
 !CHECK: [[ARRAY]] = !DILocalVariable(name: "array"
 !CHECK-SAME: arg: 3

@@ -271,8 +271,8 @@ write_prototypes(FILE *out, LLVMModuleRef module)
   }
 
   if (text_calls) {
-    fprintf(out, "declare i64 @llvm.nvvm.texsurf.handle.p1i64(metadata, i64 "
-                 "addrspace(1)*) nounwind readnone\n");
+    fprintf(out, "declare i64 @llvm.nvvm.texsurf.handle.p1i64(metadata, "
+                 "ptr addrspace(1)) nounwind readnone\n");
   }
 
   for (int i = 0; i < module->num_refs; i++) {
@@ -832,18 +832,6 @@ ll_write_function(FILE *out, LL_Function *function, LL_Module *module, bool no_r
     block = block->next;
   }
   fputs("}\n\n", out);
-}
-
-void
-ll_write_function_signature(FILE *out, LL_Function *function)
-{
-  fprintf(out, "%s (", function->return_type->str);
-  for (unsigned int j = 0; j < function->num_args; j++) {
-    fprintf(out, "%s", function->arguments[j]->type_struct->str);
-    if (j + 1 < function->num_args)
-      fprintf(out, ", ");
-  }
-  fprintf(out, ")* @%s", function->name);
 }
 
 /*
@@ -2388,9 +2376,9 @@ void
 ll_write_global_var_signature(FILE *out, LL_Value *variable)
 {
   if (variable->mvtype == LL_GLOBAL) {
-    fprintf(out, "global [0 x double]*");
+    fprintf(out, "global ptr");
   } else {
-    fprintf(out, "%s*", variable->type_struct->str);
+    fprintf(out, "ptr");
   }
   fprintf(out, " %s", variable->data);
 }
@@ -2406,7 +2394,7 @@ ll_write_llvm_used(FILE *out, LLVMModuleRef module)
   if (!module->num_llvm_used)
     return;
 
-  fprintf(out, "@llvm.used = appending global [%u x i8*] [\n  ",
+  fprintf(out, "@llvm.used = appending global [%u x ptr] [\n  ",
           module->num_llvm_used);
   for (i = 0; i < module->num_llvm_used; i++) {
     LL_Value *ptr = module->llvm_used.values[i];
