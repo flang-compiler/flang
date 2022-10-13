@@ -26,11 +26,6 @@ void ll_write_function(FILE *out, LL_Function *function, LL_Module *module,
 /**
    \brief ...
  */
-void ll_write_function_signature(FILE *out, struct LL_Function_ *function);
-
-/**
-   \brief ...
- */
 void ll_write_global_objects(FILE *out, LLVMModuleRef module);
 
 /**

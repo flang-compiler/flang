@@ -4100,7 +4100,7 @@ lldbg_function_end(LL_DebugInfo *db, int func)
       sname = getsname(i); // temporary pointer
       buff = (char *)getitem(LLVM_LONGTERM_AREA, strlen(name) + strlen(sname) +
                                                      strlen(type->str) + 25);
-      sprintf(buff, "bitcast (%%struct%s* @%s to %s)", sname, name, type->str);
+      sprintf(buff, "bitcast (ptr @%s to %s)", name, type->str);
       value = ll_create_value_from_type(db->module, type, (const char *)buff);
       lldbg_emit_global_variable(db, i, 0, 1, value);
       LLTYPE(i) = cache;

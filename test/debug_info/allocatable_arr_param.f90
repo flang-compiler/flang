@@ -1,9 +1,9 @@
 !RUN: %flang -gdwarf-4 -S -emit-llvm %s -o - | FileCheck %s
 
 !CHECK-LABEL: define void @callee_
-!CHECK: call void @llvm.dbg.declare(metadata i64* %"array$p", metadata [[DLOC:![0-9]+]]
-!CHECK-NEXT: call void @llvm.dbg.declare(metadata i64* %"array$p", metadata [[ALLOCATED:![0-9]+]]
-!CHECK-NEXT: call void @llvm.dbg.declare(metadata i64* %"array$sd", metadata [[ARRAY:![0-9]+]], metadata !DIExpression())
+!CHECK: call void @llvm.dbg.declare(metadata ptr %"array$p", metadata [[DLOC:![0-9]+]]
+!CHECK-NEXT: call void @llvm.dbg.declare(metadata ptr %"array$p", metadata [[ALLOCATED:![0-9]+]]
+!CHECK-NEXT: call void @llvm.dbg.declare(metadata ptr %"array$sd", metadata [[ARRAY:![0-9]+]], metadata !DIExpression())
 !CHECK: [[ARRAY]] = !DILocalVariable(name: "array",
 !CHECK-SAME: arg: 2,
 !CHECK-SAME: type: [[TYPE:![0-9]+]]

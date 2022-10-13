@@ -795,7 +795,7 @@ void
 print_personality(void)
 {
   print_token(
-      " personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)");
+      " personality ptr @__gxx_personality_v0");
 }
 
 /**
@@ -1196,7 +1196,7 @@ add_profile_decl(const char *key, char *gname)
 INLINE static void
 write_profile_call(const char *profFn)
 {
-  fprintf(ASMFIL, "\tcall void @%s(i8* %%prof.thisfn, i8* %%prof.callsite)\n",
+  fprintf(ASMFIL, "\tcall void @%s(ptr %%prof.thisfn, ptr %%prof.callsite)\n",
           profFn);
 }
 
@@ -1221,15 +1221,15 @@ write_profile_enter(SPTR sptr, LL_Type *currFnTy)
   static bool protos_defined = false;
   const char *currFn = get_llvm_name(sptr);
   fprintf(ASMFIL,
-          "\t%%prof.thisfn = bitcast %s* @%s to i8*\n"
-          "\t%%prof.callsite = call i8*(i32) @" PROF_CALLSITE "(i32 0)\n",
-          currFnTy->str, currFn);
+          "\t%%prof.thisfn = bitcast ptr @%s to ptr\n"
+          "\t%%prof.callsite = call ptr @" PROF_CALLSITE "(i32 0)\n",
+          currFn);
   write_profile_call(PROF_ENTER);
   if (!protos_defined) {
     /* add the declarations for output */
-    const char retAddr[] = "declare i8* @" PROF_CALLSITE "(i32)";
-    const char entFn[] = "declare void @" PROF_ENTER "(i8*, i8*)";
-    const char extFn[] = "declare void @" PROF_EXIT "(i8*, i8*)";
+    const char retAddr[] = "declare ptr @" PROF_CALLSITE "(i32)";
+    const char entFn[] = "declare void @" PROF_ENTER "(ptr, ptr)";
+    const char extFn[] = "declare void @" PROF_EXIT "(ptr, ptr)";
     char *gname;
 
     protos_defined = true;
@@ -3208,16 +3208,8 @@ write_instructions(LL_Module *module)
         OPERAND *cc;
         cc = instrs->operands;
 
-        if (cc->ot_type == OT_CONSTVAL) {
-          print_token("\tcatch i8* ");
-          write_operand(cc, " ", FLG_OMIT_OP_TYPE);
-        } else {
-          print_token("\tcatch i8* bitcast ( ");
-          write_type(cc->ll_type);
-          print_token("* ");
-          write_operand(cc, " ", FLG_OMIT_OP_TYPE);
-          print_token(" to i8*)");
-        }
+        print_token("\tcatch ptr ");
+        write_operand(cc, " ", FLG_OMIT_OP_TYPE);
       } break;
       case I_FILTER: {
         /* "filter <array-type> [ <array-of-typeinfo-vars> ]"
@@ -3227,7 +3219,7 @@ write_instructions(LL_Module *module)
           /* A no-throw exception spec, "throw()" */
           /* LLVM documentation says that "filter [0xi8*] undef" is fine, but
              the LLVM compiler rejects it.  So we have to do it differently. */
-          print_token("\t\tfilter [0 x i8*] zeroinitializer");
+          print_token("\t\tfilter [0 x ptr] zeroinitializer");
         } else {
           OPERAND *esti;       /* One typeinfo var for the exception spec. */
           int count = 0;       /* Number of types in the exception spec. */
@@ -3235,14 +3227,11 @@ write_instructions(LL_Module *module)
           for (esti = instrs->operands; esti != NULL; esti = esti->next) {
             ++count;
           }
-          snprintf(buffer, sizeof buffer, "\tfilter [%d x i8*] [", count);
+          snprintf(buffer, sizeof buffer, "\tfilter [%d x ptr] [", count);
           print_token(buffer);
           for (esti = instrs->operands; esti != NULL; esti = esti->next) {
-            print_token("i8* bitcast ( ");
-            write_type(esti->ll_type);
-            print_token("* ");
+            print_token("ptr ");
             write_operand(esti, NULL, FLG_OMIT_OP_TYPE);
-            print_token(" to i8*)");
             if (esti->next != NULL) {
               print_token(", ");
             }
@@ -4796,7 +4785,7 @@ insert_llvm_prefetch(int ilix, OPERAND *dest_op)
   static bool prefetch_defined = false;
   if (!prefetch_defined) {
     prefetch_defined = true;
-    const char *intrinsic_decl = "declare void @llvm.prefetch(i8* nocapture, i32, i32, i32)";
+    const char *intrinsic_decl = "declare void @llvm.prefetch(ptr nocapture, i32, i32, i32)";
     char *gname = (char *)getitem(LLVM_LONGTERM_AREA, strlen(intrinsic_decl) + 1);
     strcpy(gname, intrinsic_decl);
     EXFUNC_LIST *exfunc = (EXFUNC_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
@@ -4844,7 +4833,7 @@ insert_llvm_memset(int ilix, int size, OPERAND *dest_op, int len, int value,
   if (!memset_defined) {
     memset_defined = true;
     gname = (char *)getitem(LLVM_LONGTERM_AREA, strlen(memset_name) + 45);
-    sprintf(gname, "declare void %s(i8*, i8, i%d, i32, i1)", memset_name, size);
+    sprintf(gname, "declare void %s(ptr, i8, i%d, i32, i1)", memset_name, size);
     exfunc = (EXFUNC_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
     memset(exfunc, 0, sizeof(EXFUNC_LIST));
     exfunc->func_def = gname;
@@ -4887,7 +4876,7 @@ insert_llvm_memcpy(int ilix, int size, OPERAND *dest_op, OPERAND *src_op,
   if (!memcpy_defined) {
     memcpy_defined = true;
     gname = (char *)getitem(LLVM_LONGTERM_AREA, strlen(memcpy_name) + 49);
-    sprintf(gname, "declare void %s(i8*, i8*, i%d, i32, i1)", memcpy_name,
+    sprintf(gname, "declare void %s(ptr, ptr, i%d, i32, i1)", memcpy_name,
             size);
     exfunc = (EXFUNC_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
     memset(exfunc, 0, sizeof(EXFUNC_LIST));
@@ -11405,7 +11394,7 @@ process_extern_function_sptr(SPTR sptr)
   exfunc->sptr = sptr;
   if (cgmain_init_call(sptr)) {
     gname = (char *)getitem(LLVM_LONGTERM_AREA, 34);
-    sprintf(gname, "declare void @__c_bzero(i32, i8*)");
+    sprintf(gname, "declare void @__c_bzero(i32, ptr)");
     exfunc->flags |= EXF_INTRINSIC;
   } else {
     const DTYPE dTy =
@@ -14296,25 +14285,25 @@ llvm_write_ctor_dtor_list(init_list_t *list, const char *global_name)
   print_token(int_str_buffer);
 
   if (ll_feature_three_argument_ctor_and_dtor(&current_module->ir)) {
-    print_token(" x { i32, void ()*, i8* }][");
+    print_token(" x { i32, ptr, ptr }][");
     for (node = list->head; node != NULL; node = node->next) {
-      print_token("{ i32, void ()*, i8* } { i32 ");
+      print_token("{ i32, ptr, ptr } { i32 ");
       sprintf(int_str_buffer, "%d", node->priority);
       print_token(int_str_buffer);
-      print_token(", void ()* @");
+      print_token(", ptr @");
       print_token(node->name);
-      print_token(", i8* null }");
+      print_token(", ptr null }");
       if (node->next != NULL) {
         print_token(", ");
       }
     }
   } else {
-    print_token(" x { i32, void ()* }][");
+    print_token(" x { i32, ptr }][");
     for (node = list->head; node != NULL; node = node->next) {
-      print_token("{ i32, void ()* } { i32 ");
+      print_token("{ i32, ptr } { i32 ");
       sprintf(int_str_buffer, "%d", node->priority);
       print_token(int_str_buffer);
-      print_token(", void ()* @");
+      print_token(", ptr @");
       print_token(node->name);
       print_token(" }");
       if (node->next != NULL) {

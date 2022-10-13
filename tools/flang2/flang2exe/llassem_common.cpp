@@ -153,7 +153,7 @@ write_proc_pointer(SPTR sptr)
   if (abi) {
     fntype = ll_abi_function_type(abi)->str;
   }
-  fprintf(ASMFIL, "i8* bitcast(%s* @%s to i8*)", fntype, getsname(sptr));
+  fprintf(ASMFIL, "ptr bitcast(ptr @%s to ptr)", getsname(sptr));
 }
 
 void
@@ -980,14 +980,14 @@ put_addr(SPTR sptr, ISZ_T off, DTYPE dtype)
         /* Text type for contansts is produced via char_type */
         if (STYPEG(sptr) == ST_CONST)
           fprintf(ASMFIL,
-                  "getelementptr(%si8* bitcast (%s* @%s to i8*), i32 %ld)",
-                  elem_type, char_type(DTYPEG(sptr), sptr), name, off);
+                  "getelementptr(%sptr @%s, i32 %ld)",
+                  elem_type, name, off);
         /* Structures have type name mirroring variable name */
         else
           fprintf(
               ASMFIL,
-              "getelementptr(%si8* bitcast (%%struct%s* @%s to i8*), i32 %ld)",
-              elem_type, name, name, off);
+              "getelementptr(%sptr @%s, i32 %ld)",
+              elem_type, name, off);
       } else {
         /* Convert to LLVM-compatible structures */
         if (!LLTYPE(sptr)) {

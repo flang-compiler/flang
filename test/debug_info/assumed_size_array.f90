@@ -1,7 +1,7 @@
 !RUN: %flang -g -S -emit-llvm %s -o - | FileCheck %s
 
-!CHECK: call void @llvm.dbg.declare(metadata i64* %array1, metadata [[ARRAY1:![0-9]+]], metadata !DIExpression())
-!CHECK: call void @llvm.dbg.declare(metadata i64* %array2, metadata [[ARRAY2:![0-9]+]], metadata !DIExpression())
+!CHECK: call void @llvm.dbg.declare(metadata ptr %array1, metadata [[ARRAY1:![0-9]+]], metadata !DIExpression())
+!CHECK: call void @llvm.dbg.declare(metadata ptr %array2, metadata [[ARRAY2:![0-9]+]], metadata !DIExpression())
 !CHECK: [[TYPE1:![0-9]+]] = !DICompositeType(tag: DW_TAG_array_type, baseType: {{![0-9]+}}, align: 32, elements: [[ELEMS1:![0-9]+]])
 !CHECK: [[ELEMS1]] = !{[[ELEM11:![0-9]+]]}
 !CHECK: [[ELEM11]] = !DISubrange(lowerBound: 1)

@@ -1237,16 +1237,16 @@ ll_get_pointer_type(LL_Type *type)
   /* We need to assign a representation string and allocate a proper array
    * for sub_types if unique_type() actually allocated a new type. */
   if (!ret_type->str) {
-    char suffix[32] = "*";
+    char ptrstr[32] = "ptr";
     char *new_str;
     int size;
 
     if (type->addrspace) {
-      snprintf(suffix, sizeof(suffix), " addrspace(%d)*", type->addrspace);
+      snprintf(ptrstr, sizeof ptrstr, "ptr addrspace(%d)", type->addrspace);
     }
-    size = strlen(type->str) + strlen(suffix) + 1;
+    size = strlen(ptrstr) + 1;
     new_str = (char *)ll_manage_malloc(module, size);
-    sprintf(new_str, "%s%s", type->str, suffix);
+    snprintf(new_str, sizeof new_str, "%s", ptrstr);
 
     ret_type->str = new_str;
     ret_type->sub_types =

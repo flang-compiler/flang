@@ -3,7 +3,7 @@
 !RUN: %flang -gdwarf-4 -S -emit-llvm %s -o - | FileCheck %s --check-prefix=DWARF4
 !RUN: %flang -gdwarf-5 -S -emit-llvm %s -o - | FileCheck %s --check-prefix=DWARF5
 
-!DWARF4: call void @llvm.dbg.value(metadata i64* %ararray, metadata [[DLOC:![0-9]+]], metadata !DIExpression())
+!DWARF4: call void @llvm.dbg.value(metadata ptr %ararray, metadata [[DLOC:![0-9]+]], metadata !DIExpression())
 !DWARF4: !DILocalVariable(name: "ararray"
 !DWARF4-SAME: arg: 2
 !DWARF4-SAME: type: [[ARTYPE:![0-9]+]])
@@ -18,7 +18,7 @@
 !DWARF4: [[ELEM7]] = !DISubrange(lowerBound: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 368, DW_OP_deref), upperBound: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 408, DW_OP_deref), stride: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 400, DW_OP_deref, DW_OP_push_object_address, DW_OP_plus_uconst, 24, DW_OP_deref, DW_OP_mul))
 
 
-!DWARF5: call void @llvm.dbg.value(metadata i64* %ararray, metadata [[DLOC:![0-9]+]], metadata !DIExpression())
+!DWARF5: call void @llvm.dbg.value(metadata ptr %ararray, metadata [[DLOC:![0-9]+]], metadata !DIExpression())
 !DWARF5: !DILocalVariable(name: "ararray"
 !DWARF5-SAME: arg: 2
 !DWARF5-SAME: type: [[ARTYPE:![0-9]+]])
