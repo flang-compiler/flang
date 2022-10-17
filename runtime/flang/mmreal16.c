@@ -46,9 +46,9 @@ void ftn_mtaxtb_real16_(__POINT_T *, __POINT_T *, __POINT_T *,
                         __POINT_T *);
 
 void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
-                                      __POINT_T ncb, __POINT_T kab, long double *alpha,
-                                      long double a[], __POINT_T lda, long double b[],
-                                      __POINT_T ldb, long double *beta, long double c[],
+                                      __POINT_T ncb, __POINT_T kab, float128_t *alpha,
+                                      float128_t a[], __POINT_T lda, float128_t b[],
+                                      __POINT_T ldb, float128_t *beta, float128_t c[],
                                       __POINT_T ldc)
 
 {
@@ -81,10 +81,10 @@ void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
 
   int colsa, rowsa, rowsb, colsb;
   int tindex = 0;
-  long double buffera[SMALL_ROWSA * SMALL_ROWSB];
-  long double bufferb[SMALL_COLSB * SMALL_ROWSB];
-  long double temp;
-  long double calpha, cbeta;
+  float128_t buffera[SMALL_ROWSA * SMALL_ROWSB];
+  float128_t bufferb[SMALL_COLSB * SMALL_ROWSB];
+  float128_t temp;
+  float128_t calpha, cbeta;
   /*
    * Small matrix multiply variables
    */
@@ -136,7 +136,7 @@ void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
       astrt = 0;
       bstrt = 0;
       cstrt = 0;
-      if (cbeta == (long double)0.0) {
+      if (cbeta == (float128_t)0.0) {
         for (i = 0; i < rowsa; i++) {
           /* Transpose the a row of the a matrix */
           andx = astrt;
@@ -148,7 +148,7 @@ void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
           astrt++;
           cndx = cstrt;
           for (j = 0; j < colsb; j++) {
-            temp = (long double)0.0;
+            temp = (float128_t)0.0;
             bndx = bstrt;
             for (k = 0; k < rowsb; k++)
               temp += buffera[k] * b[bndx++];
@@ -171,7 +171,7 @@ void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
           astrt++;
           cndx = cstrt;
           for (j = 0; j < colsb; j++) {
-            temp = (long double)0.0;
+            temp = (float128_t)0.0;
             bndx = bstrt;
             for (k = 0; k < rowsb; k++)
               temp += buffera[k] * b[bndx++];
@@ -189,12 +189,12 @@ void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
       bndx = 0;
       cstrt = 0;
       andx = 0;
-      if (cbeta == (long double)0.0) {
+      if (cbeta == (float128_t)0.0) {
         for (j = 0; j < colsb; j++) {
           cndx = cstrt;
           for (i = 0; i < rowsa; i++) {
             /* Matrix a need not be transposed */
-            temp = (long double)0.0;
+            temp = (float128_t)0.0;
             for (k = 0; k < rowsb; k++)
               temp += a[andx + k] * b[bndx + k];
             c[cndx] = calpha * temp;
@@ -211,7 +211,7 @@ void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
           cndx = cstrt;
           for (i = 0; i < rowsa; i++) {
             /* Matrix a need not be transposed */
-            temp = (long double)0.0;
+            temp = (float128_t)0.0;
             for (k = 0; k < rowsb; k++)
               temp += a[andx + k] * b[bndx + k];
             c[cndx] = calpha * temp + cbeta * c[cndx];
@@ -245,7 +245,7 @@ void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
 
       astrt = 0;
       cstrt = 0;
-      if (cbeta == (long double)0.0) {
+      if (cbeta == (float128_t)0.0) {
         for (i = 0; i < rowsa; i++) {
           /* Transpose the a row of the a matrix */
           andx = astrt;
@@ -257,7 +257,7 @@ void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
           cndx = cstrt;
           bndx = 0;
           for (j = 0; j < colsb; j++) {
-            temp = (long double)0.0;
+            temp = (float128_t)0.0;
             for (k = 0; k < rowsb; k++)
               temp += buffera[k] * bufferb[bndx++];
             c[cndx] = temp;
@@ -278,7 +278,7 @@ void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
           cndx = cstrt;
           bndx = 0;
           for (j = 0; j < colsb; j++) {
-            temp = (long double)0.0;
+            temp = (float128_t)0.0;
             for (k = 0; k < rowsb; k++)
               temp += buffera[k] * bufferb[bndx++];
             c[cndx] = temp + cbeta * c[cndx];
@@ -308,12 +308,12 @@ void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
       andx = 0;
       cstrt = 0;
       bndx = 0;
-      if (cbeta == (long double)0.0) {
+      if (cbeta == (float128_t)0.0) {
         for (i = 0; i < colsb; i++) {
           /* Matrix a need not be transposed */
           cndx = cstrt;
           for (j = 0; j < rowsa; j++) {
-            temp = (long double)0.0;
+            temp = (float128_t)0.0;
             for (k = 0; k < rowsb; k++)
               temp += a[andx + k] * bufferb[bndx + k];
             c[cndx] = temp;
@@ -329,7 +329,7 @@ void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
           /* Matrix a need not be transposed */
           cndx = cstrt;
           for (j = 0; j < rowsa; j++) {
-            temp = (long double)0.0;
+            temp = (float128_t)0.0;
             for (k = 0; k < rowsb; k++)
               temp += a[andx + k] * bufferb[bndx + k];
             c[cndx] = temp + cbeta * c[cndx];
