@@ -15,6 +15,36 @@
 #define SMALL_ROWSB 10
 #define SMALL_COLSB 10
 
+/* C prototypes for external Fortran functions */
+void ftn_mvmul_real16_(int *, __POINT_T *, __POINT_T *, 
+                      float128_t *, float128_t *,
+                      __POINT_T *, float128_t *, 
+                      float128_t *, float128_t *);
+void ftn_vmmul_real16_(int *, __POINT_T *, __POINT_T *, 
+                      float128_t *, float128_t *,
+                      float128_t *, __POINT_T *, 
+                      float128_t *, float128_t *);
+void ftn_mnaxnb_real16_(__POINT_T *, __POINT_T *, __POINT_T *, 
+                      float128_t *, float128_t *, 
+                      __POINT_T *, float128_t *, __POINT_T *,
+                      float128_t *, float128_t *, 
+                      __POINT_T *);
+void ftn_mnaxtb_real16_(__POINT_T *, __POINT_T *, __POINT_T *, 
+                        float128_t *, float128_t *, 
+                        __POINT_T *, float128_t *, __POINT_T *,
+                        float128_t *, float128_t *, 
+                        __POINT_T *);
+void ftn_mtaxnb_real16_(__POINT_T *, __POINT_T *, __POINT_T *, 
+                        float128_t *, float128_t *, 
+                        __POINT_T *, float128_t *, __POINT_T *,
+                        float128_t *, float128_t *, 
+                        __POINT_T *);
+void ftn_mtaxtb_real16_(__POINT_T *, __POINT_T *, __POINT_T *, 
+                        float128_t *, float128_t *, 
+                        __POINT_T *, float128_t *, __POINT_T *,
+                        float128_t *, float128_t *, 
+                        __POINT_T *);
+
 void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
                                       __POINT_T ncb, __POINT_T kab, long double *alpha,
                                       long double a[], __POINT_T lda, long double b[],
@@ -54,9 +84,6 @@ void ENTF90(MMUL_REAL16, mmul_real16)(int ta, int tb, __POINT_T mra,
   long double buffera[SMALL_ROWSA * SMALL_ROWSB];
   long double bufferb[SMALL_COLSB * SMALL_ROWSB];
   long double temp;
-  void ftn_mvmul_real16_(), ftn_vmmul_real16_();
-  void ftn_mnaxnb_real16_(), ftn_mnaxtb_real16_();
-  void ftn_mtaxnb_real16_(), ftn_mtaxtb_real16_();
   long double calpha, cbeta;
   /*
    * Small matrix multiply variables
