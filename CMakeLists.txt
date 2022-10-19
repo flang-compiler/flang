@@ -408,7 +408,11 @@ if (FLANG_OPENMP_GPU_NVIDIA)
   add_definitions("-DOMP_OFFLOAD_LLVM")
 endif()
 
-if( FLANG_INCLUDE_TESTS )
+if(FLANG_INCLUDE_TESTS)
+  if(COMMAND umbrella_lit_testsuite_begin)
+    umbrella_lit_testsuite_begin(check-all)
+  endif()
+
 #  if(EXISTS ${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include/gtest/gtest.h)
 #    add_subdirectory(unittests)
 #    list(APPEND FLANG_TEST_DEPS FlangUnitTests)
@@ -419,19 +423,23 @@ if( FLANG_INCLUDE_TESTS )
   add_subdirectory(test)
 
   if(FLANG_BUILT_STANDALONE)
-    # Add a global check rule now that all subdirectories have been traversed
-    # and we know the total set of lit testsuites.
-    get_property(LLVM_LIT_TESTSUITES GLOBAL PROPERTY LLVM_LIT_TESTSUITES)
-    get_property(LLVM_LIT_PARAMS GLOBAL PROPERTY LLVM_LIT_PARAMS)
-    get_property(LLVM_LIT_DEPENDS GLOBAL PROPERTY LLVM_LIT_DEPENDS)
-    get_property(LLVM_LIT_EXTRA_ARGS GLOBAL PROPERTY LLVM_LIT_EXTRA_ARGS)
-    add_lit_target(check-all
-      "Running all regression tests"
-      ${LLVM_LIT_TESTSUITES}
-      PARAMS ${LLVM_LIT_PARAMS}
-      DEPENDS ${LLVM_LIT_DEPENDS}
-      ARGS ${LLVM_LIT_EXTRA_ARGS}
+    if(COMMAND umbrella_lit_testsuite_end)
+      umbrella_lit_testsuite_end(check-all)
+    else()
+      # Add a global check rule now that all subdirectories have been traversed
+      # and we know the total set of lit testsuites.
+      get_property(LLVM_LIT_TESTSUITES GLOBAL PROPERTY LLVM_LIT_TESTSUITES)
+      get_property(LLVM_LIT_PARAMS GLOBAL PROPERTY LLVM_LIT_PARAMS)
+      get_property(LLVM_LIT_DEPENDS GLOBAL PROPERTY LLVM_LIT_DEPENDS)
+      get_property(LLVM_LIT_EXTRA_ARGS GLOBAL PROPERTY LLVM_LIT_EXTRA_ARGS)
+      add_lit_target(check-all
+        "Running all regression tests"
+        ${LLVM_LIT_TESTSUITES}
+        PARAMS ${LLVM_LIT_PARAMS}
+        DEPENDS ${LLVM_LIT_DEPENDS}
+        ARGS ${LLVM_LIT_EXTRA_ARGS}
       )
+    endif()
   endif()
 #  add_subdirectory(utils/perf-training)
 endif()
