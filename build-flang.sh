@@ -10,6 +10,7 @@ INSTALL_PREFIX="/usr/local"
 NPROC=1
 USE_CCACHE="0"
 USE_SUDO="0"
+VERBOSE=""
 
 set -e # Exit the script on first error.
 
@@ -30,9 +31,10 @@ function print_usage {
     echo "  -n  Number of parallel jobs. Default: 1";
     echo "  -c  Use ccache. Default: 0 - do not use ccache";
     echo "  -s  Use sudo to install. Default: 0 - do not use sudo";
+    echo "  -v  Enable verbose output";
 }
 
-while getopts "t:d:p:n:c?s?" opt; do
+while getopts "t:d:p:n:c?s?v" opt; do
     case "$opt" in
         t) TARGET=$OPTARG;;
         d) BUILD_TYPE=$OPTARG;;
@@ -40,6 +42,7 @@ while getopts "t:d:p:n:c?s?" opt; do
         n) NPROC=$OPTARG;;
         c) USE_CCACHE="1";;
         s) USE_SUDO="1";;
+        v) VERBOSE="1";;
         ?) print_usage; exit 0;;
     esac
 done
@@ -60,8 +63,12 @@ fi
 # Build and install libpgmath
 cd runtime/libpgmath
 mkdir -p build && cd build
+if [ -n "$VERBOSE" ]; then
+  set -x
+fi
 cmake $CMAKE_OPTIONS ..
-make -j$NPROC
+set +x
+make -j$NPROC VERBOSE=$VERBOSE
 if [ $USE_SUDO == "1" ]; then
   echo "Install with sudo"
   sudo make install
@@ -74,6 +81,9 @@ cd ../../..
 
 # Build and install flang
 mkdir -p build && cd build
+if [ -n "$VERBOSE" ]; then
+  set -x
+fi
 cmake $CMAKE_OPTIONS \
       -DCMAKE_Fortran_COMPILER=$INSTALL_PREFIX/bin/flang \
       -DCMAKE_Fortran_COMPILER_ID=Flang \
@@ -81,7 +91,8 @@ cmake $CMAKE_OPTIONS \
       -DFLANG_LLVM_EXTENSIONS=ON \
       -DWITH_WERROR=ON \
       ..
-make -j$NPROC
+set +x
+make -j$NPROC VERBOSE=$VERBOSE
 if [ $USE_SUDO == "1" ]; then
   echo "Install with sudo"
   sudo make install
