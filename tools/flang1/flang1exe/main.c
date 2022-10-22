@@ -634,6 +634,13 @@ init(int argc, char *argv[])
   errini();
   gbl.curr_file = NULL;
   gbl.fn = NULL;
+
+#if defined(TARGET_SUPPORTS_QUADFP)
+  /* See tools/flang1/utils/machar/machar.n for info on machine type 3.
+     This should be called before dtypeinfo is initialized by init_chartab. */
+  flg.x[45] = 3;
+#endif
+
   sym_init();
   interf_init();
   BZERO(&sem, SEM, 1);
