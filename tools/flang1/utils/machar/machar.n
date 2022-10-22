@@ -276,8 +276,9 @@ lw(1n) lfCW | l | l | l | l | l | l | l | l.
 .lp
 The fourth table is for machine
 .MA 3
-which is a Fortran-90 target with integer(1), (2), (4), (8) integer kinds,
-real(4), (8), and (16), complex(8), (16) and (32).
+which is a Fortran-90 target with integer kinds (1), (2), (4), and (8),
+real kinds (4), (8), and (16), and complex kinds (4), (8) and (16),
+and with 8-byte pointers, e.g. AArch64.
 .lp
 The data types, their sizes, and alignment requirements for this compiler and
 target machine are listed in the following table.
@@ -297,20 +298,20 @@ lw(1n) lfCW | l | l | l | l | l | l | l | l.
 %TY_SINT%2%1%16%0%reg0%Short Integer%integer(2)%2%
 %TY_INT%4%3%32%0%reg0%Integer%integer%4%
 %TY_INT8%8%7%64%0%reg2%Integer*8%integer(8)%8%
-%TY_HALF%2%1%16%0%reg1%Floating Point Half%real%2%
-%TY_REAL%4%3%32%0%reg1%Floating Point Real%real%4%
-%TY_DBLE%8%7%64%0%reg2%Double Precision Real%double precision%8%
+%TY_HALF%2%1%16%0%reg1%Half Precision Real%real(2)%2%
+%TY_REAL%4%3%32%0%reg1%Single Precision Real%real%4%
+%TY_DBLE%8%7%64%0%reg2%Double Precision Real%real(8)%8%
 %TY_QUAD%16%15%128%0%reg2%Quad Precision Real%real(16)%16%
-%TY_HCMPLX%4%1%32%0%reg2%Half Complex%half complex%2%
-%TY_CMPLX%8%3%64%0%reg2%Complex%complex%4%
+%TY_HCMPLX%4%1%32%0%reg2%Half Precision Complex%half complex%2%
+%TY_CMPLX%8%3%64%0%reg2%Single Precision Complex%complex%4%
 %TY_DCMPLX%16%7%128%0%reg3%Double Precision Complex%complex(8)%8%
-%TY_QCMPLX%16%7%128%0%reg3%Quad Precision Complex%complex(16)%16%
+%TY_QCMPLX%32%15%256%0%reg3%Quad Precision Complex%complex(16)%16%
 %TY_BLOG%1%0%8%0%reg0%Byte Logical%logical(1)%1%
 %TY_SLOG%2%1%16%0%reg0%Short Logical%logical(2)%2%
 %TY_LOG%4%3%32%0%reg0%Logical%logical%4%
 %TY_LOG8%8%7%64%0%reg2%Logical*8%logical(8)%8%
 %TY_CHAR%1%0%8%0%mem2%Character%character%1%
-%TY_PTR%4%3%32%0%reg0%Address of%%%
+%TY_PTR%8%7%64%0%reg0%Address of%%%
 %TY_NCHAR%2%1%16%0%mem2%Kanji Character String%ncharacter%2%
 .TE
 .)b
