@@ -1460,11 +1460,12 @@ void CheckDecl(int);
   }
 
 #define DOCHK(sptr) \
-  if (DOVARG(sptr)) \
+  if (DOVARG(sptr)) { \
     if (sem.doconcurrent_symavl) \
       error(1053, ERR_Severe, gbl.lineno, "DO CONCURRENT", CNULL); \
     else \
-      error(115, 2, gbl.lineno, SYMNAME(sptr), CNULL);
+      error(115, 2, gbl.lineno, SYMNAME(sptr), CNULL); \
+  }
 
 #define IN_MODULE (sem.mod_cnt && gbl.internal == 0)
 #define IN_MODULE_SPEC (sem.mod_cnt && gbl.currsub == 0)
