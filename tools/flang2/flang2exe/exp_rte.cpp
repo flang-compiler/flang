@@ -1422,11 +1422,10 @@ handle_bindC_func_ret(int func, finfo_t *pf)
 static bool
 process_end_of_list(SPTR func, SPTR osym, int *nlens, DTYPE argdtype)
 {
-  if (needlen(osym, func) &&
-          (DTYG(argdtype) == TY_CHAR || DTYG(argdtype) == TY_NCHAR)
-      ||
-      (IS_PROC_DESCRG(osym) && !HAS_OPT_ARGSG(func) && func_has_char_args(func))
-  ) {
+  if ((needlen(osym, func) &&
+       (DTYG(argdtype) == TY_CHAR || DTYG(argdtype) == TY_NCHAR)) ||
+      (IS_PROC_DESCRG(osym) && !HAS_OPT_ARGSG(func) &&
+       func_has_char_args(func))) {
     parg[*nlens] = osym;
     *nlens += 1;
     return true;

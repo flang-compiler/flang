@@ -1702,8 +1702,8 @@ restartConcur:
       BIH_NOSIMD(bih) = true;
     else if (XBIT(19, 0x400))
       BIH_SIMD(bih) = true;
-    if ((!XBIT(69, 0x100000)) && BIH_NODEPCHK(bih) &&
-        (!ignore_simd_block(bih)) || XBIT(191, 0x4)) {
+    if ((!XBIT(69, 0x100000) && BIH_NODEPCHK(bih) && !ignore_simd_block(bih)) ||
+        XBIT(191, 0x4)) {
       fix_nodepchk_flag(bih);
       mark_rw_access_grp(bih);
     } else {
@@ -1790,9 +1790,9 @@ restartConcur:
           ll_extend_md_node(cpu_llvm_module, loop_md, loop_line_end);
         }
 
-        if ((!XBIT(69, 0x100000)) &&
-            (BIH_NODEPCHK(bih) && (!BIH_NODEPCHK2(bih)) &&
-            (!ignore_simd_block(bih))) || BIH_SIMD(bih)) {
+        if ((!XBIT(69, 0x100000) && BIH_NODEPCHK(bih) && !BIH_NODEPCHK2(bih) &&
+             !ignore_simd_block(bih)) ||
+            BIH_SIMD(bih)) {
           if (LL_MDREF_IS_NULL(loop_md))
             loop_md = cons_loop_id_md();
 
@@ -13398,9 +13398,10 @@ process_formal_arguments(LL_ABI_Info *abi)
     bool ftn_byval = false;
 
     assert(arg->sptr, "Unnamed function argument", i, ERR_Fatal);
-    if (!ll_feature_debug_info_ver90(&cpu_llvm_module->ir))
+    if (!ll_feature_debug_info_ver90(&cpu_llvm_module->ir)) {
       assert(SNAME(arg->sptr) == NULL, "Argument sptr already processed",
              arg->sptr, ERR_Fatal);
+    }
     if ((SCG(arg->sptr) != SC_DUMMY) && formalsMidnumNotDummy(arg->sptr)) {
       process_sptr(arg->sptr);
       continue;

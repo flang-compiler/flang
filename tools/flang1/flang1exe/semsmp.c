@@ -6658,8 +6658,9 @@ do_firstprivate(int istask)
     if (uplevel != NULL)
       uplevel = llmp_has_uplevel(uplevel->parent);
     if (uplevel != NULL) {
-      if(maxfp < uplevel->vals_count)
-          NEED(maxfp, fpsptr, int, maxfp, uplevel->vals_count);
+      if (maxfp < uplevel->vals_count) {
+        NEED(maxfp, fpsptr, int, maxfp, uplevel->vals_count);
+      }
       maxfp = uplevel->vals_count;
       for (i = 0; i < uplevel->vals_count; ++i) {
         sptr = uplevel->vals[i];
