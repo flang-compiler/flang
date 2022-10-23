@@ -90,17 +90,17 @@ jobs:
 
       - name: Copy llvm-lit
         run: |
-          cp ../../classic-flang-llvm-project/build/bin/llvm-lit build/bin/.
+          cp ../../classic-flang-llvm-project/build/bin/llvm-lit build/flang/bin/.
 
       - name: Test flang
         run: |
-          cd build
+          cd build/flang
           make check-all
 
       # Archive documentation just once, for the fastest job.
       - if: matrix.cc == 'clang' && matrix.version == '11'
         run: |
-          cd build/docs/web
+          cd build/flang/docs/web
           cp -r html/ ../../.. # copy to a place where Upload can find it.
 
       # Upload docs just once, for the fastest job.
