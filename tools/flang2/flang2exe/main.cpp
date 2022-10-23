@@ -544,6 +544,10 @@ init(int argc, char *argv[])
                           * initialize error and symbol table modules in case error messages are
                           * issued:
                           */
+
+  /* Fill xflags array with zeros */
+  memset(flg.x, 0, sizeof(flg.x));
+
   errini();
   if (argc <= 1)
     errfatal((error_code_t)1);
@@ -618,8 +622,7 @@ init(int argc, char *argv[])
   register_string_arg(arg_parser, "vh", &(version.host), "");
 
   /* x flags */
-  register_xflag_arg(arg_parser, "x", flg.x,
-                     (sizeof(flg.x) / sizeof(flg.x[0])));
+  register_xflag_arg(arg_parser, "x", flg.x);
   register_yflag_arg(arg_parser, "y", flg.x);
   /* Debug flags */
   register_qflag_arg(arg_parser, "q", flg.dbg,
