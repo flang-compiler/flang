@@ -4003,7 +4003,7 @@ update_shape_info_expr(int arg, int ast)
     aptr = (int)A_LOPG(ast);
     sptr = A_SPTRG(aptr);
     if (sptr == arg) {
-      if (shd = A_SHAPEG(aptr)) {
+      if ((shd = A_SHAPEG(aptr))) {
         nd = SHD_NDIM(shd);
         for (i = 0; i < nd; ++i)
           SHD_LWB(shd, i) = astb.bnd.one;
@@ -4051,7 +4051,7 @@ update_shape_info(int arg)
       continue;
     }
 
-    if (shd = A_SHAPEG(aptr)) {
+    if ((shd = A_SHAPEG(aptr))) {
       nd = SHD_NDIM(shd);
       for (i = 0; i < nd; ++i)
         SHD_LWB(shd, i) = astb.bnd.one;
