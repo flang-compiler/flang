@@ -240,6 +240,9 @@ DCMP	ilm	ilm
 DCMPLX	ilm	ilm
 DCON	sym
 DCONJG	ilm
+#ifdef TARGET_SUPPORTS_QUADFP
+QCONJG	ilm
+#endif
 DCOS	ilm
 DCOSD	ilm
 #ifdef TARGET_SUPPORTS_QUADFP
@@ -706,6 +709,21 @@ UXLNOT8    ilm
 MP_BEGIN_DIR
 MP_END_DIR
 #ifdef TARGET_SUPPORTS_QUADFP
+CQCON	sym
+CQST	ilm	ilm
+CQLD	ilm
+CQNEG	ilm
+CQADD	ilm	ilm
+CQSUB	ilm	ilm
+CQMUL	ilm	ilm
+CQDIV	ilm	ilm
+CQCMP	ilm	ilm
+QCMPLX	ilm	ilm
+QREAL	ilm
+QIMAG	ilm
+CQTOCQ	ilm	ilm
+CQTOI	ilm	ilm
+CQTOK	ilm	ilm
 
 QFLD	ilm
 QFST	ilm	ilm
@@ -746,6 +764,15 @@ QUFUNC/QFUNC	num	sym	args
 QUFUNCA/QFUNCA	num	num	ilm	args
 PQUFUNCA/PQFUNCA	num	num	sym	ilm	args
 QUVFUNCA/QVFUNCA	num	num	sym	ilm	sym	args
+CQFUNC	num	sym	ilms
+CQFUNCA	num	num	ilm	ilms
+PCQFUNCA	num	num	sym	ilm	ilms
+CQVFUNCA	num	num	sym	ilm	sym	ilms
+CQUFUNC/CQFUNC	num	sym	args
+CQUFUNCA/CQFUNCA	num	num	ilm	args
+PCQUFUNCA/PCQFUNCA	num	num	sym	ilm	args
+CQUVFUNCA/CQVFUNCA	num	num	sym	ilm	sym	args
+
 QABS    ilm
 QFLOOR  ilm
 QCEIL   ilm
