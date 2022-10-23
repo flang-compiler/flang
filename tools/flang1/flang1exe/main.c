@@ -622,6 +622,9 @@ init(int argc, char *argv[])
   };
   time_t now;
 
+  /* Fill xflags array with zeros */
+  memset(flg.x, 0, sizeof(flg.x));
+
   flg.freeform = -1;
   file_suffix = ".f90"; /* default suffix for source files */
   /*
@@ -726,8 +729,7 @@ init(int argc, char *argv[])
   register_string_list_arg(arg_parser, "moddir", module_dirs);
 
   /* x flags */
-  register_xflag_arg(arg_parser, "x", flg.x,
-                     (sizeof(flg.x) / sizeof(flg.x[0])));
+  register_xflag_arg(arg_parser, "x", flg.x);
   register_yflag_arg(arg_parser, "y", flg.x);
   /* Debug flags */
   register_qflag_arg(arg_parser, "q", flg.dbg,

@@ -136,21 +136,19 @@ void register_qflag_arg(arg_parser_t *parser, const char *arg_name, int *qflags,
 /** \brief Register X version of "x flag" argument
  *
  * "x" command line switch sets a mask in x flags (features) array that is
- * consumed by other parts of compiler. This function also fills the array with
- * zeros.
+ * consumed by other parts of compiler.
  *
  * \param parser         argument parser data structure
  * \param arg_name       name of the argument (minus the '-')
  * \param xflags         pointer to x flags
- * \param xflags_size    number of elelemts in xflags array
  */
-void register_xflag_arg(arg_parser_t *parser, const char *arg_name, int *xflags,
-                        const int xflags_size);
+void register_xflag_arg(arg_parser_t *parser, const char *arg_name,
+                        int *xflags);
 
 /** \brief Register Y version of "x flag" argument
  *
  * "y" command line switch clears a mask in features array, complementing what
- * "x" flag does. Note: this function is not initialize xflags array.
+ * "x" flag does.
  *
  * \param parser         argument parser data structure
  * \param arg_name       name of the argument (minus the '-')
