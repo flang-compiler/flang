@@ -268,6 +268,14 @@ Double-precision complex constant.
 .SI st direct fst lat(2)
 .SI direct fadd fmul lat(2)
 
+.IL QCMPLXCON sym
+Quad-precision complex constant.
+.AT cons null cq cse
+.CG notCG
+.SI ld double fadd fmul fst lat(3)
+.SI st direct fst lat(2)
+.SI direct fadd fmul lat(2)
+
 .IL ACEXT sym nme
 Label address.
 \'sym' is address constant for label symbol.
@@ -324,6 +332,14 @@ Load single precision complex value.  'stc' is not used.
 Load double precision complex value.  'stc' is not used.
 .AT load null cd
 .CG "movups" move sse_avx
+.SI ld double fadd fmul fst lat(3)
+.SI st direct fst lat(2)
+.SI direct fadd fmul lat(2)
+
+.IL LDQCMPLX arlnk nme stc
+Load quad precision complex value.  'stc' is not used.
+.AT load null cq
+.CG notCG
 .SI ld double fadd fmul fst lat(3)
 .SI st direct fst lat(2)
 .SI direct fadd fmul lat(2)
@@ -414,6 +430,11 @@ Double-precision complex negate.
 .AT arth null cd cse
 .CG notAILI
 
+.IL QCMPLXNEG cqlnk
+Quad-precision complex negate.
+.AT arth null cq cse
+.CG notAILI
+
 .IL FXOR splnk splnk
 May be used to implement FNEG operation.  This operation is non-commutative so
 we can ensure that a memory operand is not used.
@@ -452,6 +473,11 @@ Single-precision complex conjugate.
 Double-precision complex conjugate.
 .AT arth null cd cse
 .CG "xorpd"
+
+.IL QCMPLXCONJG cqlnk
+Quad-precision complex conjugate.
+.AT arth null cq cse
+.CG "xorpq"
 
 .IL DXOR dplnk dplnk
 May be used to implement DNEG operation.
@@ -1332,6 +1358,12 @@ Double-precision complex addition.
 .CG "addpd" sse_avx
 .SI double fadd lat(5:7)
 
+.IL QCMPLXADD cqlnk cqlnk
+Quad-precision complex addition.
+.AT arth comm cq cse
+.CG notCG
+.SI double fadd lat(5:7)
+
 .IL ISUB irlnk irlnk
 Signed 32-bit integer subtraction.
 .AT arth null ir cse
@@ -1388,6 +1420,12 @@ Single-precision complex subtraction.
 Double-precision complex subtraction.
 .AT arth null cd cse
 .CG "subpd" sse_avx
+.SI double fadd lat(7:5)
+
+.IL QCMPLXSUB cqlnk cqlnk
+Quad-precision complex subtraction.
+.AT arth null cq cse
+.CG notCG
 .SI double fadd lat(7:5)
 
 .IL IMUL irlnk irlnk
@@ -1452,6 +1490,11 @@ Single-complex multiply.
 Double-complex multiply.
 .AT arth comm cd cse
 .CG sse_avx asm_special
+
+.IL QCMPLXMUL cqlnk cqlnk
+Quad-complex multiply.
+.AT arth comm cq cse
+.CG notCG
 
 .IL IDIV irlnk irlnk
 Signed integer divide.
@@ -2844,6 +2887,16 @@ Form a double complex value out of two double precision real values, imaginary i
 .AT other null cd cse
 .CG sse_avx asm_special
 
+.IL QPQP2QCMPLX qplnk qplnk
+Form a quad complex value out of two quad precision real values.
+.AT other null cq cse
+.CG notCG
+
+.IL QPQP2QCMPLXI0 qplnk
+Form a quad complex value out of two quad precision real values, imaginary is 0.
+.AT other null cq cse
+.CG notCG
+
 .IL SCMPLX2IMAG cslnk
 Return single precision imaginary part of a single complex value.
 .AT other null sp cse
@@ -2853,6 +2906,11 @@ Return single precision imaginary part of a single complex value.
 Return double precision imaginary part of a double complex value.
 .AT other null dp cse
 .CG sse_avx asm_special
+
+.IL QCMPLX2IMAG cqlnk
+Return quad precision imaginary part of a quad complex value.
+.AT other null qp cse
+.CG notCG
 
 .IL SCMPLX2REAL cslnk
 Return single precision real part of a single complex value.
@@ -2864,6 +2922,10 @@ Return double precision real part of a double complex value.
 .AT other null dp cse
 .CG sse_avx asm_special
 
+.IL QCMPLX2REAL cqlnk
+Return quad precision real part of a quad complex value.
+.AT other null qp cse
+.CG notCG
 .IL MVQ qplnk qp
 This ili represents a m128 function return value.
 .AT move null trm
