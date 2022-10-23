@@ -60,9 +60,9 @@ jobs:
       - name: Copy llvm-lit
         run: |
           cd ${{ env.build_path }}/flang
-          cp /home/root/classic-flang-llvm-project/build/bin/llvm-lit build/bin/.
+          cp /home/root/classic-flang-llvm-project/build/bin/llvm-lit build/flang/bin/.
 
       - name: Test flang
         run: |
-          cd ${{ env.build_path }}/flang/build
+          cd ${{ env.build_path }}/flang/build/flang
           make check-all
