@@ -183,6 +183,8 @@ Cast a complex to integer (C)
 .AT spec
 .IL CDTOI arth lnk lnk
 .AT spec dcmplx
+.IL CQTOI arth lnk lnk
+.AT spec qcmplx
 .IL UITOC arth lnk
 Convert unsigned integer to unsigned character.
 .OP ICON t1 =i'255
@@ -212,6 +214,8 @@ Convert unsigned to double.
 .AT spec
 .IL CDTOCD arth lnk lnk
 .AT spec dcmplx
+.IL CQTOCQ arth lnk lnk
+.AT spec qcmplx
 .IL FIX arth lnk
 Convert real number to integer (INT and IFIX intrinsics).
 .OP FIX r p1
@@ -229,29 +233,38 @@ Convert double precision floating point number to
 unsigned integer.
 .OP DFIXU r p1
 .IL REAL arth lnk
-Returns real part of complex number (single precision).
+Returns real part of a complex value (single precision).
 .AT spec
 .OP MVSP r rp1 iv-1
 .IL DREAL arth lnk
 Returns double precision real part of a double complex value.
 .AT spec
 .OP MVDP r rp1 iv-1
+.IL QREAL arth lnk
+Returns quad precision real part of a quad complex value.
+.AT spec
 .IL IMAG arth lnk
-Returns imaginary part of complex value (single precision)
+Returns imaginary part of a complex value (single precision).
 (AIMAG intrinsic).
 .AT spec
 .OP MVSP r ip1 iv-1
 .IL DIMAG arth lnk
-Returns double precision imaginary part of a double complex value
+Returns double precision imaginary part of a double complex value.
 (DIMAG intrinsic).
 .AT spec
 .OP MVDP r ip1 iv-1
+.IL QIMAG arth lnk
+Returns quad precision imaginary part of a quad complex value.
+.AT spec
 .IL CMPLX arth lnk lnk
 Form complex number out of two single precision real values.
 .AT spec
 .IL DCMPLX arth lnk lnk
 Form double complex number out of two double precision real values.
 .AT spec dcmplx
+.IL QCMPLX arth lnk lnk
+Form quad complex number out of two quad precision real values.
+.AT spec qcmplx
 .IL ICHAR fstr lnk
 Converts single character to integer.
 .AT spec
@@ -366,6 +379,11 @@ Conjugate of a double complex number.
 .AT spec dcmplx
 .OP MVDP rr rp1 iv-1
 .OP DNEG ir ip1
+.IL QCONJG arth lnk
+Conjugate of a quadruple complex number.
+.AT spec qcmplx
+.OP MVQ rr rp1 iv-1
+.OP QNEG ir ip1
 .IL SQRT arth lnk
 Square root of a single precision real number (SQRT intrinsic).
 .OP FSQRT r p1
@@ -872,6 +890,11 @@ Double complex negation.
 .AT spec dcmplx
 .OP DNEG rr rp1
 .OP DNEG ir ip1
+.IL CQNEG arth lnk
+Quad complex negation.
+.AT spec qcmplx
+.OP QNEG rr rp1
+.OP QNEG ir ip1
 .IL NOT64 arth lnk
 Bitwise negation of 64 bit value (COMPL intrinsic).
 ./" OP NOT64 r p1
@@ -976,6 +999,10 @@ p3 - mask
 .AT spec dcmplx
 .OP DADD rr rp1 rp2
 .OP DADD ir ip1 ip2
+.IL CQADD arth lnk lnk
+.AT spec qcmplx
+.OP QADD rr rp1 rp2
+.OP QADD ir ip1 ip2
 .IL PIADD arth lnk1 lnk2 sym
 Add pointer (lnk1) to integer (lnk2) creating a new pointer value.
 \'sym' locates a data type item describing the type which
@@ -1011,6 +1038,10 @@ the pointer (lnk1) points to.
 .AT spec dcmplx
 .OP DSUB rr rp1 rp2
 .OP DSUB ir ip1 ip2
+.IL CQSUB arth lnk lnk
+.AT spec qcmplx
+.OP QSUB rr rp1 rp2
+.OP QSUB ir ip1 ip2
 
 .IL PSUB arth lnk lnk sym
 Subtract two pointers (of the same type).
@@ -1074,6 +1105,14 @@ the pointer (lnk1) points to.
 .OP DMUL t1 ip1 rp2
 .OP DMUL t2 ip2 rp1
 .OP DADD ir t2 t1
+.IL CQMUL arth lnk lnk
+.AT spec qcmplx
+.OP QMUL t1 rp1 rp2
+.OP QMUL t2 ip1 ip2
+.OP QSUB rr t1 t2
+.OP QMUL t1 ip1 rp2
+.OP QMUL t2 ip2 rp1
+.OP QADD ir t2 t1
 .IL IDIV arth lnk lnk
 .OP IDIV r p1 p2
 .IL UIDIV arth lnk lnk
@@ -1094,6 +1133,8 @@ the pointer (lnk1) points to.
 .AT spec dcmplx
 .OP DDIV rr rp1 p2
 .OP DDIV ir ip1 p2
+.IL CQDIV arth lnk lnk
+.AT spec qcmplx
 .FL ITOI arth lnk lnk
 Exponentiation - integer to an integer power.
 .OP IPOWI r p1 p2
@@ -1424,6 +1465,10 @@ The value computed is 0 if equal and -1 or 1 if not equal.
 Compare two double complex numbers.
 The value computed is the same as for the ICMP ILM.
 .AT spec
+.IL CQCMP arth lnk lnk
+Compare two quad complex numbers.
+The value computed is the same as for the ICMP ILM.
+.AT spec
 .IL SCMP fstr lnk lnk
 Compare two strings.
 The value computed is the same as for the ICMP ILM.  SCMP has no
@@ -1521,6 +1566,10 @@ lnk3 - stride
 .AT spec dcmplx
 .OP DCON rr iv0
 .OP DCON ir iv0
+.IL CQCON cons sym
+.AT spec qcmplx
+.OP QCON rr iv0
+.OP QCON ir iv0
 .CL ACON cons sym
 Address constant ILM. sym is a symbol table pointer to
 an address constant.
@@ -1640,11 +1689,16 @@ Load m128
 Load m256
 .AT spec
 .IL CLD load lnk
+Load single complex
 .AT spec
 .IL CDLD load lnk
+Load double complex
 .AT spec dcmplx
+.IL CQLD load lnk
+Load quad complex
+.AT spec qcmplx
 .IL LLD load lnk
-Load logical value.
+Load logical value
 .AT spec
 .IL SLLD load lnk
 Load logical value - LOGICAL*2
@@ -1716,12 +1770,22 @@ Store the real part of a single complex
 Store the imaginary part of a single complex
 .AT spec trm
 .IL CDST store lnk lnk
+Store double complex
 .AT spec trm dcmplx
 .IL CDSTR store lnk lnk
 Store the real part of a double complex
 .AT spec trm
 .IL CDSTI store lnk lnk
 Store the imaginary part of a double complex
+.AT spec trm
+.IL CQST store lnk lnk
+Store quad complex
+.AT spec trm qcmplx
+.IL CQSTR store lnk lnk
+Store the real part of a quad complex
+.AT spec trm
+.IL CQSTI store lnk lnk
+Store the imaginary part of a quad complex
 .AT spec trm
 .IL LST store lnk lnk
 .AT spec trm
@@ -1953,6 +2017,8 @@ in the CALL statement.
 .AT spec
 .CL CDFUNC proc n lnk lnk*
 .AT spec dcmplx
+.CL CQFUNC proc n lnk lnk*
+.AT spec qcmplx
 .FL CFUNC proc n sym lnk*
 .AT spec
 .IL CFUNCA proc n stc lnk lnk*
@@ -1971,6 +2037,15 @@ Call double complex function through procedure pointer.
 .AT spec dcmplx
 .IL CDVFUNCA proc n stc sym lnk sym lnk*
 .AT spec dcmplx
+.FL CQFUNC proc n sym lnk*
+.AT spec qcmplx
+.IL CQFUNCA proc n stc lnk lnk*
+.AT spec qcmplx
+.IL PCQFUNCA proc n stc sym lnk lnk*
+Call quad complex function through procedure pointer.
+.AT spec qcmplx
+.IL CQVFUNCA proc n stc sym lnk sym lnk*
+.AT spec qcmplx
 .IL LFUNC proc n sym lnk*
 .AT spec
 .IL LFUNCA proc n stc lnk lnk*
@@ -2603,6 +2678,8 @@ Exponentiation - integer to an integer power.
 .AT spec
 .IL CDTOK intr lnk lnk
 .AT spec dcmplx
+.IL CQTOK intr lnk lnk
+.AT spec qcmplx
 .IL KCMP arth lnk lnk
 .AT spec
 .IL UKCMP arth lnk lnk

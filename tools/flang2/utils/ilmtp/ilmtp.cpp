@@ -149,6 +149,7 @@ public:
     att_types["noinlc"]            = 0x01000000;
     att_types["doubledoublecmplx"] = 0x00800000;
     att_types["float128cmplx"]     = 0x00400000;
+    att_types["qcmplx"]            = 0x00200000;
 
     // first letter must be unique */
     ilmtypes.push_back("arth");
