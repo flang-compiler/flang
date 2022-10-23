@@ -239,6 +239,9 @@ _size_of(DTYPE dtype)
   case TY_QUAD:
   case TY_CMPLX:
   case TY_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+#endif
   case TY_INT8:
   case TY_UINT8:
   case TY_LOG8:
@@ -381,6 +384,9 @@ dlen(TY_KIND dty)
   case TY_NONE:
   case TY_NUMERIC:
   case TY_QUAD:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+#endif
   case TY_REAL:
   case TY_SINT:
   case TY_SLOG:
@@ -475,6 +481,9 @@ alignment(DTYPE dtype)
   case TY_DWORD:
   case TY_DBLE:
   case TY_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+#endif
     if (constrained && !flg.dalign)
       return dtypeinfo[TY_INT].align;
     return dtypeinfo[ty].align;
@@ -1128,6 +1137,9 @@ Scale_Of(DTYPE dtype, ISZ_T *size)
 #endif
   case TY_CMPLX:
   case TY_DCMPLX:
+#ifdef TARGET_SUPPORTS_QUADFP
+  case TY_QCMPLX:
+#endif
   case TY_INT8:
   case TY_UINT8:
   case TY_LOG8:

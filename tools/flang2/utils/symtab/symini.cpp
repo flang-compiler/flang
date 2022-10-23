@@ -69,6 +69,7 @@ public:
     argtype["D"] = DT_DBLE;
     argtype["C"] = DT_CMPLX;
     argtype["CD"] = DT_DCMPLX;
+    argtype["CQ"] = DT_QCMPLX;
     argtype["SI"] = DT_SINT;
     argtype["H"] = DT_CHAR;
     argtype["N"] = DT_NUMERIC;

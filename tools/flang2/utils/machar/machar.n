@@ -159,6 +159,7 @@ lw(1n) lfCW | l | l | l | l | l | l.
 %TY_HCMPLX%4%1%32%0%mem0%half precision complex
 %TY_CMPLX%8%3%64%0%mem0%Complex
 %TY_DCMPLX%16%7%128%0%mem1%Double Precision Complex
+%TY_QCMPLX%32%15%256%0%mem1%Quad Precision Complex
 %TY_BLOG%1%0%8%0%reg0%Byte Logical
 %TY_SLOG%2%1%16%0%reg0%Short Logical
 %TY_LOG%4%3%32%0%reg0%Logical

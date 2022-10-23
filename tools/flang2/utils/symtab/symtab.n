@@ -1601,6 +1601,8 @@ SC format.
 32-bit floating point value of real part.
 .ip \f(CWTY_DCMPLX\fP
 symbol table pointer to double precision constant for real part.
+.ip \f(CWTY_QCMPLX\fP
+symbol table pointer to quad precision constant for real part.
 .ip \f(CWTY_LOG\fP
 undefined.
 .ip \f(CWTY_CHAR\fP
@@ -1639,6 +1641,8 @@ Second 32-bit word of double precision constant.
 32-bit floating point value of imaginary part.
 .ip \f(CWTY_DCMPLX\fP
 symbol table pointer to double precision constant for imaginary part.
+.ip \f(CWTY_QCMPLX\fP
+symbol table pointer to quad precision constant for imaginary part.
 .ip \f(CWTY_LOG\fP
 1 for TRUE, and 0 for FALSE.
 .ip \f(CWTY_CHAR\fP
@@ -2062,6 +2066,8 @@ or
 (2 x 32-bit).
 .TY TY_DCMPLX "double complex" CMPLX BASIC SCALAR VEC
 (2 x 64-bit).
+.TY TY_QCMPLX "quad complex" CMPLX BASIC SCALAR VEC
+(2 x 128-bit).
 .TY TY_BLOG logical*1 LOG BASIC SCALAR VEC WORD INT
 .TY TY_SLOG logical*2 LOG BASIC SCALAR VEC WORD INT
 .TY TY_LOG logical LOG BASIC SCALAR VEC WORD INT
@@ -2212,6 +2218,7 @@ on context.  Internal to the PGFTN compiler.
 .PD DT_HCMPLX "half complex" TY_HCMPLX
 .PD DT_CMPLX complex TY_CMPLX
 .PD DT_DCMPLX "double complex" TY_DCMPLX
+.PD DT_QCMPLX "quad complex" TY_QCMPLX
 .PD DT_BLOG "logical*1" TY_BLOG
 .PD DT_SLOG "logical*2" TY_SLOG
 .PD DT_LOG "logical" TY_LOG
