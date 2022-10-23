@@ -217,12 +217,8 @@ register_qflag_arg(arg_parser_t *parser, const char *arg_name, int *qflags,
 
 /** Register "x" flag argument */
 void
-register_xflag_arg(arg_parser_t *parser, const char *arg_name, int *xflags,
-                   const int xflags_size)
+register_xflag_arg(arg_parser_t *parser, const char *arg_name, int *xflags)
 {
-  /* Fill xflags array with zeros */
-  memset(xflags, 0, xflags_size * sizeof(int));
-
   add_generic_argument(parser, arg_name, ARG_XFlag, (void *)xflags);
 }
 
