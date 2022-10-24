@@ -9,4 +9,5 @@ program foo
       res1 = sin(val)
       res2 = cos(val)
       print *, res1, res2
+      print *, "PASSED" ! Check that this compiles without error.
 end program foo
