@@ -9,7 +9,7 @@
 
 build:
 	@echo ------------------------------------- building test $(TEST)
-	$(FC) $(FFLAGS) $(SRC)/$(TEST).f90 -o $(TEST).$(EXE)
+	$(FC) $(FFLAGS) -O1 $(SRC)/$(TEST).f90 -o $(TEST).$(EXE)
 
 run:
 	@echo ------------------------------------ executing test $(TEST)
