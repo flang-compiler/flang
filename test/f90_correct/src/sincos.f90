@@ -5,7 +5,7 @@
 
 program foo
       real(kind=8) :: val, res1, res2
-      read *, val
+      call random_number(val)
       res1 = sin(val)
       res2 = cos(val)
       print *, res1, res2

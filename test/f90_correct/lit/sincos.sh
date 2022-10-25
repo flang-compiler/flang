@@ -4,6 +4,6 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Shared lit script for each tests. Run bash commands that run tests with make.
-
+# REQUIRES: asserts
 # RUN: KEEP_FILES=%keep FLAGS=%flags TEST_SRC=%s MAKE_FILE_DIR=%S/.. bash %S/runmake | tee %t
 # RUN: cat %t | FileCheck %S/runmake
