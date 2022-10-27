@@ -12,6 +12,7 @@ on:
 
 jobs:
   build_flang:
+    if: github.repository_owner == 'flang-compiler'
     runs-on: self-hosted
     env:
       build_path: /home/github
