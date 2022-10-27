@@ -23,10 +23,7 @@ jobs:
     strategy:
       matrix:
         target: [AArch64]
-        cc: [gcc]
-        cpp: [g++]
-        version: [10]
-        llvm_branch: [release_13x, release_14x]
+        llvm_branch: [release_15x]
 
     steps:
       - name: Check tools
@@ -56,7 +53,6 @@ jobs:
           cd ${{ env.build_path }}/flang
           ./build-flang.sh -t ${{ matrix.target }} -p ${{ env.install_prefix }} -n `nproc --ignore=1` -v
 
-      # Copy llvm-lit
       - name: Copy llvm-lit
         run: |
           cd ${{ env.build_path }}/flang
