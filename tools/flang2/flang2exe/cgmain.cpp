@@ -13220,7 +13220,7 @@ write_target_features(void)
 INLINE static void
 write_vscale_range(void)
 {
-  if (flg.vscale_range_min && flg.vscale_range_max) {
+  if (flg.vscale_range_min) {
     char vsrange[64U];
     snprintf(vsrange, sizeof vsrange, " vscale_range(%d,%d)",
                                       flg.vscale_range_min,
