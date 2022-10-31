@@ -728,8 +728,8 @@ ll_write_local_objects(FILE *out, LL_Function *function)
       assert(object->sptr && strcmp(object->address.data, SNAME(object->sptr)), 
               "Missing local storage", object->sptr, ERR_Fatal);
       LL_Type * llt = make_lltype_from_sptr((SPTR)object->sptr);
-      fprintf(out, "\t%s = bitcast %s* %s to %s",  
-        SNAME(object->sptr), object->type->str, object->address.data, llt->str);
+      fprintf(out, "\t%s = bitcast ptr %s to %s",
+              SNAME(object->sptr), object->address.data, llt->str);
       fputc('\n', out);
     }
 #endif
@@ -738,60 +738,40 @@ ll_write_local_objects(FILE *out, LL_Function *function)
     if (XBIT(217, 0x1)) {
       name = object->address.data;
       if (ll_type_bytes(object->type) == 4) {
-        if (object->type->data_type == LL_I32) {
-          fprintf(out, "\tstore i32 %s, i32* %s, align 4\n",
-                  POWER_STACK_32_BIT_NAN, name);
-        } else {
-          fprintf(out, "\t%s.temp = bitcast %s* %s to i32*\n", name,
-                  object->type->str, name);
-          fprintf(out, "\tstore i32 %s, i32* %s.temp, align 4\n",
-                  POWER_STACK_32_BIT_NAN, name);
-        }
+        fprintf(out, "\tstore i32 %s, ptr %s, align 4\n",
+                POWER_STACK_32_BIT_NAN, name);
       } else if (ll_type_bytes(object->type) == 8) {
-        if (object->type->data_type == LL_I64) {
-          fprintf(out, "\tstore i64 %s, i64* %s, align 8\n",
-                  POWER_STACK_64_BIT_NAN, name);
-        } else {
-          fprintf(out, "\t%s.temp = bitcast %s* %s to i64*\n", name,
-                  object->type->str, name);
-          fprintf(out, "\tstore i64 %s, i64* %s.temp, align 8\n",
-                  POWER_STACK_64_BIT_NAN, name);
-        }
+        fprintf(out, "\tstore i64 %s, ptr %s, align 8\n",
+                POWER_STACK_64_BIT_NAN, name);
       } else if (ll_type_bytes(object->type) > 4) {
-        fprintf(out, "\t%s.temp = bitcast %s* %s to i32*\n", name,
-                object->type->str, name);
-        fprintf(out, "\t%s.ptr = alloca i32*, align 4\n", name);
+        fprintf(out, "\t%s.ptr = alloca ptr, align 4\n", name);
         fprintf(out, "\t%s.count = alloca i32, align 4\n", name);
-        fprintf(out, "\tstore i32 %d, i32* %s.count, align 4\n",
+        fprintf(out, "\tstore i32 %d, ptr %s.count, align 4\n",
                 (int)(ll_type_bytes(object->type) / 4), name);
-        fprintf(out, "\t%s.temp0 = bitcast i32* %s.temp to i8*\n", name, name);
-        fprintf(out, "\t%s.temp1 = bitcast i32** %s.ptr to i8**\n", name, name);
-        fprintf(out, "\tstore i8* %s.temp0, i8** %s.temp1, align 4\n", name,
+        fprintf(out, "\tstore ptr %s, ptr %s.ptr, align 4\n", name,
                 name);
         fprintf(out, "\tbr label %%L.st.init.%04d.1\n", curr_nan_label_count);
         fprintf(out, "L.st.init.%04d.1:\n", curr_nan_label_count);
-        fprintf(out, "\t%s.temp2 = load i32, i32* %s.count, align 4\n", name,
+        fprintf(out, "\t%s.temp = load i32, ptr %s.count, align 4\n", name,
                 name);
-        fprintf(out, "\t%s.temp3 = icmp sle i32 %s.temp2, 0\n", name, name);
+        fprintf(out, "\t%s.temp0 = icmp sle i32 %s.temp, 0\n", name, name);
         fprintf(out,
-                "\tbr i1 %s.temp3, label %%L.st.init.%04d.0,"
+                "\tbr i1 %s.temp0, label %%L.st.init.%04d.0,"
                 " label %%L.st.init.%04d.2\n",
                 name, curr_nan_label_count + 1, curr_nan_label_count);
         fprintf(out, "L.st.init.%04d.2:\n", curr_nan_label_count);
-        fprintf(out, "\t%s.temp4 = load i32*, i32** %s.ptr, align 4\n", name,
+        fprintf(out, "\t%s.temp1 = load ptr, ptr %s.ptr, align 4\n", name,
                 name);
-        fprintf(out, "\tstore i32 %s, i32* %s.temp4, align 4\n",
+        fprintf(out, "\tstore i32 %s, ptr %s.temp1, align 4\n",
                 POWER_STACK_32_BIT_NAN, name);
-        fprintf(out, "\t%s.temp5 = bitcast i32* %s.temp4 to i8*\n", name, name);
-        fprintf(out, "\t%s.temp6 = getelementptr i8, i8* %s.temp5, i32 4\n",
+        fprintf(out, "\t%s.temp2 = getelementptr i8, ptr %s.temp1, i32 4\n",
                 name, name);
-        fprintf(out, "\t%s.temp7 = bitcast i32** %s.ptr to i8**\n", name, name);
-        fprintf(out, "\tstore i8* %s.temp6, i8** %s.temp7, align 4\n", name,
+        fprintf(out, "\tstore ptr %s.temp2, ptr %s.ptr, align 4\n", name,
                 name);
-        fprintf(out, "\t%s.temp8 = load i32, i32* %s.count, align 4\n", name,
+        fprintf(out, "\t%s.temp3 = load i32, ptr %s.count, align 4\n", name,
                 name);
-        fprintf(out, "\t%s.temp9 = sub i32 %s.temp8, 1\n", name, name);
-        fprintf(out, "\tstore i32 %s.temp9, i32* %s.count, align 4\n", name,
+        fprintf(out, "\t%s.temp4 = sub i32 %s.temp3, 1\n", name, name);
+        fprintf(out, "\tstore i32 %s.temp4, ptr %s.count, align 4\n", name,
                 name);
         fprintf(out, "\tbr label %%L.st.init.%04d.1\n", curr_nan_label_count);
         curr_nan_label_count++;

@@ -269,7 +269,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
 #ifdef OMP_OFFLOAD_LLVM
         // TODO ompaccel. Hackery for TGT structs. It must be fixed later.
         if (flg.omptarget)
-          fprintf(ASMFIL, " i8* ");
+          fprintf(ASMFIL, " ptr ");
         else
 #endif
           *cptr = put_next_member(*cptr);
@@ -285,7 +285,7 @@ emit_init(DTYPE tdtype, ISZ_T tconval, ISZ_T *addr, ISZ_T *repeat_cnt,
 #ifdef OMP_OFFLOAD_LLVM
     // TODO ompaccel. Hackery for TGT structs. It must be fixed later.
     if (flg.omptarget)
-      fprintf(ASMFIL, " i8* ");
+      fprintf(ASMFIL, " ptr ");
     else
 #endif
       *cptr = put_next_member(*cptr);
