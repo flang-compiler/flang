@@ -15,8 +15,7 @@ program msave
 ! NOSAVE: alloca i32
   integer :: x
 ! NOSAVE: store i32 5, ptr %x
-! SAVE: bitcast ptr @.BSS1 to ptr
-! SAVE: store i32 5, ptr
+! SAVE: store i32 5, ptr @.BSS1
   x = 5
 end program
 

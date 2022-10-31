@@ -4372,7 +4372,7 @@ gen_va_start(int ilix)
   if (!va_start_defined) {
     va_start_defined = true;
     gname = (char *)getitem(LLVM_LONGTERM_AREA, strlen(va_start_name) + 35);
-    sprintf(gname, "declare void %s(i8*)", va_start_name);
+    sprintf(gname, "declare void %s(ptr)", va_start_name);
     exfunc = (EXFUNC_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
     memset(exfunc, 0, sizeof(EXFUNC_LIST));
     exfunc->func_def = gname;
@@ -4587,7 +4587,7 @@ gen_va_end(int ilix)
   if (!va_end_defined) {
     va_end_defined = true;
     gname = (char *)getitem(LLVM_LONGTERM_AREA, strlen(va_end_name) + 35);
-    sprintf(gname, "declare void %s(i8*)", va_end_name);
+    sprintf(gname, "declare void %s(ptr)", va_end_name);
     exfunc = (EXFUNC_LIST *)getitem(LLVM_LONGTERM_AREA, sizeof(EXFUNC_LIST));
     memset(exfunc, 0, sizeof(EXFUNC_LIST));
     exfunc->func_def = gname;
@@ -6489,6 +6489,13 @@ make_bitcast(OPERAND *cast_op, LL_Type *rslt_type)
   TMPS *new_tmps;
   INSTR_LIST *Curr_Instr, *instr;
 
+  if (cast_op->ll_type->data_type == LL_PTR &&
+      rslt_type->data_type == LL_PTR) {
+    operand = gen_copy_op(cast_op);
+    operand->ll_type = rslt_type;
+    return operand;
+  }
+
   if (strict_match(cast_op->ll_type, rslt_type))
     return gen_copy_op(cast_op);
 
@@ -6950,11 +6957,7 @@ make_load(int ilix, OPERAND *load_op, LL_Type *rslt_type, MSZ msz,
       return cse_op;
     }
   }
-  if (load_op->ot_type == OT_VAR && ll_type_is_pointer_to_function(rslt_type)) {
-    load_type = LLTYPE(load_op->val.sptr);
-  } else {
-    load_type = load_op->ll_type;
-  }
+  load_type = load_op->ll_type;
 
   DBGTRACEIN2(" ilix %d, load op: %p", ilix, load_op)
   DBGDUMPLLTYPE("result type ", rslt_type)
@@ -14138,43 +14141,19 @@ reset_expr_id(void)
 static void
 store_return_value_for_entry(OPERAND *p, int i_name)
 {
-  TMPS *tmp = make_tmps();
-
   if (p->ot_type != OT_VAR || !DT_ISCMPLX(DTYPEG(p->val.sptr))) {
-    print_token("\t");
-    print_tmp_name(tmp);
-    print_token(" = bitcast ");
-    write_type(make_generic_dummy_lltype());
-    print_token(" %");
-    print_token(get_entret_arg_name());
-    print_token(" to ");
-    write_type(make_ptr_lltype(p->ll_type));
-    print_nl();
-
     print_token("\tstore ");
     write_type(p->ll_type);
     print_space(1);
     write_operand(p, "", FLG_OMIT_OP_TYPE);
     print_token(", ");
-
     write_type(make_ptr_lltype(p->ll_type));
-    print_space(1);
-    print_tmp_name(tmp);
+    print_token(" %");
+    print_token(get_entret_arg_name());
     print_token(", align 4\n");
   } else {
     TMPS *loadtmp;
-    /*  %10 = bitcast i64* %__master_entry_rslt323 to <{float, float}>*  */
-    print_token("\t");
-    print_tmp_name(tmp);
-    print_token(" = bitcast ");
-    write_type(make_generic_dummy_lltype());
-    print_token(" %");
-    print_token(get_entret_arg_name());
-    print_token(" to ");
-    write_type(p->ll_type);
-    print_nl();
-
-    /*  %11 = load <{float, float}>, <{float, float}>* %cp1_300, align 4  */
+    /*  %11 = load <{float, float}>, ptr %cp1_300, align 4  */
     loadtmp = make_tmps();
     print_token("\t");
     print_tmp_name(loadtmp);
@@ -14186,7 +14165,7 @@ store_return_value_for_entry(OPERAND *p, int i_name)
     write_operand(p, "", FLG_OMIT_OP_TYPE);
     print_token(", align 4\n");
 
-    /*  store <{float, float}> %11, <{float, float}>* %10, align 4  */
+    /*  store <{float, float}> %11, ptr %__master_entry_rslt323, align 4  */
     print_token("\tstore ");
     write_type(p->ll_type->sub_types[0]);
     print_space(1);
@@ -14194,8 +14173,8 @@ store_return_value_for_entry(OPERAND *p, int i_name)
     print_token(", ");
 
     write_type(p->ll_type);
-    print_space(1);
-    print_tmp_name(tmp);
+    print_token(" %");
+    print_token(get_entret_arg_name());
     print_token(", align 4\n");
   }
 

@@ -12,9 +12,7 @@ subroutine prefetch_dir(a1, a2)
 end subroutine prefetch_dir
 
 !! Ensure that the offset generated for the prefetch of a2(i + 256) is correct.
-! CHECK-PREFETCH: [[a1:%[0-9]+]] = bitcast ptr %a1 to ptr
-! CHECK-PREFETCH: [[a2:%[0-9]+]] = bitcast ptr %a2 to ptr
-! CHECK-PREFETCH: [[a2base:%[0-9]+]] = getelementptr i8, ptr [[a2]], i64 1020
+! CHECK-PREFETCH: [[a2base:%[0-9]+]] = getelementptr i8, ptr %a2, i64 1020
 ! CHECK-PREFETCH: [[i:%[0-9]+]] = load i32
 ! CHECK-PREFETCH: [[TMP1:%[0-9]+]] = sext i32 [[i]] to i64
 ! CHECK-PREFETCH: [[TMP2:%[0-9]+]] = mul nsw i64 [[TMP1]], 4

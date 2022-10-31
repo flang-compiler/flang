@@ -1079,7 +1079,7 @@ print_entry_subroutine(LL_Module *module)
   LL_Type *dummy_type;
   hashset_t formals; /* List of formal params for each entry trampoline */
   sclen *pd_len = NULL, *pd_len_last = NULL;
-  bool has_char_args;
+  bool has_char_args, ret_scalar;
   SPTR arg;
 
   if (SYMLKG(sptr) <= NOSYM)
@@ -1129,23 +1129,7 @@ print_entry_subroutine(LL_Module *module)
     } else {
       rettype = DT_NONE;
     }
-    if (fval && SCG(fval) != SC_DUMMY && SCG(fval) != SC_BASED) {
-      /* Bitcast fval which is local variable to i8*.
-       * We will pass this fval to master routine.
-       */
-      tmp = make_tmps();
-      tmp->id = 0;
-      print_token("\t");
-      print_tmp_name(tmp);
-      print_token(" = bitcast ");
-      write_type(make_ptr_lltype(make_lltype_from_dtype(rettype)));
-      print_space(1);
-      print_token(SNAME(fval));
-      print_token(" to ");
-      write_type(dummy_type);
-      print_space(1);
-      print_nl();
-    }
+    ret_scalar = fval && SCG(fval) != SC_DUMMY && SCG(fval) != SC_BASED;
 
     /* call the master */
     if (gbl.arets) {
@@ -1169,12 +1153,11 @@ print_entry_subroutine(LL_Module *module)
     /* if function, the second argument is the return value. The third argument
        can also be a return value if the return value is a dummy argument
        (happens when types are different). */
-    if (tmp) {
-      /* pass the tmp about */
+    if (ret_scalar) {
       print_token(", ");
       write_type(dummy_type);
       print_space(1);
-      print_tmp_name(tmp);
+      print_token(SNAME(fval));
     } else if (fval && SCG(fval) != SC_DUMMY && SCG(fval) != SC_BASED &&
                fval != FVALG(gbl.currsub)) {
       TY_KIND ThisIsABug; // FIXME
@@ -1227,7 +1210,7 @@ print_entry_subroutine(LL_Module *module)
       }
       if (i == 0)
         continue; /* skip choice */
-      if (tmp && i == 1)
+      if (ret_scalar && i == 1)
         continue; /* skip return value */
       print_token(", ");
       if (PASSBYVALG(sym))
@@ -1253,7 +1236,7 @@ print_entry_subroutine(LL_Module *module)
       int sym = *dpdscp++;
       if (i == 0) /* Skip choice */
         continue;
-      if (tmp && i == 1)
+      if (ret_scalar && i == 1)
         continue; /* Skip non-character, return value */
       if (DTYG(DTYPEG(sym)) == TY_CHAR || DTYG(DTYPEG(sym)) == TY_NCHAR) {
         clen = CLENG(sym);
@@ -1286,14 +1269,14 @@ print_entry_subroutine(LL_Module *module)
 
     print_token(")\n\t");
 
-    if (tmp) {
+    if (ret_scalar) {
       /* load return value and return it */
       LL_Type *return_ll_type;
 
       if (!DT_ISCMPLX(rettype) || !CMPLXFUNC_C) {
         return_ll_type = make_lltype_from_dtype(rettype);
 
-        /* %1 = load i32, i32* %cp1_300, align 4 */
+        /* %1 = load i32, ptr %cp1_300, align 4 */
         tmp = make_tmps();
         print_tmp_name(tmp);
         print_token(" = load ");
@@ -1309,21 +1292,9 @@ print_entry_subroutine(LL_Module *module)
         print_nl();
       } else {
         /* complex entry, default C return conventions */
-        TMPS *addrtmp;
         return_ll_type = make_lltype_from_abi_arg(&abi->arg[0]);
 
-        /* %1 = bitcast <{float, float}>* %cp1_300 to double* */
-        addrtmp = make_tmps();
-        print_tmp_name(addrtmp);
-        print_token(" = bitcast ");
-        write_type(make_ptr_lltype(make_lltype_from_dtype(rettype)));
-        print_space(1);
-        print_token(SNAME(fval));
-        print_token(" to ");
-        write_type(make_ptr_lltype(return_ll_type));
-        print_nl();
-
-        /* %2 = load double, double* %1, align 4 */
+        /* %1 = load double, ptr %cp1_300, align 4 */
         tmp = make_tmps();
         print_token("\t");
         print_tmp_name(tmp);
@@ -1333,7 +1304,7 @@ print_entry_subroutine(LL_Module *module)
         print_token(", ");
         write_type(make_ptr_lltype(return_ll_type));
         print_space(1);
-        print_tmp_name(addrtmp);
+        print_token(SNAME(fval));
         print_token(", align 4\n");
       }
       if (abi->extend_abi_return) {
