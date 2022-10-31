@@ -4807,13 +4807,27 @@ chkopnds(SST *lop, SST *operator, SST *rop)
 
   /*
    * Look for special case of 'double op complex' which should result
-   * in both operands coverted to doublecomplex.
+   * in both operands converted to double complex.
    */
   if ((TY_OF(lop) == TY_DBLE && TY_OF(rop) == TY_CMPLX) ||
       (TY_OF(lop) == TY_CMPLX && TY_OF(rop) == TY_DBLE)) {
     cngtyp(rop, DT_CMPLX16);
     cngtyp(lop, DT_CMPLX16);
   }
+
+#ifdef TARGET_SUPPORTS_QUADFP
+  /*
+   * Look for special case of 'quad op complex or complex*16' which should result
+   * in both operands converted to quad complex.
+   */
+  if (((TY_OF(rop) == TY_CMPLX || TY_OF(rop) == TY_DCMPLX) &&
+       TY_OF(lop) == TY_QUAD) ||
+      ((TY_OF(lop) == TY_CMPLX || TY_OF(lop) == TY_DCMPLX) &&
+       TY_OF(rop) == TY_QUAD)) {
+    cngtyp(rop, DT_QCMPLX);
+    cngtyp(lop, DT_QCMPLX);
+  }
+#endif
 
   if (opc == OP_CMP) {
     /* Rules for relational expressions: nondecimal constants result
@@ -4993,8 +5007,15 @@ chkopnds(SST *lop, SST *operator, SST *rop)
         }
         break;
 #ifdef TARGET_SUPPORTS_QUADFP
+      case TY_QCMPLX:
+        conval = SST_CVALG(rop);
+        if (!is_quad0(CONVAL2G(conval)))
+          break;
+        conval = CONVAL1G(conval);
+        goto ck_quad_pw;
       case TY_QUAD:
         conval = SST_CVALG(rop);
+      ck_quad_pw:
         num[0] = CONVAL1G(conval);
         num[1] = CONVAL2G(conval);
         num[2] = CONVAL3G(conval);
