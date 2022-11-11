@@ -63,7 +63,7 @@ if(${LIBPGMATH_SYSTEM_PROCESSOR} MATCHES "aarch64" AND NOT ${LIBPGMATH_WITH_GENE
   else()
     message(STATUS "Libpgmath CPU target explicitly set to ${LLVM_FLANG_CPU_TARGET}")
   endif()
-  if(FLANG_ENABLE_QUADFP)
+  if(FLANG_ENABLE_QUADFP AND NOT ("${LIBPGMATH_SYSTEM_NAME}" STREQUAL "Windows"))
     add_definitions(-DTARGET_SUPPORTS_QUADFP)
     set(TARGET_SUPPORTS_QUADFP True)
   endif()
