@@ -721,3 +721,4 @@ target_compile_options(flang_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreent
 
 target_compile_options(flang_shared PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 
+set_target_properties(flang_shared PROPERTIES INSTALL_RPATH "$ORIGIN")
