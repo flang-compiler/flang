@@ -155,3 +155,4 @@ target_compile_options(flangrti_static PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mre
 
 target_compile_options(flangrti_shared PUBLIC $<$<COMPILE_LANGUAGE:Fortran>:-Mreentrant>)
 
+set_target_properties(flangrti_shared PROPERTIES INSTALL_RPATH "$ORIGIN")
