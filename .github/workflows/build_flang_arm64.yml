@@ -2,11 +2,11 @@ name: Flang build & test ARM64
 
 on:
   push:
-    branches: [ master ]
+    branches: [ legacy ]
     paths-ignore:
       - '**/.github/workflows/build_flang.yml'
   pull_request:
-    branches: [ master ]
+    branches: [ legacy ]
     paths-ignore:
       - '**/.github/workflows/build_flang.yml'
 
@@ -27,7 +27,7 @@ jobs:
         cc: [gcc]
         cpp: [g++]
         version: [10]
-        llvm_branch: [release_13x, release_14x]
+        llvm_branch: [release_14x, release_15x]
 
     steps:
       - name: Check tools
@@ -38,13 +38,13 @@ jobs:
           ${{ env.install_prefix }}/bin/clang --version
 
       - name: Manual checkout to build in user's home dir (push)
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/legacy'
         run: |
           cd ${{ env.build_path }}
           git clone https://github.com/flang-compiler/flang.git
 
       - name: Manual checkout to build in user's home dir (pull_request)
-        if: github.ref != 'refs/heads/master'
+        if: github.ref != 'refs/heads/legacy'
         run: |
           cd ${{ env.build_path }}
           git clone https://github.com/flang-compiler/flang.git
