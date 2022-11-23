@@ -39,6 +39,10 @@ jobs:
           cmake --version
           make --version
 
+      # gcc11 and g++11 are needed to install llvm
+      - if: matrix.cc == 'gcc' && matrix.version == '11'
+        run: sudo apt install gcc-11 g++-11
+
       # Download artifacts for the classic-flang-llvm-project-related builds (all toolchains)
       - name: Download artifacts
         run: |
@@ -67,14 +71,10 @@ jobs:
           tar xzf llvm_build.tar.gz
           cd classic-flang-llvm-project/build
           sudo make install/fast
-
-      # gcc11 and g++11 are needed to install llvm
-      - if: matrix.cc == 'gcc' && matrix.version == '11'
-        run: sudo apt install gcc-11 g++-11
+          ${{ env.install_prefix }}/bin/clang --version
 
       - name: Build and install flang & libpgmath
         run: |
-          ${{ env.install_prefix }}/bin/clang --version
           ./build-flang.sh -t ${{ matrix.target }} -p ${{ env.install_prefix }} -n $(nproc) -c -s -v
 
       - name: Copy llvm-lit
