@@ -8,27 +8,23 @@
 /*
  *	getvolinfo3f.c - DFWIN GetVolumeInformation subprogram
  *	This is just the interface to the actual system routine from
- *	the dwfin module routine.  This routine is called as an 'alias'
+ *	the dfwin module routine.  This routine is called as an 'alias'
  *	when the module is called; this routine makes sure that the
  *	output character arguments are blank-filled.
  */
 
 #include <string.h>
 
-typedef char *LPSTR;
-typedef int DWORD;
+#if defined (_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
-#if defined(_WIN64)
-typedef long long LDWORD;
-extern int GetVolumeInformationA();
 #define ENTNAM(ss) _##ss
-
-typedef LDWORD *LPDWORD;
 
 static void fill(LPSTR, int, int);
 
 extern int ENTNAM(pgdfw_GetVolumeInformation)(
-    LPSTR RootPathName, LPSTR VolumeNameBuffer, DWORD VolumeNameSize,
+    LPCSTR RootPathName, LPSTR VolumeNameBuffer, DWORD VolumeNameSize,
     LPDWORD VolumeSerialNumber, LPDWORD MaximumComponentLength,
     LPDWORD FileSystemFlags, LPSTR FileSystemNameBuffer,
     DWORD FileSystemNameSize)
