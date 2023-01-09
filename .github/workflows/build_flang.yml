@@ -5,10 +5,12 @@ on:
     branches: [ master ]
     paths-ignore:
       - '**/.github/workflows/build_flang_arm64.yml'
+      - '**/.github/workflows/build_flang_windows.yml'
   pull_request:
     branches: [ master ]
     paths-ignore:
       - '**/.github/workflows/build_flang_arm64.yml'
+      - '**/.github/workflows/build_flang_windows.yml'
 
 jobs:
   build_flang:
@@ -48,7 +50,7 @@ jobs:
 
           i="0"
           # Keep checking older builds to find the right branch and correct number of artifacts
-          while { [ `jq -r '.total_count?' artifacts_llvm` != "4" ] || \
+          while { [ `jq -r '.total_count?' artifacts_llvm` != "5" ] || \
               [ `jq -r --argjson i "$i" '.workflow_runs[$i].head_branch?' runs_llvm.json` != ${{ matrix.llvm_branch }} ]; } && \
               [ $i -lt 10 ];
           do
