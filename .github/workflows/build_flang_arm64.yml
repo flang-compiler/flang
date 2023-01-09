@@ -5,10 +5,12 @@ on:
     branches: [ master ]
     paths-ignore:
       - '**/.github/workflows/build_flang.yml'
+      - '**/.github/workflows/build_flang_windows.yml'
   pull_request:
     branches: [ master ]
     paths-ignore:
       - '**/.github/workflows/build_flang.yml'
+      - '**/.github/workflows/build_flang_windows.yml'
 
 jobs:
   build_flang:
