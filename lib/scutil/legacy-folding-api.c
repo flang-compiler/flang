@@ -2436,7 +2436,7 @@ cprintf(char *buffer, const char *format, INT *val)
 void
 xcfpow(IEEE32 r1, IEEE32 i1, IEEE32 r2, IEEE32 i2, IEEE32 *rr, IEEE32 *ir)
 {
-  float complex x, y, z;
+  FLOAT_COMPLEX_TYPE x, y, z;
   float32_t rx, ix, ry, iy, rz, iz;
   unwrap_f(&rx, &r1);
   unwrap_f(&ix, &i1);
@@ -2446,8 +2446,8 @@ xcfpow(IEEE32 r1, IEEE32 i1, IEEE32 r2, IEEE32 i2, IEEE32 *rr, IEEE32 *ir)
     rz = 1.0;
     iz = 0.0;
   } else {
-    x = rx + ix * I;
-    y = ry + iy * I;
+    x = FLOAT_COMPLEX_CREATE(rx, ix);
+    y = FLOAT_COMPLEX_CREATE(ry, iy);
     check(fold_complex32_pow(&z, &x, &y));
     rz = crealf(z);
     iz = cimagf(z);
@@ -2459,7 +2459,7 @@ xcfpow(IEEE32 r1, IEEE32 i1, IEEE32 r2, IEEE32 i2, IEEE32 *rr, IEEE32 *ir)
 void
 xcdpow(IEEE64 r1, IEEE64 i1, IEEE64 r2, IEEE64 i2, IEEE64 rr, IEEE64 ir)
 {
-  double complex x, y, z;
+  DOUBLE_COMPLEX_TYPE x, y, z;
   float64_t rx, ix, ry, iy, rz, iz;
   unwrap_d(&rx, r1);
   unwrap_d(&ix, i1);
@@ -2469,8 +2469,8 @@ xcdpow(IEEE64 r1, IEEE64 i1, IEEE64 r2, IEEE64 i2, IEEE64 rr, IEEE64 ir)
     rz = 1.0;
     iz = 0.0;
   } else {
-    x = rx + ix * I;
-    y = ry + iy * I;
+    x = DOUBLE_COMPLEX_CREATE(rx, ix);
+    y = DOUBLE_COMPLEX_CREATE(ry, iy);
     check(fold_complex64_pow(&z, &x, &y));
     rz = creal(z);
     iz = cimag(z);
@@ -2482,7 +2482,7 @@ xcdpow(IEEE64 r1, IEEE64 i1, IEEE64 r2, IEEE64 i2, IEEE64 rr, IEEE64 ir)
 void
 xcqpow(IEEE128 r1, IEEE128 i1, IEEE128 r2, IEEE128 i2, IEEE128 rr, IEEE128 ir)
 {
-  long double complex x, y, z;
+  LONG_DOUBLE_COMPLEX_TYPE x, y, z;
   float128_t rx, ix, ry, iy, rz, iz;
   unwrap_q(&rx, r1);
   unwrap_q(&ix, i1);
@@ -2492,8 +2492,8 @@ xcqpow(IEEE128 r1, IEEE128 i1, IEEE128 r2, IEEE128 i2, IEEE128 rr, IEEE128 ir)
     rz = 1.0;
     iz = 0.0;
   } else {
-    x = rx + ix * I;
-    y = ry + iy * I;
+    x = LONG_DOUBLE_COMPLEX_CREATE(rx, ix);
+    y = LONG_DOUBLE_COMPLEX_CREATE(ry, iy);
     check(fold_complex128_pow(&z, &x, &y));
     rz = creall(z);
     iz = cimagl(z);
