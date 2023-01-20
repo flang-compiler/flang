@@ -909,27 +909,27 @@ fold_real128_log10(float128_t *res, const float128_t *arg)
 }
 
 enum fold_status
-fold_complex32_pow(float complex *res, const float complex *x, const float complex *y)
+fold_complex32_pow(FLOAT_COMPLEX_TYPE *res, const FLOAT_COMPLEX_TYPE *x, const FLOAT_COMPLEX_TYPE *y)
 {
   fenv_t saved_fenv;
   set_up_floating_point_environment(&saved_fenv);
   /* use 'cpow' to improve precision of result. */
-  *res = (float complex)cpow((double complex)*x, (double complex)*y);
+  *res = DCMPLX_TO_FCMPLX(cpow(FCMPLX_TO_DCMPLX(*x), FCMPLX_TO_DCMPLX(*y)));
   return check_and_restore_floating_point_environment(&saved_fenv);
 }
 
 enum fold_status
-fold_complex64_pow(double complex *res, const double complex *x, const double complex *y)
+fold_complex64_pow(DOUBLE_COMPLEX_TYPE *res, const DOUBLE_COMPLEX_TYPE *x, const DOUBLE_COMPLEX_TYPE *y)
 {
   fenv_t saved_fenv;
   set_up_floating_point_environment(&saved_fenv);
   /* use 'cpowl' to improve precision of result. */
-  *res = (double complex)cpowl((long double complex)*x, (long double complex)*y);
+  *res = LCMPLX_TO_DCMPLX(cpowl(DCMPLX_TO_LCMPLX(*x), DCMPLX_TO_LCMPLX(*y)));
   return check_and_restore_floating_point_environment(&saved_fenv);
 }
 
 enum fold_status
-fold_complex128_pow(long double complex *res, const long double complex *x, const long double complex *y)
+fold_complex128_pow(LONG_DOUBLE_COMPLEX_TYPE *res, const LONG_DOUBLE_COMPLEX_TYPE *x, const LONG_DOUBLE_COMPLEX_TYPE *y)
 {
   fenv_t saved_fenv;
   set_up_floating_point_environment(&saved_fenv);

@@ -57,6 +57,39 @@ typedef float float32_t;
 typedef double float64_t;
 typedef long double float128_t; /* 128 bits in memory, format host-dependent */
 
+#if !defined(_WIN32)
+# define FLOAT_COMPLEX_TYPE float complex
+# define FLOAT_COMPLEX_CREATE(real, imag) (real + imag * I)
+# define DOUBLE_COMPLEX_TYPE double complex
+# define DOUBLE_COMPLEX_CREATE(real, imag) (real + imag * I)
+# define LONG_DOUBLE_COMPLEX_TYPE long double complex
+# define LONG_DOUBLE_COMPLEX_CREATE(real, imag) (real + imag * I)
+
+/* For type conversion */
+# define FCMPLX_TO_DCMPLX(cplx) ((double complex)cplx)
+# define DCMPLX_TO_FCMPLX(cplx) ((float complex)cplx)
+# define DCMPLX_TO_LCMPLX(cplx) ((long double complex)cplx)
+# define LCMPLX_TO_DCMPLX(cplx) ((double complex)cplx)
+#else
+# define FLOAT_COMPLEX_TYPE _Fcomplex
+# define FLOAT_COMPLEX_CREATE(real, imag) _FCbuild(real, imag)
+# define DOUBLE_COMPLEX_TYPE _Dcomplex
+# define DOUBLE_COMPLEX_CREATE(real, imag) _Cbuild(real, imag)
+# define LONG_DOUBLE_COMPLEX_TYPE _Lcomplex
+# define LONG_DOUBLE_COMPLEX_CREATE(real, imag) _LCbuild(real, imag)
+
+/*
+ * For type conversion
+ * On Windows the complex numbers aren't native type,
+ * so the standard arithmetic operators aren't defined on complex types.
+ * Implicit conversions aren't defined between complex types.
+ */
+# define FCMPLX_TO_DCMPLX(cplx) DOUBLE_COMPLEX_CREATE((double)crealf(cplx), (double)cimagf(cplx))
+# define DCMPLX_TO_FCMPLX(cplx) FLOAT_COMPLEX_CREATE((float)creal(cplx), (float)cimag(cplx))
+# define DCMPLX_TO_LCMPLX(cplx) LONG_DOUBLE_COMPLEX_CREATE((long double)creal(cplx), (long double)cimag(cplx))
+# define LCMPLX_TO_DCMPLX(cplx) DOUBLE_COMPLEX_CREATE((double)creall(cplx), (double)cimagl(cplx))
+#endif // !defined(_WIN64)
+
 void fold_sanity_check(void);
 
 /*
@@ -165,14 +198,14 @@ enum fold_status fold_real128_exp(float128_t *res, const float128_t *arg);
 enum fold_status fold_real128_log(float128_t *res, const float128_t *arg);
 enum fold_status fold_real128_log10(float128_t *res, const float128_t *arg);
 
-enum fold_status fold_complex32_pow(float complex *res, const float complex *x,
-                                    const float complex *y);
-enum fold_status fold_complex64_pow(double complex *res,
-                                    const double complex *x,
-                                    const double complex *y);
-enum fold_status fold_complex128_pow(long double complex *res,
-                                     const long double complex *x,
-                                     const long double complex *y);
+enum fold_status fold_complex32_pow(FLOAT_COMPLEX_TYPE *res, const FLOAT_COMPLEX_TYPE *x,
+                                    const FLOAT_COMPLEX_TYPE *y);
+enum fold_status fold_complex64_pow(DOUBLE_COMPLEX_TYPE *res,
+                                    const DOUBLE_COMPLEX_TYPE *x,
+                                    const DOUBLE_COMPLEX_TYPE *y);
+enum fold_status fold_complex128_pow(LONG_DOUBLE_COMPLEX_TYPE *res,
+                                     const LONG_DOUBLE_COMPLEX_TYPE *x,
+                                     const LONG_DOUBLE_COMPLEX_TYPE *y);
 
 #ifdef __cplusplus
 }
