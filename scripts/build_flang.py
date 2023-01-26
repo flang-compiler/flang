@@ -74,7 +74,7 @@ def generate_buildoptions(arguments):
         base_cmake_args.extend(arguments.cmake_param)
 
     if arguments.verbose:
-        base_cmake_args.extend('-DCMAKE_VERBOSE_MAKEFILE=ON')
+        base_cmake_args.append('-DCMAKE_VERBOSE_MAKEFILE=ON')
 
     return base_cmake_args
 
