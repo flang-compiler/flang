@@ -16,7 +16,7 @@
 #include <stdint.h>
 
 /* See https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html. */
-#if defined(LINUX8664) || (defined(TARGET_X8664) && !defined(TARGET_WIN))
+#if defined(TARGET_LINUX_X8664)
 typedef __float128 float128_t;
 typedef _Complex float __attribute__((mode(TC))) quad_complex_t;
 #elif defined(TARGET_LINUX_POWER)

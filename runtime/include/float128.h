@@ -8,7 +8,7 @@
 #ifndef _FLOAT128_H_
 #define _FLOAT128_H_
 
-#if defined(TARGET_POWER) || (defined(TARGET_X8664) && !defined(TARGET_WIN))
+#if defined(TARGET_LINUX_POWER) || defined(TARGET_LINUX_X8664)
 typedef __float128 float128_t;
 #else
 /* __float128 is not available on AArch64 or other generic targets;
