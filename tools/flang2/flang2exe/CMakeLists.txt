@@ -160,7 +160,7 @@ target_include_directories(flang2
 
 # Install flang2 executable
 install(TARGETS flang2
-        RUNTIME DESTINATION ${LLVM_TOOLS_BINARY_DIR})
+        RUNTIME DESTINATION bin)
 
 # Local Variables:
 # mode: cmake
