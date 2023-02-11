@@ -9,6 +9,8 @@ BUILD_TYPE="Release"
 BUILD_PREFIX="./build"
 INSTALL_PREFIX="/usr/local"
 NPROC=1
+USE_LLVM_SRC_ROOT=""
+USE_LLVM_CONFIG=""
 USE_CCACHE="0"
 USE_SUDO="0"
 EXTRA_CMAKE_OPTS=""
@@ -32,19 +34,23 @@ function print_usage {
     echo "  -b  Build prefix. Default: ./build";
     echo "  -p  Install prefix. Default: /usr/local";
     echo "  -n  Number of parallel jobs. Default: 1";
+    echo "  -l  Path to LLVM sources. Default: not set";
+    echo "  -o  Path to llvm-config. Default: not set";
     echo "  -c  Use ccache. Default: 0 - do not use ccache";
     echo "  -s  Use sudo to install. Default: 0 - do not use sudo";
     echo "  -x  Extra CMake options. Default: ''";
     echo "  -v  Enable verbose output";
 }
 
-while getopts "t:d:b:p:n:csx:v?" opt; do
+while getopts "t:d:b:p:n:l:o:csx:v?" opt; do
     case "$opt" in
         t) TARGET=$OPTARG;;
         d) BUILD_TYPE=$OPTARG;;
         b) BUILD_PREFIX=$OPTARG;;
         p) INSTALL_PREFIX=$OPTARG;;
         n) NPROC=$OPTARG;;
+        l) USE_LLVM_SRC_ROOT="-DLLVM_MAIN_SRC_DIR=$OPTARG";;
+        o) USE_LLVM_CONFIG="-DLLVM_CONFIG=$OPTARG";;
         c) USE_CCACHE="1";;
         s) USE_SUDO="1";;
         x) EXTRA_CMAKE_OPTS="$OPTARG";;
@@ -103,6 +109,7 @@ cmake $CMAKE_OPTIONS \
       -DFLANG_INCLUDE_DOCS=ON \
       -DFLANG_LLVM_EXTENSIONS=ON \
       -DWITH_WERROR=ON \
+      $USE_LLVM_MAIN_SRC_DIR $USE_LLVM_CONFIG \
       $TOPDIR
 set +x
 make -j$NPROC VERBOSE=$VERBOSE
