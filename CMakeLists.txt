@@ -83,8 +83,7 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
       "--bindir"
       "--libdir"
       "--includedir"
-      "--prefix"
-      "--src-root")
+      "--prefix")
     execute_process(
       COMMAND ${CONFIG_COMMAND}
       RESULT_VARIABLE HAD_ERROR
@@ -108,7 +107,6 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
   list(GET CONFIG_OUTPUT 2 LIBRARY_DIR)
   list(GET CONFIG_OUTPUT 3 INCLUDE_DIR)
   list(GET CONFIG_OUTPUT 4 LLVM_OBJ_ROOT)
-  list(GET CONFIG_OUTPUT 5 MAIN_SRC_DIR)
 
   if(NOT MSVC_IDE)
     set(LLVM_ENABLE_ASSERTIONS ${ENABLE_ASSERTIONS}
@@ -121,7 +119,6 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
   set(LLVM_LIBRARY_DIR ${LIBRARY_DIR} CACHE PATH "Path to llvm/lib")
   set(LLVM_MAIN_INCLUDE_DIR ${INCLUDE_DIR} CACHE PATH "Path to llvm/include")
   set(LLVM_BINARY_DIR ${LLVM_OBJ_ROOT} CACHE PATH "Path to LLVM build tree")
-  set(LLVM_MAIN_SRC_DIR ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
 
   set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/lib/cmake/llvm"
      CACHE PATH "Path to LLVM cmake modules")
@@ -187,28 +184,55 @@ Please install Python or specify the PYTHON_EXECUTABLE CMake variable.")
       set(LLVM_UTILS_PROVIDED ON)
     endif()
 
-    if(EXISTS ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
-      set(LLVM_LIT ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
-      if(NOT LLVM_UTILS_PROVIDED)
-        add_subdirectory(${LLVM_MAIN_SRC_DIR}/utils/FileCheck utils/FileCheck)
-        add_subdirectory(${LLVM_MAIN_SRC_DIR}/utils/count utils/count)
-        add_subdirectory(${LLVM_MAIN_SRC_DIR}/utils/not utils/not)
-        set(LLVM_UTILS_PROVIDED ON)
-        set(FLANG_TEST_DEPS FileCheck count not)
+    if(LLVM_EXTERNAL_LIT)
+      if(NOT LLVM_LIT)
+        set(LLVM_LIT ${LLVM_EXTERNAL_LIT})
       endif()
-      #set(UNITTEST_DIR ${LLVM_MAIN_SRC_DIR}/utils/unittest)
-      #if(EXISTS ${UNITTEST_DIR}/googletest/include/gtest/gtest.h
-      #    AND NOT EXISTS ${LLVM_LIBRARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}gtest${CMAKE_STATIC_LIBRARY_SUFFIX}
-      #    AND EXISTS ${UNITTEST_DIR}/CMakeLists.txt)
-      #  add_subdirectory(${UNITTEST_DIR} utils/unittest)
-      #endif()
-    else()
-      # Seek installed Lit.
-      find_program(LLVM_LIT "lit.py" ${LLVM_MAIN_SRC_DIR}/utils/lit
-        DOC "Path to lit.py")
     endif()
 
-    if(LLVM_LIT)
+    if(NOT LLVM_LIT OR NOT LLVM_UTILS_PROVIDED)
+      if(NOT LLVM_MAIN_SRC_DIR)
+        if(LLVM_CONFIG)
+          # --src-root was supported before LLVM 16.0
+          execute_process(
+            COMMAND ${LLVM_CONFIG} --src-root
+            RESULT_VARIABLE HAD_ERROR
+            OUTPUT_VARIABLE CONFIG_OUTPUT
+            ERROR_QUIET
+          )
+          if(NOT HAD_ERROR)
+            string(STRIP "${CONFIG_OUTPUT}" MAIN_SRC_DIR)
+            set(LLVM_MAIN_SRC_DIR ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
+          else()
+            message(WARNING "LLVM_MAIN_SRC_DIR was not set. Since LLVM16.0 this cannot be obtained from llvm-config!")
+          endif()
+        endif()
+      endif()
+      if(LLVM_MAIN_SRC_DIR)
+        if(EXISTS ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
+          set(LLVM_LIT ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
+          if(NOT LLVM_UTILS_PROVIDED)
+            add_subdirectory(${LLVM_MAIN_SRC_DIR}/utils/FileCheck utils/FileCheck)
+            add_subdirectory(${LLVM_MAIN_SRC_DIR}/utils/count utils/count)
+            add_subdirectory(${LLVM_MAIN_SRC_DIR}/utils/not utils/not)
+            set(LLVM_UTILS_PROVIDED ON)
+            set(FLANG_TEST_DEPS FileCheck count not)
+          endif()
+          #set(UNITTEST_DIR ${LLVM_MAIN_SRC_DIR}/utils/unittest)
+          #if(EXISTS ${UNITTEST_DIR}/googletest/include/gtest/gtest.h
+          #    AND NOT EXISTS ${LLVM_LIBRARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}gtest${CMAKE_STATIC_LIBRARY_SUFFIX}
+          #    AND EXISTS ${UNITTEST_DIR}/CMakeLists.txt)
+          #  add_subdirectory(${UNITTEST_DIR} utils/unittest)
+          #endif()
+        else()
+          # Seek installed Lit.
+          find_program(LLVM_LIT "lit.py" ${LLVM_MAIN_SRC_DIR}/utils/lit
+            DOC "Path to lit.py")
+        endif()
+      endif()
+    endif()
+
+    if(LLVM_LIT AND LLVM_UTILS_PROVIDED)
       # Define the default arguments to use with 'lit', and an option for the user
       # to override.
       set(LIT_ARGS_DEFAULT "-sv")
@@ -221,6 +245,7 @@ Please install Python or specify the PYTHON_EXECUTABLE CMake variable.")
       if( WIN32 AND NOT CYGWIN )
         set(LLVM_LIT_TOOLS_DIR "" CACHE PATH "Path to GnuWin32 tools")
       endif()
+      message(STATUS "Found lit as ${LLVM_LIT}")
     else()
       set(LLVM_INCLUDE_TESTS OFF)
     endif()
@@ -417,13 +442,6 @@ if(FLANG_INCLUDE_TESTS)
     umbrella_lit_testsuite_begin(check-all)
   endif()
 
-#  if(EXISTS ${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include/gtest/gtest.h)
-#    add_subdirectory(unittests)
-#    list(APPEND FLANG_TEST_DEPS FlangUnitTests)
-#    list(APPEND FLANG_TEST_PARAMS
-#      flang_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/test/Unit/lit.site.cfg
-#      )
-#  endif()
   add_subdirectory(test)
 
   if(FLANG_BUILT_STANDALONE)

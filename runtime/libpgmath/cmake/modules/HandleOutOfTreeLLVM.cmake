@@ -14,8 +14,7 @@ macro(find_llvm_parts)
     set(LIBCXX_USING_INSTALLED_LLVM 1)
     set(CONFIG_COMMAND ${LLVM_CONFIG_PATH}
       "--includedir"
-      "--prefix"
-      "--src-root")
+      "--prefix")
     execute_process(
       COMMAND ${CONFIG_COMMAND}
       RESULT_VARIABLE HAD_ERROR
@@ -33,11 +32,24 @@ macro(find_llvm_parts)
 
     list(GET CONFIG_OUTPUT 0 INCLUDE_DIR)
     list(GET CONFIG_OUTPUT 1 LLVM_OBJ_ROOT)
-    list(GET CONFIG_OUTPUT 2 MAIN_SRC_DIR)
 
+    if(NOT LLVM_MAIN_SRC_DIR)
+      # --src-root was supported before LLVM 16.0
+      execute_process(
+        COMMAND ${LLVM_CONFIG} --src-root
+        RESULT_VARIABLE HAD_ERROR
+        OUTPUT_VARIABLE CONFIG_OUTPUT
+        ERROR_QUIET
+      )
+      if(NOT HAD_ERROR)
+        string(STRIP "${CONFIG_OUTPUT}" MAIN_SRC_DIR)
+        set(LLVM_MAIN_SRC_DIR ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
+      else()
+        message(WARNING "LLVM_MAIN_SRC_DIR was not set. Since LLVM16.0 this can't be obtained from llvm-config!")
+      endif()
+    endif()
     set(LLVM_INCLUDE_DIR ${INCLUDE_DIR} CACHE PATH "Path to llvm/include")
     set(LLVM_BINARY_DIR ${LLVM_OBJ_ROOT} CACHE PATH "Path to LLVM build tree")
-    set(LLVM_MAIN_SRC_DIR ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
 
     # --cmakedir is supported since llvm r291218 (4.0 release)
     execute_process(
@@ -62,11 +74,17 @@ macro(find_llvm_parts)
 
   if (EXISTS "${LLVM_CMAKE_PATH}")
     list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_PATH}")
-  elseif (EXISTS "${LLVM_MAIN_SRC_DIR}/cmake/modules")
-    list(APPEND CMAKE_MODULE_PATH "${LLVM_MAIN_SRC_DIR}/cmake/modules")
+  elseif (LLVM_MAIN_SRC_DIR)
+    if (EXISTS "${LLVM_MAIN_SRC_DIR}/cmake/modules")
+      list(APPEND CMAKE_MODULE_PATH "${LLVM_MAIN_SRC_DIR}/cmake/modules")
+    else()
+      set(LLVM_FOUND OFF)
+      message(WARNING "Neither ${LLVM_CMAKE_PATH} nor ${LLVM_MAIN_SRC_DIR}/cmake/modules found")
+      return()
+    endif()
   else()
     set(LLVM_FOUND OFF)
-    message(WARNING "Neither ${LLVM_CMAKE_PATH} nor ${LLVM_MAIN_SRC_DIR}/cmake/modules found")
+    message(WARNING "The ${LLVM_CMAKE_PATH} not found")
     return()
   endif()
 
@@ -115,7 +133,13 @@ macro(configure_out_of_tree_llvm)
     # Required LIT Configuration ------------------------------------------------
     # Define the default arguments to use with 'lit', and an option for the user
     # to override.
-    set(LLVM_EXTERNAL_LIT "${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py")
+    if (NOT LLVM_EXTERNAL_LIT)
+      if (LLVM_MAIN_SRC_DIR)
+        set(LLVM_EXTERNAL_LIT "${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py")
+      else()
+        message(FATAL_ERROR "Neither LLVM_EXTERNAL_LIT nor LLVM_MAIN_SRC_DIR was defined")
+      endif()
+    endif()
     set(LIT_ARGS_DEFAULT "-sv --show-xfail --show-unsupported")
     if (MSVC OR XCODE)
       set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
