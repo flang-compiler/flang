@@ -5573,6 +5573,9 @@ where, n = flg.x[249]
 .XF "250:"
 Set number of bigbuffers for multi-buffer memory management for AMD GPU.
 (moved to 202)
-.XF "251:"
-(NOT available - check declaration in global.h for flg.x[], all compilers)
 
+.XF "251:"
+Reserved to save an alignment passed by pragma `!DIR$ ALIGN alignment`
+
+.XF "252:"
+(NOT available - check declaration in global.h for flg.x[], all compilers)

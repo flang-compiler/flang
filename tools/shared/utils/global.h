@@ -204,7 +204,7 @@ typedef struct {
   int endian;
   int terse;
   int dollar;   /* defines the char to which '$' is translated */
-  int x[251];   /* x flags */
+  int x[252];   /* x flags */
   bool quad; /* quad align "unconstrained objects" if sizeof >= 16 */
   int anno;
   bool qa; /* TRUE => -qa appeared on command line */
