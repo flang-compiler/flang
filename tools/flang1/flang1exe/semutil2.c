@@ -1972,7 +1972,11 @@ compute_size_expr(bool add_flag, ACL *aclp, DTYPE dtype)
         if (dtype2 != DT_DEFERCHAR && dtype2 != DT_DEFERNCHAR)
           dtype = SST_DTYPEG(stkp);
       } else if (DTY(dtype) == TY_ARRAY) {
-        if (!eq_dtype(DDTG(dtype), acs.eltype)) {
+        if (is_dtype_runtime_length_char(dtype) &&
+            is_dtype_runtime_length_char(acs.eltype)) {
+          // AC element could have adjusted length. The length mismatch should
+          // be checked in runtime when -fcheck=bounds is enabled.
+        } else if (!eq_dtype(DDTG(dtype), acs.eltype)) {
           errsev(95);
         }
       } else {
