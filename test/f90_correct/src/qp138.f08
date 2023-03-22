@@ -2,6 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
+! test NINT intrinsic with a quad-precision boundary value
+
 program main
   real(16) :: a
   integer :: r, e

@@ -2,6 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
+! check that I/O of highest-precision (quad) real numbers do not introduce errors larger than epsilon
+
 program test
   use iso_fortran_env, only: real_kinds
   implicit none

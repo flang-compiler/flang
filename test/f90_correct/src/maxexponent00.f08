@@ -1,15 +1,15 @@
 ! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+!
+! test MAXEXPONENT intrinsic with quad-precision arguments
 
-
-! Program to test the MAXEXPONENT intrinsic
 program exponentmax
     implicit none
     real(kind=16) :: args1 = 123.12_16
     integer :: args2 = maxexponent(args1)
-    integer, parameter :: args3 = maxexponent(args1)      
-  
+    integer, parameter :: args3 = maxexponent(args1)
+
     call test (args2, args3, maxexponent(args1), maxexponent(123.12_16))
 
 end program exponentmax

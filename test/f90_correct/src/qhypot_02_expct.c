@@ -3,9 +3,8 @@
  * See https://llvm.org/LICENSE.txt for license information.
  * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  *
+ * Part of the F2008 HYPOT intrinsic test with quad-precision arguments
  */
-
-/* Part of the f2008 hypot intrinsic test take quad precision. */
 
 #include <stdio.h>
 #include <math.h>

@@ -2,6 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
+! test WRITE of quad-precision real value
+
 program main
   real(kind=16) :: x
   character(len=32) :: str1

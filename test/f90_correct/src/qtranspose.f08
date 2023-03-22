@@ -1,8 +1,10 @@
-!** Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-!** See https://llvm.org/LICENSE.txt for license information.
-!** SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+!
+! test TRANSPOSE intrinsic with quad-precision arguments; also test
+! the functionality of IEEE_NEXT_AFTER for quad-precision results
 
-! this test case is test transpose function take quadruple precision
 program main
   use ieee_arithmetic
   use check_mod

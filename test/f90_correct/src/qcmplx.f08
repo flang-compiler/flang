@@ -2,7 +2,7 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-! test for intrinsic function cmplx(*, kind = 16).
+! test conversion to complex type with the CMPLX intrinsic
 
 program test
   integer, parameter :: n = 7

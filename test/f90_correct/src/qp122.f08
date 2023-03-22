@@ -2,7 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-!this test case is test for const quad convert to logical *2
+! test for const quad convert to logical *2
+
 program main
   use check_mod
   integer, parameter :: k = 1

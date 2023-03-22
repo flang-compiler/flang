@@ -2,7 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-! Test conversion of quad real to double complex.
+! test conversion of quad real to double complex
+
 program main
   use check_mod
   complex(kind = 8) :: b, ea

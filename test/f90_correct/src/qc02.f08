@@ -4,8 +4,6 @@
 !
 ! test for exponentiation operation of real complex : complex(4) ^ complex(4)
 
-! not supported!
-
 program test
   integer, parameter :: n = 16
   integer, parameter :: m = 2 * n

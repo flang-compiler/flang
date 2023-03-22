@@ -2,6 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
+! test INT/NINT/IFIX/IDINT/IDNINT/INT2 intrinsics returning 16-bit results
+
 program main
   use check_mod
   real*4 a

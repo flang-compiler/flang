@@ -2,7 +2,7 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-! test for intrinsic tand take quad precision argument.
+! test TAND intrinsic with quad-precision arguments
 
 program test
   use ieee_arithmetic
@@ -29,32 +29,32 @@ program test
      300, & ! 5/3 pi
      315, & ! 7/4 pi
      330  & ! 11/6 pi
-  /)  
+  /)
   integer :: i
   real(k), dimension(n) :: arg
   real(k) :: result(m), expect(m)
-  
+
   expect(1:n) = (/ &
-    0.00000000000000000000000000000000000_k, &    
-   0.577350269189625764509148780501957505_k, &    
-    1.00000000000000000000000000000000000_k, &    
-    1.73205080756887729352744634150587251_k, &    
-   ieee_value(expect(5), ieee_positive_inf), & 
-   -1.73205080756887729352744634150587251_k, &    
-   -1.00000000000000000000000000000000000_k, &    
-  -0.577350269189625764509148780501957505_k, &    
-    0.00000000000000000000000000000000000_k, &    
-   0.577350269189625764509148780501957505_k, &    
-    1.00000000000000000000000000000000000_k, &    
-    1.73205080756887729352744634150587251_k, &    
-  ieee_value(expect(13), ieee_negative_inf), & 
-   -1.73205080756887729352744634150587251_k, &    
-   -1.00000000000000000000000000000000000_k, &    
+    0.00000000000000000000000000000000000_k, &
+   0.577350269189625764509148780501957505_k, &
+    1.00000000000000000000000000000000000_k, &
+    1.73205080756887729352744634150587251_k, &
+   ieee_value(expect(5), ieee_positive_inf), &
+   -1.73205080756887729352744634150587251_k, &
+   -1.00000000000000000000000000000000000_k, &
+  -0.577350269189625764509148780501957505_k, &
+    0.00000000000000000000000000000000000_k, &
+   0.577350269189625764509148780501957505_k, &
+    1.00000000000000000000000000000000000_k, &
+    1.73205080756887729352744634150587251_k, &
+  ieee_value(expect(13), ieee_negative_inf), &
+   -1.73205080756887729352744634150587251_k, &
+   -1.00000000000000000000000000000000000_k, &
   -0.577350269189625764509148780501957505_k  &
   /)
 
   expect(n+1:2*n) = expect(1:n)
- 
+
   arg = degrees
   result(1:n) = tand(arg)
   result(n+1:2*n) = tand(degrees)
@@ -65,11 +65,11 @@ program test
     else if (expect(i) .eq. 0.0_k) then
       if ((result(i) .ne. expect(i)) .and. &
           (abs(result(i)) .gt. q_tol)) STOP i
-    else 
+    else
       if (abs((result(i) - expect(i)) / expect(i)) .gt. q_tol) STOP i
     endif
-  enddo  
- 
+  enddo
+
   print *, 'PASS'
 
-end 
+end

@@ -2,7 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-!this test case is test for write
+! test WRITE statement with quad-precision input
+
 program test
   use check_mod
   integer, parameter :: k = 16

@@ -2,10 +2,11 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-!this test case is test for accepts private items in public NAMELISTs(compile)
+! test public NAMELISTs with private quad-precision values
+
 program main
   type :: tp2
-    real(kind = 16) :: t
+    real(kind=16) :: t
   end type
 
   type :: tp1

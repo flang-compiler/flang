@@ -2,7 +2,7 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-! test for conjg take quad precision
+! test CONJG intrinsic with quad-precision arguments
 
 program test
   integer :: r(21), e(21)

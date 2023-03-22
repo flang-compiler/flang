@@ -2,6 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
+! test NINT(KIND=8) intrinsic with quad-precision arguments
+
 program main
   use check_mod
   real(16) :: a = -huge(1.0_16), a2 = huge(1.0_16)

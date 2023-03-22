@@ -2,7 +2,9 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-!this test case is test for gamma log_gamma
+! test GAMMA/LOG_GAMMA intrinsics with quad-precision arguments;
+! check that SELECTED_REAL_KIND and PRECISION behave correctly
+
 program gamma
   implicit none
   intrinsic :: gamma, log_gamma

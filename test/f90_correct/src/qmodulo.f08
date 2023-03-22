@@ -1,4 +1,9 @@
-! Intrinsics function sign take quad precision.
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+!
+! test MODULO intrinsic with quad-precision arguments
+
 program test
   use check_mod
   real(16) :: a1(5), a2(5), ares(25), aexp(25)
@@ -39,13 +44,13 @@ program test
 
   a1 = -a1
   ares(6:10) = modulo(a1, a2)
-  
+
   a2 = -a2
   ares(11:15) = modulo(a1, a2)
-  
+
   a1 = -a1
   ares(16:20) = modulo(a1, a2)
-  
+
   ares(21:25) = modulo(b1, b2)
   call checkr16(ares, aexp, 25)
 end

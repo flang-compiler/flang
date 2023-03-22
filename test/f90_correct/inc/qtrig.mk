@@ -7,20 +7,20 @@
 ########## Make rule for test qsin qtan qcos  ########
 
 
-qtriangle: run
+qtrig: run
 	
 
-build:  $(SRC)/qtriangle.f08
-	-$(RM) qtriangle.$(EXESUFFIX) core *.d *.mod FOR*.DAT FTN* ftn* fort.*
+build:  $(SRC)/qtrig.f08
+	-$(RM) qtrig.$(EXESUFFIX) core *.d *.mod FOR*.DAT FTN* ftn* fort.*
 	@echo ------------------------------------ building test $@
 	-$(CC) -c $(CFLAGS) $(SRC)/check.c -o check.$(OBJX)
-	-$(FC) -c $(FFLAGS) $(LDFLAGS) $(SRC)/qtriangle.f08 -o qtriangle.$(OBJX)
-	-$(FC)  $(FFLAGS) $(LDFLAGS) qtriangle.$(OBJX) check.$(OBJX) $(LIBS) -o qtriangle.$(EXESUFFIX)
+	-$(FC) -c $(FFLAGS) $(LDFLAGS) $(SRC)/qtrig.f08 -o qtrig.$(OBJX)
+	-$(FC)  $(FFLAGS) $(LDFLAGS) qtrig.$(OBJX) check.$(OBJX) $(LIBS) -o qtrig.$(EXESUFFIX)
 
 
 run: 
-	@echo ------------------------------------ executing test qtriangle 
-	qtriangle.$(EXESUFFIX)
+	@echo ------------------------------------ executing test qtrig 
+	qtrig.$(EXESUFFIX)
 
 verify: ;
 

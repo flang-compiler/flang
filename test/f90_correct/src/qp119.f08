@@ -2,7 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-!this test case is test for const quad convert to logical 8
+! test for const quad convert to logical 8
+
 program main
   logical(kind = 8) :: a
   character(10) :: str

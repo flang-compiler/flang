@@ -3,6 +3,7 @@
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
 ! test for IO take quad precision' intrinsic argument
+
 program test
 implicit none
   real(16) :: r16, a, b

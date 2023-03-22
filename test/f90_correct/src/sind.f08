@@ -2,13 +2,13 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-! test for sind take quad precision argument
+! test SIND intrinsic with quad-precision arguments
 
 program test
   real(16) :: r1, r2, q1 = -1.23456789_16
   real(16) :: eps_q = 1.e-33_16
   integer :: result(2), expect(2)
- 
+
   expect = 1
   result = 0
 

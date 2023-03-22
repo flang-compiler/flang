@@ -2,6 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
+! test quad-precision division
+
 program main
   use check_mod
   real(16) :: a = 6.5421_16/1.23456_16, e

@@ -1,9 +1,8 @@
-!                                                        
 ! Part of the LLVM Project, under the Apache License v2.0
 ! See https://llvm.org/LICENSE.txt for license informatio
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-
-!this test case is test random_number function take quadruple precision
+!
+! test RANDOM_NUMBER intrinsic with quad-precision arguments
 
 program test
   real(16) :: num(10), r16, num222(2, 2, 2), num66(6,6), num2(2:6,2:6), &

@@ -1,9 +1,8 @@
-!
 ! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-
-! minloc taking quad precision
+!
+! test MINLOC intrinsic with quad-precision arguments
 
 program p
   integer, parameter :: n = 9
@@ -28,7 +27,7 @@ program p
   v_huge = minloc((/huge(1.0_16), huge(1.0_16), huge(1.0_16), huge(1.0_16)/))
   v_huge_b = minloc((/huge(1.0_16), huge(1.0_16), huge(1.0_16), huge(1.0_16)/), back=.true.)
   if (v_huge(1) == 1 .and. v_huge_b(1) == 4 ) rslts(4) = 1
- 
+
   tmp1 = minloc((/tiny(1.0_16), tiny(1.0_16), tiny(1.0_16), tiny(1.0_16)/))
   tmp2 = minloc((/tiny(1.0_16), tiny(1.0_16), tiny(1.0_16), tiny(1.0_16)/), back=.true.)
   if (tmp1(1) == 1 .and. tmp2(1) == 4) rslts(5) = 1
@@ -37,7 +36,7 @@ program p
   tmp2 = minloc((/epsilon(1.0_16), epsilon(1.0_16), epsilon(1.0_16), epsilon(1.0_16)/), back=.true.)
   if (tmp1(1) == 1 .and. tmp2(1) == 4) rslts(6) = 1
 
-  !functional verification 
+  !functional verification
   tmp1 = minloc((/1.000000000000000000000000000000_16, &
                   1.000000000000000000000000000002_16, &
                   1.000000000000000000000000000000_16, &
@@ -45,7 +44,7 @@ program p
                   1.000000000000000000000000000001_16, &
                   0.999999999999999999999999999998_16/))
   if (tmp1(1) == 6) rslts(7) = 1
-  
+
   !variable param
   array_r16 = reshape((/1.222222222222222222222222222222_16, &
                         1.222222222222222222222222222221_16, &
@@ -65,4 +64,3 @@ program p
 
   call check(rslts, expect, n)
 end
-

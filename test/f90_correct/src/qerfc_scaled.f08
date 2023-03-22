@@ -1,8 +1,9 @@
-!** Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-!** See https://llvm.org/LICENSE.txt for license information.
-!** SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+!
+! test scaled complementary error function intrinsic (ERFC_SCALED) with quad-precision arguments
 
-! Exponentially-scaled complementary error function with a quad-precision argument.
 program p
   use ieee_arithmetic
   real(kind=16), parameter :: xneg = -106.5637380121098417363881585073946045229689_16

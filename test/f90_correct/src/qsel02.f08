@@ -1,10 +1,10 @@
-!* Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-!* See https://llvm.org/LICENSE.txt for license information.
-!* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-!* intrisic function selected_real_kind() supports real kind 16.
-!* That's for quad-precision
-!* selected_real_kind as the initialization of a variable	
+! test quad-precision support in the SELECTED_REAL_KIND intrinsic when
+! used in variable initializations
+
 program main
   integer result(8), expect(8)
   integer, parameter :: i1 = selected_real_kind(p = 16)
@@ -16,7 +16,7 @@ program main
   integer, parameter :: i7 = selected_real_kind(p = 34, r = 4932)
   integer, parameter :: i8 = selected_real_kind(p = 6, r = 40, radix = 10)
   data expect / 16, 16, 16, 16, -1, -2,  -3, -5 /
-    
+
   result(1) = i1
   result(2) = i2
   result(3) = i3

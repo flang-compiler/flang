@@ -2,7 +2,7 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-! test for intrinsic sind take quad precision argument.
+! test SIND intrinsic with quad-precision arguments
 
 program test
   implicit none
