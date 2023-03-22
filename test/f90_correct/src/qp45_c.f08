@@ -2,6 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
+! test REAL/FLOAT/FLOOR/CEILING/SNGL/AINT/ANINT intrinsics returning quad-precision results
+
 program main
   use check_mod
   real*4 a

@@ -1,10 +1,11 @@
-!** Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-!** See https://llvm.org/LICENSE.txt for license information.
-!** SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+!
+! test HYPOT intrinsic with quad-precision arguments
 
-!*   Intrinsics function hypot take quad precision.
 program test
-use ieee_arithmetic
+  use ieee_arithmetic
  
   integer, parameter :: n = 5
   real(16), parameter :: q_tol = 1e-33_16

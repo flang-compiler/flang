@@ -1,8 +1,9 @@
-!** Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-!** See https://llvm.org/LICENSE.txt for license information.
-!** SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+!
+! test SQRT/EXP/LOG/SIN intrinsics with quad-precision arguments
 
-!*   Intrinsics function sin cos tan take quad precision.
 program p
   use ISO_C_BINDING
   use check_mod

@@ -2,6 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
+! test exponentiation of quad-precision value with a negative INTEGER*8 exponent
+
 program main
   use check_mod
   integer(8) :: b = -4_8

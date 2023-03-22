@@ -1,8 +1,9 @@
-!** Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-!** See https://llvm.org/LICENSE.txt for license information.
-!** SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+!
+! test SET_EXPONENT intrinsic with quad-precision arguments
 
-! this test case is test set_exponent function take quadruple precision
 program main
   use check_mod
   use ieee_arithmetic
@@ -33,11 +34,11 @@ program main
   a16(3) = set_exponent(1.0_16, -i)
   a16(4) = set_exponent(1.0_16, i)
   a16(5) = set_exponent(inf16, 10)
-  
+
   if (ieee_is_finite(a4(3))) STOP 1
   if (ieee_is_finite(a8(3))) STOP 2
   if (ieee_is_finite(a16(5))) STOP 3
-  
+
   if(all(a4(1:2) .eq. ea4(1:2)) .neqv. .true.) STOP 4
   if(all(a8(1:2) .eq. ea8(1:2)) .neqv. .true.) STOP 5
   if(all(a8(1:2) .eq. ea8(1:2)) .neqv. .true.) STOP 6

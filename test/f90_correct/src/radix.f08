@@ -1,9 +1,9 @@
-!                                                        
 ! Part of the LLVM Project, under the Apache License v2.0
 ! See https://llvm.org/LICENSE.txt for license informatio
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+!
+! test RADIX intrinsic with quad-precision arguments
 
-! check if radix function take quadruple precision properly
 program main
   integer, parameter :: eres(25) = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
   integer :: res(25)
@@ -40,6 +40,6 @@ program main
   else
     res(i) = E(i-20)
   end if
-  end do  
+  end do
 call check(res, eres, 25)
 end program main

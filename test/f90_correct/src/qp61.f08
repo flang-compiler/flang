@@ -2,7 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-!this test case is test for const quad convert to double
+! test for const quad convert to double
+
 program main
   use check_mod
   real(kind = 8) :: a = 1.1_16, ea

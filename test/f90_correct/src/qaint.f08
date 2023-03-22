@@ -1,8 +1,9 @@
-!** Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-!** See https://llvm.org/LICENSE.txt for license information.
-!** SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+!
+! test AINT intrinsic with quad-precision arguments
 
-!*   Intrinsics function aint take quad precision.
 program p
   use check_mod
   integer, parameter :: n = 4

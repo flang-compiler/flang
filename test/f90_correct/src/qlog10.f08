@@ -2,7 +2,7 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-! test for log10 take quad precision argument
+! test LOG10 intrinsic with quad-precision argument
 
 program test
   integer, parameter :: n = 5

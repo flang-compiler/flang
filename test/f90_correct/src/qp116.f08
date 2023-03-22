@@ -2,7 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-!this test case is test for const quad convert to int
+! test for const quad convert to int
+
 program main
   integer, parameter :: k = 1
   integer(kind = 4) :: b, ea

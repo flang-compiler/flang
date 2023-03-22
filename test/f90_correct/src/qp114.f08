@@ -3,6 +3,7 @@
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
 ! test for const quad convert to double
+
 program main
   use check_mod
   real(kind = 8) :: b, ea

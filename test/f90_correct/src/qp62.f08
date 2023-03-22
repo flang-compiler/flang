@@ -2,7 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-!this test case is test for const dcomolex convert to quad
+! test for const dcomolex convert to quad
+
 program main
   use check_mod
   complex(kind = 8) :: a = 1.1_16, ea

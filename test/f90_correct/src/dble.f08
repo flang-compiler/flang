@@ -2,7 +2,7 @@
 ! Part of the LLVM Project, under the Apache License v2.0
 ! See https://llvm.org/LICENSE.txt for license informatio
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-
+!
 ! check if dble function take quadruple precision properly
 
 program main

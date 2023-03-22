@@ -1,8 +1,9 @@
-!** Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-!** See https://llvm.org/LICENSE.txt for license information.
-!** SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+!
+! test UNPACK intrinsic with quad-precision arguments
 
-! this test case is test unpack function take quadruple precision
 program main
   use ieee_arithmetic
   real(16), dimension(3, 3, 3) :: filed, res, expct
@@ -35,7 +36,7 @@ end
 subroutine init(expct)
   real(16), dimension(3, 3, 3) :: expct
   expct(1, 1, 1) = 1.18973149535723176508575932662800702E+4932_16
-  expct(2, 1, 1) = 0.999999999999999999999999999999999904_16 
+  expct(2, 1, 1) = 0.999999999999999999999999999999999904_16
   expct(3, 1, 1) = 1.00000000000000000000000000000000019_16
   expct(3, 2, 1) = 256.000000000000000000000000000000000_16
   expct(3, 2, 2) = 3125.00000000000000000000000000000000_16

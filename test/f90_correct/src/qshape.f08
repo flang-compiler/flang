@@ -1,8 +1,9 @@
-!** Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-!** See https://llvm.org/LICENSE.txt for license information.
-!** SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+!
+! test SHAPE intrinsic with quad-precision arguments
 
-!*   Intrinsics function shape take quad precision.
 program main
   use check_mod
   real(16), parameter :: a(30,30,30) = 1.0_16

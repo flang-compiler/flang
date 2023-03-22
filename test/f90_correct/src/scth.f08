@@ -2,12 +2,12 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-! test for sinh, cosh and tanh take quad precision argument
+! test SINH/COSH/TANH intrinsics with quad-precision arguments
 
 program test
   real(kind = 16) :: x, ysinh, ycosh, ytanh, answer
   real(kind = 16) :: eps_q = 1.e-33_16
-  integer :: real_result(9), exp_result(9) 
+  integer :: real_result(9), exp_result(9)
   exp_result = 1
   real_result = 0
 

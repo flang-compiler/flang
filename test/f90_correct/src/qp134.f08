@@ -2,6 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
+! check that TAND(90.0) returns infinity
+
 program main
   use ieee_arithmetic
   real(8) :: a

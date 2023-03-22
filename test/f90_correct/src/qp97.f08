@@ -2,7 +2,7 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-! test for intrinsic function take quad precision argument.
+! test various intrinsics with quad-precision arguments
 
 program test
   integer, parameter :: n = 10

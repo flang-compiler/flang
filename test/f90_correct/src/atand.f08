@@ -2,7 +2,7 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-! test for atand take quad precision argument
+! test ATAND intrinsic with quad-precision arguments
 
 program test
   real(16) :: r1, r2, q1 = -0.123456789_16

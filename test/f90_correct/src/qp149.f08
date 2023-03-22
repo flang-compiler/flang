@@ -4,8 +4,6 @@
 !
 ! test for exponentiation operation of quad complex : real(16) ^ real(16)
 
-! not supported!
-
 program test
   integer, parameter :: n = 16
   !integer, parameter :: m = 2 * n

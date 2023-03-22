@@ -1,4 +1,9 @@
-! this test case is test fraction function take quadruple precision
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+!
+! test FRACTION intrinsic with quad-precision arguments
+
 program test
       integer :: i = 1
       integer :: exp_result(6), real_result(6)
@@ -36,4 +41,3 @@ program test
       if(a(6) == b(6)) real_result(6) = 1
       call check(real_result, exp_result, 6)
 end
-

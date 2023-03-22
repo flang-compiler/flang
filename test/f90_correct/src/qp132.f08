@@ -2,9 +2,9 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-! test for option -Hx,57,0x10 while REAL*16 will be mapped to REAL*8
-! and print warning like "REAL(16) will be mapped to REAL(8)"
-! this test must add option "-Hx,57,0x10" or will be failure.
+! Test the option -Hx,57,0x10 which maps REAL*16 to REAL*8, and prints a
+! warning like "REAL(16) will be mapped to REAL(8)". This test will fail
+! if the option "-Hx,57,0x10" is not specified.
 
 program test
   integer, parameter :: n = 16

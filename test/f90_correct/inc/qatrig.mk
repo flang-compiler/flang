@@ -7,20 +7,20 @@
 ########## Make rule for test qasin qacos qatan  ########
 
 
-qatriangle: run
+qatrig: run
 	
 
-build:  $(SRC)/qatriangle.f08
-	-$(RM) qatriangle.$(EXESUFFIX) core *.d *.mod FOR*.DAT FTN* ftn* fort.*
+build:  $(SRC)/qatrig.f08
+	-$(RM) qatrig.$(EXESUFFIX) core *.d *.mod FOR*.DAT FTN* ftn* fort.*
 	@echo ------------------------------------ building test $@
 	-$(CC) -c $(CFLAGS) $(SRC)/check.c -o check.$(OBJX)
-	-$(FC) -c $(FFLAGS) $(LDFLAGS) $(SRC)/qatriangle.f08 -o qatriangle.$(OBJX)
-	-$(FC) $(FFLAGS) $(LDFLAGS) qatriangle.$(OBJX) check.$(OBJX) $(LIBS) -o qatriangle.$(EXESUFFIX)
+	-$(FC) -c $(FFLAGS) $(LDFLAGS) $(SRC)/qatrig.f08 -o qatrig.$(OBJX)
+	-$(FC) $(FFLAGS) $(LDFLAGS) qatrig.$(OBJX) check.$(OBJX) $(LIBS) -o qatrig.$(EXESUFFIX)
 
 
 run: 
-	@echo ------------------------------------ executing test qatriangle 
-	qatriangle.$(EXESUFFIX)
+	@echo ------------------------------------ executing test qatrig 
+	qatrig.$(EXESUFFIX)
 
 verify: ;
 

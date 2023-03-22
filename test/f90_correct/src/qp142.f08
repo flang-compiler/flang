@@ -2,6 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
+! test NINT intrinsic with a quad-precision version of INT_MIN
+
 program main
   integer :: r, e
   r = nint(-2147483650.4567_16, kind = 4)

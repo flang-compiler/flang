@@ -2,7 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-!this test case is test for r
+! test formatted file I/O of quad-precision values
+
 program test
   integer, parameter :: k = 16
   real(kind = k) :: a, e = 1.23456_16

@@ -2,7 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-!this test case is test for io type
+! test I/O of NML with quad-precision data
+
 program test
   character(80) :: str
   integer, parameter :: k = 16

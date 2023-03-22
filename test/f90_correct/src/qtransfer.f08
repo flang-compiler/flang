@@ -1,8 +1,9 @@
-!** Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-!** See https://llvm.org/LICENSE.txt for license information.
-!** SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+!
+! test TRANSFER intrinsic with quad-precision arguments
 
-! this test case is test transfer function take quadruple precision
 program main
   use check_mod
   complex(8), parameter :: a(3) = transfer([1.1_16, 2.2_16, 3.3_16], [(0.0_8, 0.0_8)])
@@ -28,7 +29,7 @@ program main
   ef(2) = 4.10412981420537605637899636917792932E-4936_16
   eg(1) = 2.05206490704296507903132505531756728E-4936_16
   eg(2) = 4.10412981420537605637899636917792932E-4936_16
-  
+
   c = transfer([1.1_16, 2.2_16, 3.3_16], [(0.0_8, 0.0_8)])
   g = transfer([1,2,3,4,5,6,7,8], [1.0_16])
 

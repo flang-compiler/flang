@@ -2,7 +2,7 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
-! test for dim take quad precision argument
+! test DIM intrinsic with quad-precision arguments
 
 program test
   real(kind = 16) :: x1, x2, ydim(3), answer

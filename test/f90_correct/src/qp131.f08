@@ -2,6 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
+! test exponentiation of quad-precision values
+
 program main
    integer, parameter :: n = 7 
    real(16) :: q_tol = 5e-33_16

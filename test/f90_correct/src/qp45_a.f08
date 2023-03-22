@@ -2,6 +2,8 @@
 ! See https://llvm.org/LICENSE.txt for license information.
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
+! test REAL/FLOAT/FLOOR/CEILING/SNGL/AINT/ANINT intrinsics returning single-precision results
+
 program main
   use check_mod
   real*4 rslta(15), expcta(15)
@@ -48,7 +50,6 @@ program main
   rslta(13) = aint(c)
   rslta(14) = anint(b)
   rslta(15) = anint(c)
-
 
   call checkr4(rslta, expcta, 15, rtoler = 5.e-6)
 
