@@ -14241,42 +14241,42 @@ reset_expr_id(void)
 static void
 store_return_value_for_entry(OPERAND *p, int i_name)
 {
-  if (p->ot_type != OT_VAR || !DT_ISCMPLX(DTYPEG(p->val.sptr))) {
-    print_token("\tstore ");
-    write_type(p->ll_type);
-    print_space(1);
-    write_operand(p, "", FLG_OMIT_OP_TYPE);
-    print_token(", ");
-    write_type(make_ptr_lltype(p->ll_type));
-    print_token(" %");
-    print_token(get_entret_arg_name());
-    print_token(", align 4\n");
-  } else {
-    TMPS *loadtmp;
-    /*  %11 = load <{float, float}>, ptr %cp1_300, align 4  */
-    loadtmp = make_tmps();
+  const LL_Type *retTy;
+  TMPS *new_tmps;
+  // extract the scalar value if datatype is a pointer type
+  if (p->ll_type->data_type == LL_PTR) {
+    retTy = p->ll_type->sub_types[0];
+    assert((retTy->data_type  != LL_PTR), 
+	    "scalar type is expected : got %d ", LL_PTR, ERR_Fatal);
+    new_tmps = make_tmps();
     print_token("\t");
-    print_tmp_name(loadtmp);
-    print_token(" = load");
-    write_type(p->ll_type->sub_types[0]);
+    print_tmp_name(new_tmps);
+    print_space(1);
+    print_token("=");
+    print_space(1);
+    print_token("load ");
+    write_type(retTy);
     print_token(", ");
     write_type(p->ll_type);
-    print_space(1);
     write_operand(p, "", FLG_OMIT_OP_TYPE);
-    print_token(", align 4\n");
-
-    /*  store <{float, float}> %11, ptr %__master_entry_rslt323, align 4  */
-    print_token("\tstore ");
-    write_type(p->ll_type->sub_types[0]);
-    print_space(1);
-    print_tmp_name(loadtmp);
-    print_token(", ");
-
-    write_type(p->ll_type);
-    print_token(" %");
-    print_token(get_entret_arg_name());
     print_token(", align 4\n");
   }
+
+  print_token("\tstore ");
+  if (p->ll_type->data_type == LL_PTR) {
+    write_type(retTy);
+    print_space(1);
+    print_tmp_name(new_tmps);
+  } else {
+   write_type(p->ll_type);
+   print_space(1);
+   write_operand(p, "", FLG_OMIT_OP_TYPE);
+  }
+  print_token(", ");
+  write_type(make_ptr_lltype(p->ll_type));
+  print_token(" %");
+  print_token(get_entret_arg_name());
+  print_token(", align 4\n");
 
   print_token("\t");
   print_token(llvm_instr_names[i_name]);

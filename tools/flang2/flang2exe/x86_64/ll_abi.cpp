@@ -248,7 +248,12 @@ amd64_coerce(LL_Module *module, LL_ABI_ArgInfo *arg,
       break;
     case AMD64_SSE:
       /* Possibilities: float, double, <2 x float> */
-      if (size == 8 * i + 4)
+      if (dtype == DT_CMPLX) {
+        LL_Type *ftype = ll_create_basic_type(module, LL_FLOAT, 0);
+        LL_Type *pair[2] = {ftype, ftype};
+        types[i] = ll_create_anon_struct_type(module, pair, 2,  true, 0);
+      }
+      else if (size == 8 * i + 4)
         types[i] = ll_create_basic_type(module, LL_FLOAT, 0);
       else
         types[i] = ll_create_basic_type(module, LL_DOUBLE, 0);
