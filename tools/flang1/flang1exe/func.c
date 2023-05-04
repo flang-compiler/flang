@@ -3262,6 +3262,16 @@ leave_arg(int ast, int i, int *parg, int lc)
     case I_NORM2:
       if (i != 0)
         return 0;
+      // Argument with expression has to be rewritten
+      switch(A_TYPEG(arg)) {
+        default:
+          break;
+        case A_BINOP:
+        case A_UNOP:
+        case A_PAREN:
+          return 0;
+      }
+
       args = A_ARGSG(ast);
       astdim = ARGT_ARG(args, 1);
       break;
