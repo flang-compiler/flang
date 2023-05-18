@@ -1936,6 +1936,12 @@ collapse_assignment(int asn, int std)
       if (CONVAL1G(cnst) == stb.dbl0 && CONVAL2G(cnst) == stb.dbl0)
         is_zero = 1;
       break;
+#ifdef TARGET_SUPPORTS_QUADFP
+    case DT_QCMPLX:
+      if (CONVAL1G(cnst) == stb.quad0 && CONVAL2G(cnst) == stb.quad0)
+        is_zero = 1;
+      break;
+#endif
     case DT_BINT:
     case DT_SINT:
     case DT_INT4:
