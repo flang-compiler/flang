@@ -59,12 +59,9 @@ def generate_buildoptions(arguments):
         f'-DCMAKE_BUILD_TYPE={arguments.build_type}',
         f'-DCMAKE_TOOLCHAIN_FILE={arguments.toolchain}'
     ]
-    # On Windows on ARM we have to use NMake, Ninja is not available yet.
-    if sys.platform == 'win32' and platform.uname()[4].lower() == 'arm64':
-        base_cmake_args.append('-GNMake Makefiles')
-    else:
-        generator = 'Ninja' if sys.platform == 'win32' else 'Unix Makefiles'
-        base_cmake_args.append(f'-G{generator}')
+
+    generator = 'Ninja' if sys.platform == 'win32' else 'Unix Makefiles'
+    base_cmake_args.append(f'-G{generator}')
 
     if arguments.use_ccache:
         base_cmake_args.append('-DCMAKE_C_COMPILER_LAUNCHER=ccache')
