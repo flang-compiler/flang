@@ -845,7 +845,7 @@ get_module_file_name_from_user(TOBE_IMPORTED_LIST *il, const char *from_file_nam
     saveslash = *slash;
     *slash = '\0'; /* have a directory, terminate the string */
     if (fndpath(il->modulefilename, il->fullfilename, MAX_FNAME_LEN,
-                from_file_name) == 0) {
+                chfromdup) == 0) {
       *slash = saveslash;
       FREE(chfromdup);
       return 1;

@@ -24,6 +24,8 @@ COMP_CHECK=python $(HOMEQA)/../tools/check_compilation.py
 
 RM=rm -f
 CP=cp -f
+CD=cd
+MKDIR=mkdir -p
 UNAME := $(shell uname -a)
 
 INCLUDES=$(BASE_DIR)/inc
