@@ -64,4 +64,4 @@ jobs:
       - name: Test flang
         run: |
           cd ${{ env.build_path }}/flang/build/flang
-          make check-all
+          make check-flang-long
