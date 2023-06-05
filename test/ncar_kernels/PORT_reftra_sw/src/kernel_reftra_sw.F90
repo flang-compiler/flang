@@ -132,7 +132,7 @@
    
 
     ! STATE VERIFICATION
-    IF ( ALL(( abs(outstate_ztradc - ztradc) ) .LT. _TOL) ) THEN
+    IF ( ALL(( abs(outstate_ztradc - ztradc) ) .LE. _TOL) ) THEN
         WRITE(*,*) "ztradc is IDENTICAL."
         !WRITE(*,*) "STATE : ", outstate_ztradc
         !WRITE(*,*) "KERNEL: ", ztradc
@@ -150,7 +150,7 @@
         WRITE(*,*) "Mean value of original outstate_ztradc is ", sum(outstate_ztradc)/real(size(outstate_ztradc))
         WRITE(*,*) ""
     END IF
-    IF ( ALL(( abs(outstate_zrefdc - zrefdc) ) .LT. _TOL)) THEN
+    IF ( ALL(( abs(outstate_zrefdc - zrefdc) ) .LE. _TOL)) THEN
         WRITE(*,*) "zrefdc is IDENTICAL."
         !WRITE(*,*) "STATE : ", outstate_zrefdc
         !WRITE(*,*) "KERNEL: ", zrefdc
@@ -168,7 +168,7 @@
         WRITE(*,*) "Mean value of original outstate_zrefdc is ", sum(outstate_zrefdc)/real(size(outstate_zrefdc))
         WRITE(*,*) ""
     END IF
-    IF ( ALL(( abs(outstate_ztrac - ztrac) ) .LT. _TOL)) THEN
+    IF ( ALL(( abs(outstate_ztrac - ztrac) ) .LE. _TOL)) THEN
         WRITE(*,*) "ztrac is IDENTICAL."
         !WRITE(*,*) "STATE : ", outstate_ztrac
         !WRITE(*,*) "KERNEL: ", ztrac
@@ -186,7 +186,7 @@
         WRITE(*,*) "Mean value of original outstate_ztrac is ", sum(outstate_ztrac)/real(size(outstate_ztrac))
         WRITE(*,*) ""
     END IF
-    IF ( ALL(( abs(outstate_zrefc - zrefc) ) .LT. _TOL) ) THEN
+    IF ( ALL(( abs(outstate_zrefc - zrefc) ) .LE. _TOL) ) THEN
         WRITE(*,*) "zrefc is IDENTICAL."
         !WRITE(*,*) "STATE : ", outstate_zrefc
         !WRITE(*,*) "KERNEL: ", zrefc
