@@ -66,6 +66,15 @@ add_lit_testsuite(check-flang "Running Flang regression tests"
   )
 set_target_properties(check-flang PROPERTIES FOLDER "Flang tests")
 
+add_lit_testsuite(check-flang-long "Running time-consuming Flang regression tests"
+  ${CMAKE_CURRENT_BINARY_DIR}
+  EXCLUDE_FROM_CHECK_ALL
+  PARAMS "${FLANG_TEST_PARAMS};run_long_tests=true"
+  DEPENDS ${FLANG_TEST_DEPS}
+  ARGS ${FLANG_TEST_EXTRA_ARGS}
+  )
+set_target_properties(check-flang-long PROPERTIES FOLDER "Flang tests")
+
 add_lit_testsuites(FLANG ${CMAKE_CURRENT_SOURCE_DIR}
   PARAMS ${FLANG_TEST_PARAMS}
   DEPENDS ${FLANG_TEST_DEPS}

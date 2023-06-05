@@ -86,7 +86,7 @@ jobs:
       - name: Test flang
         run: |
           cd build/flang
-          make check-all
+          make check-flang-long
 
       # Archive documentation just once, for the fastest job.
       - if: matrix.cc == 'clang' && matrix.version == '11'
