@@ -11,7 +11,7 @@ FC=flang
 CC=clang
 CXX=clang++
 OBJX=o
-EXESUFFIX=out
+EXESUFFIX=exe
 EXE=out
 
 
