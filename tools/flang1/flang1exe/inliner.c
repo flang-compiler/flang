@@ -1526,7 +1526,7 @@ move_labels(int stdstart, int stdlast)
  * actual parameter.
  */
 static int
-replace_parms(int ast, void *extra_arg)
+replace_parms(int ast, int *extra_arg)
 {
   int iar;
   int astLop, astNew, astSS, astSub, vastSubs[7], ast1;
