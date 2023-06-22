@@ -9,12 +9,12 @@
 
 subroutine F90_matmul_log2_contmxm(dest, src1, src2, k_extent, m_extent, n_extent)
 
-  LOGICAL*2, dimension(k_extent,m_extent) :: src1
-  LOGICAL*2, dimension(m_extent,n_extent) :: src2
-  LOGICAL*2, dimension(k_extent,n_extent) :: dest
   DESC_INT k_extent
   DESC_INT n_extent
   DESC_INT m_extent
+  LOGICAL*2, dimension(k_extent,m_extent) :: src1
+  LOGICAL*2, dimension(m_extent,n_extent) :: src2
+  LOGICAL*2, dimension(k_extent,n_extent) :: dest
 
   DESC_INT k
   DESC_INT n
