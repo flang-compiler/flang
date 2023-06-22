@@ -23,9 +23,10 @@ typedef struct {
 
 /* ENTFTN(comm_start) function: adjust base addresses and call doit */
 
-static void I8(comm_sked_start)(comm_sked *sk, char *rb, char *sb, F90_Desc *rd,
+static void I8(comm_sked_start)(void *sk_, char *rb, char *sb, F90_Desc *rd,
                                 F90_Desc *sd)
 {
+  comm_sked *sk = (comm_sked*)sk_;
 #if defined(DEBUG)
   if (F90_KIND_G(rd) != F90_KIND_G(sd) || F90_LEN_G(rd) != F90_LEN_G(sd))
     __fort_abort("COMM_START: mismatched array types");
@@ -39,8 +40,9 @@ static void I8(comm_sked_start)(comm_sked *sk, char *rb, char *sb, F90_Desc *rd,
 /* comm_free function: free channel and schedule structures */
 
 static void
-comm_sked_free(comm_sked *sk)
+comm_sked_free(void *sk_)
 {
+  comm_sked *sk = (comm_sked*)sk_;
   __fort_frechn(sk->channel);
   __fort_free(sk);
 }
