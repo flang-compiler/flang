@@ -135,13 +135,13 @@ module IEEE_EXCEPTIONS
   interface
     pure integer function __fenv_fegetexceptflag(flagp, exc) bind(c)
       use, intrinsic :: iso_c_binding
-      integer(c_int)        :: flagp
+      integer(c_int), intent(in) :: flagp
       integer(c_int), value :: exc
     end function __fenv_fegetexceptflag
 
     pure integer function __fenv_fesetexceptflag(flagp, exc) bind(c)
       use, intrinsic :: iso_c_binding
-      integer(c_int)        :: flagp
+      integer(c_int), intent(in) :: flagp
       integer(c_int), value :: exc
     end function __fenv_fesetexceptflag
 
@@ -188,49 +188,49 @@ module IEEE_EXCEPTIONS
 ! Inquiry functions for IEEE exceptions
 contains
   logical function ieee_support_flagnox(flag)
-    type(ieee_flag_type)  :: flag
+    type(ieee_flag_type), intent(in) :: flag
     ieee_support_flagnox = .true.
     return
   end function ieee_support_flagnox
 
   logical function ieee_support_flagr(flag, x)
 !dir$ ignore_tkr (kr) x
-    type(ieee_flag_type)  :: flag
+    type(ieee_flag_type), intent(in) :: flag
     real :: x
     ieee_support_flagr = .true.
     return
   end function ieee_support_flagr
 
   logical function ieee_support_halting(flag)
-    type(ieee_flag_type) :: flag
+    type(ieee_flag_type), intent(in) :: flag
     ieee_support_halting = .true.
     return
   end function ieee_support_halting
 
 !--------------------------------------------------------------------------
   elemental subroutine ieee_get_flag(flag, flag_value)
-    type(ieee_flag_type)  :: flag
+    type(ieee_flag_type), intent(in) :: flag
     logical, intent(out) :: flag_value
     flag_value = (__fenv_fetestexcept(flag%ft) .eq. flag%ft)
     return
   end subroutine
 
   elemental subroutine ieee_get_flag_l8(flag, flag_value)
-    type(ieee_flag_type)  :: flag
+    type(ieee_flag_type), intent(in) :: flag
     logical*8, intent(out) :: flag_value
     flag_value = (__fenv_fetestexcept(flag%ft) .eq. flag%ft)
     return
   end subroutine
 
   elemental subroutine ieee_get_halting_mode(flag, halting)
-    type(ieee_flag_type)  :: flag
+    type(ieee_flag_type), intent(in) :: flag
     logical, intent(out) :: halting
     halting = (iand(__fenv_fegetexcept(),flag%ft) .ne. 0)
     return
   end subroutine
 
   elemental subroutine ieee_get_halting_mode_l8(flag, halting)
-    type(ieee_flag_type)  :: flag
+    type(ieee_flag_type), intent(in) :: flag
     logical*8, intent(out) :: halting
     halting = (iand(__fenv_fegetexcept(),flag%ft) .ne. 0)
     return
@@ -238,7 +238,7 @@ contains
 
 !--------------------------------------------------------------------------
   pure subroutine ieee_set_flag_scalar(flag, flag_value)
-    type(ieee_flag_type) :: flag
+    type(ieee_flag_type), intent(in) :: flag
     logical, intent(in)  :: flag_value
     if (flag_value) then
       i = __fenv_feraiseexcept(flag%ft)
@@ -248,7 +248,7 @@ contains
   end subroutine ieee_set_flag_scalar
 
   pure subroutine ieee_set_flag_array(flag, flag_value)
-    type(ieee_flag_type), dimension(:) :: flag
+    type(ieee_flag_type), intent(in), dimension(:) :: flag
     logical, intent(in), dimension(:)  :: flag_value
     integer flagp, flagv
     flagp = 0
@@ -263,7 +263,7 @@ contains
   end subroutine ieee_set_flag_array
   
   pure subroutine ieee_set_flag_arrscal(flag, flag_value)
-    type(ieee_flag_type), dimension(:) :: flag
+    type(ieee_flag_type), intent(in), dimension(:) :: flag
     logical, intent(in) :: flag_value
     integer flagp, flagv
     flagp = 0
@@ -278,7 +278,7 @@ contains
   end subroutine ieee_set_flag_arrscal
 
   subroutine ieee_set_halting_mode_scalar(flag, halting)
-    type(ieee_flag_type) :: flag
+    type(ieee_flag_type), intent(in) :: flag
     logical, intent(in)  :: halting
     if (halting) then
       i = __fenv_feenableexcept(flag%ft)
@@ -288,7 +288,7 @@ contains
   end subroutine ieee_set_halting_mode_scalar
 
   subroutine ieee_set_halting_mode_array(flag, halting)
-    type(ieee_flag_type), dimension(:) :: flag
+    type(ieee_flag_type), intent(in), dimension(:) :: flag
     logical, intent(in), dimension(:)  :: halting
     integer flagp, flagn
     flagp = 0
@@ -305,7 +305,7 @@ contains
   end subroutine ieee_set_halting_mode_array
 
   subroutine ieee_set_halting_mode_arrscal(flag, halting)
-    type(ieee_flag_type), dimension(:) :: flag
+    type(ieee_flag_type), intent(in), dimension(:) :: flag
     logical, intent(in) :: halting
     integer flagp, flagn
     flagp = 0
@@ -323,7 +323,7 @@ contains
 
 !--------------------------------------------------------------------------
   pure subroutine ieee_set_flag_scalar_l8(flag, flag_value)
-    type(ieee_flag_type) :: flag
+    type(ieee_flag_type), intent(in) :: flag
     logical*8, intent(in)  :: flag_value
     if (flag_value) then
       i = __fenv_feraiseexcept(flag%ft)
@@ -333,7 +333,7 @@ contains
   end subroutine ieee_set_flag_scalar_l8
 
   pure subroutine ieee_set_flag_array_l8(flag, flag_value)
-    type(ieee_flag_type), dimension(:) :: flag
+    type(ieee_flag_type), intent(in), dimension(:) :: flag
     logical*8, intent(in), dimension(:)  :: flag_value
     integer flagp, flagv
     flagp = 0
@@ -348,7 +348,7 @@ contains
   end subroutine ieee_set_flag_array_l8
   
   pure subroutine ieee_set_flag_arrscal_l8(flag, flag_value)
-    type(ieee_flag_type), dimension(:) :: flag
+    type(ieee_flag_type), intent(in), dimension(:) :: flag
     logical*8, intent(in) :: flag_value
     integer flagp, flagv
     flagp = 0
@@ -363,7 +363,7 @@ contains
   end subroutine ieee_set_flag_arrscal_l8
 
   subroutine ieee_set_halting_mode_scalar_l8(flag, halting)
-    type(ieee_flag_type) :: flag
+    type(ieee_flag_type), intent(in) :: flag
     logical*8, intent(in)  :: halting
     if (halting) then
       i = __fenv_feenableexcept(flag%ft)
@@ -373,7 +373,7 @@ contains
   end subroutine ieee_set_halting_mode_scalar_l8
 
   subroutine ieee_set_halting_mode_array_l8(flag, halting)
-    type(ieee_flag_type), dimension(:) :: flag
+    type(ieee_flag_type), intent(in), dimension(:) :: flag
     logical*8, intent(in), dimension(:)  :: halting
     integer flagp, flagn
     flagp = 0
@@ -390,7 +390,7 @@ contains
   end subroutine ieee_set_halting_mode_array_l8
 
   subroutine ieee_set_halting_mode_arrscal_l8(flag, halting)
-    type(ieee_flag_type), dimension(:) :: flag
+    type(ieee_flag_type), intent(in), dimension(:) :: flag
     logical*8, intent(in) :: halting
     integer flagp, flagn
     flagp = 0
