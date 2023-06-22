@@ -2340,7 +2340,7 @@ ll_make_outlined_ompaccel_call(SPTR parent_func_sptr, SPTR outlined_func)
   OMPACCEL_TINFO *omptinfo;
   omptinfo = ompaccel_tinfo_get(outlined_func);
   nargs = omptinfo->n_symbols;
-  int args[nargs], garg_ilis[nargs];
+  int args[nargs];
   DTYPE arg_dtypes[nargs];
 
   DTYPEP(outlined_func, DT_NONE);
