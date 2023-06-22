@@ -11,6 +11,7 @@
 #endif
 
 module IEEE_EXCEPTIONS
+  use, intrinsic :: iso_c_binding
 #ifdef PGDLL
 !DEC$ ATTRIBUTES DLLEXPORT :: IEEE_EXCEPTIONS
 #endif
@@ -60,12 +61,12 @@ module IEEE_EXCEPTIONS
 #endif
 
 ! Derived types and parameters
-  type ieee_flag_type
+  type, bind(c) :: ieee_flag_type
     private
     integer :: ft
   end type ieee_flag_type
 
-  type ieee_status_type
+  type, bind(c) :: ieee_status_type
     private
     integer :: mxcsr
     integer :: x87cw
@@ -96,49 +97,9 @@ module IEEE_EXCEPTIONS
   type(ieee_flag_type), parameter :: ieee_all(5) = &
             (/ieee_usual, ieee_underflow, ieee_inexact/)
 
-  ! Generic interfaces
-  !--------------------
-  interface ieee_support_flag
-    module procedure ieee_support_flagnox, ieee_support_flagr
-  end interface
-
-  interface ieee_set_flag
-    module procedure ieee_set_flag_scalar
-    module procedure ieee_set_flag_array
-    module procedure ieee_set_flag_arrscal
-    module procedure ieee_set_flag_scalar_l8
-    module procedure ieee_set_flag_array_l8
-    module procedure ieee_set_flag_arrscal_l8
-  end interface
-
-  interface ieee_set_halting_mode
-    module procedure ieee_set_halting_mode_scalar
-    module procedure ieee_set_halting_mode_array
-    module procedure ieee_set_halting_mode_arrscal
-    module procedure ieee_set_halting_mode_scalar_l8
-    module procedure ieee_set_halting_mode_array_l8
-    module procedure ieee_set_halting_mode_arrscal_l8
-  end interface
-
-  interface ieee_get_flag
-    module procedure ieee_get_flag
-    module procedure ieee_get_flag_l8
-  end interface
-
-  interface ieee_get_halting_mode
-    module procedure ieee_get_halting_mode
-    module procedure ieee_get_halting_mode_l8
-  end interface
-
   ! External interfaces
   !--------------------
   interface
-    pure integer function __fenv_fegetexceptflag(flagp, exc) bind(c)
-      use, intrinsic :: iso_c_binding
-      integer(c_int), intent(in) :: flagp
-      integer(c_int), value :: exc
-    end function __fenv_fegetexceptflag
-
     pure integer function __fenv_fesetexceptflag(flagp, exc) bind(c)
       use, intrinsic :: iso_c_binding
       integer(c_int), intent(in) :: flagp
@@ -182,6 +143,40 @@ module IEEE_EXCEPTIONS
       import
       type(ieee_status_type) :: env
     end function __fenv_fesetenv
+  end interface
+
+  ! Generic interfaces
+  !--------------------
+  interface ieee_support_flag
+    module procedure ieee_support_flagnox, ieee_support_flagr
+  end interface
+
+  interface ieee_set_flag
+    module procedure ieee_set_flag_scalar
+    module procedure ieee_set_flag_array
+    module procedure ieee_set_flag_arrscal
+    module procedure ieee_set_flag_scalar_l8
+    module procedure ieee_set_flag_array_l8
+    module procedure ieee_set_flag_arrscal_l8
+  end interface
+
+  interface ieee_set_halting_mode
+    module procedure ieee_set_halting_mode_scalar
+    module procedure ieee_set_halting_mode_array
+    module procedure ieee_set_halting_mode_arrscal
+    module procedure ieee_set_halting_mode_scalar_l8
+    module procedure ieee_set_halting_mode_array_l8
+    module procedure ieee_set_halting_mode_arrscal_l8
+  end interface
+
+  interface ieee_get_flag
+    module procedure ieee_get_flag
+    module procedure ieee_get_flag_l8
+  end interface
+
+  interface ieee_get_halting_mode
+    module procedure ieee_get_halting_mode
+    module procedure ieee_get_halting_mode_l8
   end interface
 
 !--------------------------------------------------------------------------
