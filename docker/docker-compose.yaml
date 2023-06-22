@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  classic-flang-llvm-project:
+    container_name: classic-flang-llvm-project
+    image: classic-flang-llvm-project
+    build:
+      context: ./classic-flang-llvm-project
+      dockerfile: Dockerfile
+    command: [ "/classic-flang-llvm-project.sh" ]
+    volumes:
+      - ./classic-flang-llvm-project/src:/classic-flang-llvm-project/src
+      - ./classic-flang-llvm-project/build:/classic-flang-llvm-project/build
+      - ./classic-flang-llvm-project/install:/opt/llvm
+  classic-flang:
+    container_name: classic-flang
+    image: classic-flang
+    build:
+      context: ./classic-flang
+      dockerfile: Dockerfile
+    command: [ "/classic-flang.sh" ]
+    volumes:
+      - ./classic-flang/src:/classic-flang/src
+      - ./classic-flang/build:/classic-flang/build
+      - ./classic-flang-llvm-project/install:/opt/llvm:ro
+      - ./classic-flang/install:/opt/flang
+    depends_on:
+      classic-flang-llvm-project:
+        condition: service_completed_successfully

@@ -2,28 +2,34 @@
 set -e
 
 # Set an LLVM branch Flang to be based on.
-# The latest supported LLVM version is 10.0: https://github.com/flang-compiler/flang/wiki/Building-Flang
-# TODO We would want to upgrade to LLVM version 16, in order to support recent AMD GPUs.
-BRANCH=release_100
-#BRANCH=release/16.x
+#BRANCH=release_14x
+#BRANCH=release_15x
+BRANCH=release_16x
 
 # Classic Flang requires modified LLVM.
-# Get the source cfor it, if not yet available.
+# Get the source for it, if not yet available.
 # We give a way to reuse the existing source to allow our own modifications of it.
 if [ ! -e /classic-flang-llvm-project/src/classic-flang-llvm-project ]; then
     mkdir -p /classic-flang-llvm-project/src && \
         cd /classic-flang-llvm-project/src && \
         git clone https://github.com/flang-compiler/classic-flang-llvm-project.git && \
-	cd classic-flang-llvm-project && \
-	git checkout $BRANCH
+	cd classic-flang-llvm-project
 fi
 
+cd /classic-flang-llvm-project/src && \
+    cd classic-flang-llvm-project && \
+    git checkout $BRANCH
+
 # Build (or partially rebuild after modifications) and install LLVM from source.
+# Note: we use clang, not gcc - to avoid "LIBOMP: 128-bit quad precision functionality requested but not available"
+# No "openmp" in LLVM_ENABLE_PROJECTS - to avoid "add_custom_target cannot create target "check-openmp" because another
+# target with the same name already exists", see https://discourse.llvm.org/t/openmp-nvidia-offload-build-problem-13-0-1/60096
 mkdir -p /classic-flang-llvm-project/build && \
     cd /classic-flang-llvm-project/build && \
     cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_LINKER=mold -DCMAKE_C_FLAGS=-fuse-ld=mold -DCMAKE_CXX_FLAGS=-fuse-ld=mold \
-    -DCMAKE_INSTALL_PREFIX=/opt/llvm -DLLVM_TARGETS_TO_BUILD="X86;AArch64;NVPTX;AMDGPU" \
+    -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15 -DCMAKE_LINKER=mold \
+    -DCMAKE_INSTALL_PREFIX=/opt/llvm -DLLVM_ENABLE_PROJECTS="clang;flang" -DLLVM_ENABLE_RUNTIMES="openmp" \
+    -DLLVM_TARGETS_TO_BUILD="X86;AArch64;NVPTX;AMDGPU" -DLLVM_ENABLE_CLASSIC_FLANG=ON \
     /classic-flang-llvm-project/src/classic-flang-llvm-project/llvm && \
     cmake --build . && \
     cmake --install .
