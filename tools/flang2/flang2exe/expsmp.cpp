@@ -2681,18 +2681,16 @@ exp_smp(ILM_OP opc, ILM *ilmp, int curilm)
 #if defined(OMP_OFFLOAD_LLVM) || defined(OMP_OFFLOAD_PGI)
     if(!flg.omptarget || IS_OMP_DEVICE_CG) break;
     OMPACCEL_TINFO *targetinfo;
-    int ili;
     wr_block();
     cr_block();
     if(opc == IM_ETARGETDATA) {
       targetinfo = ompaccel_tinfo_current_get_targetdata();
-      ili = ll_make_tgt_target_data_end(OMPACCEL_DEFAULT_DEVICEID, targetinfo);
+      int ili = ll_make_tgt_target_data_end(OMPACCEL_DEFAULT_DEVICEID, targetinfo);
+      chk_block(ili);
     }
     iltb.callfg = 1;
-    chk_block(ili);
     wr_block();
     cr_block();
-    break;
 #endif
     break;
   case IM_BDISTRIBUTE:
