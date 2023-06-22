@@ -77,8 +77,6 @@ inline SPTR GetParamSptr(int dpdsc, int i) {
 const int DIFLAG_ARTIFICIAL = 1 << 6;
 const int DIFLAG_ISMAINPGM = 1 << 21; // removed in release_90
 static int DIFLAG_PURE;      // removed in release_80
-static int DIFLAG_ELEMENTAL; // removed in release_80
-static int DIFLAG_RECURSIVE; // removed in release_80
 
 const int DISPFLAG_LOCALTOUNIT = 1 << 2; // added in release_80
 const int DISPFLAG_DEFINITION = 1 << 3;  // added in release_80
@@ -658,27 +656,6 @@ lldbg_create_block_mdnode(LL_DebugInfo *db, LL_MDRef routine_context, int line,
     llmd_add_md(mdb, get_file_mdnode(db, findex));
   llmd_add_i32(mdb, ID);
 
-  return llmd_finish(mdb);
-}
-
-INLINE static LL_MDRef
-lldbg_create_string_type_mdnode(LL_DebugInfo *db, ISZ_T sz, DBLINT64 alignment,
-                                const char *name, int encoding)
-{
-  LLMD_Builder mdb = llmd_init(db->module);
-
-  if (ll_feature_has_diextensions(&db->module->ir)) {
-    llmd_set_class(mdb, LL_DIStringType);
-  } else {
-    llmd_set_class(mdb, LL_DIBasicType_string);
-  }
-  llmd_add_i32(mdb, make_dwtag(db, DW_TAG_string_type));
-  llmd_add_string(mdb, name);
-  llmd_add_i64(mdb, sz);
-  llmd_add_INT64(mdb, alignment);
-  if (!ll_feature_has_diextensions(&db->module->ir)) {
-    llmd_add_i32(mdb, encoding);
-  }
   return llmd_finish(mdb);
 }
 
