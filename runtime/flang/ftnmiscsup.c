@@ -35,7 +35,7 @@ void
 Ftn_date(char *buf,     /* date buffer */
          INT buf_len)   /* length of date buffer */
 {
-  char loc_buf[9];
+  char loc_buf[10];
   INT idx1;
   time_t ltime;
   struct tm *lt;
