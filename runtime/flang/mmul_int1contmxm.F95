@@ -9,12 +9,12 @@
 
 subroutine F90_matmul_int1_contmxm(dest, src1, src2, k_extent, m_extent, n_extent)
 
-  INTEGER*1, dimension(k_extent,m_extent) :: src1
-  INTEGER*1, dimension(m_extent,n_extent) :: src2
-  INTEGER*1, dimension(k_extent,n_extent) :: dest
   DESC_INT k_extent
   DESC_INT n_extent
   DESC_INT m_extent
+  INTEGER*1, dimension(k_extent,m_extent) :: src1
+  INTEGER*1, dimension(m_extent,n_extent) :: src2
+  INTEGER*1, dimension(k_extent,n_extent) :: dest
 
   DESC_INT k
   DESC_INT n

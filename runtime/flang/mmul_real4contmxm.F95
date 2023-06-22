@@ -9,12 +9,12 @@
 
 subroutine F90_matmul_real4_contmxm(dest, src1, src2, k_extent, m_extent, n_extent)
 
-  REAL*4, dimension(k_extent,m_extent) :: src1
-  REAL*4, dimension(m_extent,n_extent) :: src2
-  REAL*4, dimension(k_extent,n_extent) :: dest
   DESC_INT k_extent
   DESC_INT n_extent
   DESC_INT m_extent
+  REAL*4, dimension(k_extent,m_extent) :: src1
+  REAL*4, dimension(m_extent,n_extent) :: src2
+  REAL*4, dimension(k_extent,n_extent) :: dest
 
   DESC_INT k
   DESC_INT n

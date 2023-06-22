@@ -9,12 +9,12 @@
 
 subroutine F90_matmul_log8_contmxm(dest, src1, src2, k_extent, m_extent, n_extent)
 
-  LOGICAL*8, dimension(k_extent,m_extent) :: src1
-  LOGICAL*8, dimension(m_extent,n_extent) :: src2
-  LOGICAL*8, dimension(k_extent,n_extent) :: dest
   DESC_INT k_extent
   DESC_INT n_extent
   DESC_INT m_extent
+  LOGICAL*8, dimension(k_extent,m_extent) :: src1
+  LOGICAL*8, dimension(m_extent,n_extent) :: src2
+  LOGICAL*8, dimension(k_extent,n_extent) :: dest
 
   DESC_INT k
   DESC_INT n
