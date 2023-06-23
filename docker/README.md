@@ -1,8 +1,8 @@
 # Build Flang from source in Docker
 
-[Flang](https://github.com/flang-compiler/flang) is a Fortran compiler targeting LLVM.
+[Flang](https://github.com/flang-compiler/flang) (also known as "Classic Flang") is an out-of-tree Fortran compiler targeting LLVM.
 
-This builds the ``flang`` compiler on Ubuntu 22.04, according to the instructions given on GitHub.
+This builds the Flang compiler in Ubuntu 22.04 Docker container, according to the instructions given on GitHub, plus OpenMP offload features for AMD and NVIDIA GPUs.
 
 ## Building
 

@@ -12,6 +12,11 @@ if [ ! -e /classic-flang/src/classic-flang ]; then
 	git checkout $BRANCH
 fi
 
+# Switch to the requested branch
+cd /classic-flang/src && \
+    cd classic-flang && \
+    git checkout $BRANCH
+
 # Build pgmath prerequisite.
 mkdir -p /classic-flang/build && \
     cd /classic-flang/build && \
@@ -25,8 +30,11 @@ mkdir -p /classic-flang/build && \
     cmake --install .
 
 # Build (or partially rebuild after modifications) and install Flang from source.
-# -DCMAKE_Fortran_COMPILER=/opt/llvm/bin/flang-new -DCMAKE_Fortran_COMPILER_ID=Flang
-# Using makefiles to avoid "ninja: build stopped: multiple rules generate include-static/__norm2.mod"
+# The building is only possible with in-tree LLVM Flang (flang-new), or bootstrapped
+# with the classic Flang itself. GNU Fortran fails with some stupid parsing errors.
+# If you want to try GNU Fortran, switch from Ninja to "Unix Makefiles" to avoid
+# "ninja: build stopped: multiple rules generate include-static/__norm2.mod", and
+# change "cmake --build ." to "cmake --build . -- -j$(grep -c ^processor /proc/cpuinfo)"
 mkdir -p /classic-flang/build && \
     cd /classic-flang/build && \
     mkdir -p flang && \
@@ -37,6 +45,6 @@ mkdir -p /classic-flang/build && \
     -DCMAKE_Fortran_COMPILER=/opt/llvm/bin/flang-new -DCMAKE_Fortran_COMPILER_ID=Flang -DCMAKE_LINKER=mold \
     -DCMAKE_INSTALL_PREFIX=/opt/flang -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DFLANG_OPENMP_GPU_NVIDIA=ON \
     /classic-flang/src/classic-flang && \
-    cmake --build . -- -j$(grep -c ^processor /proc/cpuinfo) && \
+    cmake --build . && \
     cmake --install .
 

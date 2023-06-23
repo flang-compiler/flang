@@ -2,9 +2,11 @@
 set -e
 
 # Set an LLVM branch Flang to be based on.
+# For now, the recommended branch is release_15x, because release_16x is not
+# patched yet to support PGI-specific Flang compiler options.
 #BRANCH=release_14x
-#BRANCH=release_15x
-BRANCH=release_16x
+BRANCH=release_15x
+#BRANCH=release_16x
 
 # Classic Flang requires modified LLVM.
 # Get the source for it, if not yet available.
@@ -16,6 +18,7 @@ if [ ! -e /classic-flang-llvm-project/src/classic-flang-llvm-project ]; then
 	cd classic-flang-llvm-project
 fi
 
+# Switch to the requested branch
 cd /classic-flang-llvm-project/src && \
     cd classic-flang-llvm-project && \
     git checkout $BRANCH
