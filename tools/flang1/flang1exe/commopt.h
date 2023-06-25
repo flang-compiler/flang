@@ -162,8 +162,8 @@ typedef union {
     int barr1;
     int barr2;
     int fg; /* fg node */
-    int ignore : 1;
-    int fused : 1;
+    unsigned ignore : 1;
+    unsigned fused : 1;
   } forall;
 } FTABLE;
 
