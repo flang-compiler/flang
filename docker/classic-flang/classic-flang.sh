@@ -50,7 +50,7 @@ mkdir -p /classic-flang/build && \
     -DCMAKE_C_COMPILER=/opt/llvm/bin/clang -DCMAKE_CXX_COMPILER=/opt/llvm/bin/clang++ \
     -DCMAKE_Fortran_COMPILER=/opt/llvm/bin/flang-new -DCMAKE_Fortran_COMPILER_ID=Flang -DCMAKE_LINKER=mold \
     -DCMAKE_INSTALL_PREFIX=/opt/flang -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DFLANG_OPENMP_GPU_NVIDIA=ON \
-    -DWITH_WERROR=OFF \
+    -DFLANG_INCLUDE_DOCS=ON -DFLANG_LLVM_EXTENSIONS=ON -DWITH_WERROR=OFF \
     /classic-flang/src/classic-flang && \
     cmake --build . && \
     cmake --install .

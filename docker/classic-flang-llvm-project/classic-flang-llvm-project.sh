@@ -23,6 +23,14 @@ cd /classic-flang-llvm-project/src && \
     cd classic-flang-llvm-project && \
     git checkout $BRANCH
 
+if [[ -n ${DISTCC_HOSTS} ]]; then
+export CCACHE_PREFIX=distcc
+echo "Using distcc with DISTCC_HOSTS=\"${DISTCC_HOSTS}\""
+PUMP=pump
+DISTCC_JOBS=$(echo "${DISTCC_HOSTS}" | egrep -i -o '/[0-9]+' | sed 's|/||g' | xargs  | sed -e 's/\ /+/g' | bc)
+DISTCC_JOBS="-- -j ${DISTCC_JOBS}"
+fi
+
 # Build (or partially rebuild after modifications) and install LLVM from source.
 # Note: we use clang, not gcc - to avoid "LIBOMP: 128-bit quad precision functionality requested but not available"
 # No "openmp" in LLVM_ENABLE_PROJECTS - to avoid "add_custom_target cannot create target "check-openmp" because another
@@ -33,7 +41,8 @@ mkdir -p /classic-flang-llvm-project/build && \
     -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15 -DCMAKE_LINKER=mold \
     -DCMAKE_INSTALL_PREFIX=/opt/llvm -DLLVM_ENABLE_PROJECTS="clang;flang" -DLLVM_ENABLE_RUNTIMES="openmp" \
     -DLLVM_TARGETS_TO_BUILD="X86;AArch64;NVPTX;AMDGPU" -DLLVM_ENABLE_CLASSIC_FLANG=ON \
+    -DLLVM_CCACHE_BUILD=ON \
     /classic-flang-llvm-project/src/classic-flang-llvm-project/llvm && \
-    cmake --build . && \
+    ${PUMP} cmake --build . ${DISTCC_JOBS} && \
     cmake --install .
 

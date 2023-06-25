@@ -12,6 +12,11 @@ services:
       - ./classic-flang-llvm-project/src:/classic-flang-llvm-project/src
       - ./classic-flang-llvm-project/build:/classic-flang-llvm-project/build
       - ./classic-flang-llvm-project/install:/opt/llvm
+    environment:
+      DISTCC_HOSTS: ${DISTCC_HOSTS}
+    networks:
+      - tunnels
+    shm_size: 8gb
   classic-flang:
     container_name: classic-flang
     image: classic-flang
@@ -27,3 +32,8 @@ services:
     depends_on:
       classic-flang-llvm-project:
         condition: service_completed_successfully
+
+networks:
+  tunnels:
+    external:
+      name: tunnels

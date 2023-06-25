@@ -1,20 +1,69 @@
+# We use distcc to accelerate the building process.
+# Compile distcc from source, because distcc Ubuntu package
+# is broken in multiple ways.
+
+FROM ubuntu:22.04 as distcc
+
+LABEL maintainer "Dmitry Mikushin <dmitry@kernelgen.org>"
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        build-essential \
+        libiberty-dev \
+        automake \
+        autoconf \
+        python3 \
+        python3-dev \
+        git && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN useradd -rm -s /bin/bash distcc
+
+USER distcc
+
+WORKDIR /home/distcc
+
+RUN git clone https://github.com/distcc/distcc.git && \
+    cd distcc && \
+    ./autogen.sh && \
+    ./configure --prefix=/usr/local && \
+    make clean && \
+    make
+
+USER root
+
+RUN cd distcc && \
+    make install
+
+USER distcc
+
+RUN cd distcc && \
+    PATH=$PATH:/distcc/usr/bin make check
+
+#########################################################
+
 FROM ubuntu:22.04
 
 LABEL maintainer "Dmitry Mikushin <dmitry@kernelgen.org>"
 
 ENV DEBIAN_FRONTEND noninteractive
 
-# Install build dependencies of llvm.
+# Install distcc
+COPY --from=distcc /usr/local/. /usr/local
 
-# Install compiler, python and git.
+# Install build dependencies of LLVM: compiler, python and git.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        ca-certificates gnupg \
+        ca-certificates \
         build-essential \
         pkg-config \
-        cmake \
         python3 \
-        libpython3-dev \
+        python3-dev \
+        cmake \
+        ccache \
         zlib1g-dev \
         wget \
         unzip \
@@ -22,6 +71,7 @@ RUN apt-get update && \
         clang-15 \
         libffi-dev \
         zstd \
+        bc \
         libhsa-runtime-dev && \
     rm -rf /var/lib/apt/lists/*
 

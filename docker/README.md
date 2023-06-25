@@ -20,5 +20,25 @@ The status of build is not printed right into the current terminal window. In or
 docker-compose logs -f
 ```
 
-## Usage
+## Using distcc
+
+This build supports distributed parallel build with distcc as an extra option.
+
+The distcc hosts shall be provided on ports of a centralized gateway server with an SSH access to it. Gateway configuration is not covered by this instruction and should be provided by the user, e.g. by setting up SSH port forwarding.
+
+1. Create SSH keys in the docker folder:
+
+```
+ssh-keygen -t rsa -b 4096 -C "autossh" -f id_rsa
+```
+
+2. Create a gateway server account, and use `id_rsa.pub` as an authorized key for it
+
+3. Define distcc host in .env, for example:
+
+```
+DISTCC_HOSTS="localhost/8 tunnels:3632/8,lzo,cpp"
+```
+
+4. Build Flang as usual and enjoy the distributed compilation being deployed!
 
