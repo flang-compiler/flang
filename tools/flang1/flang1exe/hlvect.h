@@ -18,13 +18,13 @@
 #define MAX_LOOPS 14
 
 typedef struct {
-  int depchk : 1;   /* [no]depchk */
-  int assoc : 1;    /* [no]assoc */
-  int eqvchk : 1;   /* [no]eqvchk */
-  int lstval : 1;   /* [no]lastval */
-  int recog : 1;    /* [no]recog */
-  int trans : 1;    /* [no]transform */
-  int safecall : 1; /* permit calls in loops */
+  unsigned depchk : 1;   /* [no]depchk */
+  unsigned assoc : 1;    /* [no]assoc */
+  unsigned eqvchk : 1;   /* [no]eqvchk */
+  unsigned lstval : 1;   /* [no]lastval */
+  unsigned recog : 1;    /* [no]recog */
+  unsigned trans : 1;    /* [no]transform */
+  unsigned safecall : 1; /* permit calls in loops */
   int shortloop;    /* a.k.a. smallvect */
   int mincnt;       /* flg.x[30] = min lp count for vectorization */
   int ldstsplit;    /* flg.x[40] = load/store threshhold for splitting */
