@@ -42,3 +42,23 @@ DISTCC_HOSTS="localhost/8 tunnels:3632/8,lzo,cpp"
 
 4. Build Flang as usual and enjoy the distributed compilation being deployed!
 
+
+Timing of distributed compilation on 4 machines with 8, 8, 8 and 4 cores:
+
+```
+time docker-compose up --build
+________________________________________________________
+Executed in   22.79 mins    fish           external
+   usr time   51.68 secs  836.00 micros   51.68 secs
+   sys time    2.17 secs  203.00 micros    2.17 secs
+```
+
+The same compilation on a local machine with 8 cores:
+
+```
+time docker-compose up --build
+________________________________________________________
+Executed in   53.55 mins    fish           external
+   usr time  127.28 secs   26.23 millis  127.25 secs
+   sys time    5.02 secs    0.35 millis    5.02 secs
+```
