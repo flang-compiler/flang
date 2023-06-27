@@ -5,7 +5,7 @@
 !
 ! Simply check the file compiles with no error.
 !
-! RUN: %flang -S -emit-llvm %s -o - | FileCheck %s
+! RUN: %flang -I%flags -S -emit-llvm %s -o - | FileCheck %s
 ! CHECK: version_var
 ! CHECK: options_var
 

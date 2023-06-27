@@ -2,8 +2,8 @@
 !* See https://llvm.org/LICENSE.txt for license information.
 !* SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-! RUN: %flang -O0 -fopenmp -Hy,69,0x1000 -S -emit-llvm %s -o - | FileCheck %s
-! RUN: %flang -i8 -O0 -fopenmp -Hy,69,0x1000 -S -emit-llvm %s -o - | FileCheck %s
+! RUN: %flang -I%flags -O0 -fopenmp -Hy,69,0x1000 -S -emit-llvm %s -o - | FileCheck %s
+! RUN: %flang -I%flags -i8 -O0 -fopenmp -Hy,69,0x1000 -S -emit-llvm %s -o - | FileCheck %s
 
 module omp_atomic_load_logical
   use, intrinsic :: iso_fortran_env, &
