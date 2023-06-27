@@ -11,7 +11,7 @@ services:
     volumes:
       - ./classic-flang-llvm-project/src:/classic-flang-llvm-project/src
       - ./classic-flang-llvm-project/build:/classic-flang-llvm-project/build
-      - ./classic-flang-llvm-project/install:/opt/llvm
+      - ./classic-flang/install:/opt/llvm
     environment:
       DISTCC_HOSTS: ${DISTCC_HOSTS}
     networks:
@@ -27,8 +27,7 @@ services:
     volumes:
       - ./classic-flang/src:/classic-flang/src
       - ./classic-flang/build:/classic-flang/build
-      - ./classic-flang-llvm-project/install:/opt/llvm:ro
-      - ./classic-flang/install:/opt/flang
+      - ./classic-flang/install:/opt/llvm
     depends_on:
       classic-flang-llvm-project:
         condition: service_completed_successfully

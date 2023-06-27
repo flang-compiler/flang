@@ -18,6 +18,8 @@ if [ ! -e /classic-flang-llvm-project/src/classic-flang-llvm-project ]; then
 	cd classic-flang-llvm-project
 fi
 
+git config --global --add safe.directory /classic-flang-llvm-project/src/classic-flang-llvm-project
+
 # Switch to the requested branch
 cd /classic-flang-llvm-project/src && \
     cd classic-flang-llvm-project && \
@@ -39,10 +41,13 @@ mkdir -p /classic-flang-llvm-project/build && \
     cd /classic-flang-llvm-project/build && \
     cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15 -DCMAKE_LINKER=mold \
-    -DCMAKE_INSTALL_PREFIX=/opt/llvm -DLLVM_ENABLE_PROJECTS="clang;flang" -DLLVM_ENABLE_RUNTIMES="openmp" \
+    -DCMAKE_INSTALL_PREFIX=/opt/llvm -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_ENABLE_RUNTIMES="openmp" \
     -DLLVM_TARGETS_TO_BUILD="X86;AArch64;NVPTX;AMDGPU" -DLLVM_ENABLE_CLASSIC_FLANG=ON \
     -DLLVM_CCACHE_BUILD=ON \
     /classic-flang-llvm-project/src/classic-flang-llvm-project/llvm && \
     ${PUMP} cmake --build . ${DISTCC_JOBS} && \
     cmake --install .
+
+# Note: classing Flang and in-tree Flang cannot co-exist in the toolchain at this time:
+# https://github.com/flang-compiler/classic-flang-llvm-project/issues/158
 

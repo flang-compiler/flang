@@ -12,6 +12,8 @@ if [ ! -e /classic-flang/src/classic-flang ]; then
 	git checkout $BRANCH
 fi
 
+git config --global --add safe.directory /classic-flang/src/classic-flang
+
 # Switch to the requested branch
 cd /classic-flang/src && \
     cd classic-flang && \
@@ -24,7 +26,7 @@ mkdir -p /classic-flang/build && \
     cd pgmath && \
     cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=/opt/llvm/bin/clang -DCMAKE_CXX_COMPILER=/opt/llvm/bin/clang++ \
-    -DCMAKE_INSTALL_PREFIX=/opt/flang \
+    -DCMAKE_INSTALL_PREFIX=/opt/llvm \
     /classic-flang/src/classic-flang/runtime/libpgmath && \
     cmake --build . && \
     cmake --install .
@@ -48,10 +50,11 @@ mkdir -p /classic-flang/build && \
     cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
     -DLLVM_CONFIG=/opt/llvm/bin/llvm-config -DCMAKE_PREFIX_PATH=/opt/llvm \
     -DCMAKE_C_COMPILER=/opt/llvm/bin/clang -DCMAKE_CXX_COMPILER=/opt/llvm/bin/clang++ \
-    -DCMAKE_Fortran_COMPILER=/opt/llvm/bin/flang-new -DCMAKE_Fortran_COMPILER_ID=Flang -DCMAKE_LINKER=mold \
-    -DCMAKE_INSTALL_PREFIX=/opt/flang -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DFLANG_OPENMP_GPU_NVIDIA=ON \
+    -DCMAKE_Fortran_COMPILER=/opt/llvm/bin/flang -DCMAKE_Fortran_COMPILER_ID=Flang \
+    -DCMAKE_LINKER=mold \
+    -DCMAKE_INSTALL_PREFIX=/opt/llvm -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DFLANG_OPENMP_GPU_NVIDIA=ON \
     -DFLANG_INCLUDE_DOCS=ON -DFLANG_LLVM_EXTENSIONS=ON -DWITH_WERROR=OFF \
     /classic-flang/src/classic-flang && \
-    cmake --build . && \
+    cmake --build . -- && \
     cmake --install .
 
