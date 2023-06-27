@@ -4,7 +4,7 @@
 ! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 !
 
-! RUN: %flang1 %s | FileCheck %s
+! RUN: flang1 %s | FileCheck %s
 ! CHECK: procedure:Program
 ! CHECK-DAG: s:[[FUNC:[0-9]+]] {{.*}}:func
 ! CHECK-DAG: s:[[REALLOC:[0-9]+]] {{.*}}:f90_realloc_arr_in_impiled_do

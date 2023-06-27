@@ -8,7 +8,7 @@
 ! Ensure that flang1 generates a flag for empty derived type to mark null subc
 ! when exporting typedef initialization to MOD file.
 
-! RUN: %flang1 %s
+! RUN: flang1 %s
 ! RUN: FileCheck %s --input-file=./sconst_with_null_subc.mod
 ! RUN: rm -f ./sconst_with_null_subc.mod
 module sconst_with_null_subc

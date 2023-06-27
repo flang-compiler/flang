@@ -8,7 +8,7 @@
 ! Ensure that flang1 successfully produces correct symbol table entries for the
 ! empty derived type S, the array A, as well as the array constructor [S()].
 
-! RUN: %flang1 %s -opt 0 -q 0 1 -q 47 1 | FileCheck %s
+! RUN: flang1 %s -opt 0 -q 0 1 -q 47 1 | FileCheck %s
 ! CHECK: datatype:[[STYPE:[0-9]+]] Derived member:1 size:0
 ! CHECK: datatype:[[ATYPE:[0-9]+]] Array type:[[STYPE]] dims:1
 ! CHECK: datatype:[[CTYPE:[0-9]+]] Array type:[[STYPE]] dims:1
