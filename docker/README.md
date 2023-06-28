@@ -1,4 +1,4 @@
-# Build Flang from source in Docker
+# Build Flang from source in Docker container
 
 [Flang](https://github.com/flang-compiler/flang) (also known as "Classic Flang") is an out-of-tree Fortran compiler targeting LLVM.
 
@@ -28,6 +28,22 @@ The status of build is not printed right into the current terminal window. In or
 docker-compose logs -f
 ```
 
+The compiled Flang+LLVM toolchain will be installed to `./classic-flang/install` folder of the host machine. You can mount this folder to your further containers for the actual use.
+
+## Debugging
+
+By default, LLVM and Flang are built in Release mode. In order to build in Debug mode, run `docker-compose up --build` after adding `CMAKE_BUILD_TYPE=Debug` into the `.env` file.
+
+## Development
+
+To make changes into the Flang source code and recompile it, use the `classic-flang` service directly:
+
+```
+docker-compose run classic-flang bash
+```
+
+The source files are mapped to `/classic-flang/src/classic-flang/`, build folder is mapped to `/classic-flang/build/Release/flang`. You can edit source files, build and re-install the updated binaries by running `ninja && ninja install` in the build folder.
+
 ## Using distcc
 
 This build supports distributed parallel build with distcc as an extra option.
@@ -37,7 +53,7 @@ The distcc hosts shall be provided on ports of a centralized gateway server with
 1. Create SSH keys in the docker folder:
 
 ```
-ssh-keygen -t rsa -b 4096 -C "autossh" -f id_rsa
+ssh-keygen -t rsa -b 4096 -C "distcc" -f id_rsa
 ```
 
 2. Create a gateway server account, and use `id_rsa.pub` as an authorized key for it
@@ -71,6 +87,3 @@ Executed in   53.55 mins    fish           external
    sys time    5.02 secs    0.35 millis    5.02 secs
 ```
 
-## Debugging
-
-By default, LLVM and Flang are built in Release mode. In order to build in debug mode, run `docker-compose up --build` after adding `CMAKE_BUILD_TYPE=Debug` into the `.env` file.
