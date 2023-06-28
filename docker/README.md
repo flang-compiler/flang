@@ -70,3 +70,7 @@ Executed in   53.55 mins    fish           external
    usr time  127.28 secs   26.23 millis  127.25 secs
    sys time    5.02 secs    0.35 millis    5.02 secs
 ```
+
+## Debugging
+
+By default, LLVM and Flang are built in Release mode. In order to build in debug mode, run `docker-compose up --build` after adding `CMAKE_BUILD_TYPE=Debug` into the `.env` file.

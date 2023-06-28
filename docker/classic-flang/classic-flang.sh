@@ -3,6 +3,11 @@ set -e
 
 BRANCH=master
 
+if [[ -z $CMAKE_BUILD_TYPE ]]; then
+    echo "Build type is not set, please set CMAKE_BUILD_TYPE to Debug or Release"
+    exit 1
+fi
+
 # Get the Flang source, if not yet available.
 if [ ! -e /classic-flang/src/classic-flang ]; then
     mkdir -p /classic-flang/src && \
@@ -22,9 +27,9 @@ cd /classic-flang/src && \
 # Build pgmath prerequisite.
 mkdir -p /classic-flang/build && \
     cd /classic-flang/build && \
-    mkdir -p pgmath && \
-    cd pgmath && \
-    cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+    mkdir -p $CMAKE_BUILD_TYPE/pgmath && \
+    cd $CMAKE_BUILD_TYPE/pgmath && \
+    cmake -G Ninja -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
     -DCMAKE_C_COMPILER=/opt/llvm/bin/clang -DCMAKE_CXX_COMPILER=/opt/llvm/bin/clang++ \
     -DCMAKE_INSTALL_PREFIX=/opt/llvm \
     /classic-flang/src/classic-flang/runtime/libpgmath && \
@@ -45,13 +50,13 @@ mkdir -p /classic-flang/build && \
 # change "cmake --build ." to "cmake --build . -- -j$(grep -c ^processor /proc/cpuinfo)"
 mkdir -p /classic-flang/build && \
     cd /classic-flang/build && \
-    mkdir -p flang && \
-    cd flang && \
-    cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+    mkdir -p $CMAKE_BUILD_TYPE/flang && \
+    cd $CMAKE_BUILD_TYPE/flang && \
+    LDFLAGS="${LDFLAGS} -fuse-ld=mold -Wl,-O1 -Wl,--as-needed" \
+    cmake -G Ninja -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
     -DLLVM_CONFIG=/opt/llvm/bin/llvm-config -DCMAKE_PREFIX_PATH=/opt/llvm \
     -DCMAKE_C_COMPILER=/opt/llvm/bin/clang -DCMAKE_CXX_COMPILER=/opt/llvm/bin/clang++ \
     -DCMAKE_Fortran_COMPILER=/opt/llvm/bin/flang -DCMAKE_Fortran_COMPILER_ID=Flang \
-    -DCMAKE_LINKER=mold \
     -DCMAKE_INSTALL_PREFIX=/opt/llvm -DLLVM_TARGETS_TO_BUILD="X86;AArch64" -DFLANG_OPENMP_GPU_NVIDIA=ON \
     -DFLANG_INCLUDE_DOCS=ON -DFLANG_LLVM_EXTENSIONS=ON -DWITH_WERROR=OFF \
     /classic-flang/src/classic-flang && \

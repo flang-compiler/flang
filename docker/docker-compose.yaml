@@ -13,6 +13,7 @@ services:
       - ./classic-flang-llvm-project/build:/classic-flang-llvm-project/build
       - ./classic-flang/install:/opt/llvm
     environment:
+      CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE:-Release}
       DISTCC_HOSTS: ${DISTCC_HOSTS}
     networks:
       - tunnels
@@ -28,6 +29,8 @@ services:
       - ./classic-flang/src:/classic-flang/src
       - ./classic-flang/build:/classic-flang/build
       - ./classic-flang/install:/opt/llvm
+    environment:
+      CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE:-Release}
     depends_on:
       classic-flang-llvm-project:
         condition: service_completed_successfully

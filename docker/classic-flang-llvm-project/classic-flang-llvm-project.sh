@@ -8,6 +8,11 @@ set -e
 BRANCH=release_15x
 #BRANCH=release_16x
 
+if [[ -z ${CMAKE_BUILD_TYPE} ]]; then
+    echo "Build type is not set, please set CMAKE_BUILD_TYPE to Debug or Release"
+    exit 1
+fi
+
 # Classic Flang requires modified LLVM.
 # Get the source for it, if not yet available.
 # We give a way to reuse the existing source to allow our own modifications of it.
@@ -37,10 +42,11 @@ fi
 # Note: we use clang, not gcc - to avoid "LIBOMP: 128-bit quad precision functionality requested but not available"
 # No "openmp" in LLVM_ENABLE_PROJECTS - to avoid "add_custom_target cannot create target "check-openmp" because another
 # target with the same name already exists", see https://discourse.llvm.org/t/openmp-nvidia-offload-build-problem-13-0-1/60096
-mkdir -p /classic-flang-llvm-project/build && \
-    cd /classic-flang-llvm-project/build && \
-    cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15 -DCMAKE_LINKER=mold \
+mkdir -p /classic-flang-llvm-project/build/$CMAKE_BUILD_TYPE && \
+    cd /classic-flang-llvm-project/build/$CMAKE_BUILD_TYPE && \
+    LDFLAGS="${LDFLAGS} -fuse-ld=mold -Wl,-O1 -Wl,--as-needed" \
+    cmake -G Ninja -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
+    -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15 \
     -DCMAKE_INSTALL_PREFIX=/opt/llvm -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_ENABLE_RUNTIMES="openmp" \
     -DLLVM_TARGETS_TO_BUILD="X86;AArch64;NVPTX;AMDGPU" -DLLVM_ENABLE_CLASSIC_FLANG=ON \
     -DLLVM_CCACHE_BUILD=ON \
