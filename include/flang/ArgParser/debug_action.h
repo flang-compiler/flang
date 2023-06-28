@@ -12,6 +12,11 @@
 #ifndef DEBUG_ACTION_H
 #define DEBUG_ACTION_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /** \brief Forward-declared action map type
  */
 typedef struct action_map_ action_map_t;
@@ -60,5 +65,9 @@ void copy_action(const action_map_t *from, const char *keyword_from,
  * \param keyword the keyword to look up actions
  */
 void execute_actions_for_keyword(action_map_t *map, const char *keyword);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* ndef DEBUG_ACTION_H */

@@ -5,6 +5,14 @@
  *
  */
 
+#ifndef XFLAGS_H
+#define XFLAGS_H
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdbool.h>
 
 /** \file
@@ -43,3 +51,10 @@ void set_xflag_value(int *xflags, int index, int value);
  * \param value  mask to unset (if value is a bit vector)
  */
 void unset_xflag_value(int *xflags, int index, int value);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // XFLAGS_H
+

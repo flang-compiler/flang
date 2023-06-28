@@ -17,6 +17,14 @@
  *   or more values
  */
 
+#ifndef ARG_PARSER_H
+#define ARG_PARSER_H
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "flang/ArgParser/debug_action.h"
 #include <stdbool.h>
 
@@ -222,3 +230,10 @@ void parse_arguments(const arg_parser_t *parser, int argc, char **argv);
  * \return         true if value was set, false otherwise
  */
 bool was_value_set(const arg_parser_t *parser, const void *location);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // ARG_PARSER_H
+

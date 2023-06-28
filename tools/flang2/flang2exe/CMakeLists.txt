@@ -19,7 +19,7 @@ set(SOURCES
   dtypeutl.cpp
   fenddf.cpp
   ilmutil.cpp
-  listing.cpp
+  listing.c
   mwd.cpp
   semsym.cpp
   semutil0.cpp
@@ -89,15 +89,6 @@ set(INCLUDE_DIRS
   ${UTILS_UPPER_BIN_DIR}         # `Upper' headers
   ${UTILS_SHARED_DIR}
   )
-
-set(SHARED_SOURCES
-  ${SHARED_SOURCES}
-  ${LIB_SOURCE_DIR}/ADT/hash.c
-  ${LIB_SOURCE_DIR}/ArgParser/arg_parser.c
-  ${LIB_SOURCE_DIR}/ArgParser/debug_action.c
-  ${LIB_SOURCE_DIR}/ArgParser/xflag.c
-  )
-
 
 foreach(FILE ${SHARED_SOURCES})
   get_filename_component(TOFILE ${FILE} NAME)

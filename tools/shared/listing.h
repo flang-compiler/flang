@@ -10,6 +10,11 @@
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /**
    \brief ...
  */
@@ -24,5 +29,9 @@ void list_line(const char *txt);
    \brief ...
  */
 void list_page(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LISTING_H_

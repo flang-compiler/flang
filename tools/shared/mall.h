@@ -8,6 +8,11 @@
 #ifndef MALL_H_
 #define MALL_H_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "gbldefs.h"
 
 /**
@@ -31,5 +36,9 @@ void bjunk(void *p, BIGUINT64 n);
    \brief ...
  */
 void sccfree(char *ap);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // MALL_H_

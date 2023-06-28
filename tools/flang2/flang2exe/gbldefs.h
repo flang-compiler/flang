@@ -109,7 +109,8 @@ typedef bool LOGICAL;
 
 #if DEBUG
 void reportarea(int full);
-void bjunk(void *p, BIGUINT64 n);
+
+#include "mall.h"
 
 #define NEW(p, dt, n)                               \
   if (1) {                                          \
@@ -175,9 +176,9 @@ typedef enum RUTYPE {
 #ifndef __cplusplus
  void bzero(void *, size_t);
 #endif
-void list_init(FILE*); /* from listing.c: */
-void list_line(const char*);
-void list_page(void);
+
+#include "listing.h"
+ 
 void fprintf_str_esc_backslash(FILE *f, char *str);
 void extractor_end(void);                          /* extractor.h */
 void extractor_single_index_file(char *indexname); /* extractor.h */

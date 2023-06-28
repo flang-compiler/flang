@@ -143,13 +143,8 @@ typedef int LOGICAL;
 
 void finish(void); /* from main.c    */
 
-/* mall.c */
-char *sccalloc(BIGUINT64);
-void sccfree(char *);
-char *sccrelal(char *, BIGUINT64);
-#ifdef DEBUG
-void bjunk(void *p, BIGUINT64 n);
-#endif
+#include "mall.h"
+#include "listing.h"
 
 char *getitem(int, int); /* from salloc.c: */
 #define GETITEM(area, type) (type *) getitem(area, sizeof(type))
@@ -163,9 +158,6 @@ char *mkfname(const char *, const char *, const char *); /* from miscutil.c: */
 bool is_xflag_bit(int);
 void set_xflag(int, INT);
 void set_yflag(int, INT);
-void list_init(FILE *); /* listing.c: */
-void list_line(const char *); /* listing.c */
-void list_page(void);   /* listing.c */
 
 ISZ_T get_bss_addr(void); /* from assem.c */
 void assemble(void);

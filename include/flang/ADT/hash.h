@@ -8,6 +8,11 @@
 #ifndef __SHARED_HASH_H__
 #define __SHARED_HASH_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /** \file
  * \brief General-Purpose Hash Tables.
  *
@@ -247,5 +252,9 @@ typedef struct hash_accu_ {
   } while (0)
 
 #define HASH_ACCU_VALUE(accu) ((accu).a + 0)
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* __SHARED_HASH_H__ */
