@@ -622,7 +622,7 @@ internref_bnd(int ast)
 }
 
 void
-set_internref_stfunc(int ast)
+set_internref_stfunc(int ast, int* extra_arg)
 {
   if (ast && A_TYPEG(ast) == A_ID) {
     int sptr;

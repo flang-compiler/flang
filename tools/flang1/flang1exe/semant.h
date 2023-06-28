@@ -1550,7 +1550,7 @@ int sym_in_scope(int, OVCLASS, int *, int *, int);
 void sem_import_sym(int);
 int test_scope(int);
 int declref(int, SYMTYPE, int);
-void set_internref_stfunc(int);
+void set_internref_stfunc(int, int*);
 int declsym(int, SYMTYPE, LOGICAL);
 int refsym(int, OVCLASS);
 int refsym_inscope(int, OVCLASS);
