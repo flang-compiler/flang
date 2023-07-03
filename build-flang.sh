@@ -9,7 +9,7 @@ BUILD_TYPE="Release"
 BUILD_PREFIX="./build"
 INSTALL_PREFIX="/usr/local"
 NPROC=1
-USE_LLVM_SRC_ROOT=""
+USE_LLVM_MAIN_SRC_DIR=""
 USE_LLVM_CONFIG=""
 USE_CCACHE="0"
 USE_SUDO="0"
@@ -49,7 +49,7 @@ while getopts "t:d:b:p:n:l:o:csx:v?" opt; do
         b) BUILD_PREFIX=$OPTARG;;
         p) INSTALL_PREFIX=$OPTARG;;
         n) NPROC=$OPTARG;;
-        l) USE_LLVM_SRC_ROOT="-DLLVM_MAIN_SRC_DIR=$OPTARG";;
+        l) USE_LLVM_MAIN_SRC_DIR="-DLLVM_MAIN_SRC_DIR=$OPTARG";;
         o) USE_LLVM_CONFIG="-DLLVM_CONFIG=$OPTARG";;
         c) USE_CCACHE="1";;
         s) USE_SUDO="1";;
