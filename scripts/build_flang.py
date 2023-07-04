@@ -34,6 +34,9 @@ def get_arguments():
                           default='Release', help='set build type (default: %(choices)s)')
     buildopt.add_argument('--cmake-param', metavar='OPT', action='append', default=[],
                           help='Add custom argument to CMake')
+    buildopt.add_argument('-l', '--llvm-source-dir', metavar='DIR', default='',
+                          help='Specify LLVM source directory, usually \
+                                "/path/to/classic-flang-llvm-project/llvm" (default: %(default)s)')
     buildopt.add_argument('-p', '--install-prefix', metavar='PATH', nargs='?', default=None, const=False,
                           help='Install after build, also specify LLVM dir')
     buildopt.add_argument('--toolchain', metavar='FILE', default=default_toolchain().as_posix(),
@@ -69,6 +72,9 @@ def generate_buildoptions(arguments):
 
     if arguments.cmake_param:
         base_cmake_args.extend(arguments.cmake_param)
+
+    if arguments.llvm_source_dir:
+        base_cmake_args.append(f'-DLLVM_MAIN_SRC_DIR={arguments.llvm_source_dir}')
 
     if arguments.verbose:
         base_cmake_args.append('-DCMAKE_VERBOSE_MAKEFILE=ON')
