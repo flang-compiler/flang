@@ -10,7 +10,7 @@ include(CheckLibraryExists)
 
 if(NOT Python3_Interpreter_FOUND)
   libpgmath_warning_say("Could not find Python 3.")
-  libpgmath_warning_say("The check-pgm target will not be available!")
+  libpgmath_warning_say("The check-libpgmath target will not be available!")
   return()
 endif()
 
@@ -39,17 +39,24 @@ if(${LIBPGMATH_STANDALONE_BUILD})
     set(cmake_3_2_USES_TERMINAL USES_TERMINAL)
   endif()
   set(LIBPGMATH_TEST_COMPILER ${CMAKE_C_COMPILER} CACHE STRING
-    "Compiler to use for testing Pgm library")
+    "Compiler to use for testing Libpgmath")
   set(LIBPGMATH_TEST_OPENMP_FLAG -fopenmp CACHE STRING
-    "Compiler flag to use for testing Pgm library")
+    "Compiler flag to use for testing Libpgmath")
   find_program(LIBPGMATH_LLVM_LIT_EXECUTABLE
     NAMES llvm-lit lit.py lit
     PATHS ${LIBPGMATH_LLVM_TOOLS_DIR})
   if(NOT LIBPGMATH_LLVM_LIT_EXECUTABLE)
-    libpgmath_say("Cannot find llvm-lit.")
-    libpgmath_say("Please put llvm-lit in your PATH, set LIBPGMATH_LLVM_LIT_EXECUTABLE to its full path or point LIBPGMATH_LLVM_TOOLS_DIR to its directory")
-    libpgmath_warning_say("The check-libpgmath target will not be available!")
-    return()
+    if(LLVM_MAIN_SRC_DIR AND EXISTS ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
+      set(LIBPGMATH_LLVM_LIT_EXECUTABLE "${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py")
+    else()
+      libpgmath_say("Cannot find llvm-lit.")
+      libpgmath_say("Please put llvm-lit in your PATH, "
+                    "set LIBPGMATH_LLVM_LIT_EXECUTABLE to its full path, "
+                    "set LIBPGMATH_LLVM_TOOLS_DIR to its build directory, or "
+                    "set LLVM_MAIN_SRC_DIR to the llvm-project/llvm source directory.")
+      libpgmath_warning_say("The check-libpgmath target will not be available!")
+      return()
+    endif()
   endif()
   # Set lit arguments
   # The -j 1 lets the actual tests run with the entire machine.
@@ -83,7 +90,7 @@ else()
       DEPENDS ${LIBPGMATH_LIBRARY_NAME} pgarch)
   else()
     add_lit_testsuite(check-lib${LIBPGM_LIBRARY_NAME}
-      "Running libpgm tests"
+      "Running Libpgmath tests"
       ${CMAKE_CURRENT_BINARY_DIR}
       DEPENDS ${LIBPGM_LIBRARY_NAME})
   endif()

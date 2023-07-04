@@ -1,17 +1,17 @@
-macro(libpgmath_say message_to_user)
-  message(STATUS "LIBPGMATH: ${message_to_user}")
+macro(libpgmath_say)
+  message(STATUS "LIBPGMATH: " ${ARGV})
 endmacro()
 
 # void libpgmath_warning_say(string message_to_user);
 # - prints out message_to_user with a warning
-macro(libpgmath_warning_say message_to_user)
-  message(WARNING "LIBPGMATH: ${message_to_user}")
+macro(libpgmath_warning_say)
+  message(WARNING "LIBPGMATH: " ${ARGV})
 endmacro()
 
 # void libpgmath_error_say(string message_to_user);
 # - prints out message_to_user with an error and exits cmake
-macro(libpgmath_error_say message_to_user)
-  message(FATAL_ERROR "LIBPGMATH: ${message_to_user}")
+macro(libpgmath_error_say)
+  message(FATAL_ERROR "LIBPGMATH: " ${ARGV})
 endmacro()
 
 macro(get_current_name name)
