@@ -4,5 +4,5 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 
-# RUN: KEEP_FILES=%keep FLAGS=%flags TEST_SRC=%s MAKE_FILE_DIR=%S/.. bash %S/runmake | tee %t
+# RUN: env KEEP_FILES=%keep FLAGS=%flags TEST_SRC=%/s MAKE_FILE_DIR=%/S/.. bash %/S/runmake | tee %/t
 # RUN: cat %t | FileCheck %S/runmake

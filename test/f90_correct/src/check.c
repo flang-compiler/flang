@@ -66,6 +66,7 @@ check_(int* res, int* exp, int* np)
 	printf("%3d tests completed. %d tests passed. %d tests FAILED.\n",
                       n, tests_passed, tests_failed);
     }
+    fflush(stdout);
 }
 
 void
@@ -100,12 +101,14 @@ checkll_(long long *res, long long *exp, int *np)
 	printf("%3d tests completed. %d tests passed. %d tests FAILED.\n",
                       n, tests_passed, tests_failed);
     }
+    fflush(stdout);
 }
 
 void
 checkll(long long *res, long long *exp, int *np)
 {
     checkll_(res, exp, np);
+    fflush(stdout);
 }
 
 /* maximum allowed difference in units in the last place */
@@ -149,6 +152,7 @@ checkf_(float* res, float* exp, int* np)
 	printf("%3d tests completed. %d tests passed. %d tests FAILED.\n",
                       n, tests_passed, tests_failed);
     }
+    fflush(stdout);
 }
 
 void
@@ -220,6 +224,7 @@ checkd_(double* res, double* exp, int* np)
 	printf("%3d tests completed. %d tests passed. %d tests FAILED.\n",
                       n, tests_passed, tests_failed);
     }
+    fflush(stdout);
 }
 
 void
