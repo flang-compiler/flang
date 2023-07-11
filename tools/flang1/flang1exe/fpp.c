@@ -1115,6 +1115,7 @@ dodef(void)
 static void
 doincl(LOGICAL include_next)
 {
+  FILE *tmpfp;
   int toktyp;
   char buff[MAX_FNAME_LEN];
   char fullname[MAX_FNAME_LEN];
@@ -1177,6 +1178,16 @@ doincl(LOGICAL include_next)
       idir.last = i;
       goto found;
     }
+
+  if (type == 0) { /* could be absolute path, check where it leads to */
+    tmpfp = fopen(buff, "r");
+    if (tmpfp) {
+      snprintf(fullname, MAX_FNAME_LEN, "%s", buff);
+      idir.last = 0;
+      if (fclose(tmpfp) == 0)
+        goto found;
+    }
+  }
 
   pperror(226, buff, 4); /* cpp just continues, but why?? */
   return;
