@@ -2103,6 +2103,7 @@ add_to_incllist(char *fullname)
 static void
 _doincl(char *name, int type, LOGICAL include_next)
 {
+  FILE *tmpfp;
   char fullname[MAX_PATHNAME_LEN];
   int i;
 
@@ -2129,6 +2130,16 @@ _doincl(char *name, int type, LOGICAL include_next)
       idir.last = i;
       goto found;
     }
+
+  if (type == 0) { /* could be absolute path, check where it leads to */
+    tmpfp = fopen(name, "r");
+    if (tmpfp) {
+      snprintf(fullname, MAX_PATHNAME_LEN, "%s", name);
+      idir.last = 0;
+      if (fclose(tmpfp) == 0)
+        goto found;
+    }
+  }
 
   pperror(206, name, 4); /* cpp just continues, but why?? */
   return;
