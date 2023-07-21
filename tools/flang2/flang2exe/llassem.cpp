@@ -1202,8 +1202,13 @@ assemble_end(void)
   for (gblsym = ag_global; gblsym; gblsym = AG_SYMLK(gblsym)) {
     if (AG_TYPEDESC(gblsym) && !AG_DEFD(gblsym)) {
       fprintf(ASMFIL, "%%%s = type opaque\n", AG_TYPENAME(gblsym));
-      fprintf(ASMFIL, "@%s = external global %%%s\n", AG_NAME(gblsym),
-              AG_TYPENAME(gblsym));
+      if (strstr(cpu_llvm_module->target_triple, "windows-msvc") != NULL) {
+        fprintf(ASMFIL, "@%s = external dllimport global %%%s\n", AG_NAME(gblsym),
+                AG_TYPENAME(gblsym));
+      } else {
+        fprintf(ASMFIL, "@%s = external global %%%s\n", AG_NAME(gblsym),
+                AG_TYPENAME(gblsym));
+      }
     }
   }
   for (gblsym = ag_typedef; gblsym; gblsym = AG_SYMLK(gblsym)) {
@@ -1212,8 +1217,13 @@ assemble_end(void)
               AG_TYPENAME(gblsym));
     else if (AG_TYPEDESC(gblsym) && !AG_DEFD(gblsym)) {
       fprintf(ASMFIL, "%%%s = type opaque\n", AG_TYPENAME(gblsym));
-      fprintf(ASMFIL, "@%s = external global %%%s\n", AG_NAME(gblsym),
-              AG_TYPENAME(gblsym));
+      if (strstr(cpu_llvm_module->target_triple, "windows-msvc") != NULL) {
+        fprintf(ASMFIL, "@%s = external dllimport global %%%s\n", AG_NAME(gblsym),
+                AG_TYPENAME(gblsym));
+      } else {
+        fprintf(ASMFIL, "@%s = external global %%%s\n", AG_NAME(gblsym),
+                AG_TYPENAME(gblsym));
+      }
     }
   }
   for (gblsym = ag_other; gblsym; gblsym = AG_SYMLK(gblsym)) {
