@@ -168,9 +168,12 @@ __fort_bcopysl(char *to, char *fr, size_t cnt, size_t tostr, size_t frstr,
     i *= len;
     j *= len;
     for (; cnt > 0; cnt--, i -= tostr, j -= frstr) {
-      for (k = len - 1; k >= 0; k--) {
+      // Since k is unsigned, stop the loop when k == 0, then
+      // copy the last element after the loop.
+      for (k = len - 1; k > 0; k--) {
         to[i + k] = fr[j + k];
       }
+      to[i] = fr[j];
     }
   }
 }
