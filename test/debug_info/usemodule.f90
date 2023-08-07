@@ -1,24 +1,29 @@
+! REQUIRES: llvm-17
+
 !RUN: %flang -g -S -emit-llvm %s -o - | FileCheck %s
 
-!CHECK: [[VAR1:![0-9]+]] = distinct !DIGlobalVariable(name: "var1"
-!CHECK: [[MYMOD:![0-9]+]] = !DIModule(scope: {{![0-9]+}}, name: "mymod"
-!CHECK: [[VAR2:![0-9]+]] = distinct !DIGlobalVariable(name: "var2"
-!CHECK: [[VAR3:![0-9]+]] = distinct !DIGlobalVariable(name: "var3"
 
-!CHECK: !DIImportedEntity(tag: DW_TAG_imported_module, scope: [[USE_ALL:![0-9]+]], entity: [[MYMOD]]
-!CHECK: [[USE_ALL]] = distinct !DISubprogram(name: "use_all"
+!CHECK-DAG: [[VAR1:![0-9]+]] = distinct !DIGlobalVariable(name: "var1"
+!CHECK-DAG: [[MYMOD:![0-9]+]] = !DIModule(scope: {{![0-9]+}}, name: "mymod"
+!CHECK-DAG: [[VAR2:![0-9]+]] = distinct !DIGlobalVariable(name: "var2"
+!CHECK-DAG: [[VAR3:![0-9]+]] = distinct !DIGlobalVariable(name: "var3"
 
-!CHECK: !DIImportedEntity(tag: DW_TAG_imported_declaration, scope: [[USE_RESTRICTED:![0-9]+]], entity: [[VAR1]]
-!CHECK: [[USE_RESTRICTED]] = distinct !DISubprogram(name: "use_restricted"
+!CHECK-DAG: !DIImportedEntity(tag: DW_TAG_imported_module, scope: [[USE_ALL:![0-9]+]], entity: [[MYMOD]]
+!CHECK-DAG: [[USE_ALL]] = distinct !DISubprogram(name: "use_all"
 
-!CHECK: !DIImportedEntity(tag: DW_TAG_imported_module, scope: [[USE_RENAMED:![0-9]+]], entity: [[MYMOD]]
+!CHECK-DAG: !DIImportedEntity(tag: DW_TAG_imported_declaration, scope: [[USE_RESTRICTED:![0-9]+]], entity: [[VAR1]]
+!CHECK-DAG: [[USE_RESTRICTED]] = distinct !DISubprogram(name: "use_restricted"
+
+!CHECK: [[USE_RENAMED:![0-9]+]] = distinct !DISubprogram(name: "use_renamed"
+!CHECK-SAME: retainedNodes: [[RETAINED:![0-9]+]]
+!CHECK: [[RETAINED]] = !{[[RETAIN1:![0-9]+]]
+!CHECK: [[RETAIN1]] = !DIImportedEntity(tag: DW_TAG_imported_module, scope: [[USE_RENAMED]], entity: [[MYMOD]]
 !CHECK-SAME: elements: [[RENAMES:![0-9]+]]
-!CHECK: [[USE_RENAMED]] = distinct !DISubprogram(name: "use_renamed"
 !CHECK: [[RENAMES]] = !{[[RENAME1:![0-9]+]]}
-!CHECK: [[RENAME1]] = !DIImportedEntity(tag: DW_TAG_imported_declaration, name: "var4", scope: [[USE_RENAMED]], entity: [[VAR1]]
+!CHECK: [[RENAME1]] = !DIImportedEntity(tag: DW_TAG_imported_declaration, name: "var4", scope: [[USE_RENAMED:![0-9]+]], entity: [[VAR1]]
 
-!CHECK: !DIImportedEntity(tag: DW_TAG_imported_declaration, name: "var4", scope: [[USE_RESTRICTED_RENAMED:![0-9]+]], entity: [[VAR1]]
-!CHECK: [[USE_RESTRICTED_RENAMED]] = distinct !DISubprogram(name: "use_restricted_renamed"
+!CHECK-DAG: !DIImportedEntity(tag: DW_TAG_imported_declaration, name: "var4", scope: [[USE_RESTRICTED_RENAMED:![0-9]+]], entity: [[VAR1]]
+!CHECK-DAG: [[USE_RESTRICTED_RENAMED]] = distinct !DISubprogram(name: "use_restricted_renamed"
 
 module mymod
   integer :: var1 = 11
