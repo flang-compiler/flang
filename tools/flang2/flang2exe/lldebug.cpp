@@ -4115,7 +4115,7 @@ lldbg_function_end(LL_DebugInfo *db, int func)
 static LL_MDRef
 lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
                              IMPORT_TYPE entity_type, LL_MDRef elements_mdnode,
-                            LL_MDRef imported_list)
+                             LL_MDRef imported_list)
 {
   LLMD_Builder mdb;
   LL_MDRef entity_mdnode, scope_mdnode = 0, file_mdnode, cur_mdnode;
