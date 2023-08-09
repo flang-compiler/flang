@@ -188,10 +188,11 @@ static LL_MDRef lldbg_fwd_local_variable(LL_DebugInfo *db, int sptr, int findex,
 static LL_MDRef lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr,
                                              SPTR func_sptr,
                                              IMPORT_TYPE entity_type,
-                                             LL_MDRef elements_mdnode);
+                                             LL_MDRef elements_mdnode,
+                                             LL_MDRef imported_list);
 static void lldbg_emit_imported_entity(LL_DebugInfo *db, SPTR entity_sptr,
                                        SPTR func_sptr, IMPORT_TYPE entity_type,
-                                       LL_MDRef elements);
+                                       LL_MDRef elements, LL_MDRef imported_list);
 static LL_MDRef lldbg_create_subrange_mdnode(LL_DebugInfo *db, LL_MDRef count,
                                              LL_MDRef lb, LL_MDRef ub,
                                              LL_MDRef st);
@@ -530,6 +531,7 @@ lldbg_create_subprogram_mdnode(
       llmd_add_md(mdb, lv_list_mdnode);
   } else if (ll_feature_debug_info_ver13(&db->module->ir))
     llmd_add_md(mdb, lv_list_mdnode);
+
   llmd_add_i32(mdb, scope);
 
   /* Request a distinct mdnode so that it can be updated with a function pointer
@@ -2417,6 +2419,7 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
   LL_MDRef lv_list_mdnode;
   LL_MDRef context_mdnode;
   LL_MDRef scope;
+  LL_MDRef imported_list;
   const char *mips_linkage_name = "";
   const char *func_name;
   int virtuality = 0;
@@ -2471,6 +2474,8 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
                                  ll_get_md_null(), lv_list_mdnode, lineno);
   if (!db->subroutine_mdnodes)
     db->subroutine_mdnodes = hashmap_alloc(hash_functions_direct);
+  imported_list = ll_feature_debug_info_ver17(&db->module->ir) ?
+                 lv_list_mdnode : db->llvm_dbg_imported;
   scopeData = (hash_data_t)(unsigned long)db->cur_subprogram_mdnode;
   hashmap_replace(db->subroutine_mdnodes, INT2HKEY(sptr), &scopeData);
   while (db->import_entity_list) {
@@ -2480,10 +2485,12 @@ lldbg_emit_subprogram(LL_DebugInfo *db, SPTR sptr, DTYPE ret_dtype, int findex,
     /* There are pending entities to be imported into this func */
     lldbg_emit_imported_entity(db, db->import_entity_list->entity, sptr,
                                db->import_entity_list->entity_type,
-                               elements_mdnode);
+                               elements_mdnode, imported_list);
     while (child) {
       LL_MDRef element = lldbg_create_imported_entity(db, child->entity, sptr,
-                                                      child->entity_type, (LL_MDRef) NULL);
+                                                      child->entity_type,
+                                                      (LL_MDRef) NULL,
+                                                      (LL_MDRef) NULL);
       ll_extend_md_node(db->module, elements_mdnode, element);
       child = child->next;
     }
@@ -4107,7 +4114,8 @@ lldbg_function_end(LL_DebugInfo *db, int func)
 
 static LL_MDRef
 lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
-                             IMPORT_TYPE entity_type, LL_MDRef elements_mdnode)
+                             IMPORT_TYPE entity_type, LL_MDRef elements_mdnode,
+                             LL_MDRef imported_list)
 {
   LLMD_Builder mdb;
   LL_MDRef entity_mdnode, scope_mdnode = 0, file_mdnode, cur_mdnode;
@@ -4164,14 +4172,16 @@ lldbg_create_imported_entity(LL_DebugInfo *db, SPTR entity_sptr, SPTR func_sptr,
   llmd_add_md(mdb, elements_mdnode); // elements
 
   cur_mdnode = llmd_finish(mdb);
-  ll_extend_md_node(db->module, db->llvm_dbg_imported, cur_mdnode);
+  if (imported_list)
+    ll_extend_md_node(db->module, imported_list, cur_mdnode);
   return cur_mdnode;
 }
 
 static void
 lldbg_emit_imported_entity(LL_DebugInfo *db, SPTR entity_sptr,
                            SPTR func_sptr, IMPORT_TYPE entity_type,
-                           LL_MDRef elements_mdnode)
+                           LL_MDRef elements_mdnode,
+                           LL_MDRef imported_list)
 {
   static hashset_t entity_func_added;
   const char *entity_func;
@@ -4185,7 +4195,7 @@ lldbg_emit_imported_entity(LL_DebugInfo *db, SPTR entity_sptr,
     return;
   hashset_insert(entity_func_added, entity_func);
   lldbg_create_imported_entity(db, entity_sptr, func_sptr, entity_type,
-                               elements_mdnode);
+                               elements_mdnode, imported_list);
 }
 
 void
