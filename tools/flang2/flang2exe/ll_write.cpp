@@ -935,7 +935,6 @@ static const MDTemplate Tmpl_DICompileUnit_ver39[] = {
   { "retainedTypes",            NodeField,               0 },
   { "globals",                  NodeField,               0 },
   { "emissionKind",             DWEmissionField,         0 },
-  { "imports",                  NodeField,               0 },
   { "splitDebugFilename",       StringField,             0 },
   { "nameTableKind",            DebugNameTableKindField, 0 }
 };

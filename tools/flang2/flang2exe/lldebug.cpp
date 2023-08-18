@@ -313,8 +313,7 @@ lldbg_create_compile_unit_mdnode(LL_DebugInfo *db, int lang_tag,
                                  const char *compflags, int vruntime,
                                  LL_MDRef *enum_types_list,
                                  LL_MDRef *retained_types_list,
-                                 LL_MDRef *subprograms_list, LL_MDRef *gv_list,
-                                 LL_MDRef *imported_entity_list)
+                                 LL_MDRef *subprograms_list, LL_MDRef *gv_list)
 {
   LLMD_Builder mdb = llmd_init(db->module);
   LL_MDRef cur_mdnode;
@@ -347,7 +346,6 @@ lldbg_create_compile_unit_mdnode(LL_DebugInfo *db, int lang_tag,
   *retained_types_list = ll_create_flexible_md_node(db->module);
   *subprograms_list = ll_create_flexible_md_node(db->module);
   *gv_list = ll_create_flexible_md_node(db->module);
-  *imported_entity_list = ll_create_flexible_md_node(db->module);
 
   if (ll_feature_debug_info_pre34(&db->module->ir)) {
     llmd_add_md(mdb,
@@ -365,7 +363,6 @@ lldbg_create_compile_unit_mdnode(LL_DebugInfo *db, int lang_tag,
     llmd_add_md(mdb, *gv_list);
     if (ll_feature_subprogram_not_in_cu(&db->module->ir))
       llmd_add_i32(mdb, 1); /* emissionMode: FullDebug */
-    llmd_add_md(mdb, *imported_entity_list);
     llmd_add_string(mdb, "");
     if (!XBIT(120, 0x40000000))
       llmd_add_i32(mdb, 2); /* nameTableKind: None */
@@ -1852,7 +1849,7 @@ lldbg_emit_compile_unit(LL_DebugInfo *db)
         db, lang_tag, get_filename(1), get_currentdir(), db->producer, 1,
         flg.opt >= 1/*isOptimized Flag*/, flg.cmdline,
         0, &db->llvm_dbg_enum, &db->llvm_dbg_retained, &db->llvm_dbg_sp,
-        &db->llvm_dbg_gv, &db->llvm_dbg_imported);
+        &db->llvm_dbg_gv);
   }
   return db->comp_unit_mdnode;
 }
