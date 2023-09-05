@@ -2349,8 +2349,11 @@ write_operand(OPERAND *p, const char *punc_string, int flags)
 #endif
     if (!(flags & FLG_OMIT_OP_TYPE))
       write_type(pllt);
-    if (p->flags & OPF_SRET_TYPE)
+    if (p->flags & OPF_SRET_TYPE) {
       print_token(" sret");
+      print_token(p->ll_type->sub_types[0]->str);
+      print_token(")");
+    }
     if (p->flags & OPF_SRARG_TYPE)
       print_token(" byval");
     print_space(1);
