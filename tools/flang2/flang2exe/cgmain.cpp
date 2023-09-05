@@ -275,6 +275,7 @@ typedef struct ComplexResultList_t {
   unsigned entries;
 } ComplexResultList_t;
 static ComplexResultList_t complexResultList;
+LL_ABI_Info *entry_abi;
 
 /* ---  static prototypes (exported prototypes belong in cgllvm.h) --- */
 
@@ -1613,11 +1614,12 @@ restartConcur:
 
   /* Build up the additional items/dummys needed for the master sptr if there
      are entries, and call process_formal_arguments on that information. */
-  if (has_multiple_entries(gbl.currsub) && get_entries_argnum())
-    process_formal_arguments(
-        process_ll_abi_func_ftn_mod(current_module, get_master_sptr(), 1));
-  else
+  if (has_multiple_entries(gbl.currsub) && get_entries_argnum()) {
+    entry_abi = process_ll_abi_func_ftn_mod(current_module, get_master_sptr(), 1);
+    process_formal_arguments(entry_abi);
+  } else {
     process_formal_arguments(llvm_info.abi_info);
+  }
   made_return = false;
 
   get_local_overlap_size();
@@ -14562,6 +14564,18 @@ get_parnum(SPTR sptr)
 {
   for (unsigned parnum = 1; parnum <= llvm_info.abi_info->nargs; parnum++) {
     if (llvm_info.abi_info->arg[parnum].sptr == sptr) {
+      return parnum;
+    }
+  }
+
+  return 0;
+}
+
+int
+get_entry_parnum(SPTR sptr)
+{
+  for (unsigned parnum = 1; parnum <= entry_abi->nargs; parnum++) {
+    if (entry_abi->arg[parnum].sptr == sptr) {
       return parnum;
     }
   }
