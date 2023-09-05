@@ -303,4 +303,6 @@ void insert_llvm_dbg_value(OPERAND *load, LL_MDRef mdnode, SPTR sptr,
 bool pointer_scalar_need_debug_info(SPTR sptr);
 
 int get_parnum(SPTR sptr);
+
+int get_entry_parnum(SPTR sptr);
 #endif

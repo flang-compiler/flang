@@ -3253,10 +3253,15 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
               if (SCG(data_sptr) == SC_DUMMY) {
                 LL_MDRef type_mdnode = lldbg_emit_type(
                     db, __POINT_T, data_sptr, findex, false, false, false);
+                int parnum_lldbg = 0;
+                if (has_multiple_entries(gbl.currsub))
+                  parnum_lldbg = get_entry_parnum(data_sptr);
+                else
+                  parnum_lldbg = get_parnum(data_sptr);
                 dataloc = lldbg_create_local_variable_mdnode(
                     db, DW_TAG_arg_variable, db->cur_subprogram_mdnode, NULL,
                     file_mdnode, db->cur_subprogram_lineno,
-                    get_parnum(data_sptr), type_mdnode,
+                    parnum_lldbg, type_mdnode,
                     set_dilocalvariable_flags(data_sptr), ll_get_md_null());
                 lldbg_register_param_mdnode(db, dataloc, data_sptr);
 
@@ -3317,10 +3322,15 @@ lldbg_emit_type(LL_DebugInfo *db, DTYPE dtype, SPTR sptr, int findex,
                   if (SCG(datasptr) == SC_DUMMY) {
                     LL_MDRef type_mdnode = lldbg_emit_type(
                         db, __POINT_T, datasptr, findex, false, false, false);
+                    int parnum_lldbg = 0;
+                    if (has_multiple_entries(gbl.currsub))
+                      parnum_lldbg = get_entry_parnum(data_sptr);
+                    else
+                      parnum_lldbg = get_parnum(data_sptr);
                     dataloc = lldbg_create_local_variable_mdnode(
                         db, DW_TAG_arg_variable, db->cur_subprogram_mdnode,
                         NULL, file_mdnode, db->cur_subprogram_lineno,
-                        get_parnum(sptr), type_mdnode,
+                        parnum_lldbg, type_mdnode,
                         set_dilocalvariable_flags(datasptr), ll_get_md_null());
                     lldbg_register_param_mdnode(db, dataloc, datasptr);
                   } else
@@ -3975,12 +3985,18 @@ lldbg_emit_param_variable(LL_DebugInfo *db, SPTR sptr, int findex, int parnum,
     if ((ASSUMRANKG(sptr) || ASSUMSHPG(sptr)) && SDSCG(sptr)) {
       type_mdnode = lldbg_emit_type(db, dtype, SDSCG(sptr), findex,
                                     is_reference, true, false, sptr);
-      parnum = get_parnum(SDSCG(sptr));
+      if (has_multiple_entries(gbl.currsub))
+        parnum = get_entry_parnum(SDSCG(sptr));
+      else
+        parnum = get_parnum(SDSCG(sptr));
     } else if (STYPEG(sptr) == ST_ARRAY &&
                (ALLOCATTRG(sptr) || POINTERG(sptr)) && SDSCG(sptr)) {
       type_mdnode = lldbg_emit_type(db, dtype, sptr, findex, is_reference, true,
                                     false, MIDNUMG(sptr));
-      parnum = get_parnum(SDSCG(sptr));
+      if (has_multiple_entries(gbl.currsub))
+        parnum = get_entry_parnum(SDSCG(sptr));
+      else
+        parnum = get_parnum(SDSCG(sptr));
     } else {
       type_mdnode =
           lldbg_emit_type(db, dtype, sptr, findex, is_reference, true, false);
