@@ -33,6 +33,13 @@
 #define ARGS_NUMBER 3
 #define MIN_ARGS_NUMBER 0
 
+enum DT_GENERAL{
+  DT_INT_GENERAL,
+  DT_REAL_GENERAL,
+  DT_CHAR_GENERAL,
+  DT_NONE_GENERAL
+};
+
 static struct {
   int nent;  /* number of arguments specified by user */
   int nargt; /* number actually needed for AST creation */
@@ -4152,6 +4159,52 @@ cmp_mod_scope(SPTR sptr)
   return scope1 == scope2;
 }
 
+/*
+ * The arguments shall all have the same type which shall be integer, real,
+ * or character and they shall all have the same kind type parameter.
+ */
+void
+check_max_min_argument(int argdtype, int *dtype_last)
+{
+  int dtype_new = DT_NONE_GENERAL;
+
+  switch (DTYG(argdtype)) {
+    case TY_BINT:
+    case TY_SINT:
+    case TY_INT:
+    case TY_INT8:
+    case TY_WORD:
+    case TY_DWORD:
+      dtype_new = DT_INT_GENERAL;
+      break;
+    case TY_HALF:
+    case TY_REAL:
+    case TY_DBLE:
+    case TY_QUAD:
+      dtype_new = DT_REAL_GENERAL;
+      break;
+    case TY_CHAR:
+    case TY_NCHAR:
+      dtype_new = DT_CHAR_GENERAL;
+      break;
+    default:
+      dtype_new = DT_NONE_GENERAL;
+      break;
+  }
+  if (*dtype_last == 0)
+    *dtype_last = dtype_new;
+
+  if (dtype_new == DT_NONE_GENERAL) {
+    error(155, 3, gbl.lineno,
+          "Arguments must be INTEGER, REAL, or CHARACTER!", CNULL);
+  } else if (dtype_new != *dtype_last) {
+    error(155, 3, gbl.lineno,
+           "Arguments must have the same kind type parameter!", CNULL);
+  } else {
+    *dtype_last = dtype_new;
+  }
+}
+
 /** \brief Handle Generic and Intrinsic function calls.
  */
 int
@@ -4178,6 +4231,8 @@ ref_intrin(SST *stktop, ITEM *list)
   int tmp, tmp_ast;
   FtnRtlEnum rtlRtn;
   int intrin; /* one of the I_* constants */
+  int dtype_last = 0;
+  int maxtype = 0;
 
   dtyper = 0;
   dtype1 = 0;
@@ -4264,11 +4319,26 @@ ref_intrin(SST *stktop, ITEM *list)
       } else if (argdtype == DT_WORD) {
       }
     }
+
+    if (intrin == I_MAX || intrin == I_MIN) {
+      check_max_min_argument(argdtype, &dtype_last);
+    }
+
     if (!dtype1) {
       f_dt = dtype1 = argdtype; /* Save 1st arg's data type */
       if (DTY(argdtype) == TY_ARRAY)
         break;
     } else {
+      if (intrin == I_MAX || intrin == I_MIN) {
+        int dtypecompare = DTYG(argdtype);
+        if (dtypecompare == TY_WORD) dtypecompare = TY_INT;
+        if (dtypecompare == TY_DWORD) dtypecompare = TY_INT8;
+        if (dtypecompare > maxtype) {
+          maxtype = dtypecompare;
+          dtype1 = argdtype;
+        }
+      }
+
       /* check rest of args to see if they might be array. */
       /* assert.  haven't seen an array argument yet. */
       if (DTY(argdtype) == TY_ARRAY) {
