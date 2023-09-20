@@ -553,7 +553,7 @@ ll_check_struct_return(DTYPE dtype)
  *
  *   %struct.S = type { [10 x i32] }
  *
- *   define void @f(%struct.S* noalias sret %agg.result) ...
+ *   define void @f(ptr noalias sret(%struct.S) %agg.result) ...
  *
  * Some structs can be returned in registers, depending on ABI-specific rules.
  * For example, x86-64 can return a struct {long x, y; } struct in registers
@@ -7279,6 +7279,8 @@ gen_arg_operand(LL_ABI_Info *abi, unsigned abi_arg, int arg_ili)
     operand = gen_llvm_expr(value_ili, arg_type);
   if (arg->kind == LL_ARG_BYVAL && !missing)
     operand->flags |= OPF_SRARG_TYPE;
+  if (arg->kind == LL_ARG_INDIRECT && !missing && (abi_arg == 0))
+    operand->flags |= OPF_SRET_TYPE;
   return operand;
 
   arg_type = make_lltype_from_abi_arg(arg);
@@ -13701,7 +13703,9 @@ print_arg_attributes(LL_ABI_ArgInfo *arg)
     print_token(" signext");
     break;
   case LL_ARG_BYVAL:
-    print_token(" byval");
+    print_token(" byval(");
+    print_token(arg->type->sub_types[0]->str);
+    print_token(")");
     break;
   default:
     interr("Unknown argument kind", arg->kind, ERR_Fatal);
@@ -13760,7 +13764,9 @@ print_function_signature(int func_sptr, const char *fn_name, LL_ABI_Info *abi,
   /* Hidden sret argument for struct returns. */
   if (LL_ABI_HAS_SRET(abi)) {
     print_token(abi->arg[0].type->str);
-    print_token(" sret");
+    print_token(" sret(");
+    print_token(abi->arg[0].type->sub_types[0]->str);
+    print_token(")");
     if (print_arg_names) {
       print_space(1);
       print_token(SNAME(ret_info.sret_sptr));
