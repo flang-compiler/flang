@@ -70,6 +70,7 @@ void fixup_srcalloc_bounds(int *, int *, int);
 
 void check_alloc_ptr_type(int, int, DTYPE, int, int, int, int); /* func.c */
 LOGICAL contiguous_section(int arr_ast);                        /* func.c */
+int rewrite_lbound_ubound(int func_ast, int actual, int nextstd); /* func.c */
 
 int gen_set_len_ast(int ast, SPTR ddesc, int sz); /* outconv.c */
 LOGICAL inline_RTE_set_type(int, int, int, int, DTYPE, int); /* outconv.c */

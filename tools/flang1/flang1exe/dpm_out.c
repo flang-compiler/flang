@@ -1535,10 +1535,22 @@ transform_wrapup(void)
     finish_fl();
     open_entry_guard(this_entry);
     if (ENTSTDG(this_entry) != EntryStd) {
+      int s;
+      /* Rewrite any assignments added at the entry point. */
+      for (s = STD_NEXT(ENTSTDG(this_entry)); s != EntryStd; s = STD_NEXT(s)) {
+        int ast;
+        arg_gbl.std = s;
+        arg_gbl.lhs = 0;
+        arg_gbl.used = FALSE;
+        arg_gbl.inforall = FALSE;
+        gbl.lineno = STD_LINENO(s);
+        ast = STD_AST(s);
+        if (A_TYPEG(ast) == A_ASN)
+          rewrite_asn(ast, s, TRUE, 0);
+      }
       /* reset LINENO for any statements added at the entry point.
        * this allows the debugger to set its breakpoints at the proper
        * point, which is after the prologue code */
-      int s;
       for (s = STD_NEXT(ENTSTDG(this_entry)); s != EntryStd; s = STD_NEXT(s)) {
         STD_LINENO(s) = 0;
       }

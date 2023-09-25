@@ -498,3 +498,4 @@ int add_bounds_subscripts(int to_ast, int rank, const int lower_bound_asts[],
                           const int upper_bound_asts[], DTYPE elt_dtype);
 int add_shapely_subscripts(int to_ast, int from_ast, DTYPE arr_dtype, DTYPE elt_dtype);
 LOGICAL ast_is_sym(int ast);
+SPTR get_whole_array_sym(int arr_ast);

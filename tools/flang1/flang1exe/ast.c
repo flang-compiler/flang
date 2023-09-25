@@ -4470,7 +4470,6 @@ ast_rewrite(int ast)
 {
   int atype;
   int astnew;
-  int l;
   int parent, mem, left, right, lop, rop, l1, l2, l3, sub, lbd, upbd, stride,
       dest, src, ifexpr, ifstmt, dolab, dovar, m1, m2, m3, itriple, otriple,
       otriple1, dim, bvect, ddesc, sdesc, mdesc, vsub, chunk, npar, start,
@@ -4689,26 +4688,6 @@ ast_rewrite(int ast)
             astnew = mk_binop(OP_DIV, astnew, stride, astb.bnd.dtype);
           }
         }
-      }
-      break;
-    case I_LBOUND:
-      /* is dim a constant ? */
-      if ((i = A_ALIASG(ARGT_ARG(argtnew, 1)))) {
-        shape = A_SHAPEG(ARGT_ARG(argtnew, 0));
-        i = CONVAL2G(A_SPTRG(i)) - 1;
-        l = lbound_of_shape(shape, i);
-        if (l)
-          astnew = l;
-      }
-      break;
-    case I_UBOUND:
-      /* is dim a constant ? */
-      if ((i = A_ALIASG(ARGT_ARG(argtnew, 1)))) {
-        shape = A_SHAPEG(ARGT_ARG(argtnew, 0));
-        i = CONVAL2G(A_SPTRG(i)) - 1;
-        l = ubound_of_shape(shape, i);
-        if (l)
-          astnew = l;
       }
       break;
     default:
@@ -10181,4 +10160,16 @@ add_shapely_subscripts(int to_ast, int from_ast, DTYPE arr_dtype,
   int extent_asts[MAXRANK];
   int rank = get_ast_extents(extent_asts, from_ast, arr_dtype);
   return add_extent_subscripts(to_ast, rank, extent_asts, elt_dtype);
+}
+
+/* If an array AST is a whole array, return the SPTR of the array or the
+ * structure component. */
+SPTR
+get_whole_array_sym(int arr_ast)
+{
+  if (A_TYPEG(arr_ast) == A_ID)
+    return A_SPTRG(arr_ast);
+  if (A_TYPEG(arr_ast) == A_MEM && !A_SHAPEG(A_PARENTG(arr_ast)))
+    return A_SPTRG(A_MEMG(arr_ast));
+  return SPTR_NULL;
 }

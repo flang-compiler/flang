@@ -6800,10 +6800,11 @@ const_eval(int ast)
       return sz;
     }
     case I_LBOUND: {
-      int lwb;
+      int lwb, dim;
       val = A_ARGSG(ast);
       ast = ARGT_ARG(val, 0);
-      ast = ADD_LWAST(A_DTYPEG(ast), val - 1);
+      dim = get_const_from_ast(ARGT_ARG(val, 1));
+      ast = ADD_LWAST(A_DTYPEG(ast), dim - 1);
       lwb = get_const_from_ast(ast);
       if (XBIT(68, 0x1) && A_ALIASG(ast) && !DT_ISWORD(A_DTYPEG(ast))) {
         lwb = get_int_cval(lwb);
@@ -6811,10 +6812,11 @@ const_eval(int ast)
       return lwb;
     }
     case I_UBOUND: {
-      int upb;
+      int upb, dim;
       val = A_ARGSG(ast);
       ast = ARGT_ARG(val, 0);
-      ast = ADD_UPAST(A_DTYPEG(ast), val - 1);
+      dim = get_const_from_ast(ARGT_ARG(val, 1));
+      ast = ADD_UPAST(A_DTYPEG(ast), dim - 1);
       upb = get_const_from_ast(ast);
       if (XBIT(68, 0x1) && A_ALIASG(ast) && !DT_ISWORD(A_DTYPEG(ast))) {
         upb = get_int_cval(upb);
