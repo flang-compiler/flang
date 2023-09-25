@@ -99,7 +99,6 @@ convert_output(void)
   }
   convert_statements();
   FREE(ftb.base);
-  comm_fini();
   freearea(FORALL_AREA);
   if (flg.opt >= 2 && !XBIT(47, 0x10)) {
     collapse_allocates(TRUE);
@@ -108,6 +107,7 @@ convert_output(void)
   eliminate_barrier();
   free_brtbl();
   transform_wrapup();
+  comm_fini();
   convert_simple();
   if (XBIT(58, 0x10000000))
     convert_template_instance();
@@ -1105,9 +1105,17 @@ _simple_replacements(int ast, int *pany)
         fname = SYMNAME(fsptr);
         newast = ast;
         in_device_code = 0;
-        if (strcmp(fname, mkRteRtnNm(RTE_lboundDsc)) == 0) {
+        if (strcmp(fname, mkRteRtnNm(RTE_lboundDsc)) == 0 ||
+            strcmp(fname, mkRteRtnNm(RTE_lbound1Dsc)) == 0 ||
+            strcmp(fname, mkRteRtnNm(RTE_lbound2Dsc)) == 0 ||
+            strcmp(fname, mkRteRtnNm(RTE_lbound4Dsc)) == 0 ||
+            strcmp(fname, mkRteRtnNm(RTE_lbound8Dsc)) == 0) {
           newast = _pghpf_bound(1, ast);
-        } else if (strcmp(fname, mkRteRtnNm(RTE_uboundDsc)) == 0) {
+        } else if (strcmp(fname, mkRteRtnNm(RTE_uboundDsc)) == 0 ||
+                   strcmp(fname, mkRteRtnNm(RTE_ubound1Dsc)) == 0 ||
+                   strcmp(fname, mkRteRtnNm(RTE_ubound2Dsc)) == 0 ||
+                   strcmp(fname, mkRteRtnNm(RTE_ubound4Dsc)) == 0 ||
+                   strcmp(fname, mkRteRtnNm(RTE_ubound8Dsc)) == 0) {
           newast = _pghpf_bound(0, ast);
         } else if (strcmp(fname, mkRteRtnNm(RTE_extent)) == 0) {
           newast = _pghpf_size(0, ast);
@@ -1232,7 +1240,10 @@ convert_simple(void)
     beforestd = std;
     ast_traverse(ast, NULL, _simple_replacements, &any);
     if (any) {
-      ast = ast_rewrite(ast);
+      while (any > 0) {
+        ast = ast_rewrite(ast);
+        any--;
+      }
       STD_AST(std) = ast;
       A_STDP(ast, std);
     }

@@ -2871,6 +2871,9 @@ rewrite_func_ast(int func_ast, int func_args, int lhs)
     ARGT_ARG(newargt, 5) = mk_cval(size_of(stb.user.dt_int), DT_INT4);
     is_icall = FALSE;
     goto ret_call;
+  case I_UBOUND: /* ubound(array[, dim, kind]) */
+  case I_LBOUND: /* lbound(array[, dim, kind]) */
+    return rewrite_lbound_ubound(func_ast, 0, arg_gbl.std);
   default:
     goto ret_norm;
   }
@@ -3705,12 +3708,13 @@ rewrite_sub_ast(int ast, int lc)
     asd = A_ASDG(ast);
     numdim = ASD_NDIM(asd);
     assert(numdim > 0 && numdim <= 7, "rewrite_sub_ast: bad numdim", ast, 4);
+    lop = rewrite_sub_ast(A_LOPG(ast), lc);
     for (i = 0; i < numdim; ++i) {
       l = rewrite_sub_ast(ASD_SUBS(asd, i), lc);
       subs[i] = l;
     }
     /*	return mk_subscr(A_LOPG(ast), subs, numdim, DTY(dtype+1)); */
-    return mk_subscr(A_LOPG(ast), subs, numdim, dtype);
+    return mk_subscr(lop, subs, numdim, dtype);
   case A_TRIPLE:
     l = rewrite_sub_ast(A_LBDG(ast), lc);
     r = rewrite_sub_ast(A_UPBDG(ast), lc);
@@ -7507,4 +7511,451 @@ _reshape(int func_args, DTYPE dtype, int lhs)
   /*fprintf(STDERR, "RESHAPE"); dbg_print_ast(retval,0);*/
 
   return retval;
+}
+
+/** \brief Rewrite intrinsic LBOUND/UBOUND to runtime call.
+ *
+ *  \param func_ast ast for the intrinsic call
+ *  \param actual   corresponding actual for a assumed-shape formal that is
+ *                  used as the array parameter in the intrinsic call
+ *  \param nextstd  insert the generated stmts before this stmt
+ */
+int
+rewrite_lbound_ubound(int func_ast, int actual, int nextstd)
+{
+  DTYPE dtype, arrdtype;
+  int func_args, optype, array, dim, nargs, newargt, subscr[MAXDIMS],
+      result, ast;
+  SPTR sptr, actual_sptr, hpf_sym, temp_arr;
+  FtnRtlEnum rtlRtn;
+
+  func_args = A_ARGSG(func_ast);
+  optype = A_OPTYPEG(func_ast);
+  dtype = A_DTYPEG(func_ast);
+  array = ARGT_ARG(func_args, 0);
+  arrdtype = A_DTYPEG(array);
+  /* The KIND parameter has been eliminated and is represented in dtype. */
+  if (ARGT_CNT(func_args) == 2)
+    dim = ARGT_ARG(func_args, 1);
+  else
+    dim = 0;
+  sptr = get_whole_array_sym(array);
+  result = 0;
+  if (sptr && SDSCG(sptr) &&
+      (POINTERG(sptr) || ALLOCG(sptr) || ASSUMRANKG(sptr))) {
+    /* Get bound info from section descriptor. */
+    if (dim) {
+      if (optype == I_LBOUND) {
+        switch (dtype) {
+        case DT_BINT:
+          rtlRtn = RTE_lbound1Dsc;
+          break;
+        case DT_SINT:
+          rtlRtn = RTE_lbound2Dsc;
+          break;
+        case DT_INT4:
+          rtlRtn = RTE_lbound4Dsc;
+          break;
+        case DT_INT8:
+          rtlRtn = RTE_lbound8Dsc;
+          break;
+        default:
+          error(155, 3, gbl.lineno, SYMNAME(gbl.currsub),
+                "invalid kind argument for lbound");
+          rtlRtn = RTE_lboundDsc;
+          break;
+        }
+      } else {
+        switch (dtype) {
+        case DT_BINT:
+          rtlRtn = RTE_ubound1Dsc;
+          break;
+        case DT_SINT:
+          rtlRtn = RTE_ubound2Dsc;
+          break;
+        case DT_INT4:
+          rtlRtn = RTE_ubound4Dsc;
+          break;
+        case DT_INT8:
+          rtlRtn = RTE_ubound8Dsc;
+          break;
+        default:
+          error(155, 3, gbl.lineno, SYMNAME(gbl.currsub),
+                "invalid kind argument for ubound");
+          rtlRtn = RTE_uboundDsc;
+          break;
+        }
+      }
+      /* pghpf...bound(dim, static_desciptor) */
+      hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), dtype);
+      nargs = 2;
+      newargt = mk_argt(nargs);
+      ARGT_ARG(newargt, 0) = dim;
+      ARGT_ARG(newargt, 1) = check_member(array, mk_id(SDSCG(sptr)));
+      DESCUSEDP(sptr, 1);
+      goto ret_func;
+    } else {
+      if (!XBIT(68, 0x1) || XBIT(68, 0x2)) {
+        if (optype == I_LBOUND) {
+          switch (DDTG(dtype)) {
+          case DT_BINT:
+            rtlRtn = RTE_lbounda1Dsc;
+            break;
+          case DT_SINT:
+            rtlRtn = RTE_lbounda2Dsc;
+            break;
+          case DT_INT4:
+            rtlRtn = RTE_lbounda4Dsc;
+            break;
+          case DT_INT8:
+            rtlRtn = RTE_lbounda8Dsc;
+            break;
+          default:
+            error(155, 3, gbl.lineno, SYMNAME(gbl.currsub),
+                  "invalid kind argument for lbound");
+            rtlRtn = RTE_lboundaDsc;
+            break;
+          }
+        } else {
+          switch (DDTG(dtype)) {
+          case DT_BINT:
+            rtlRtn = RTE_ubounda1Dsc;
+            break;
+          case DT_SINT:
+            rtlRtn = RTE_ubounda2Dsc;
+            break;
+          case DT_INT4:
+            rtlRtn = RTE_ubounda4Dsc;
+            break;
+          case DT_INT8:
+            rtlRtn = RTE_ubounda8Dsc;
+            break;
+          default:
+            error(155, 3, gbl.lineno, SYMNAME(gbl.currsub),
+                  "invalid kind argument for ubound");
+            rtlRtn = RTE_uboundaDsc;
+            break;
+          }
+        }
+      } else {
+        if (optype == I_LBOUND) {
+          switch (DDTG(dtype)) {
+          case DT_BINT:
+            rtlRtn = RTE_lboundaz1Dsc;
+            break;
+          case DT_SINT:
+            rtlRtn = RTE_lboundaz2Dsc;
+            break;
+          case DT_INT4:
+            rtlRtn = RTE_lboundaz4Dsc;
+            break;
+          case DT_INT8:
+            rtlRtn = RTE_lboundaz8Dsc;
+            break;
+          default:
+            error(155, 3, gbl.lineno, SYMNAME(gbl.currsub),
+                  "invalid kind argument for lbound");
+            rtlRtn = RTE_lboundazDsc;
+            break;
+          }
+        } else {
+          switch (DDTG(dtype)) {
+          case DT_BINT:
+            rtlRtn = RTE_uboundaz1Dsc;
+            break;
+          case DT_SINT:
+            rtlRtn = RTE_uboundaz2Dsc;
+            break;
+          case DT_INT4:
+            rtlRtn = RTE_uboundaz4Dsc;
+            break;
+          case DT_INT8:
+            rtlRtn = RTE_uboundaz8Dsc;
+            break;
+          default:
+            error(155, 3, gbl.lineno, SYMNAME(gbl.currsub),
+                  "invalid kind argument for ubound");
+            rtlRtn = RTE_uboundazDsc;
+            break;
+          }
+        }
+      }
+      /* pghpf...bounda(temp, sd) or
+       * pghpf...boundaz(temp, sd) for -Mlarge_arrays
+       */
+      hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), DT_NONE);
+      nargs = 2;
+      newargt = mk_argt(nargs);
+      ARGT_ARG(newargt, 1) = check_member(array, mk_id(SDSCG(sptr)));
+      DESCUSEDP(sptr, 1);
+      goto ret_call;
+    }
+  } else {
+    /* Get bound info from dtype or shape. */
+    int rank = rank_of_ast(array);
+    if (actual)
+      actual_sptr = get_whole_array_sym(actual);
+    else
+      actual_sptr = SPTR_NULL;
+    if (dim) {
+      if (A_ALIASG(dim)) {
+        int i = get_int_cval(A_SPTRG(A_ALIASG(dim)));
+        if (actual) {
+          int lb, extent, mask;
+          if (actual_sptr && SDSCG(actual_sptr) &&
+              (POINTERG(actual_sptr) || ALLOCG(actual_sptr))) {
+            /* The whole array actual_sptr corresponding to an assumed-shape
+             * formal cannot be assumed-rank. */
+            extent = get_extent(SDSCG(actual_sptr), i - 1);
+          } else {
+            extent = extent_of_shape(A_SHAPEG(actual), i - 1);
+          }
+          lb = ADD_LWBD(arrdtype, i - 1);
+          lb = ast_rewrite(lb); /* Replace formal in boundary */
+          mask = mk_binop(OP_GT, extent, astb.bnd.zero, DT_LOG);
+          lb = mk_merge(lb, astb.bnd.one, mask, astb.bnd.dtype);
+          if (optype == I_LBOUND) {
+            result = lb;
+          } else {
+            /* The extent of formal parameter is equal to the extent of actual
+             * parameter. */
+            result = mk_binop(OP_ADD, lb, extent, astb.bnd.dtype);
+            result = mk_binop(OP_SUB, result, astb.bnd.one, astb.bnd.dtype);
+          }
+        } else if (sptr) {
+          int lb, ub;
+          lb = ADD_LWAST(arrdtype, i - 1);
+          if (!lb)
+            lb = astb.bnd.one;
+          ub = ADD_UPAST(arrdtype, i - 1);
+          if (optype == I_LBOUND) {
+            if (ADD_ASSUMSZ(arrdtype) && i == rank) {
+              result = lb;
+            } else {
+              int mask = mk_binop(OP_LE, lb, ub, DT_LOG);
+              result = mk_merge(lb, astb.bnd.one, mask, astb.bnd.dtype);
+            }
+          } else {
+            int mask = mk_binop(OP_LE, lb, ub, DT_LOG);
+            result = mk_merge(ub, astb.bnd.zero, mask, astb.bnd.dtype);
+          }
+        } else {
+          if (optype == I_LBOUND)
+            result = astb.bnd.one;
+          else
+            result = extent_of_shape(A_SHAPEG(array), i - 1);
+        }
+        goto ret_val;
+      } else {
+        if (optype == I_LBOUND) {
+          switch (dtype) {
+          case DT_BINT:
+            rtlRtn = RTE_lb1;
+            break;
+          case DT_SINT:
+            rtlRtn = RTE_lb2;
+            break;
+          case DT_INT4:
+            rtlRtn = RTE_lb4;
+            break;
+          case DT_INT8:
+            rtlRtn = RTE_lb8;
+            break;
+          default:
+            error(155, 3, gbl.lineno, SYMNAME(gbl.currsub),
+                  "invalid kind argument for lbound");
+            rtlRtn = RTE_lb;
+            break;
+          }
+        } else {
+          switch (dtype) {
+          case DT_BINT:
+            rtlRtn = RTE_ub1;
+            break;
+          case DT_SINT:
+            rtlRtn = RTE_ub2;
+            break;
+          case DT_INT4:
+            rtlRtn = RTE_ub4;
+            break;
+          case DT_INT8:
+            rtlRtn = RTE_ub8;
+            break;
+          default:
+            error(155, 3, gbl.lineno, SYMNAME(gbl.currsub),
+                  "invalid kind argument for ubound");
+            rtlRtn = RTE_ub;
+            break;
+          }
+        }
+        /* f90...bound(rank, dim, l1, u1, l2, u2, ..., l<rank>, u<rank>) */
+        hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), astb.bnd.dtype);
+        nargs = 2 + 2 * rank;
+        newargt = mk_argt(nargs);
+        ARGT_ARG(newargt, 0) = mk_isz_cval(rank, astb.bnd.dtype);
+        if (actual)
+          dim = ast_rewrite(dim); /* Replace formal in DIM */
+        ARGT_ARG(newargt, 1) = dim;
+      }
+    } else {
+      if (!XBIT(68, 0x1) || XBIT(68, 0x2)) {
+        if (optype == I_LBOUND) {
+          switch (DDTG(dtype)) {
+          case DT_BINT:
+            rtlRtn = RTE_lba1;
+            break;
+          case DT_SINT:
+            rtlRtn = RTE_lba2;
+            break;
+          case DT_INT4:
+            rtlRtn = RTE_lba4;
+            break;
+          case DT_INT8:
+            rtlRtn = RTE_lba8;
+            break;
+          default:
+            error(155, 3, gbl.lineno, SYMNAME(gbl.currsub),
+                  "invalid kind argument for lbound");
+            rtlRtn = RTE_lba;
+            break;
+          }
+        } else {
+          switch (DDTG(dtype)) {
+          case DT_BINT:
+            rtlRtn = RTE_uba1;
+            break;
+          case DT_SINT:
+            rtlRtn = RTE_uba2;
+            break;
+          case DT_INT4:
+            rtlRtn = RTE_uba4;
+            break;
+          case DT_INT8:
+            rtlRtn = RTE_uba8;
+            break;
+          default:
+            error(155, 3, gbl.lineno, SYMNAME(gbl.currsub),
+                  "invalid kind argument for ubound");
+            rtlRtn = RTE_uba;
+            break;
+          }
+        }
+      } else {
+        /* -Mlarge_arrays, but the result is default integer */
+        if (optype == I_LBOUND) {
+          switch (DDTG(dtype)) {
+          case DT_BINT:
+            rtlRtn = RTE_lbaz1;
+            break;
+          case DT_SINT:
+            rtlRtn = RTE_lbaz2;
+            break;
+          case DT_INT4:
+            rtlRtn = RTE_lbaz4;
+            break;
+          case DT_INT8:
+            rtlRtn = RTE_lbaz8;
+            break;
+          default:
+            error(155, 3, gbl.lineno, SYMNAME(gbl.currsub),
+                  "invalid kind argument for lbound");
+            rtlRtn = RTE_lbaz;
+            break;
+          }
+        } else {
+          switch (DDTG(dtype)) {
+          case DT_BINT:
+            rtlRtn = RTE_ubaz1;
+            break;
+          case DT_SINT:
+            rtlRtn = RTE_ubaz2;
+            break;
+          case DT_INT4:
+            rtlRtn = RTE_ubaz4;
+            break;
+          case DT_INT8:
+            rtlRtn = RTE_ubaz8;
+            break;
+          default:
+            error(155, 3, gbl.lineno, SYMNAME(gbl.currsub),
+                  "invalid kind argument for ubound");
+            rtlRtn = RTE_ubaz;
+            break;
+          }
+        }
+      }
+      /* f90...bounda(temp, rank, l1, u1, l2, u2, ..., l<rank>, u<rank>) or
+       * f90...boundaz(temp, rank, l1, u1, l2, u2, ..., l<rank>, u<rank>) for
+       * -Mlarge_arrays
+       */
+      hpf_sym = sym_mkfunc_nodesc(mkRteRtnNm(rtlRtn), DT_NONE);
+      nargs = 2 + 2 * rank;
+      newargt = mk_argt(nargs);
+      ARGT_ARG(newargt, 1) = mk_isz_cval(rank, astb.bnd.dtype);
+    }
+    /* l1, u1, l2, u2, ..., l<rank>, u<rank> */
+    for (int i = 0; i < rank; i++) {
+      int lb, ub;
+      if (actual) {
+        int extent, mask;
+        if (actual_sptr && SDSCG(actual_sptr) &&
+            (POINTERG(actual_sptr) || ALLOCG(actual_sptr))) {
+          /* The whole array actual_sptr corresponding to an assumed-shape
+           * formal cannot be assumed-rank. */
+          extent = get_extent(SDSCG(actual_sptr), i);
+        } else {
+          extent = extent_of_shape(A_SHAPEG(actual), i);
+        }
+        lb = ADD_LWBD(arrdtype, i);
+        lb = ast_rewrite(lb); /* Replace formal in boundary */
+        mask = mk_binop(OP_GT, extent, astb.bnd.zero, DT_LOG);
+        lb = mk_merge(lb, astb.bnd.one, mask, astb.bnd.dtype);
+        /* The extent of formal parameter is equal to the extent of actual
+         * parameter. */
+        ub = mk_binop(OP_ADD, lb, extent, astb.bnd.dtype);
+        ub = mk_binop(OP_SUB, ub, astb.bnd.one, astb.bnd.dtype);
+      } else if (sptr) {
+        lb = ADD_LWAST(arrdtype, i);
+        if (!lb)
+          lb = astb.bnd.one;
+        if (ADD_ASSUMSZ(arrdtype) && i == rank - 1)
+          ub = astb.ptr0;
+        else
+          ub = ADD_UPAST(arrdtype, i);
+      } else {
+        lb = astb.bnd.one;
+        ub = extent_of_shape(A_SHAPEG(array), i);
+      }
+      ARGT_ARG(newargt, 2 + i * 2) = lb;
+      ARGT_ARG(newargt, 3 + i * 2) = ub;
+    }
+    if (dim)
+      goto ret_func;
+    else
+      goto ret_call;
+  }
+ret_func:
+  ast = mk_func_node(A_FUNC, mk_id(hpf_sym), nargs, newargt);
+  A_DTYPEP(ast, A_DTYPEG(func_ast));
+  A_SHAPEP(ast, A_SHAPEG(func_ast));
+  A_OPTYPEP(ast, optype);
+  return ast;
+ret_call:
+  if (ADD_ASSUMRANK(arrdtype)) {
+    temp_arr = mk_shape_sptr(A_SHAPEG(func_ast), subscr, DDTG(dtype));
+    if (ALLOCG(temp_arr)) {
+      mk_mem_allocate(mk_id(temp_arr), subscr, nextstd, 0);
+      mk_mem_deallocate(mk_id(temp_arr), nextstd);
+    }
+  } else {
+    temp_arr = get_arr_temp(dtype, TRUE, FALSE, FALSE);
+    trans_mkdescr(temp_arr);
+  }
+  ARGT_ARG(newargt, 0) = mk_id(temp_arr);
+  ast = mk_func_node(A_CALL, mk_id(hpf_sym), nargs, newargt);
+  A_OPTYPEP(ast, optype);
+  add_stmt_before(ast, nextstd);
+  return mk_id(temp_arr);
+ret_val:
+  return result;
 }

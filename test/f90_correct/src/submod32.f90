@@ -32,10 +32,11 @@ program prog
     print *, "kind: ", kind(x)
     print *, "maxval: ", maxval(x)
     call check_arr(x)
-    if ( a .EQ. lbound(x, DIM=1) .AND. b .EQ. size(x) .AND. maxval(x) .EQ. m) then 
+    if ( a .EQ. 1 .AND. lbound(x, DIM=1) .EQ. 7 .AND. b .EQ. size(x) .AND. maxval(x) .EQ. m) then
         print *, " PASS "
     else 
-        print *, "FAILED: lbound of arr in submod is ", a, " and lbound of x is ", lbound(x, DIM=1)
+        print *, "FAILED: lbound of arr in submod is ", a, " and the expection is 1"
+        print *, "FAILED: lbound of x is is ", lbound(x, DIM=1), "and the expection is 7"
         print *, "FAILED: size of arr in submod is ", b, " and size of x is ", size(x)
         print *, "FAILED: maxval of arr in submod is", m, " and maxval of x is", maxval(x)
     end if
