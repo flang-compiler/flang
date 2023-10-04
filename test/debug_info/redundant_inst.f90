@@ -9,8 +9,8 @@
 !STORE: ![[LOCATION]] = !DILocation(line: 19, column: 1, scope: !{{.*}})
 
 !Check the line table entry of the second assignment.
-!LINETABLE: Address    Line Column File ISA Discriminator Flags
-!LINETABLE: 0x{{.*}}    19    1      1   0         0       is_stmt
+!LINETABLE: Address    Line Column File ISA Discriminator {{(OpIndex )?}}Flags
+!LINETABLE: 0x{{.*}}    19    1      1   0         0      {{(0 )?}}is_stmt
 
 
 program main
