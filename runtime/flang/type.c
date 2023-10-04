@@ -1877,10 +1877,10 @@ ENTF90(INIT_FROM_DESC, init_from_desc)(void *object, const F90_Desc *desc,
                                        int rank)
 {
   if (object && desc) {
-    OBJECT_DESC *obj_desc = (OBJECT_DESC *)desc;
+    const OBJECT_DESC *obj_desc = (const OBJECT_DESC *)desc;
     size_t items = 1;
     size_t index[MAXDIMS];
-    TYPE_DESC *type_desc = obj_desc->type;
+    const TYPE_DESC *type_desc = obj_desc->type;
     int j;
     size_t element_bytes = 0;
     void *prototype = NULL;
@@ -1899,7 +1899,7 @@ ENTF90(INIT_FROM_DESC, init_from_desc)(void *object, const F90_Desc *desc,
     if (type_desc)
       obj_desc = &type_desc->obj;
     else
-      type_desc = (TYPE_DESC *)obj_desc;
+      type_desc = (const TYPE_DESC *)obj_desc;
     element_bytes = obj_desc->size;
     prototype = obj_desc->prototype;
 

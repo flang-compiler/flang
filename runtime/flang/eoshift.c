@@ -15,7 +15,7 @@
 static void I8(eoshift_scalar)(char *rb,          /* result base */
                                char *ab,          /* array base */
                                __INT_T shift_amt, /* shift amount */
-                               char *bb,          /* boundary base */
+                               const char *bb,    /* boundary base */
                                __INT_T shift_dim, /* shift dimension */
                                F90_Desc *rs,      /* result descriptor */
                                F90_Desc *as,      /* array descriptor */
@@ -237,7 +237,7 @@ static void I8(eoshift_scalar)(char *rb,          /* result base */
 static void I8(eoshift_loop)(char *rb,          /* result base */
                              char *ab,          /* array base */
                              __INT_T *sb,       /* shift base */
-                             char *bb,          /* boundary base */
+                             const char *bb,    /* boundary base */
                              __INT_T shift_dim, /* dimension to shift */
                              F90_Desc *rs,      /* result descriptor */
                              F90_Desc *as,      /* array descriptor */
@@ -342,7 +342,7 @@ void ENTFTN(EOSHIFTSZ, eoshiftsz)(char *rb,     /* result base */
                                   F90_Desc *ss, /* shift descriptor */
                                   F90_Desc *ds) /* dim descriptor */
 {
-  char *bb;
+  const char *bb;
   DECL_HDR_VARS(ac);
   DECL_HDR_VARS(rc);
   DECL_DIM_PTRS(asd);
@@ -351,8 +351,7 @@ void ENTFTN(EOSHIFTSZ, eoshiftsz)(char *rb,     /* result base */
 
   shift = *sb;
   dim = *db;
-  /* FIXME: bb is passed to many non-const parameters; just cast it for now. */
-  bb = (F90_KIND_G(rs) == __STR) ? (char *)" " : (char *)GET_DIST_ZED;
+  bb = (F90_KIND_G(rs) == __STR) ? " " : (const char *)GET_DIST_ZED;
 
 #if defined(DEBUG)
   if (__fort_test & DEBUG_EOSH) {
@@ -597,12 +596,11 @@ void ENTFTN(EOSHIFTZ, eoshiftz)(char *rb,     /* result base */
   DECL_HDR_PTRS(bs);
   DECL_HDR_VARS(ac);
   DECL_HDR_VARS(rc);
-  char *bb;
+  const char *bb;
   __INT_T dim;
 
   dim = *db;
-  /* FIXME: bb is passed to many non-const parameters; just cast it for now. */
-  bb = (F90_KIND_G(rs) == __STR) ? (char *)" " : (char *)GET_DIST_ZED;
+  bb = (F90_KIND_G(rs) == __STR) ? " " : (const char *)GET_DIST_ZED;
   bs = (F90_Desc *)&F90_KIND_G(rs);
 
 #if defined(DEBUG)

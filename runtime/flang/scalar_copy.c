@@ -11,167 +11,167 @@
 #include "fioMacros.h"
 
 static void
-copy_none(__SHORT_T *rp, __SHORT_T *sp, int size)
+copy_none(__SHORT_T *rp, const __SHORT_T *sp, int size)
 {
   __fort_abort("scalar_copy: undefined type");
 }
 static void
-copy_short(__SHORT_T *rp, __SHORT_T *sp, int size)
+copy_short(__SHORT_T *rp, const __SHORT_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_ushort(__USHORT_T *rp, __USHORT_T *sp, int size)
+copy_ushort(__USHORT_T *rp, const __USHORT_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_cint(__CINT_T *rp, __CINT_T *sp, int size)
+copy_cint(__CINT_T *rp, const __CINT_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_uint(__UINT_T *rp, __UINT_T *sp, int size)
+copy_uint(__UINT_T *rp, const __UINT_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_long(__LONG_T *rp, __LONG_T *sp, int size)
+copy_long(__LONG_T *rp, const __LONG_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_ulong(__ULONG_T *rp, __ULONG_T *sp, int size)
+copy_ulong(__ULONG_T *rp, const __ULONG_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_float(__FLOAT_T *rp, __FLOAT_T *sp, int size)
+copy_float(__FLOAT_T *rp, const __FLOAT_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_double(__DOUBLE_T *rp, __DOUBLE_T *sp, int size)
+copy_double(__DOUBLE_T *rp, const __DOUBLE_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_cplx8(__CPLX8_T *rp, __CPLX8_T *sp, int size)
+copy_cplx8(__CPLX8_T *rp, const __CPLX8_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_cplx16(__CPLX16_T *rp, __CPLX16_T *sp, int size)
+copy_cplx16(__CPLX16_T *rp, const __CPLX16_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_char(__CHAR_T *rp, __CHAR_T *sp, int size)
+copy_char(__CHAR_T *rp, const __CHAR_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_uchar(__UCHAR_T *rp, __UCHAR_T *sp, int size)
+copy_uchar(__UCHAR_T *rp, const __UCHAR_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_longdouble(__LONGDOUBLE_T *rp, __LONGDOUBLE_T *sp, int size)
+copy_longdouble(__LONGDOUBLE_T *rp, const __LONGDOUBLE_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_longlong(__LONGLONG_T *rp, __LONGLONG_T *sp, int size)
+copy_longlong(__LONGLONG_T *rp, const __LONGLONG_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_ulonglong(__ULONGLONG_T *rp, __ULONGLONG_T *sp, int size)
+copy_ulonglong(__ULONGLONG_T *rp, const __ULONGLONG_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_log1(__LOG1_T *rp, __LOG1_T *sp, int size)
+copy_log1(__LOG1_T *rp, const __LOG1_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_log2(__LOG2_T *rp, __LOG2_T *sp, int size)
+copy_log2(__LOG2_T *rp, const __LOG2_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_log4(__LOG4_T *rp, __LOG4_T *sp, int size)
+copy_log4(__LOG4_T *rp, const __LOG4_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_log8(__LOG8_T *rp, __LOG8_T *sp, int size)
+copy_log8(__LOG8_T *rp, const __LOG8_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_word4(__WORD4_T *rp, __WORD4_T *sp, int size)
+copy_word4(__WORD4_T *rp, const __WORD4_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_word8(__WORD8_T *rp, __WORD8_T *sp, int size)
+copy_word8(__WORD8_T *rp, const __WORD8_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_nchar(__NCHAR_T *rp, __NCHAR_T *sp, int size)
+copy_nchar(__NCHAR_T *rp, const __NCHAR_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_int2(__INT2_T *rp, __INT2_T *sp, int size)
+copy_int2(__INT2_T *rp, const __INT2_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_int4(__INT4_T *rp, __INT4_T *sp, int size)
+copy_int4(__INT4_T *rp, const __INT4_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_int8(__INT8_T *rp, __INT8_T *sp, int size)
+copy_int8(__INT8_T *rp, const __INT8_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_real4(__REAL4_T *rp, __REAL4_T *sp, int size)
+copy_real4(__REAL4_T *rp, const __REAL4_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_real8(__REAL8_T *rp, __REAL8_T *sp, int size)
+copy_real8(__REAL8_T *rp, const __REAL8_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_real16(__REAL16_T *rp, __REAL16_T *sp, int size)
+copy_real16(__REAL16_T *rp, const __REAL16_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_cplx32(__CPLX32_T *rp, __CPLX32_T *sp, int size)
+copy_cplx32(__CPLX32_T *rp, const __CPLX32_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_word16(__WORD16_T *rp, __WORD16_T *sp, int size)
+copy_word16(__WORD16_T *rp, const __WORD16_T *sp, int size)
 {
   *rp = *sp;
 }
 static void
-copy_int1(__INT1_T *rp, __INT1_T *sp, int size)
+copy_int1(__INT1_T *rp, const __INT1_T *sp, int size)
 {
   *rp = *sp;
 }
 
-static void copy_bytes(char *, char *, int);
+static void copy_bytes(char *, const char *, int);
 
 void (*__fort_scalar_copy[__NTYPES])() = {
     copy_none,       /*     no type (absent optional argument) */
@@ -211,7 +211,7 @@ void (*__fort_scalar_copy[__NTYPES])() = {
 };
 
 static void
-copy_bytes(char *to, char *fr, int n)
+copy_bytes(char *to, const char *fr, int n)
 {
   memmove(to, fr, n);
 }

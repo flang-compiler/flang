@@ -62,7 +62,7 @@ addn(char *p, int val, int n)
 /* generate a possible temp name */
 
 static char *
-gentmp(char *dir, char *pfx)
+gentmp(const char *dir, const char *pfx)
 {
   extern long getpid(void);
   extern long time(void *);
@@ -132,7 +132,7 @@ __io_tempnam(const char *dir, const char *pfx)
   char *p;
 
   while (1) {
-    p = gentmp((char *)dir, (char *)pfx);
+    p = gentmp(dir, pfx);
     if ((access(p, 0) == -1) && (errno == ENOENT)) {
       break;
     }

@@ -12,7 +12,7 @@
 #include "stdioInterf.h"
 #include "fioMacros.h"
 
-extern void (*__fort_scalar_copy[__NTYPES])(void *rp, void *sp, int len);
+extern void (*__fort_scalar_copy[__NTYPES])(void *rp, const void *sp, int len);
 
 static int I8(next_index)(__INT_T *index, F90_Desc *s)
 {
