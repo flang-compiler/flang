@@ -370,9 +370,9 @@ static int
 qscmp(const void *a1, const void *a2)
 {
   int r;
-  int *f1, *f2;
-  f1 = (int *)a1;
-  f2 = (int *)a2;
+  const int *f1, *f2;
+  f1 = (const int *)a1;
+  f2 = (const int *)a2;
   if (fields[*f1].flag && fields[*f2].flag) {
     r = fields[*f1].offs - fields[*f2].offs;
     if (r == 0)

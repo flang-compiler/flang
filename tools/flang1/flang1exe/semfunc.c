@@ -12488,7 +12488,7 @@ _trim(int string)
   }
   result = getstring(str, newlen);
   if (DTY(dtyper) == TY_NCHAR) {
-    i = kanji_len((unsigned char *)str, newlen);
+    i = kanji_len((const unsigned char *)str, newlen);
     dtype = get_type(2, TY_NCHAR, i);
     val[0] = result;
     val[1] = 0;
