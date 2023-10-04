@@ -60,7 +60,7 @@ int dmp_dent(DTYPE dtypeind);
 void pr_dent(DTYPE dt, FILE *f);
 int scale_of(DTYPE dtype, INT *size);
 int fval_of(DTYPE dtype);
-int kanji_len(unsigned char *p, int len);
+int kanji_len(const unsigned char *p, int len);
 int kanji_char(unsigned char *p, int len, int *bytes);
 int kanji_prefix(unsigned char *p, int newlen, int len);
 DTYPE get_array_dtype(int numdim, DTYPE eltype);

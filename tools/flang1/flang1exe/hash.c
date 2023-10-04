@@ -445,7 +445,7 @@ hashmap_sort(hashmap_t h, void (*f)(hash_key_t, hash_data_t, void *context),
   for (n = 0; n < size; n++) {
     hash_key_t key = h->set.table[n];
     if (ISKEY(key)) {
-      mysortmap[i].table =(hash_key_t*)h->set.table[n];
+      mysortmap[i].table =(hash_key_t)h->set.table[n];
       mysortmap[i].dtable = dtable[n];
       i++;
     } 

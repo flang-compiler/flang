@@ -3060,7 +3060,7 @@ get_ty_kind(DTYPE dtype)
     \param len length in bytes of \p p
  */
 int
-kanji_len(unsigned char *p, int len)
+kanji_len(const unsigned char *p, int len)
 {
   int count = 0;
   int val;
