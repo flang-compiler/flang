@@ -15,7 +15,7 @@
 #define QTREE
 
 #include "fort_vars.h"
-extern void (*__fort_scalar_copy[__NTYPES])(void *rp, void *sp, int size);
+extern void (*__fort_scalar_copy[__NTYPES])(void *rp, const void *sp, int size);
 
 static int _1 = 1;
 

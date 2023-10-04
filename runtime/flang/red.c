@@ -15,7 +15,7 @@
 #include "fioMacros.h"
 #include "red.h"
 
-extern void (*__fort_scalar_copy[__NTYPES])(void *rp, void *sp, int len);
+extern void (*__fort_scalar_copy[__NTYPES])(void *rp, const void *sp, int len);
 
 void ENTFTN(QOPY_IN, qopy_in)(char **dptr, __POINT_T *doff, char *dbase,
                               F90_Desc *dd, char *ab, F90_Desc *ad,

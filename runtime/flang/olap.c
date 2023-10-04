@@ -13,7 +13,7 @@
 #include "fioMacros.h"
 
 #include "fort_vars.h"
-extern void (*__fort_scalar_copy[__NTYPES])(void *rp, void *sp, int size);
+extern void (*__fort_scalar_copy[__NTYPES])(void *rp, const void *sp, int size);
 
 /* overlap shift communication schedule */
 

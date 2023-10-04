@@ -66,7 +66,7 @@ void
 __abort(int sv, const char *msg)
 {
   char cmd[128];
-  char *p;
+  const char *p;
   int n;
   const char * dbg_env = "F90_TERM_DEBUG";
   const char * dbg_cmd = "gdb -p %d";
@@ -81,7 +81,7 @@ __abort(int sv, const char *msg)
   fflush(__io_stderr());
   if (tracopt & T_DEBUG) {
     p = getenv(dbg_env);
-    p = (char *)(p == NULL ? dbg_cmd : p);
+    p = (p == NULL ? dbg_cmd : p);
     sprintf(cmd, p, getpid());
     system(cmd);
   } else if (tracopt & T_TRACE) {

@@ -9,7 +9,7 @@
 #include "fioMacros.h"
 
 #include "fort_vars.h"
-extern void (*__fort_scalar_copy[__NTYPES])(void *rp, void *sp, int size);
+extern void (*__fort_scalar_copy[__NTYPES])(void *rp, const void *sp, int size);
 
 static void I8(fills_loop)(char *ab, F90_Desc *as, void *fb, __INT_T off0,
                            __INT_T dim)

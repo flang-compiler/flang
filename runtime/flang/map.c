@@ -18,7 +18,7 @@
 static int
 compar_tids(const void *a, const void *b)
 {
-  return *(int *)a - *(int *)b;
+  return *(const int *)a - *(const int *)b;
 }
 
 /* Verify the logical to physical processor map */

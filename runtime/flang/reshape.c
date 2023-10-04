@@ -10,7 +10,7 @@
 #include "stdioInterf.h"
 #include "fioMacros.h"
 
-extern void (*__fort_scalar_copy[__NTYPES])(void *rp, void *sp, int len);
+extern void (*__fort_scalar_copy[__NTYPES])(void *rp, const void *sp, int len);
 
 /* advance index n elements and return the remaining extent in the
    first dimension from that point.  When the end of the array is
