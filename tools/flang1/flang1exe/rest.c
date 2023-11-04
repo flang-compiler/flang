@@ -2385,6 +2385,8 @@ is_seq_dummy(int entry, int arr, int loc)
   dummy_sptr = aux.dpdsc_base[dscptr + loc];
   if (SEQG(dummy_sptr))
     return TRUE;
+  if (CONTIGATTRG(dummy_sptr))
+    return TRUE;
   if (ASSUMSHPG(dummy_sptr))
     return FALSE;
   return TRUE;
