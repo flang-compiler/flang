@@ -1883,11 +1883,13 @@ llvm_omp_sched(int std, int ast, int dtype, int dotop, int dobottom, int dovar,
     ilm = lower_sptr(odovar, VarBase);
     lower_typestore(dtype, ilm, doinitilm);
 
-    plower("oL", "LABEL", dotop);
-    if (schedtype == 0x000 || chunkone) {
-      check_loop_bound(odovar, o_ub, o_ub, dost, dobottom, 0, incr_loop);
-    } else {
-      check_loop_bound(odovar, newend, o_ub, dost, dobottom, 1, incr_loop);
+    if (schedtype != 0) { 
+      plower("oL", "LABEL", dotop);
+      if (chunkone) {
+        check_loop_bound(odovar, o_ub, o_ub, dost, dobottom, 0, incr_loop);
+      } else {
+        check_loop_bound(odovar, newend, o_ub, dost, dobottom, 1, incr_loop);
+      }
     }
 
     /* dovar = odovar */
