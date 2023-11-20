@@ -836,6 +836,11 @@ semant1(int rednum, SST *top)
    *	<stmt> ::= <stbeg> <statement> <stend>
    */
   case STMT1:
+    /*
+     * `!DIR$ ALIGN alignment` pragma should only take effect within the
+     * scope of the statement, so flang1 need to clear the flg.x[251] here.
+     */
+    flg.x[251] = 0;
     break;
 
   /* ------------------------------------------------------------------ */
