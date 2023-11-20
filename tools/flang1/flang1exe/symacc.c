@@ -43,7 +43,7 @@ sym_init_first(void)
  * https://github.com/flang-compiler/flang/issues/1043
  */
 #ifndef _WIN64
-  assert(sizeof_SYM == 44, "bad SYM size", sizeof_SYM, ERR_Fatal);
+  assert(sizeof_SYM == 46, "bad SYM size", sizeof_SYM, ERR_Fatal);
 #endif
 
   if (stb.stg_base == NULL) {

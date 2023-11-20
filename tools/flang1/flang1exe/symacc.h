@@ -166,6 +166,7 @@ typedef struct SYM {
   INT lineno;
   INT w39;
   INT w40;
+  INT palign;
 } SYM;
 
 /*   symbol table data declarations:  */

@@ -180,6 +180,7 @@ typedef struct SYM {
   INT w30;
   INT w31;
   INT w32;
+  INT palign;
 } SYM;
 #endif
 
@@ -256,6 +257,7 @@ typedef struct SYM {
   INT lineno;
   INT w39;
   INT w40;
+  INT palign;
 } SYM;
 #endif
 

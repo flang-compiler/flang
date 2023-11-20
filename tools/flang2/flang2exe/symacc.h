@@ -157,6 +157,7 @@ typedef struct SYM {
   INT w30;
   INT w31;
   INT w32;
+  INT palign;
 } SYM;
 
 /*   symbol table data declarations:  */

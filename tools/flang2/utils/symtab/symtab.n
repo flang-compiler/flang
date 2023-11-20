@@ -307,6 +307,8 @@ Flags per symbol (named f33 through f64).
 Flags per symbol (named f65 through f96).
 .SF flags4 w25
 Flags per symbol (named f97 through f128).
+.SF PALIGN w33
+Store the symbol's alignment value specified by align pragma in the form of '!DIR$ ALIGN alignment'.
 .nr II \n(iiu
 .nr ii 0
 .lp

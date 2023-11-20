@@ -497,8 +497,8 @@ private:
         fprintf(out1, "%d,", 0 /*xp->f*/);
       }
       fprintf(out1, "\n");
-      fprintf(out1, "\t %d, %d, %d, %d, %d, %d, %d,},\n", xp->w26, xp->w27,
-              xp->w28, xp->w29, xp->w30, xp->w31, xp->w32);
+      fprintf(out1, "\t %d, %d, %d, %d, %d, %d, %d, %d,},\n", xp->w26,
+              xp->w27, xp->w28, xp->w29, xp->w30, xp->w31, xp->w32, xp->palign);
     }
     fprintf(out1, "};\n\n");
     fprintf(out1, "static char init_names[INIT_NAMES_SIZE] = {");
