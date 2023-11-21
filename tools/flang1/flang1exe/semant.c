@@ -9764,6 +9764,12 @@ semant1(int rednum, SST *top)
     SST_GDTYPEP(RHS(1), sem.gdtype);
     SST_GTYP(RHS(1), sem.gty);
 
+    /*
+     * When declaring a variable's symbol, flang1 should store
+     * the alignment from `!DIR$ ALIGN alignment` pragma to
+     * the symbol.
+     */
+    PALIGNP(sptr, flg.x[251]);
     break;
 
   /* ------------------------------------------------------------------ */
