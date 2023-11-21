@@ -2500,6 +2500,7 @@ import(lzhandle *fdlz, WantPrivates wantPrivates, int ivsn)
       ps->symlk = get_num(10);
       ps->sym.scope = get_num(10);
       ps->sym.nmptr = get_num(10);
+      ps->sym.palign = get_num(10);
       ps->flags1 = get_num(16);
       ps->flags2 = get_num(16);
 
@@ -5406,6 +5407,7 @@ fill_sym(SYMITEM *ps, int sptr)
   GETFIELD(lineno);
   GETFIELD(w39); 
   GETFIELD(w40); 
+  GETFIELD(palign);
 #undef GETFIELD
   stb.stg_base[sptr].uname = 0;
 } /* fill_sym */

@@ -2337,10 +2337,11 @@ export_symbol(int sptr)
   lzprintf(outlz, "S %d", sptr);
   if (exportmode)
     lzprintf(outlz, " %d", HASHLKG(sptr));
-  lzprintf(outlz, " %d %d %d %d %d %d %d %d", stb.stg_base[sptr].stype,
+  lzprintf(outlz, " %d %d %d %d %d %d %d %d %d", stb.stg_base[sptr].stype,
            stb.stg_base[sptr].sc, stb.stg_base[sptr].b3, stb.stg_base[sptr].b4,
            stb.stg_base[sptr].dtype, stb.stg_base[sptr].symlk,
-           stb.stg_base[sptr].scope, stb.stg_base[sptr].nmptr);
+           stb.stg_base[sptr].scope, stb.stg_base[sptr].nmptr,
+           stb.stg_base[sptr].palign);
 
 #undef PUTFIELD
 #undef PUTISZ_FIELD
