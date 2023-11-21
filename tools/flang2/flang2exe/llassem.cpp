@@ -4368,6 +4368,16 @@ assn_static_off(SPTR sptr, DTYPE dtype, ISZ_T size)
   } else {
     a = align_unconstrained(dtype);
   }
+  /*
+   * To align the symbol set by `!DIR$ ALIGN alignment` pragma in flang1,
+   * flang should align both its symbol's offset in AG and AG's alignment
+   * in memory.
+   *
+   * The following code ensures the alignment of the symbol's offset in AG.
+   */
+  if (a < PALIGNG(sptr)) {
+    a = PALIGNG(sptr) - 1;
+  }
   addr = ALIGN(addr, a);
   ADDRESSP(sptr, addr);
   if (DINITG(sptr)) {
