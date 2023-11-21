@@ -2040,6 +2040,7 @@ read_symbol(void)
   SPTR sptr = getSptrVal("symbol");
   bool has_alias = false;
   char *alias_name;
+  int palign;
 #if DEBUG
   if (sptr > symbolcount) {
     fprintf(stderr, "Symbol count was %d, but new symbol number is %d\n",
@@ -2050,6 +2051,7 @@ read_symbol(void)
   stype = getSymType();
   sclass = getSCKind();
   dtype = getDtypeVal("dtype");
+  palign = getval("palign");
 #if DEBUG
   if (dtype > datatypecount) {
     fprintf(stderr, "Datatype count was %d, but new datatype is %d\n",
@@ -3300,6 +3302,9 @@ read_symbol(void)
     fprintf(stderr, "ILM file line %d: unknown symbol type\n", ilmlinenum);
     ++errors;
     break;
+  }
+  if (newsptr != SPTR_NULL) {
+    PALIGNP(newsptr, palign);
   }
   Trace((" newsptr = %d", newsptr));
 } /* read_symbol */
