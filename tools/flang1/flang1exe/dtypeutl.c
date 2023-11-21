@@ -1288,6 +1288,14 @@ alignment_of_var(int sptr)
       align = ta;
   }
 #endif
+  /*
+   * If alignment of variable set by `!DIR$ ALIGN alignment`
+   * in flang1 is smaller than its original, then this pragma
+   * should have no effect.
+   */
+  if (align < PALIGNG(sptr)) {
+    align = PALIGNG(sptr) - 1;
+  }
   return align;
 } /* alignment_of_var */
 

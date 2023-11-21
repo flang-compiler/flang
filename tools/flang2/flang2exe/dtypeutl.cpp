@@ -557,9 +557,21 @@ align_unconstrained(DTYPE dtype)
 int
 alignment_sym(SPTR sym)
 {
-  if (QALNG(sym))
-    return dtypeinfo[TY_DBLE].align;
-  return alignment(DTYPEG(sym));
+  int align;
+  if (QALNG(sym)) {
+    align = dtypeinfo[TY_DBLE].align;
+  } else {
+    align = alignment(DTYPEG(sym));
+  }
+  /*
+   * If alignment of symbol set by `!DIR$ ALIGN alignment`
+   * in flang1 is smaller than its original, then this pragma
+   * should have no effect.
+   */
+  if (align < PALIGNG(sym)) {
+    align = PALIGNG(sym) - 1;
+  }
+  return align;
 }
 
 int

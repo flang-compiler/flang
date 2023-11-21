@@ -4288,19 +4288,29 @@ unsigned
 align_of_var(SPTR sptr)
 {
   DTYPE dtype = DTYPEG(sptr);
-  if (!PDALN_IS_DEFAULT(sptr))
-    return 1u << PDALNG(sptr);
-  if (QALNG(sptr))
-    return 4 * align_of(DT_INT);
-  if (dtype) {
+  int align = 0;
+  if (!PDALN_IS_DEFAULT(sptr)) {
+    align = 1u << PDALNG(sptr);
+  } else if(QALNG(sptr)) {
+    align = 4 * align_of(DT_INT);
+  } else if (dtype) {
     if (flg.quad && !DESCARRAYG(sptr) && zsize_of(dtype) >= MIN_ALIGN_SIZE) {
-      return DATA_ALIGN + 1;
+      align = DATA_ALIGN + 1;
+    } else {
+      align = align_of(dtype);
     }
-    return align_of(dtype);
+  } else if(STYPEG(sptr) == ST_PROC) {/* No DTYPE */
+    align = align_of(DT_ADDR);
   }
-  if (STYPEG(sptr) == ST_PROC) /* No DTYPE */
-    return align_of(DT_ADDR);
-  return 0;
+  /*
+   * If alignment of variable set by `!DIR$ ALIGN alignment`
+   * in flang1 is smaller than its original, then this pragma
+   * should have no effect.
+   */
+  if (align < PALIGNG(sptr)) {
+    align = PALIGNG(sptr);
+  }
+  return align;
 }
 
 static void
