@@ -1592,6 +1592,17 @@ write_statics(void)
   DSRT *dsrtp;
   int count = 0;
   char *static_nm = static_name;
+  int align = 16;
+
+  /*
+   * statics should align with its corresponding AG's alignment, so that
+   * all symbols within the BSS align with the alignment set by
+   * `!DIR$ ALIGN alignment` pragma in flang1 as long as the symbol's
+   * offset in AG aligns with the specified alignment.
+   */
+  for (SPTR sptr = gbl.statics; sptr > NOSYM; sptr = SYMLKG(sptr)) {
+    align = align > PALIGNG(sptr) ? align : PALIGNG(sptr);
+  }
 
   if (lcl_inits) {
     if (DBGBIT(5, 32)) {
@@ -1609,7 +1620,7 @@ write_statics(void)
     fprintf(ASMFIL, "%%struct%s = type <{ %s }>\n", static_nm, type_only);
     fprintf(ASMFIL, "@%s = %s %%struct%s <{ ", static_nm, type_str, static_nm);
     process_dsrt(lcl_inits, gbl.saddr, typed, false, 0);
-    fprintf(ASMFIL, " }>, align 16");
+    fprintf(ASMFIL, " }>, align %d", align);
     ll_write_object_dbg_references(ASMFIL, cpu_llvm_module, static_dbg_list);
     static_dbg_list = NULL;
     fputc('\n', ASMFIL);
@@ -1619,8 +1630,8 @@ write_statics(void)
             (long)gbl.saddr);
     fprintf(ASMFIL,
             "@%s = %s %%struct%s <{ [%ld x i8] zeroinitializer }>"
-            ", align 16",
-            static_name, type_str, static_name, (long)gbl.saddr);
+            ", align %d",
+            static_name, type_str, static_name, (long)gbl.saddr, align);
     ll_write_object_dbg_references(ASMFIL, cpu_llvm_module, static_dbg_list);
     static_dbg_list = NULL;
     fputc('\n', ASMFIL);
