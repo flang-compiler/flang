@@ -1521,12 +1521,22 @@ write_bss(void)
   char *bss_nm = bss_name;
 
   if (gbl.bss_addr) {
+    /*
+     * BSS should align with its corresponding AG's alignment, so that
+     * all symbols within the BSS align with the alignment set by
+     * `!DIR$ ALIGN alignment` pragma in flang1 as long as the symbol's
+     * offset in AG aligns with the specified alignment.
+     */
+    int align = 32;
+    for (SPTR sptr = gbl.bssvars; sptr > NOSYM; sptr = SYMLKG(sptr)) {
+      align = align > PALIGNG(sptr) ? align : PALIGNG(sptr);
+    }
     fprintf(ASMFIL, "%%struct%s = type <{[%" ISZ_PF "d x i8]}>\n", bss_nm,
             gbl.bss_addr);
     fprintf(ASMFIL,
             "@%s = %s %%struct%s <{[%" ISZ_PF "d x i8] "
-            "zeroinitializer }> , align 32",
-            bss_nm, type_str, bss_nm, gbl.bss_addr);
+            "zeroinitializer }> , align %d",
+            bss_nm, type_str, bss_nm, gbl.bss_addr, align);
     ll_write_object_dbg_references(ASMFIL, cpu_llvm_module, bss_dbg_list);
     bss_dbg_list = NULL;
     fputc('\n', ASMFIL);
