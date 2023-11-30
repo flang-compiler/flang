@@ -858,7 +858,7 @@ void
 assem_init(void)
 {
   INT nmptr;
-  SPTR sptr;
+  SPTR sptr, cmem;
   int align8, mod_or_sub, subprog;
   char *typed;
 
@@ -927,6 +927,22 @@ assem_init(void)
       }
     }
     free(typed);
+
+    /*
+     * Update the alignment for cmn.
+     *
+     * To align the symbol set by `!DIR$ ALIGN alignment` pragma
+     * in flang1, flang should align both its symbol's offset
+     * in AG and AG's alignment in memory.
+     *
+     * Here we update the AG_ALIGN(ag) to ensure cmn is aligned
+     * in memory to the maximum alignment among all symbols in
+     * the cmn.
+     */
+    for (cmem = CMEMFG(sptr); cmem > NOSYM; cmem = SYMLKG(cmem)) {
+      AG_ALIGN(gblsym) = AG_ALIGN(gblsym) > PALIGNG(cmem) ?
+                      AG_ALIGN(gblsym) : PALIGNG(cmem);
+    }
   }
 
   /* ag_local gets allocated and deallocate for every function */
@@ -1171,6 +1187,7 @@ assemble_end(void)
         free(AG_CMBLKINITDATA(gblsym));
         AG_CMBLKINITDATA(gblsym) = NULL;
       } else {
+        int align;
         fprintf(ASMFIL, "%%struct%s = type < { %s } > \n", name, typed);
         if (strstr(cpu_llvm_module->target_triple, "windows-msvc") != NULL) {
           fprintf(ASMFIL, "@%s = %s global %%struct%s ", name,
@@ -1179,8 +1196,17 @@ assemble_end(void)
           fprintf(ASMFIL, "@%s = %s global %%struct%s ", name,
                   AG_ISMOD(gblsym) ? "external" : "common", name);
         }
+
+        /*
+         * cmn should align with its corresponding AG's alignment,
+         * so that all symbols within the cmn align with the alignment set by
+         * `!DIR$ ALIGN alignment` pragma in flang1 as long as the symbol's
+         * offset in AG aligns with the specified alignment.
+         */
+        align =
+            align_value > AG_ALIGN(tdefsym) ? align_value : AG_ALIGN(tdefsym);
         fprintf(ASMFIL, "%s, align %d",
-                AG_ISMOD(gblsym) ? "" : " zeroinitializer", align_value);
+                AG_ISMOD(gblsym) ? "" : " zeroinitializer", align);
       }
       for (llObjtodbgFirst(listp, &i); !llObjtodbgAtEnd(&i);
            llObjtodbgNext(&i)) {
@@ -1721,6 +1747,7 @@ write_comm(void)
 
   for (sptr = gbl.cmblks; sptr > NOSYM; sptr = SYMLKG(sptr)) {
     SPTR cmem;
+    int align;
 
     first_data = 1;
     process_sptr(sptr);
@@ -1766,6 +1793,14 @@ write_comm(void)
     else
       gbl.asmfil = cmn_blk_ir;
 
+    /*
+     * cmn should align with its corresponding AG's alignment,
+     * so that all symbols within the cmn align with the alignment set by
+     * `!DIR$ ALIGN alignment` pragma in flang1 as long as the symbol's
+     * offset in AG aligns with the specified alignment.
+     */
+    align = align_value > AG_ALIGN(gblsym) ? align_value : AG_ALIGN(gblsym);
+
     fprintf(ASMFIL, "%%struct%s = type < { %s } > \n", name, type_only);
     fprintf(ASMFIL, "@%s = global %%struct%s", name, name);
     fprintf(ASMFIL, " < { ");
@@ -1774,7 +1809,7 @@ write_comm(void)
 
     DSRTP(sptr, NULL);
 
-    fprintf(ASMFIL, ", align %d", align_value);
+    fprintf(ASMFIL, ", align %d", align);
 
     for (cmem = CMEMFG(sptr); cmem > NOSYM; cmem = SYMLKG(cmem)) {
       if (MIDNUMG(cmem)) /* some member does not have midnum/no name */
