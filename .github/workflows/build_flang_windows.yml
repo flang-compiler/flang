@@ -20,7 +20,7 @@ jobs:
         os:
           - windows-latest
           # - self-hosted
-        llvm_branch: [release_15x]
+        llvm_branch: [release_16x, release_17x]
         include:
           - os: windows-latest
             arch: amd64
@@ -70,27 +70,36 @@ jobs:
       - name: Download artifact
         run: |
           cd ../..
-          Invoke-WebRequest -Uri https://api.github.com/repos/flang-compiler/classic-flang-llvm-project/actions/workflows/pre-compile_llvm.yml/runs -OutFile runs_llvm.json
-          Invoke-WebRequest "$(jq -r '.workflow_runs[0].artifacts_url?' runs_llvm.json)" -OutFile artifacts_llvm
-
-          $i=0
-          # Keep checking older builds to find the right branch and correct number of artifacts
-          while ( ( "$(jq -r '.total_count?' artifacts_llvm)" -ne "5" ) -or `
-                  ( "$(jq -r --argjson i $i ".workflow_runs[$i].head_branch" runs_llvm.json)" -ne "${{ matrix.llvm_branch }}") -and `
-                  ($i -lt 10)
-                )
-          {
-            write-output "No artifacts or wrong branch in build $i, counting from latest"
-            $i += 1
-            Invoke-WebRequest -Uri "$(jq -r --argjson i $i ".workflow_runs[$i].artifacts_url" runs_llvm.json)" -OutFile artifacts_llvm
+          # Search backwards in the workflow history for the specified branch
+          # for the first successful run that produced the desired artifact.
+          $build_name="llvm_build_win_${{ matrix.arch }}_clangcl_${{ matrix.llvm_branch }}"
+          Invoke-WebRequest -Uri https://api.github.com/repos/flang-compiler/classic-flang-llvm-project/actions/workflows/pre-compile_llvm.yml/runs -OutFile llvm_runs.json
+          $urls = @($(jq -r --arg b ${{ matrix.llvm_branch }} '.workflow_runs[] | select(.head_branch == $b) | select (.conclusion == ""success"") | .artifacts_url?' llvm_runs.json))
+          Invoke-WebRequest "$(jq -r '.workflow_runs[0].artifacts_url?' llvm_runs.json)" -OutFile llvm_artifacts.json
+          for ($i = 0; $i -lt $urls.Count; $i++) {
+            $artifacts_url = $urls[$i]
+            Invoke-WebRequest -Uri "$artifacts_url" -o llvm_artifacts.json
+            $archive_url = "$(jq -r --arg b $build_name '.artifacts[] | select(.name == $b) | .archive_download_url' llvm_artifacts.json)"
+            if (! $archive_url) {
+              Write-Output "$artifacts_url did not contain a $build_name archive; too old?"
+              continue
+            }
+            Write-Output "Downloading $archive_url."
+            $artifact_path = "$pwd\${build_name}.zip"
+            try {
+              $response = Invoke-WebRequest -Method Get -Uri $archive_url -OutFile $artifact_path -Headers @{ "Authorization" = "Bearer ${{ secrets.GITHUB_TOKEN }}" }
+              if ($response.StatusCode -lt 300) {
+                break
+              }
+            } catch {}
           }
-          $url="$(jq -r '.artifacts[] | select(.name==\"llvm_build_win_${{ matrix.arch }}_clangcl_${{ matrix.llvm_branch }}\") | .archive_download_url' artifacts_llvm)"
-          write-output "$($url)"
-          $artifactPath = "$pwd\llvm_build_win_${{ matrix.arch }}_clangcl_${{ matrix.llvm_branch }}.zip"
-          Invoke-RestMethod -Method Get -Uri $url -OutFile $artifactPath -Headers @{ "Authorization" = "Bearer ${{ secrets.GITHUB_TOKEN }}" }
-          Expand-Archive -Force -Path llvm_build_win_${{ matrix.arch }}_clangcl_${{ matrix.llvm_branch }}.zip -DestinationPath .
+          if (!(Test-Path "$artifact_path")) {
+            Write-Output "Could not download the correct prebuilt compiler; aborting."
+            exit 1
+          }
+          Expand-Archive -Force -Path "${build_name}.zip" -DestinationPath .
           & 7z x "$pwd\llvm_build.7z" -o"$pwd\classic-flang-llvm-project\" -y
-          write-output "$(Get-ChildItem)"
+          Write-Output "$(Get-ChildItem)"
 
       - name: Build and install flang & libpgmath
         run: |

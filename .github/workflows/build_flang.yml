@@ -14,15 +14,24 @@ on:
 
 jobs:
   build_flang:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       install_prefix: /usr/local
     strategy:
       matrix:
         target: [X86]
-        cc: [clang, gcc]
-        version: [10, 11]
-        llvm_branch: [release_15x]
+        cc: [clang]
+        version: [14, 15]
+        llvm_branch: [release_16x, release_17x]
+        include:
+          - target: X86
+            cc: gcc
+            version: 12
+            llvm_branch: release_16x
+          - target: X86
+            cc: gcc
+            version: 12
+            llvm_branch: release_17x
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so the job can access it
@@ -45,21 +54,27 @@ jobs:
       - name: Download artifacts
         run: |
           cd ../..
-          curl -sL https://api.github.com/repos/flang-compiler/classic-flang-llvm-project/actions/workflows/pre-compile_llvm.yml/runs --output runs_llvm.json
-          wget --output-document artifacts_llvm `jq -r '.workflow_runs[0].artifacts_url?' runs_llvm.json`
-
-          i="0"
-          # Keep checking older builds to find the right branch and correct number of artifacts
-          while { [ `jq -r '.total_count?' artifacts_llvm` != "5" ] || \
-              [ `jq -r --argjson i "$i" '.workflow_runs[$i].head_branch?' runs_llvm.json` != ${{ matrix.llvm_branch }} ]; } && \
-              [ $i -lt 10 ];
-          do
-            echo "No artifacts or wrong branch in build $i, counting from latest"
-            i=$[$i+1]
-            wget --output-document artifacts_llvm `jq -r --argjson i "$i" '.workflow_runs[$i].artifacts_url?' runs_llvm.json`
+          # Search backwards in the workflow history for the specified branch
+          # for the first successful run that produced the desired artifact.
+          build_name="llvm_build_${{ matrix.target }}_${{ matrix.cc }}_${{ matrix.version }}_${{ matrix.llvm_branch }}"
+          curl -sL https://api.github.com/repos/flang-compiler/classic-flang-llvm-project/actions/workflows/pre-compile_llvm.yml/runs -o llvm_runs.json
+          urls=(`jq -r --arg b ${{ matrix.llvm_branch }} '.workflow_runs[] | select(.head_branch == $b) | select (.conclusion == "success") | .artifacts_url?' llvm_runs.json`)
+          for artifacts_url in "${urls[@]}"; do
+            curl -sL "$artifacts_url" -o llvm_artifacts.json
+            archive_url=`jq -r --arg b $build_name '.artifacts[] | select(.name == $b) | .archive_download_url' llvm_artifacts.json`
+            if [ -z "$archive_url" ]; then
+              echo "$artifacts_url did not contain a $build_name archive; too old?"
+              continue
+            fi
+            echo "Downloading $archive_url."
+            if curl -sL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" $archive_url -o llvm_build.zip; then
+              break
+            fi
           done
-          url=`jq -r '.artifacts[] | select(.name == "llvm_build_${{ matrix.target }}_${{ matrix.cc }}_${{ matrix.version }}_${{ matrix.llvm_branch }}") | .archive_download_url' artifacts_llvm`
-          wget --output-document llvm_build.zip --header="Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" $url
+          if [ ! -f llvm_build.zip ]; then
+            echo "Could not download the correct prebuilt compiler; aborting."
+            exit 1
+          fi
 
       - name: Install llvm
         run: |
@@ -69,10 +84,6 @@ jobs:
           tar xzf llvm_build.tar.gz
           cd classic-flang-llvm-project/build
           sudo make install/fast
-
-      # gcc11 and g++11 are needed to install llvm
-      - if: matrix.cc == 'gcc' && matrix.version == '11'
-        run: sudo apt install gcc-11 g++-11
 
       - name: Build and install flang & libpgmath
         run: |
@@ -89,13 +100,13 @@ jobs:
           make check-flang-long
 
       # Archive documentation just once, for the fastest job.
-      - if: matrix.cc == 'clang' && matrix.version == '11'
+      - if: matrix.cc == 'clang' && matrix.version == '15'
         run: |
           cd build/flang/docs/web
           cp -r html/ ../../.. # copy to a place where Upload can find it.
 
       # Upload docs just once, for the fastest job.
-      - if: matrix.cc == 'clang' && matrix.version == '11'
+      - if: matrix.cc == 'clang' && matrix.version == '15'
         uses: actions/upload-artifact@v2
         with:
           name: html_docs_flang
