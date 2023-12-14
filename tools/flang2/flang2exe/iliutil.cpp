@@ -6134,8 +6134,7 @@ addarth(ILI *ilip)
 
   case IL_DASIN:
     if (XBIT_NEW_MATH_NAMES) {
-      fname = make_math(MTH_asin, &funcsptr, 1, false, DT_DBLE, 2, DT_DBLE,
-                        DT_DBLE);
+      fname = make_math(MTH_asin, &funcsptr, 1, false, DT_DBLE, 1, DT_DBLE);
       ilix = ad_func(IL_dpfunc, IL_QJSR, fname, 1, op1);
       ilix = ad1altili(opc, op1, ilix);
       return ilix;
