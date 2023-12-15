@@ -74,7 +74,7 @@ interf_init()
  * https://github.com/flang-compiler/flang/issues/1043
  */
 #if DEBUG && !defined(_WIN64)
-  assert(sizeof(SYM) / sizeof(INT) == 44, "bad SYM size",
+  assert(sizeof(SYM) / sizeof(INT) == 46, "bad SYM size",
          sizeof(SYM) / sizeof(INT), 4);
   assert(sizeof(AST) / sizeof(int) == 19, "interf_init:inconsistent AST size",
          sizeof(AST) / sizeof(int), 2);
@@ -2500,6 +2500,7 @@ import(lzhandle *fdlz, WantPrivates wantPrivates, int ivsn)
       ps->symlk = get_num(10);
       ps->sym.scope = get_num(10);
       ps->sym.nmptr = get_num(10);
+      ps->sym.palign = get_num(10);
       ps->flags1 = get_num(16);
       ps->flags2 = get_num(16);
 
@@ -5406,6 +5407,7 @@ fill_sym(SYMITEM *ps, int sptr)
   GETFIELD(lineno);
   GETFIELD(w39); 
   GETFIELD(w40); 
+  GETFIELD(palign);
 #undef GETFIELD
   stb.stg_base[sptr].uname = 0;
 } /* fill_sym */

@@ -56,9 +56,9 @@ sym_init_first(void)
  */
 #if !defined(_WIN64)
 #if defined(PGHPF)
-  assert(sizeof_SYM == 44, "bad SYM size", sizeof_SYM, ERR_Fatal);
+  assert(sizeof_SYM == 46, "bad SYM size", sizeof_SYM, ERR_Fatal);
 #else
-  assert(sizeof_SYM == 36, "bad SYM size", sizeof_SYM, ERR_Fatal);
+  assert(sizeof_SYM == 38, "bad SYM size", sizeof_SYM, ERR_Fatal);
 #endif
 #endif // _WIN64
 

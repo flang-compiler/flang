@@ -836,6 +836,11 @@ semant1(int rednum, SST *top)
    *	<stmt> ::= <stbeg> <statement> <stend>
    */
   case STMT1:
+    /*
+     * `!DIR$ ALIGN alignment` pragma should only take effect within the
+     * scope of the statement, so flang1 need to clear the flg.x[251] here.
+     */
+    flg.x[251] = 0;
     break;
 
   /* ------------------------------------------------------------------ */
@@ -9759,6 +9764,12 @@ semant1(int rednum, SST *top)
     SST_GDTYPEP(RHS(1), sem.gdtype);
     SST_GTYP(RHS(1), sem.gty);
 
+    /*
+     * When declaring a variable's symbol, flang1 should store
+     * the alignment from `!DIR$ ALIGN alignment` pragma to
+     * the symbol.
+     */
+    PALIGNP(sptr, flg.x[251]);
     break;
 
   /* ------------------------------------------------------------------ */

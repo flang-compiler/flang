@@ -359,6 +359,8 @@ field will locate the original name.
 Flags per symbol (named f65 through f96).
 .SF flags4 w37
 Flags per symbol (named f97 through f128).
+.SF PALIGN w41
+Store the symbol's alignment value specified by align pragma in the form of '!DIR$ ALIGN alignment'.
 Other Fields
 .ul
 .nr II \n(iiu

@@ -132,9 +132,12 @@
  *              pass elemental field for subprogram when emitting ST_ENTRY.
  *
  *              For ST_PROC, pass IS_PROC_PTR_IFACE flag.
+ *
+ * 23.12        -- 1.56
+ *              All of 1.55 + PALIGN
  */
 #define VersionMajor 1
-#define VersionMinor 55
+#define VersionMinor 56
 
 void lower(int);
 void lower_end_contains(void);

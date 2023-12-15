@@ -3705,6 +3705,7 @@ lower_symbol(int sptr)
   } else
 #endif
     putval("dtype", dtype);
+  putval("palign", PALIGNG(sptr));
   /* type specific information */
   switch (stype) {
   case ST_ARRAY:

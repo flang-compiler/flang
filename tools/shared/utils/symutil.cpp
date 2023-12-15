@@ -111,9 +111,9 @@ class Symutil : public UtilityApplication
   std::vector<std::string> attrnames;
 
 #if defined(PGHPF)
-  static const int SYMLEN = 40;
+  static const int SYMLEN = 41;
 #else
-  static const int SYMLEN = 32;
+  static const int SYMLEN = 33;
 #endif
 
   // Generate run time checking code for symbol table field access macros.

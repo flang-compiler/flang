@@ -136,13 +136,16 @@
  *              pass elemental field for subprogram when emitting ST_ENTRY.
  *
  *              For ST_PROC, receive IS_PROC_PTR_IFACE flag.
+ *
+ * 23.12        -- 1.56
+ *              All of 1.55 + PALIGN
  */
 
 #include "gbldefs.h"
 #include "semant.h"
 
 #define VersionMajor 1
-#define VersionMinor 55
+#define VersionMinor 56
 
 /**
    \brief ...

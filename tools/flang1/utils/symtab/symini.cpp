@@ -1057,7 +1057,8 @@ private:
       fprintf(out1, "\t 0,\n");
       fprintf(out1, "#endif\n");
 
-      fprintf(out1, "\t %5d, %5d, %5d\n", xp->lineno, xp->w39, xp->w40);
+      fprintf(out1, "\t %5d, %5d, %5d, %5d\n", xp->lineno, xp->w39,
+              xp->w40, xp->palign);
 
       fprintf(out1, "\t},\n");
     }

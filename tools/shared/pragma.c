@@ -1053,7 +1053,28 @@ do_sw(void)
   case SW_ESCTYALIAS:
     break;
   case SW_ALIGN:
-    break;
+    if (gtok() != T_INT) {
+      int backup_nowarn = gbl.nowarn;
+      gbl.nowarn = false;
+      error((error_code_t)280, ERR_Warning, lineno,
+            "ALIGN: non-integer alignment", 0);
+      gbl.nowarn = backup_nowarn;
+      return true;
+    }
+
+    /* check whether the alignment is power of 2 */
+    if (itok <= 0 || ((itok & (itok - 1)) != 0)) {
+      int backup_nowarn = gbl.nowarn;
+      gbl.nowarn = false;
+      error((error_code_t)280, ERR_Warning, lineno,
+            "ALIGN: non-power-of-2 alignment", 0);
+      gbl.nowarn = backup_nowarn;
+      return true;
+    }
+
+    TR1("SW_ALIGN alignment[%d]\n", itok);
+    flg.x[251] = itok;
+    return true;
   case SW_BOUNDS:
     if (no_specified) {
       bclr(DIR_OFFSET(currdir, x[70]), 0x02);
