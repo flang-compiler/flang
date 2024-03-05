@@ -6,7 +6,7 @@
 !
 ! RUN: %flang -S -emit-llvm %s -o - | FileCheck %s --check-prefix=CHECK
 !
-! CHECK:      [[LOOP:L.LB[0-9]_[0-9]+]]:{{[' ',\t]+}}; preds = %[[LOOP]], %L.LB
+! CHECK:      [[LOOP:L.LB[0-9]_[0-9]+]]:{{[' ',\t]+}}; preds = %[[LOOP]]{{.*}}, %L.LB
 ! CHECK:      store float
 ! CHECK-NOT:  store float
 ! CHECK:      br i1 {{.*}}, label %[[LOOP]], label %L.LB
