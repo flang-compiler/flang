@@ -15,7 +15,7 @@ subroutine func1(a, b, m)
   do i = 1, m
     b(i) = a(i) + 1
   end do
-! CHECK-00:      [[LOOP:L.LB[0-9]_[0-9]+]]:{{[' ',\t]+}}; preds = %[[LOOP]], %L.LB
+! CHECK-00:      [[LOOP:L.LB[0-9]_[0-9]+]]:{{[' ',\t]+}}; preds = %[[LOOP]]{{.*}}, %L.LB
 ! CHECK-00:      br i1 {{.*}}, label %[[LOOP]], {{.*}} !llvm.loop [[LOOP_LATCH_MD:![0-9]+]]
 end subroutine func1
 
