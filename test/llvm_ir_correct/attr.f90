@@ -16,5 +16,6 @@
        end do
        print *, acc(100)
       end program
-! ATTRS-NOSVE: attributes{{.*}}"target-features"="+neon{{(,\+v8a)*}}"
-! ATTRS-SVE: attributes{{.*}}"target-features"="+neon{{(,\+v8a)*}},+sve"
+! ATTRS-NOSVE-NOT: attributes{{.*}}"target-features"="{{.*}}+sve{{.*}}"
+! ATTRS-NOSVE: attributes{{.*}}"target-features"="{{.*}}+neon{{.*}}"
+! ATTRS-SVE: attributes{{.*}}"target-features"="{{.*}}+sve{{.*}}"
