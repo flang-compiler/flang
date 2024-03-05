@@ -29,7 +29,7 @@ subroutine func1(a, b)
   do i = 1, m
     b(i) = a(i) + 1
   end do
-  ! CHECK-O0:           [[BB1:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB1]],
+  ! CHECK-O0:           [[BB1:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB1]]
   ! CHECK-O0:           br i1 {{.*}}, label %[[BB1]]
   ! CHECK-O0-SAME:      !llvm.loop [[MD_LOOP1:![0-9]+]]
   ! CHECK-O1-COUNT-10:  store i32
@@ -37,7 +37,7 @@ subroutine func1(a, b)
   ! CHECK-O1-NOT:       br i1 {{.*}}, label %{{L.LB[0-9]_[0-9]+}}
   ! CHECK-O1-NOT:       !llvm.loop !{{[0-9]+}}
   ! CHECK-O1:           ret void
-  ! CHECK-DISABLED:     [[BB1:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB1]],
+  ! CHECK-DISABLED:     [[BB1:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB1]]
   ! CHECK-DISABLED:     br i1 {{.*}}, label %[[BB1]]
 end subroutine func1
 
@@ -49,7 +49,7 @@ subroutine func2(m, a, b)
   do i = 1, m
     b(i) = a(i) + 1
   end do
-  ! CHECK:              [[BB2:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB2]],
+  ! CHECK:              [[BB2:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB2]]
   ! CHECK-O1-COUNT-4:   store i32
   ! CHECK-O1-NOT:       store i32
   ! CHECK:              br i1 {{.*}}, label %[[BB2]]
@@ -66,7 +66,7 @@ subroutine func3(m, a, b)
   do i = 1, m
     b(i) = a(i) + 1
   end do
-  ! CHECK:              [[BB3:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB3]],
+  ! CHECK:              [[BB3:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB3]]
   ! CHECK-O1-COUNT-7:   store i32
   ! CHECK-O1-NOT:       store i32
   ! CHECK:              br i1 {{.*}}, label %[[BB3]]

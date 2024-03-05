@@ -17,7 +17,7 @@ subroutine func1(m, a, b)
   do i = 1, m
     b(i) = a(i) + 1
   end do
-  ! CHECK:       [[BB1:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB1]],
+  ! CHECK:       [[BB1:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB1]]
   ! CHECK:       br i1 {{.*}}, label %[[BB1]]
   ! CHECK-SAME:  !llvm.loop [[MD_LOOP1:![0-9]+]]
 end subroutine func1
@@ -32,7 +32,7 @@ subroutine func2(m, a, b)
   do i = 1, m
     b(i) = a(i) + 1
   end do
-  ! CHECK:       [[BB2:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB2]],
+  ! CHECK:       [[BB2:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB2]]
   ! CHECK:       br i1 {{.*}}, label %[[BB2]]
   ! CHECK-SAME:  !llvm.loop [[MD_LOOP2:![0-9]+]]
 end subroutine func2
@@ -47,7 +47,7 @@ subroutine func3(m, a, b)
   do i = 1, m
     b(i) = a(i) + 1
   end do
-  ! CHECK:       [[BB3:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB3]],
+  ! CHECK:       [[BB3:L.LB[0-9]_[0-9]+]]:{{[ \t]+}}; preds = %[[BB3]]
   ! CHECK:       br i1 {{.*}}, label %[[BB3]]
   ! CHECK-SAME:  !llvm.loop [[MD_LOOP3:![0-9]+]]
 end subroutine func3
