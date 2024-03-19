@@ -14,7 +14,7 @@ build:  $(SRC)/dd00.f
 	-$(RM) dd00.$(EXESUFFIX) core *.d *.mod FOR*.DAT FTN* ftn* fort.*
 	@echo ------------------------------------ building test $@
 	-$(CC) -c $(CFLAGS) $(SRC)/check.c -o check.$(OBJX)
-	-$(FC) -c $(FFLAGS) $(LDFLAGS) $(SRC)/dd00.f -o dd00.$(OBJX)
+	-$(FC) -c $(FFLAGS) -Mnobackslash $(LDFLAGS) $(SRC)/dd00.f -o dd00.$(OBJX)
 	-$(FC) $(FFLAGS) $(LDFLAGS) dd00.$(OBJX) check.$(OBJX) $(LIBS) -o dd00.$(EXESUFFIX)
 
 

@@ -14,7 +14,7 @@ build:  $(SRC)/im20.f
 	-$(RM) im20.$(EXESUFFIX) core *.d *.mod FOR*.DAT FTN* ftn* fort.*
 	@echo ------------------------------------ building test $@
 	-$(CC) -c $(CFLAGS) $(SRC)/check.c -o check.$(OBJX)
-	-$(FC) -c $(FFLAGS) $(LDFLAGS) $(SRC)/im20.f -o im20.$(OBJX)
+	-$(FC) -c $(FFLAGS) -Mnobackslash $(LDFLAGS) $(SRC)/im20.f -o im20.$(OBJX)
 	-$(FC) $(FFLAGS) $(LDFLAGS) im20.$(OBJX) check.$(OBJX) $(LIBS) -o im20.$(EXESUFFIX)
 
 
