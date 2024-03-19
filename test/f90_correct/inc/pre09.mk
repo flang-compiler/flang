@@ -15,7 +15,7 @@ build:  $(SRC)/pre09.f90
 	-$(RM) pre09.$(EXESUFFIX) core *.d *.mod FOR*.DAT FTN* ftn* fort.*
 	@echo ------------------------------------ building test $@
 	-$(CC) -c $(CFLAGS) $(SRC)/check.c -o check.$(OBJX)
-	-$(FC) -c $(FFLAGS) $(LDFLAGS) $(SRC)/pre09.f90 -o pre09.$(OBJX)
+	-$(FC) -c $(FFLAGS) -Mnobackslash $(LDFLAGS) $(SRC)/pre09.f90 -o pre09.$(OBJX)
 	-$(FC) $(FFLAGS) $(LDFLAGS) pre09.$(OBJX) check.$(OBJX) $(LIBS) -o pre09.$(EXESUFFIX)
 
 
