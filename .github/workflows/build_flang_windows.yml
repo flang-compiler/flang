@@ -74,11 +74,11 @@ jobs:
           # for the first successful run that produced the desired artifact.
           $build_name="llvm_build_win_${{ matrix.arch }}_clangcl_${{ matrix.llvm_branch }}"
           Invoke-WebRequest -Uri https://api.github.com/repos/flang-compiler/classic-flang-llvm-project/actions/workflows/pre-compile_llvm.yml/runs -OutFile llvm_runs.json
-          $urls = @($(jq -r --arg b ${{ matrix.llvm_branch }} '.workflow_runs[] | select(.head_branch == $b) | select (.conclusion == ""success"") | .artifacts_url?' llvm_runs.json))
+          $urls = @($(jq -r --arg b ${{ matrix.llvm_branch }} '.workflow_runs[] | select(.head_branch == $b) | select (.conclusion == "success") | .artifacts_url?' llvm_runs.json))
           Invoke-WebRequest "$(jq -r '.workflow_runs[0].artifacts_url?' llvm_runs.json)" -OutFile llvm_artifacts.json
           for ($i = 0; $i -lt $urls.Count; $i++) {
             $artifacts_url = $urls[$i]
-            Invoke-WebRequest -Uri "$artifacts_url" -o llvm_artifacts.json
+            Invoke-WebRequest -Uri "$artifacts_url" -OutFile llvm_artifacts.json
             $archive_url = "$(jq -r --arg b $build_name '.artifacts[] | select(.name == $b) | .archive_download_url' llvm_artifacts.json)"
             if (! $archive_url) {
               Write-Output "$artifacts_url did not contain a $build_name archive; too old?"
