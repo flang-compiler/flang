@@ -7706,7 +7706,10 @@ rewrite_lbound_ubound(int func_ast, int actual, int nextstd)
               (POINTERG(actual_sptr) || ALLOCG(actual_sptr))) {
             /* The whole array actual_sptr corresponding to an assumed-shape
              * formal cannot be assumed-rank. */
-            extent = get_extent(SDSCG(actual_sptr), i - 1);
+            int subs[1];
+            int desc = find_descriptor_ast(actual_sptr, actual);
+            subs[0] = mk_isz_cval(get_global_extent_index(i - 1), astb.bnd.dtype);
+            extent = mk_subscr(desc, subs, 1, astb.bnd.dtype);
           } else {
             extent = extent_of_shape(A_SHAPEG(actual), i - 1);
           }
@@ -7902,7 +7905,10 @@ rewrite_lbound_ubound(int func_ast, int actual, int nextstd)
             (POINTERG(actual_sptr) || ALLOCG(actual_sptr))) {
           /* The whole array actual_sptr corresponding to an assumed-shape
            * formal cannot be assumed-rank. */
-          extent = get_extent(SDSCG(actual_sptr), i);
+          int subs[1];
+          int desc = find_descriptor_ast(actual_sptr, actual);
+          subs[0] = mk_isz_cval(get_global_extent_index(i - 1), astb.bnd.dtype);
+          extent = mk_subscr(desc, subs, 1, astb.bnd.dtype);
         } else {
           extent = extent_of_shape(A_SHAPEG(actual), i);
         }
