@@ -14,6 +14,9 @@ else ()
   SET(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -no-flang-libs")
 endif ()
 
+# iso_c_bind.F95 has C backslash characters and require -Mnobackslash option
+SET(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mnobackslash")
+
 # We are using Fortran driver to build this library with fresh compiler
 # components, so point its binary directory to the build directory to pick up
 # flang* executables

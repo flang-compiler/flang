@@ -14,7 +14,7 @@ build:  $(SRC)/ph10.f
 	-$(RM) ph10.$(EXESUFFIX) core *.d *.mod FOR*.DAT FTN* ftn* fort.*
 	@echo ------------------------------------ building test $@
 	-$(CC) -c $(CFLAGS) $(SRC)/check.c -o check.$(OBJX)
-	-$(FC) -c $(FFLAGS) $(LDFLAGS) $(SRC)/ph10.f -o ph10.$(OBJX)
+	-$(FC) -c $(FFLAGS) -Mnobackslash $(LDFLAGS) $(SRC)/ph10.f -o ph10.$(OBJX)
 	-$(FC) $(FFLAGS) $(LDFLAGS) ph10.$(OBJX) check.$(OBJX) $(LIBS) -o ph10.$(EXESUFFIX)
 
 
