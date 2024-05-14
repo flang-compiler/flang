@@ -88,19 +88,7 @@ module IEEE_ARITHMETIC
     module procedure ieee_arithmetic_eqtct
   end interface
 
-  interface operator (==)
-    module procedure ieee_arithmetic_eqti
-    module procedure ieee_arithmetic_eqtr
-    module procedure ieee_arithmetic_eqtct
-  end interface
-
   interface operator (.ne.)
-    module procedure ieee_arithmetic_neti
-    module procedure ieee_arithmetic_netr
-    module procedure ieee_arithmetic_netct
-  end interface
-
-  interface operator (/=)
     module procedure ieee_arithmetic_neti
     module procedure ieee_arithmetic_netr
     module procedure ieee_arithmetic_netct
@@ -479,7 +467,7 @@ contains
   pure logical function ieee_support_datatyper(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
     ieee_support_datatyper = .true.
     return 
   end function ieee_support_datatyper
@@ -496,7 +484,7 @@ contains
   pure logical function ieee_support_denormalr(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
 #if defined TARGET_LINUX_ARM || defined TARGET_LINUX_POWER || defined PGFLANG
     ieee_support_denormalr = .false.
 #else
@@ -513,7 +501,7 @@ contains
   pure logical function ieee_support_divider(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
     ieee_support_divider = .true.
     return 
   end function ieee_support_divider
@@ -526,7 +514,7 @@ contains
   pure logical function ieee_support_infr(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
     ieee_support_infr = .true.
     return 
   end function ieee_support_infr
@@ -539,23 +527,23 @@ contains
   pure logical function ieee_support_nanr(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
     ieee_support_nanr = .true.
     return 
   end function ieee_support_nanr
 
   pure logical function ieee_support_roundingnox(rv)
 !pgi$ defaultkind
-    type(ieee_round_type) :: rv
+    type(ieee_round_type), intent(in) :: rv
     i = rv%rt
     ieee_support_roundingnox = ((i.ge.0).and.(i.le.3))
     return
   end function ieee_support_roundingnox
   pure logical function ieee_support_roundingr(rv,x)
 !pgi$ defaultkind
-    type(ieee_round_type) :: rv
+    type(ieee_round_type), intent(in) :: rv
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
     i = rv%rt
     ieee_support_roundingr = ((i.ge.0).and.(i.le.3))
     return 
@@ -569,7 +557,7 @@ contains
   pure logical function ieee_support_sqrtr(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
     ieee_support_sqrtr = .true.
     return 
   end function ieee_support_sqrtr
@@ -582,7 +570,7 @@ contains
   pure logical function ieee_support_standardr(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
     ieee_support_standardr = .true.
     return 
   end function ieee_support_standardr
@@ -599,7 +587,7 @@ contains
   pure logical function ieee_support_uflowctrlr(x)
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
-    real :: x
+    real, intent(in) :: x
 #if defined TARGET_LINUX_ARM || defined TARGET_LINUX_POWER || defined PGFLANG
     ieee_support_uflowctrlr = .false.
 #else
@@ -696,7 +684,8 @@ contains
    
   !-----------------------------------------------------------------
   elemental type(ieee_class_type) function ieee_classr4(x)
-    real*4 x, ex
+    real*4, intent(in) :: x
+    real*4 :: ex
     integer*4 ix, iexp, imant
 #if 0
    ix = transfer(x,ix)
@@ -740,7 +729,8 @@ contains
   end function
 
   elemental type(ieee_class_type) function ieee_classr8(x)
-    real*8 x, ex
+    real*8, intent(in) :: x
+    real*8 :: ex
     integer*4 iz(2), ix, iy, iexp, imant
 #if 0
     iz = transfer(x,iz)
@@ -788,7 +778,8 @@ contains
 
 #ifdef TARGET_SUPPORTS_QUADFP
   elemental type(ieee_class_type) function ieee_classr16(x)
-    real*16 x, ex
+    real*16, intent(in) :: x
+    real*16 :: ex
     integer*4 ir(4), iw, ix, iy, iz, iexp, imant
     equivalence(ex, ir)
     ex = x
@@ -834,8 +825,9 @@ contains
 #endif
 
   elemental real*4 function ieee_valuer4(x, cl)
-    real*4 x, ex
-    type(ieee_class_type) :: cl
+    real*4, intent(in) :: x
+    real*4 :: ex
+    type(ieee_class_type), intent(in) :: cl
     integer*4 ix
 #if 0
     ix = transfer(x,ix)
@@ -860,8 +852,9 @@ contains
   end function
 
   elemental real*8 function ieee_valuer8(x, cl)
-    real*8 x, ex
-    type(ieee_class_type) :: cl
+    real*8, intent(in) :: x
+    real*8 :: ex
+    type(ieee_class_type), intent(in) :: cl
     integer*4 ix, iz(2)
 #if 0
     iz = transfer(x,iz)
@@ -889,8 +882,9 @@ contains
 
 #ifdef TARGET_SUPPORTS_QUADFP
   elemental real*16 function ieee_valuer16(x, cl)
-    real*16 x, ex
-    type(ieee_class_type) :: cl
+    real*16, intent(in) :: x
+    real*16 :: ex
+    type(ieee_class_type), intent(in) :: cl
     integer*4 ix, iz(4)
     equivalence(ex, iz)
     if (cl%ct .eq. 0) ix = z'00000000'
@@ -912,7 +906,8 @@ contains
 #endif
 
   elemental real*4 function ieee_copy_signr4(x, y)
-    real*4 x, y, ex, ey
+    real*4, intent(in) :: x, y
+    real*4 :: ex, ey
     integer*4 ix, iy
 #if 0
     ix = transfer(x,ix)
@@ -934,7 +929,8 @@ contains
   end function
 
   elemental real*8 function ieee_copy_signr8(x, y)
-    real*8 x, y, ex
+    real*8, intent(in) :: x, y
+    real*8 :: ex
     integer*4 ix, iy, iz(2)
 #if 0
     iz = transfer(ex,iz)
@@ -966,7 +962,8 @@ contains
 
 #ifdef TARGET_SUPPORTS_QUADFP
   elemental real*16 function ieee_copy_signr16(x, y)
-    real*16 x, y, ex
+    real*16, intent(in) :: x, y
+    real*16 :: ex
     integer*4 ix, iy, iz(4)
     equivalence(ex, iz)
     ex = y
@@ -983,7 +980,7 @@ contains
 
   elemental logical function ieee_is_finiter4(x)
 !pgi$ defaultkind
-    real*4 x
+    real*4, intent(in) :: x
     type(ieee_class_type) :: cl
     cl = ieee_class(x)
     if (cl%ct .lt. 6) then
@@ -995,7 +992,7 @@ contains
 
   elemental logical function ieee_is_finiter8(x)
 !pgi$ defaultkind
-    real*8 x
+    real*8, intent(in) :: x
     type(ieee_class_type) :: cl
     cl = ieee_class(x)
     if (cl%ct .lt. 6) then
@@ -1008,7 +1005,7 @@ contains
 #ifdef TARGET_SUPPORTS_QUADFP
   elemental logical function ieee_is_finiter16(x)
 !pgi$ defaultkind
-    real*16 x
+    real*16, intent(in) :: x
     type(ieee_class_type) :: cl
     cl = ieee_class(x)
     if (cl%ct .lt. 6) then
@@ -1021,7 +1018,7 @@ contains
 
   elemental logical function ieee_is_nanr4(x)
 !pgi$ defaultkind
-    real*4 x
+    real*4, intent(in) :: x
     type(ieee_class_type) :: cl
     cl = ieee_class(x)
     if ((cl%ct .eq. 8) .or. (cl%ct .eq. 9)) then
@@ -1033,7 +1030,7 @@ contains
 
   elemental logical function ieee_is_nanr8(x)
 !pgi$ defaultkind
-    real*8 x
+    real*8, intent(in) :: x
     type(ieee_class_type) :: cl
     cl = ieee_class(x)
     if ((cl%ct .eq. 8) .or. (cl%ct .eq. 9)) then
@@ -1046,7 +1043,7 @@ contains
 #ifdef TARGET_SUPPORTS_QUADFP
 elemental logical function ieee_is_nanr16(x)
 !pgi$ defaultkind
-    real*16 x
+    real*16, intent(in) :: x
     type(ieee_class_type) :: cl
     cl = ieee_class(x)
     if ((cl%ct .eq. 8) .or. (cl%ct .eq. 9)) then
@@ -1059,27 +1056,27 @@ elemental logical function ieee_is_nanr16(x)
 
   elemental logical function ieee_unorderedr4(x, y)
 !pgi$ defaultkind
-    real*4 x, y
+    real*4, intent(in) :: x, y
     ieee_unorderedr4 = (ieee_is_nanr4(x) .or. ieee_is_nanr4(y))
   end function
 
   elemental logical function ieee_unorderedr8(x, y)
 !pgi$ defaultkind
-    real*8 x, y
+    real*8, intent(in) :: x, y
     ieee_unorderedr8 = (ieee_is_nanr8(x) .or. ieee_is_nanr8(y))
   end function
 
 #ifdef TARGET_SUPPORTS_QUADFP
   elemental logical function ieee_unorderedr16(x, y)
 !pgi$ defaultkind
-    real*16 x, y
+    real*16, intent(in) :: x, y
     ieee_unorderedr16 = (ieee_is_nanr16(x) .or. ieee_is_nanr16(y))
   end function
 #endif
 
   elemental logical function ieee_is_negativer4(x)
 !pgi$ defaultkind
-    real*4 x
+    real*4, intent(in) :: x
     type(ieee_class_type) :: cl
     cl = ieee_class(x)
     if ((cl%ct .lt. 8) .and. (iand(cl%ct,1) .eq. 1)) then
@@ -1091,7 +1088,7 @@ elemental logical function ieee_is_nanr16(x)
 
   elemental logical function ieee_is_negativer8(x)
 !pgi$ defaultkind
-    real*8 x
+    real*8, intent(in) :: x
     type(ieee_class_type) :: cl
     cl = ieee_class(x)
     if ((cl%ct .lt. 8) .and. (iand(cl%ct,1) .eq. 1)) then
@@ -1104,7 +1101,7 @@ elemental logical function ieee_is_nanr16(x)
 #ifdef TARGET_SUPPORTS_QUADFP
   elemental logical function ieee_is_negativer16(x)
 !pgi$ defaultkind
-    real*16 x
+    real*16, intent(in) :: x
     type(ieee_class_type) :: cl
     cl = ieee_class(x)
     if ((cl%ct .lt. 8) .and. (iand(cl%ct, 1) .eq. 1)) then
@@ -1117,7 +1114,7 @@ elemental logical function ieee_is_nanr16(x)
 
   elemental logical function ieee_is_normalr4(x)
 !pgi$ defaultkind
-    real*4 x
+    real*4, intent(in) :: x
     type(ieee_class_type) :: cl
     cl = ieee_class(x)
     if ((cl%ct .lt. 6) .and. (iand(cl%ct,2) .eq. 0)) then
@@ -1129,7 +1126,7 @@ elemental logical function ieee_is_nanr16(x)
 
   elemental logical function ieee_is_normalr8(x)
 !pgi$ defaultkind
-    real*8 x
+    real*8, intent(in) :: x
     type(ieee_class_type) :: cl
     cl = ieee_class(x)
     if ((cl%ct .lt. 6) .and. (iand(cl%ct,2) .eq. 0)) then
@@ -1142,7 +1139,7 @@ elemental logical function ieee_is_nanr16(x)
 #ifdef TARGET_SUPPORTS_QUADFP
   elemental logical function ieee_is_normalr16(x)
 !pgi$ defaultkind
-    real*16 x
+    real*16, intent(in) :: x
     type(ieee_class_type) :: cl
     cl = ieee_class(x)
     if ((cl%ct .lt. 6) .and. (iand(cl%ct, 2) .eq. 0)) then
@@ -1154,7 +1151,8 @@ elemental logical function ieee_is_nanr16(x)
 #endif
 
   elemental real*4 function ieee_logbr4(x)
-    real*4 x, ex
+    real*4, intent(in) :: x
+    real*4 :: ex
     integer*4 ix, iexp, imant, ibitp
 #if 0
    ix = transfer(x,ix)
@@ -1182,7 +1180,8 @@ elemental logical function ieee_is_nanr16(x)
   end function
 
   elemental real*8 function ieee_logbr8(x)
-    real*8 x, ex
+    real*8, intent(in) :: x
+    real*8 :: ex
     integer*4 iz(2), ix, iy, iexp, imant
 #if 0
    iz = transfer(x,iz)
@@ -1233,7 +1232,8 @@ elemental logical function ieee_is_nanr16(x)
 
 #ifdef TARGET_SUPPORTS_QUADFP
   elemental real*16 function ieee_logbr16(x)
-    real*16 x, ex
+    real*16, intent(in) :: x
+    real*16 :: ex
     integer*4 iz(4), ix, iy, ix2, iy2, iexp, imant
     equivalence(ex, iz)
     ex = x
@@ -1325,117 +1325,117 @@ elemental logical function ieee_is_nanr16(x)
 #endif
 
   elemental real*4 function ieee_nextafterr4(x,y)
-    real*4 x, y
+    real*4, intent(in) :: x, y
     ieee_nextafterr4 = __nextafterf(x, y)
   end function
 
   elemental real*8 function ieee_nextafterr8(x,y)
-    real*8 x, y
+    real*8, intent(in) :: x, y
     ieee_nextafterr8 = __nextafter(x, y)
   end function
 
 #ifdef TARGET_SUPPORTS_QUADFP
   elemental real*16 function ieee_nextafterr16(x,y)
-    real*16 x, y
+    real*16, intent(in) :: x, y
     ieee_nextafterr16 = __nextafterl(x, y)
   end function
 #endif
 
   elemental real*4 function ieee_rem4x4(x,y)
-    real*4 x, y
+    real*4, intent(in) :: x, y
     ieee_rem4x4 = __remainderf(x, y)
   end function
 
   elemental real*8 function ieee_rem4x8(x,y)
-    real*4 x
-    real*8 y
+    real*4, intent(in) :: x
+    real*8, intent(in) :: y
     ieee_rem4x8 = __remainder(dble(x), y)
   end function
 
 #ifdef TARGET_SUPPORTS_QUADFP
   elemental real*16 function ieee_rem4x16(x,y)
-    real*4 x
-    real*16 y
+    real*4, intent(in) :: x
+    real*16, intent(in) :: y
     ieee_rem4x16 = __remainderl(real(x, kind = 16), y)
   end function
 #endif
 
   elemental real*8 function ieee_rem8x4(x,y)
-    real*8 x
-    real*4 y
+    real*8, intent(in) :: x
+    real*4, intent(in) :: y
     ieee_rem8x4 = __remainder(x, dble(y))
   end function
 
   elemental real*8 function ieee_rem8x8(x,y)
-    real*8 x, y
+    real*8, intent(in) :: x, y
     ieee_rem8x8 = __remainder(x, y)
   end function
 
 #ifdef TARGET_SUPPORTS_QUADFP
   elemental real*16 function ieee_rem8x16(x,y)
-    real*8 x
-    real*16 y
+    real*8, intent(in) :: x
+    real*16, intent(in) :: y
     ieee_rem8x16 = __remainderl(real(x, kind = 16), y)
   end function
 
   elemental real*16 function ieee_rem16x4(x,y)
-    real*16 x
-    real*4 y
+    real*16, intent(in) :: x
+    real*4, intent(in) :: y
     ieee_rem16x4 = __remainderl(x, real(y, kind = 16))
   end function
 
   elemental real*16 function ieee_rem16x8(x,y)
-    real*16 x
-    real*8 y
+    real*16, intent(in) :: x
+    real*8, intent(in) :: y
     ieee_rem16x8 = __remainderl(x, real(y, kind = 16))
   end function
 
   elemental real*16 function ieee_rem16x16(x,y)
-    real*16 x, y
+    real*16, intent(in) :: x, y
     ieee_rem16x16 = __remainderl(x, y)
   end function
 #endif
 
   elemental real*4 function ieee_rintr4(x)
-    real*4 x
+    real*4, intent(in) :: x
     ieee_rintr4 = __nearbyintf(x)
   end function
 
   elemental real*8 function ieee_rintr8(x)
-    real*8 x
+    real*8, intent(in) :: x
     ieee_rintr8 = __nearbyint(x)
   end function
 
 #ifdef TARGET_SUPPORTS_QUADFP
   elemental real*16 function ieee_rintr16(x)
-    real*16 x
+    real*16, intent(in) :: x
     ieee_rintr16 = __nearbyintl(x)
   end function
 #endif
 
   elemental real*4 function ieee_scalbr4(x, i)
-    real*4 x
-    integer*4 i
+    real*4, intent(in) :: x
+    integer*4, intent(in) :: i
     ieee_scalbr4 = __scalbnf(x, i)
   end function
 
   elemental real*8 function ieee_scalbr8(x, i)
-    real*8 x
-    integer*4 i
+    real*8, intent(in) :: x
+    integer*4, intent(in) :: i
     ieee_scalbr8 = __scalbn(x, i)
   end function
 
 #ifdef TARGET_SUPPORTS_QUADFP
   elemental real*16 function ieee_scalbr16(x, i)
-    real*16 x
-    integer*4 i
+    real*16, intent(in) :: x
+    integer*4, intent(in) :: i
     ieee_scalbr16 = __scalbnl(x, i)
   end function
 #endif
 
   elemental real*4 function ieee_scalbr4i8(x, i)
-    real*4 x
-    integer*8 i
+    real*4, intent(in) :: x
+    integer*8, intent(in) :: i
     integer*4 j
     if (i .gt. 2048) then
       j = 2048
@@ -1448,8 +1448,8 @@ elemental logical function ieee_is_nanr16(x)
   end function
 
   elemental real*8 function ieee_scalbr8i8(x, i)
-    real*8 x
-    integer*8 i
+    real*8, intent(in) :: x
+    integer*8, intent(in) :: i
     integer*4 j
     if (i .gt. 2048) then
       j = 2048
@@ -1463,8 +1463,8 @@ elemental logical function ieee_is_nanr16(x)
 
 #ifdef TARGET_SUPPORTS_QUADFP
   elemental real*16 function ieee_scalbr16i8(x, i)
-    real*16 x
-    integer*8 i
+    real*16, intent(in) :: x
+    integer*8, intent(in) :: i
     integer*4 j
     if (i .gt. 32768) then
       j = 32768
