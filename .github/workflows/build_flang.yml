@@ -22,16 +22,16 @@ jobs:
         target: [X86]
         cc: [clang]
         version: [14, 15]
-        llvm_branch: [release_16x, release_17x]
+        llvm_branch: [release_17x, release_18x]
         include:
           - target: X86
             cc: gcc
             version: 12
-            llvm_branch: release_16x
+            llvm_branch: release_17x
           - target: X86
             cc: gcc
             version: 12
-            llvm_branch: release_17x
+            llvm_branch: release_18x
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so the job can access it

@@ -20,7 +20,7 @@ jobs:
         os:
           - windows-latest
           # - self-hosted
-        llvm_branch: [release_16x, release_17x]
+        llvm_branch: [release_17x, release_18x]
         include:
           - os: windows-latest
             arch: amd64
