@@ -20,13 +20,13 @@ jobs:
       build_path: /home/github
       install_prefix: /home/github/usr/local
     container:
-      image: ghcr.io/${{ github.repository_owner}}/ubuntu20-flang-${{ matrix.llvm_branch }}:latest
+      image: ghcr.io/${{ github.repository_owner}}/ubuntu-flang-${{ matrix.llvm_branch }}:latest
       credentials:
         username: github
     strategy:
       matrix:
         target: [AArch64]
-        llvm_branch: [release_16x, release_17x]
+        llvm_branch: [release_17x, release_18x]
 
     steps:
       - name: Check tools
