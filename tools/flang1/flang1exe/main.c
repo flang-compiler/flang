@@ -94,7 +94,11 @@ static const char *feature = "flang";
 
 /** Product name in debug output
  */
-#define DNAME "F90"
+#ifdef FLANG_VENDOR
+#define DNAME FLANG_VENDOR FLANG_LANGUAGE
+#else
+#define DNAME FLANG_LANGUAGE
+#endif
 
 #if DEBUG
 static int dodebug = 0;
@@ -1152,7 +1156,12 @@ do_debug(const char *phase)
     return;
   }
   if (dodebug)
+#ifdef FLANG_VENDOR
+    fprintf(gbl.dbgfil, "{%s%s after %s\n", FLANG_VENDOR, FLANG_LANGUAGE,
+                                            phase);
+#else
     fprintf(gbl.dbgfil, "{%s after %s\n", feature, phase);
+#endif
 
   current_phase = phase;
   execute_actions_for_keyword(phase_dump_map, phase);

@@ -8,6 +8,10 @@
 #ifndef VERSION_H_
 #define VERSION_H_
 
+#ifndef FLANG_LANGUAGE
+#define FLANG_LANGUAGE "F90"
+#endif
+
 typedef struct {
   const char *lang;    /* language */
   const char *host;    /* host */
