@@ -8,6 +8,12 @@
 ! RUN: %flang -c -fno-backslash %s
 ! RUN: not %flang -c -Mnobackslash %s 2>&1 | FileCheck %s
 ! RUN: not %flang -c -fbackslash %s 2>&1 | FileCheck %s
+! RUN: %flang -c -Mnobackslash -Mbackslash %s
+! RUN: %flang -c -fbackslash -fno-backslash %s
+! RUN: not %flang -c -Mbackslash -Mnobackslash %s 2>&1 | FileCheck %s
+! RUN: not %flang -c -fno-backslash -fbackslash %s 2>&1 | FileCheck %s
+! RUN: not %flang -c -Mnobackslash -Mbackslash -Mnobackslash %s 2>&1 | FileCheck %s
+! RUN: not %flang -c -fbackslash -fno-backslash -fbackslash %s 2>&1 | FileCheck %s
 
 write (*,*) "\" ! CHECK: Unmatched quote
 end
