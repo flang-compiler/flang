@@ -8572,15 +8572,12 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
     ld_ili = ILI_OPND(ilix, 1);
     nme_ili = ILI_OPND(ilix, 2);
     msz = (MSZ)ILI_OPND(ilix, 3);
-    flags = opc == IL_LDSCMPLX ? DT_CMPLX
-#ifdef TARGET_SUPPORTS_QUADFP
-          : opc == IL_LDQCMPLX ? DT_QCMPLX
-#endif
-                               : DT_DCMPLX;
     operand = gen_address_operand(ld_ili, nme_ili, false,
                                   make_ptr_lltype(expected_type), (MSZ)-1);
     assert(operand->ll_type->data_type == LL_PTR,
            "Invalid operand for cmplx load", ilix, ERR_Fatal);
+    flags =
+        ldst_instr_flags_from_dtype_nme(msz_dtype(msz), nme_ili);
     operand =
         make_load(ilix, operand, operand->ll_type->sub_types[0], msz, flags);
   } break;
