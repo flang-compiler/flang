@@ -107,7 +107,7 @@ jobs:
 
       # Upload docs just once, for the fastest job.
       - if: matrix.cc == 'clang' && matrix.version == '15'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: html_docs_flang
           path: html
