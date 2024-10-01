@@ -108,7 +108,7 @@ if (NOT DEFINED LIBOMP_EXPORT_DIR)
   find_library(
     FLANG_LIBOMP
     NAMES omp libomp
-    HINTS ${CMAKE_BINARY_DIR}/lib)
+    HINTS "${LLVM_LIBRARY_DIR}/${LLVM_HOST_TARGET}")
   target_link_libraries(flangrti_shared PUBLIC ${FLANG_LIBOMP})
 endif()
 
