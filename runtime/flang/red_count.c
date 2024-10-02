@@ -84,11 +84,13 @@ COUNTFNLKN(count_int8, __INT8_T, 8)
 
 static void (*l_count[4][__NTYPES])() = TYPELIST2LK(l_count_);
 
-static void I8(g_count)(__INT_T n, __INT_T *lr, __INT_T *rr, void *lv, void *rv)
+static void I8(g_count)(__INT_T n, void *lr, void *rr, void *lv, void *rv, __INT_T unused)
 {
   __INT_T i;
+  __INT_T *lr_i = (__INT_T *)lr;
+  __INT_T *rr_i = (__INT_T *)rr;
   for (i = 0; i < n; i++) {
-    lr[i] = lr[i] + rr[i];
+    lr_i[i] = lr_i[i] + rr_i[i];
   }
 }
 
@@ -110,8 +112,7 @@ void ENTFTN(COUNTS, counts)(char *rb, char *mb, DECL_HDR_PTRS(rs), F90_Desc *ms)
     z.lk_shift = GET_DIST_SHIFTS(F90_KIND_G(ms));
   }
   z.l_fn = l_count[z.lk_shift][ms->kind];
-  z.g_fn =
-      (void (*)(__INT_T, void *, void *, void *, void *, __INT_T))I8(g_count);
+  z.g_fn = I8(g_count);
   z.zb = GET_DIST_ZED;
   *(__INT_T *)rb = 0;
   I8(__fort_red_scalar)(&z, rb, mb, (char *)GET_DIST_TRUE_LOG_ADDR,
@@ -137,8 +138,7 @@ void ENTFTN(COUNT, count)(char *rb, char *mb, char *db, DECL_HDR_PTRS(rs),
     z.lk_shift = GET_DIST_SHIFTS(F90_KIND_G(ms));
   }
   z.l_fn = l_count[z.lk_shift][ms->kind];
-  z.g_fn =
-      (void (*)(__INT_T, void *, void *, void *, void *, __INT_T))I8(g_count);
+  z.g_fn = I8(g_count);
   z.zb = GET_DIST_ZED;
   I8(__fort_red_array)(&z, rb, mb, (char *)GET_DIST_TRUE_LOG_ADDR, db,
 		        rs, ms, (F90_Desc *)&mask_desc, ds, __COUNT);
