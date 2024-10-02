@@ -215,9 +215,8 @@ __abort_sig_hand(int sig, siginfo_t *in, FLANGRTI_UCONTEXT_T *u)
   struct sigaction new;
   struct sigaction old;
 
-  new.sa_sigaction = (void (*)(int, siginfo_t *, void *))SIG_DFL;
+  new.sa_handler = SIG_DFL;
   sigemptyset(&new.sa_mask);
-  new.sa_flags = SA_SIGINFO;
   n = 0;
   while (sigs[n].sig != 0) {
     sigaction(sigs[n].sig, &new, &old);
