@@ -1,10 +1,15 @@
-!RUN: %flang -g -fopenmp -S -emit-llvm %s -o - | FileCheck %s
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-!CHECK: define internal void @main_sub
-!CHECK: define internal void @__nv_main_sub_
-!CHECK:  call void @llvm.dbg.declare(metadata ptr %"res$p
-!CHECK-NEXT:  call void @llvm.dbg.declare(metadata ptr %"res$p
-!CHECK-NEXT:  call void @llvm.dbg.declare(metadata ptr %"res$sd
+! REQUIRES: llvm-19
+! RUN: %flang -g -fopenmp -S -emit-llvm %s -o - | FileCheck %s
+
+! CHECK: define internal void @main_sub
+! CHECK: define internal void @__nv_main_sub_
+! CHECK:      #dbg_declare(ptr %"res$p
+! CHECK-NEXT: #dbg_declare(ptr %"res$p
+! CHECK-NEXT: #dbg_declare(ptr %"res$sd
 
 program main
   type :: dtype

@@ -1,15 +1,20 @@
-!RUN: %flang -g -S -emit-llvm %s -o - | FileCheck %s
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-!CHECK: call void @llvm.dbg.value(metadata ptr %array, metadata [[ARRAYDL:![0-9]+]], metadata !DIExpression())
-!CHECK: call void @llvm.dbg.declare(metadata ptr %"array$sd", metadata [[ARRAY:![0-9]+]], metadata !DIExpression())
-!CHECK-LABEL: distinct !DICompileUnit(language: DW_LANG_Fortran90,
-!CHECK: [[ARRAY]] = !DILocalVariable(name: "array"
-!CHECK-SAME: arg: 3
-!CHECK-SAME: type: [[TYPE:![0-9]+]])
-!CHECK: [[TYPE]] = !DICompositeType(tag: DW_TAG_array_type, baseType: {{![0-9]+}}, size: 32, align: 32, elements: [[ELEM:![0-9]+]], dataLocation: [[ARRAYDL]])
-!CHECK: [[ELEM]] = !{[[ELEM1:![0-9]+]], [[ELEM2:![0-9]+]]}
-!CHECK: [[ELEM1]] = !DISubrange(count: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 88, DW_OP_deref), lowerBound: 1, stride: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 112, DW_OP_deref, DW_OP_push_object_address, DW_OP_plus_uconst, 24, DW_OP_deref, DW_OP_mul))
-!CHECK: [[ELEM2]] = !DISubrange(count: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 136, DW_OP_deref), lowerBound: 1, stride: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 160, DW_OP_deref, DW_OP_push_object_address, DW_OP_plus_uconst, 24, DW_OP_deref, DW_OP_mul))
+! REQUIRES: llvm-19
+! RUN: %flang -g -S -emit-llvm %s -o - | FileCheck %s
+
+! CHECK: #dbg_value(ptr %array, [[ARRAYDL:![0-9]+]], !DIExpression()
+! CHECK: #dbg_declare(ptr %"array$sd", [[ARRAY:![0-9]+]], !DIExpression()
+! CHECK-LABEL: distinct !DICompileUnit(language: DW_LANG_Fortran90,
+! CHECK: [[ARRAY]] = !DILocalVariable(name: "array"
+! CHECK-SAME: arg: 3
+! CHECK-SAME: type: [[TYPE:![0-9]+]])
+! CHECK: [[TYPE]] = !DICompositeType(tag: DW_TAG_array_type, baseType: {{![0-9]+}}, size: 32, align: 32, elements: [[ELEM:![0-9]+]], dataLocation: [[ARRAYDL]])
+! CHECK: [[ELEM]] = !{[[ELEM1:![0-9]+]], [[ELEM2:![0-9]+]]}
+! CHECK: [[ELEM1]] = !DISubrange(count: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 88, DW_OP_deref), lowerBound: 1, stride: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 112, DW_OP_deref, DW_OP_push_object_address, DW_OP_plus_uconst, 24, DW_OP_deref, DW_OP_mul))
+! CHECK: [[ELEM2]] = !DISubrange(count: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 136, DW_OP_deref), lowerBound: 1, stride: !DIExpression(DW_OP_push_object_address, DW_OP_plus_uconst, 160, DW_OP_deref, DW_OP_push_object_address, DW_OP_plus_uconst, 24, DW_OP_deref, DW_OP_mul))
 
 subroutine show (message, array)
   character (len=*) :: message
