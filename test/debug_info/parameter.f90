@@ -1,8 +1,13 @@
-!RUN: %flang -g -S -emit-llvm %s -o - | FileCheck %s
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-!CHECK: call void @llvm.dbg.value(metadata i64 99, metadata [[SPAR:![0-9]+]], metadata !DIExpression())
-!CHECK: distinct !DIGlobalVariable(name: "apar"
-!CHECK: [[SPAR]] = !DILocalVariable(name: "spar"
+! REQUIRES: llvm-19
+! RUN: %flang -g -S -emit-llvm %s -o - | FileCheck %s
+
+! CHECK: #dbg_value(i64 99, [[SPAR:![0-9]+]], !DIExpression()
+! CHECK: distinct !DIGlobalVariable(name: "apar"
+! CHECK: [[SPAR]] = !DILocalVariable(name: "spar"
 
 program main
   integer (kind=8) :: svar

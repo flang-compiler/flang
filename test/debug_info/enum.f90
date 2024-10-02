@@ -1,13 +1,18 @@
-!RUN: %flang -g -S -emit-llvm %s -o - | FileCheck %s
+! Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+! See https://llvm.org/LICENSE.txt for license information.
+! SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-!CHECK: call void @llvm.dbg.value(metadata i32 1, metadata [[ENM1:![0-9]+]], metadata !DIExpression())
-!CHECK: call void @llvm.dbg.value(metadata i32 2, metadata [[ENM2:![0-9]+]], metadata !DIExpression())
-!CHECK: call void @llvm.dbg.value(metadata i32 5, metadata [[ENM3:![0-9]+]], metadata !DIExpression())
-!CHECK: call void @llvm.dbg.value(metadata i32 6, metadata [[ENM4:![0-9]+]], metadata !DIExpression())
-!CHECK: [[ENM1]] = !DILocalVariable(name: "red"
-!CHECK: [[ENM2]] = !DILocalVariable(name: "blue"
-!CHECK: [[ENM3]] = !DILocalVariable(name: "black"
-!CHECK: [[ENM4]] = !DILocalVariable(name: "pink"
+! REQUIRES: llvm-19
+! RUN: %flang -g -S -emit-llvm %s -o - | FileCheck %s
+
+! CHECK: #dbg_value(i32 1, [[ENM1:![0-9]+]], !DIExpression()
+! CHECK: #dbg_value(i32 2, [[ENM2:![0-9]+]], !DIExpression()
+! CHECK: #dbg_value(i32 5, [[ENM3:![0-9]+]], !DIExpression()
+! CHECK: #dbg_value(i32 6, [[ENM4:![0-9]+]], !DIExpression()
+! CHECK: [[ENM1]] = !DILocalVariable(name: "red"
+! CHECK: [[ENM2]] = !DILocalVariable(name: "blue"
+! CHECK: [[ENM3]] = !DILocalVariable(name: "black"
+! CHECK: [[ENM4]] = !DILocalVariable(name: "pink"
 
 program main
   enum, bind(c)
