@@ -32,9 +32,9 @@
  * this declares the proper names for the rw_routine and file
  * used in the RW_ macros
  */
-#define RW_ROUTINE int (*p_rw)(void *, size_t, size_t, FILE *)
+#define RW_ROUTINE size_t (*p_rw)(void *, size_t, size_t, FILE *)
 #define RW_FILE FILE *fd
-#define RW_ROUTINE_TYPE int (*)(void *, size_t, size_t, FILE *)
+#define RW_ROUTINE_TYPE size_t (*)(void *, size_t, size_t, FILE *)
 
 /*
  * sometimes special action is taken on read or write.
@@ -47,8 +47,7 @@ extern void rw_dpmout_state(RW_ROUTINE, RW_FILE);
 extern void rw_semant_state(RW_ROUTINE, RW_FILE); /* semfin.c */
 extern void rw_gnr_state(RW_ROUTINE, RW_FILE);    /* semgnr.c */
 extern void rw_sym_state(RW_ROUTINE, RW_FILE);    /* symtab.c */
-extern void rw_dtype_state(int (*p_rw)(void *, size_t, size_t, FILE *),
-                           FILE *fd);             /* dtypeutl.c */
+extern void rw_dtype_state(RW_ROUTINE, RW_FILE);  /* dtypeutl.c */
 extern void rw_ast_state(RW_ROUTINE, RW_FILE);    /* ast.c */
 extern void rw_dinit_state(RW_ROUTINE, RW_FILE);  /* dinit.c */
 extern void rw_import_state(RW_ROUTINE, RW_FILE); /* interf.c */

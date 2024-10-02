@@ -13799,7 +13799,7 @@ save_host_state(int wherefrom)
       }
     }
   }
-  rw_host_state(wherefrom, (int (*)())fwrite, state_file);
+  rw_host_state(wherefrom, fwrite, state_file);
   saved_symavl = stb.stg_avail;
   saved_astavl = astb.stg_avail;
   saved_dtyavl = stb.dt.stg_avail;
@@ -13906,7 +13906,7 @@ restore_host_state(int whichpass)
 
   if (whichpass == 2) {
     fseek(state_file, 0L, 0);
-    rw_host_state(0x13, (int (*)())fread, state_file);
+    rw_host_state(0x13, fread, state_file);
     /*astb.firstuast = astb.stg_avail;*/
     /* ### don't reset firstusym for main program */
     stb.firstusym = stb.stg_avail;
@@ -13914,7 +13914,7 @@ restore_host_state(int whichpass)
     fix_symtab();
   } else if (whichpass == 4) { /* for ipa import */
     fseek(state_file, 0L, 0);
-    rw_host_state(0x2, (int (*)())fread, state_file);
+    rw_host_state(0x2, fread, state_file);
     /*astb.firstuast = astb.stg_avail;*/
     /* ### don't reset firstusym for main program */
     stb.firstusym = stb.stg_avail;
@@ -13993,7 +13993,7 @@ restore_host_state(int whichpass)
     saved_labels[saved_labels_avail] = ';';
 
     fseek(state_file, 0L, 0);
-    rw_host_state(0x3, (int (*)())fread, state_file);
+    rw_host_state(0x3, fread, state_file);
     /*astb.firstuast = astb.stg_avail;*/
 
     fseek(state_append_file, state_file_position, 0);
@@ -14124,13 +14124,13 @@ save_module_state1()
     if (modstate_file == NULL)
       errfatal(5);
   }
-  rw_host_state(0x1, (int (*)())fwrite, modstate_file);
+  rw_host_state(0x1, fwrite, modstate_file);
 } /* save_module_state1 */
 
 void
 save_module_state2()
 {
-  rw_host_state(0x16, (int (*)())fwrite, modstate_file);
+  rw_host_state(0x16, fwrite, modstate_file);
   modsaved_symavl = stb.stg_avail;
   modsaved_astavl = astb.stg_avail;
   modsaved_dtyavl = stb.dt.stg_avail;
@@ -14151,14 +14151,14 @@ save_imported_modules_state()
     if (modsave_file == NULL)
       errfatal(5);
   }
-  rw_host_state(0x20, (int (*)())fwrite, modsave_file);
+  rw_host_state(0x20, fwrite, modsave_file);
 } /* save_imported_modules_state */
 
 void
 restore_imported_modules_state()
 {
   fseek(modsave_file, 0L, 0);
-  rw_host_state(0x20, (int (*)())fread, modsave_file);
+  rw_host_state(0x20, fread, modsave_file);
 } /* restore_imported_modules_state */
 
 /*
@@ -14193,7 +14193,7 @@ restore_module_state()
     errfatal(5);
   /* First, read the binary-saved information */
   fseek(modstate_file, 0L, 0);
-  rw_host_state(0x17, (int (*)())fread, modstate_file);
+  rw_host_state(0x17, fread, modstate_file);
   /* for TPR 1654, if we need to set NEEDMOD for internal
    * subprograms, this is the place to set it
    * NEEDMODP( stb.curr_scope, 1 );
@@ -14221,7 +14221,7 @@ restore_module_state()
     mod_clear_init = 0;
     /* Lastly, rewrite the module state file */
     fseek(modstate_file, 0L, 0);
-    rw_host_state(0x17, (int (*)())fwrite, modstate_file);
+    rw_host_state(0x17, fwrite, modstate_file);
     modsaved_symavl = stb.stg_avail;
     modsaved_astavl = astb.stg_avail;
     modsaved_dtyavl = stb.dt.stg_avail;
@@ -14239,7 +14239,7 @@ reset_module_state()
     interr("no module state file to restore", 0, 4);
   if (sem.which_pass == 1) {
     fseek(modstate_file, 0L, 0);
-    rw_host_state(0x17, (int (*)())fread, modstate_file);
+    rw_host_state(0x17, fread, modstate_file);
   } else {
     /* export the module-contained subprogram */
     if (!modstate_append_file) {
