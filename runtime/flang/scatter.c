@@ -99,21 +99,11 @@ static void I8(gathscat_start)(void *skp, char *rb, char *sb, F90_Desc *rd,
 
   j = k = sk->lclcnt;
   if (k > 0) {
-
     /* 
      * make sure base type of object hasn't changed for local gather...
      * This can occur when we share schedules across objects ...
      */
-    /* Couldn't find where gathscatfn is set to local_gathscat_WRAPPER.
-       Possible dead code? Work around the compiler warning with an
-       explicit cast for now. */
-    if (sk->gathscatfn == (gathscatfn_t)local_gathscat_WRAPPER) {
-
-      local_gathscat_WRAPPER(k, rp, sk->soff, sp, sk->goff, F90_KIND_G(rd));
-
-    } else {
-      sk->gathscatfn(k, rp, sk->soff, sp, sk->goff);
-    }
+    sk->gathscatfn(k, rp, sk->soff, sp, sk->goff, F90_KIND_G(rd));
   }
   /* now non-local elements */
 
@@ -160,20 +150,12 @@ static void I8(gathscat_start)(void *skp, char *rb, char *sb, F90_Desc *rd,
       }
 
       if (nr > 0) {
-
         /* 
          * Added call to wrapper routine for local scatter
          * in order to handle cases where the schedule is
          * shared between objects of different types...
          */
-        /* Couldn't find where gathscatfn is set to local_gathscat_WRAPPER.
-           Possible dead code? Work around the compiler warning with an
-           explicit cast for now. */
-        if (sk->scatterfn == (scatterfn_t)local_scatter_WRAPPER) {
-          local_scatter_WRAPPER(nr, rp, sk->soff + k, bufr, F90_KIND_G(rd));
-        } else {
-          sk->scatterfn(nr, rp, sk->soff + k, bufr);
-        }
+        sk->scatterfn(nr, rp, sk->soff + k, bufr, F90_KIND_G(rd));
       }
 
       j += ns;

@@ -42,9 +42,12 @@ struct gathscat_dim {
   __INT_T *xmap;     /* map index axis -> unvectored axis */
 };
 
-typedef void (*gatherfn_t)(int, void *, void *, int *);
-typedef void (*gathscatfn_t)(int, void *, int *, void *, int *);
-typedef void (*scatterfn_t)(int, void *, int *, void *);
+typedef void (*gatherfn_t)(int n, void *dst, void *src, int *gv,
+                           __INT_T optional_kind);
+typedef void (*gathscatfn_t)(int n, void *dst, int *sv, void *src, int *gv,
+                             __INT_T optional_kind);
+typedef void (*scatterfn_t)(int n, void *dst, int *sv, void *src,
+                            __INT_T optional_kind);
 
 struct gathscat_parm {
   const char *what;           /* "GATHER"/"XXX_SCATTER" */

@@ -191,5 +191,5 @@ static gatherfn_t __fort_local_gather[__NTYPES] = {
 void
 local_gather_WRAPPER(int n, void *dst, void *src, int *gv, __INT_T kind)
 {
-  __fort_local_gather[kind](n, dst, src, gv);
+  __fort_local_gather[kind](n, dst, src, gv, /* optional */ 0);
 }

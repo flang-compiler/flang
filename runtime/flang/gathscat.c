@@ -191,7 +191,7 @@ static scatterfn_t __fort_local_scatter[__NTYPES] = {
 void
 local_scatter_WRAPPER(int n, void *dst, int *sv, void *src, __INT_T kind)
 {
-  __fort_local_scatter[kind](n, dst, sv, src);
+  __fort_local_scatter[kind](n, dst, sv, src, /* optional */ 0);
 }
 
 /* local gather-scatter functions */
@@ -377,5 +377,5 @@ void
 local_gathscat_WRAPPER(int n, void *dst, int *sv, void *src, int *gv,
                        __INT_T kind)
 {
-  __fort_local_gathscat[kind](n, dst, sv, src, gv);
+  __fort_local_gathscat[kind](n, dst, sv, src, gv, /* optional */ 0);
 }
