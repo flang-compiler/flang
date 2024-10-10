@@ -40,6 +40,10 @@ create_action_map(action_map_t **map)
 void
 destroy_action_map(action_map_t **map)
 {
+  if (*map == NULL) {
+      return;
+  }
+    
   /* Free flags data structure */
   hashmap_free((*map)->actions);
 
