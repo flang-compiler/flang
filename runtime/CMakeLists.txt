@@ -4,6 +4,12 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 
+if(DEFINED CROSS_COMPILE_TARGET_TRIPLE)
+  set(CMAKE_C_FLAGS "-target ${CROSS_COMPILE_TARGET_TRIPLE}")
+  set(CMAKE_CXX_FLAGS "-target ${CROSS_COMPILE_TARGET_TRIPLE}")
+  set(CMAKE_Fortran_FLAGS "-target ${CROSS_COMPILE_TARGET_TRIPLE}")
+endif()
+
 set (RUNTIME_SHARED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shared)
 
 add_definitions(
@@ -39,6 +45,11 @@ elseif( ${TARGET_ARCHITECTURE} STREQUAL "ppc64le" )
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(DEFINED CROSS_COMPILE_TARGET_TRIPLE)
+  link_directories("${LLVM_LIBRARY_DIR}/${CROSS_COMPILE_TARGET_TRIPLE}")
+else()
+  link_directories("${LLVM_LIBRARY_DIR}/${LLVM_HOST_TARGET}")
+endif()
 
 add_subdirectory(ompstub)
 
