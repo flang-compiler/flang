@@ -12,7 +12,7 @@
 /* local gather functions */
 
 static void
-local_gather_INT1(int n, void *dstp, void *srcp, int *gv)
+local_gather_INT1(int n, void *dstp, void *srcp, int *gv, int unused)
 {
   __INT1_T *dst = (__INT1_T *)dstp;
   __INT1_T *src = (__INT1_T *)srcp;
@@ -22,7 +22,7 @@ local_gather_INT1(int n, void *dstp, void *srcp, int *gv)
 }
 
 static void
-local_gather_INT2(int n, void *dstp, void *srcp, int *gv)
+local_gather_INT2(int n, void *dstp, void *srcp, int *gv, int unused)
 {
   __INT2_T *dst = (__INT2_T *)dstp;
   __INT2_T *src = (__INT2_T *)srcp;
@@ -32,7 +32,7 @@ local_gather_INT2(int n, void *dstp, void *srcp, int *gv)
 }
 
 static void
-local_gather_INT4(int n, void *dstp, void *srcp, int *gv)
+local_gather_INT4(int n, void *dstp, void *srcp, int *gv, int unused)
 {
   __INT4_T *dst = (__INT4_T *)dstp;
   __INT4_T *src = (__INT4_T *)srcp;
@@ -42,7 +42,7 @@ local_gather_INT4(int n, void *dstp, void *srcp, int *gv)
 }
 
 static void
-local_gather_INT8(int n, void *dstp, void *srcp, int *gv)
+local_gather_INT8(int n, void *dstp, void *srcp, int *gv, int unused)
 {
   __INT8_T *dst = (__INT8_T *)dstp;
   __INT8_T *src = (__INT8_T *)srcp;
@@ -52,7 +52,7 @@ local_gather_INT8(int n, void *dstp, void *srcp, int *gv)
 }
 
 static void
-local_gather_LOG1(int n, void *dstp, void *srcp, int *gv)
+local_gather_LOG1(int n, void *dstp, void *srcp, int *gv, int unused)
 {
   __LOG1_T *dst = (__LOG1_T *)dstp;
   __LOG1_T *src = (__LOG1_T *)srcp;
@@ -62,7 +62,7 @@ local_gather_LOG1(int n, void *dstp, void *srcp, int *gv)
 }
 
 static void
-local_gather_LOG2(int n, void *dstp, void *srcp, int *gv)
+local_gather_LOG2(int n, void *dstp, void *srcp, int *gv, int unused)
 {
   __LOG2_T *dst = (__LOG2_T *)dstp;
   __LOG2_T *src = (__LOG2_T *)srcp;
@@ -72,7 +72,7 @@ local_gather_LOG2(int n, void *dstp, void *srcp, int *gv)
 }
 
 static void
-local_gather_LOG4(int n, void *dstp, void *srcp, int *gv)
+local_gather_LOG4(int n, void *dstp, void *srcp, int *gv, int unused)
 {
   __LOG4_T *dst = (__LOG4_T *)dstp;
   __LOG4_T *src = (__LOG4_T *)srcp;
@@ -82,7 +82,7 @@ local_gather_LOG4(int n, void *dstp, void *srcp, int *gv)
 }
 
 static void
-local_gather_LOG8(int n, void *dstp, void *srcp, int *gv)
+local_gather_LOG8(int n, void *dstp, void *srcp, int *gv, int unused)
 {
   __LOG8_T *dst = (__LOG8_T *)dstp;
   __LOG8_T *src = (__LOG8_T *)srcp;
@@ -92,7 +92,7 @@ local_gather_LOG8(int n, void *dstp, void *srcp, int *gv)
 }
 
 static void
-local_gather_REAL4(int n, void *dstp, void *srcp, int *gv)
+local_gather_REAL4(int n, void *dstp, void *srcp, int *gv, int unused)
 {
   __REAL4_T *dst = (__REAL4_T *)dstp;
   __REAL4_T *src = (__REAL4_T *)srcp;
@@ -102,7 +102,7 @@ local_gather_REAL4(int n, void *dstp, void *srcp, int *gv)
 }
 
 static void
-local_gather_REAL8(int n, void *dstp, void *srcp, int *gv)
+local_gather_REAL8(int n, void *dstp, void *srcp, int *gv, int unused)
 {
   __REAL8_T *dst = (__REAL8_T *)dstp;
   __REAL8_T *src = (__REAL8_T *)srcp;
@@ -112,7 +112,7 @@ local_gather_REAL8(int n, void *dstp, void *srcp, int *gv)
 }
 
 static void
-local_gather_REAL16(int n, void *dstp, void *srcp, int *gv)
+local_gather_REAL16(int n, void *dstp, void *srcp, int *gv, int unused)
 {
   __REAL16_T *dst = (__REAL16_T *)dstp;
   __REAL16_T *src = (__REAL16_T *)srcp;
@@ -122,7 +122,7 @@ local_gather_REAL16(int n, void *dstp, void *srcp, int *gv)
 }
 
 static void
-local_gather_CPLX8(int n, void *dstp, void *srcp, int *gv)
+local_gather_CPLX8(int n, void *dstp, void *srcp, int *gv, int unused)
 {
   __CPLX8_T *dst = (__CPLX8_T *)dstp;
   __CPLX8_T *src = (__CPLX8_T *)srcp;
@@ -132,7 +132,7 @@ local_gather_CPLX8(int n, void *dstp, void *srcp, int *gv)
 }
 
 static void
-local_gather_CPLX16(int n, void *dstp, void *srcp, int *gv)
+local_gather_CPLX16(int n, void *dstp, void *srcp, int *gv, int unused)
 {
   __CPLX16_T *dst = (__CPLX16_T *)dstp;
   __CPLX16_T *src = (__CPLX16_T *)srcp;
@@ -142,7 +142,7 @@ local_gather_CPLX16(int n, void *dstp, void *srcp, int *gv)
 }
 
 static void
-local_gather_CPLX32(int n, void *dstp, void *srcp, int *gv)
+local_gather_CPLX32(int n, void *dstp, void *srcp, int *gv, int unused)
 {
   __CPLX32_T *dst = (__CPLX32_T *)dstp;
   __CPLX32_T *src = (__CPLX32_T *)srcp;
