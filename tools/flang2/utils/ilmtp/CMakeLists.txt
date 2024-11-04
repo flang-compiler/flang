@@ -33,9 +33,18 @@ add_custom_command(
                                               -s ${FLANG2_DOC_BIN_DIR}/ilmtp.rst
   DEPENDS ilmtp ${ARCH_DEP_ILM_DIR}/ilmtp.n
                 ${ARCH_DEP_ILM_DIR}/ilmtp_atomic.n
-                ${ARCH_DEP_ILM_DIR}/ilmtp_longdouble.n
                 ${ARCH_DEP_ILI_DIR}/ilitp.n
   )
+
+if(NOT ${TARGET_ARCHITECTURE} STREQUAL "riscv64")
+  add_custom_command(
+    OUTPUT ${UTILS_ILM_BIN_DIR}/ilmtpdf.h
+           ${UTILS_ILM_BIN_DIR}/ilmtp.h
+           ${UTILS_ILM_BIN_DIR}/ilmtp.n1
+           ${FLANG2_DOC_BIN_DIR}/ilmtp.rst
+    APPEND
+    DEPENDS ${ARCH_DEP_ILM_DIR}/ilmtp_longdouble.n)
+endif()
 
 add_custom_target(gen_backend_ilm
   SOURCES ${UTILS_ILM_BIN_DIR}/ilmtpdf.h
