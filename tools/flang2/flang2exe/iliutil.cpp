@@ -94,7 +94,7 @@ static int _pwr2(INT, int);
 static int _kpwr2(INT, INT, int);
 static int _ipowi(int, int);
 static int _xpowi(int, int, ILI_OP);
-#if defined(TARGET_X8664) || defined(TARGET_POWER) || !defined(TARGET_LLVM_ARM)
+#if defined(TARGET_X8664) || defined(TARGET_POWER)
 static int _frsqrt(int);
 #endif
 static int _mkfunc(const char *);
@@ -2696,7 +2696,7 @@ addarth(ILI *ilip)
 #endif
 #ifdef IL_FRSQRT
   case IL_FRSQRT:
-#if !defined(TARGET_LLVM_ARM)
+#if defined(TARGET_X8664) || defined(TARGET_POWER)
     if (XBIT(183, 0x10000)) {
       if (ncons == 1) {
         xfsqrt(con1v2, &res.numi[1]);
@@ -13214,7 +13214,7 @@ _xpowi(int opn, int pwr, ILI_OP opc)
   return opn;
 }
 
-#if defined(TARGET_X8664) || defined(TARGET_POWER) || !defined(TARGET_LLVM_ARM)
+#if defined(TARGET_X8664) || defined(TARGET_POWER)
 static int
 _frsqrt(int x)
 {

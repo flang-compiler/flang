@@ -31,8 +31,14 @@ add_custom_command(
   DEPENDS ilitp
           ${UTILS_ILI_DIR}/ilitp_atomic.n
           ${ARCH_DEP_ILI_DIR}/ilitp.n
-          ${ARCH_DEP_ILI_DIR}/ilitp_longdouble.n
   )
+
+if(NOT ${TARGET_ARCHITECTURE} STREQUAL "riscv64")
+  add_custom_command(
+    OUTPUT ${UTILS_ILI_BIN_DIR}/schinfo.h ${UTILS_ILI_BIN_DIR}/ilinfodf.h ${UTILS_ILI_BIN_DIR}/iliatt.h
+    APPEND
+    DEPENDS ${ARCH_DEP_ILI_DIR}/ilitp_longdouble.n)
+endif()
 
 add_custom_target(gen_backend_ili
   SOURCES ${UTILS_ILI_BIN_DIR}/schinfo.h ${UTILS_ILI_BIN_DIR}/ilinfodf.h ${UTILS_ILI_BIN_DIR}/iliatt.h

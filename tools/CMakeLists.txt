@@ -14,6 +14,9 @@ set(UTILS_COMMON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shared/utils/common)
 if( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
   add_definitions(-DLLVM_ENABLE_FFI=false)
 endif()
+if( ${TARGET_ARCHITECTURE} STREQUAL "riscv64" )
+  add_definitions(-DLLVM_ENABLE_FFI=false)
+endif()
 
 link_directories("${LLVM_LIBRARY_DIR}/${LLVM_HOST_TARGET}")
 
