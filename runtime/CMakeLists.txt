@@ -37,6 +37,11 @@ elseif( ${TARGET_ARCHITECTURE} STREQUAL "aarch64" )
    -DTARGET_${OS}_ARM
    -DTARGET_${OS}_ARM64
   )
+elseif( ${TARGET_ARCHITECTURE} STREQUAL "riscv64" )
+  add_definitions(
+   -DTARGET_LLVM_RISCV64
+   -DTARGET_LINUX_RISCV
+  )
 elseif( ${TARGET_ARCHITECTURE} STREQUAL "ppc64le" )
   add_definitions(
     -DTARGET_${OS}_POWER

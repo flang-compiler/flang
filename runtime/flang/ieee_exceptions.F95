@@ -37,6 +37,13 @@ module IEEE_EXCEPTIONS
   integer, private, parameter :: FE_INEXACT   = 16
   integer, private, parameter :: FE_DENORM    = 0
   ! FE_DENORM is not currently supported on arm 
+#elif defined(TARGET_LINUX_RISCV)
+  integer, private, parameter :: FE_INVALID   = 16
+  integer, private, parameter :: FE_DIVBYZERO = 8
+  integer, private, parameter :: FE_OVERFLOW  = 4
+  integer, private, parameter :: FE_UNDERFLOW = 2
+  integer, private, parameter :: FE_INEXACT   = 1
+  integer, private, parameter :: FE_DENORM    = 0
 #elif defined(TARGET_LINUX_POWER)
   ! FE_DENORM is not supported on Power
   integer, private, parameter :: FE_INVALID   = X'20000000'

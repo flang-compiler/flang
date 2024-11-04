@@ -3782,7 +3782,7 @@ process_ll_abi_func_ftn_mod(LL_Module *mod, SPTR func_sptr, bool update)
            "Unknown function prototype",
            func_sptr, ERR_Fatal);
     abi->missing_prototype = true;
-#if defined(TARGET_ARM)
+#if defined(TARGET_ARM) || defined(TARGET_RISCV)
     abi->call_as_varargs = false;
 #else
     abi->call_as_varargs = true;
