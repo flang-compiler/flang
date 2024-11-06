@@ -10,29 +10,30 @@
    \brief Main source module to translate into LLVM
  */
 
-#include "cgmain.h"
-#include "dtypeutl.h"
-#include "ll_ftn.h"
-#include "exp_rte.h"
-#include "error.h"
-#include "machreg.h"
-#include "dinit.h"
-#include "cg.h"
-#include "mach.h"
-#include "fih.h"
-#include "pd.h"
-#include "llutil.h"
-#include "lldebug.h"
-#include "go.h"
-#include "sharedefs.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include "llassem.h"
-#include "ll_write.h"
+#include <string>
+#include "cgmain.h"
+#include "cg.h"
+#include "dinit.h"
+#include "dtypeutl.h"
+#include "error.h"
+#include "exp_rte.h"
 #include "expand.h"
-#include "outliner.h"
+#include "fih.h"
+#include "go.h"
+#include "ll_ftn.h"
+#include "ll_write.h"
+#include "llassem.h"
+#include "lldebug.h"
+#include "llutil.h"
+#include "mach.h"
+#include "machreg.h"
 #include "mth.h"
+#include "outliner.h"
+#include "pd.h"
+#include "sharedefs.h"
 #if defined(SOCPTRG)
 #include "soc.h"
 #endif
@@ -2639,11 +2640,12 @@ get_omnipotent_pointer(LL_Module *module)
     LL_MDRef s0;
     LL_MDRef r0;
     LL_MDRef a[3];
-    char baseBuff[32];
+    char baseBuff[64];
     const char *baseName = "Flang FAA";
     const char *const omniName = "unlimited ptr";
     const char *const unObjName = "unref ptr";
-    snprintf(baseBuff, 32, "%s %x", baseName, funcId);
+    snprintf(baseBuff, 64, "%s %zx %x", baseName,
+             std::hash<std::string>{}(current_module->module_name), funcId);
     s0 = ll_get_md_string(module, baseBuff);
     r0 = ll_get_md_node(module, LL_PlainMDNode, &s0, 1);
     a[0] = ll_get_md_string(module, unObjName);
