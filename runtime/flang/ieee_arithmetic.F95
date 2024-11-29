@@ -36,8 +36,12 @@ module IEEE_ARITHMETIC
   integer, private, parameter :: FE_DOWNWARD   = X'00800000'
   integer, private, parameter :: FE_UPWARD     = X'00400000'
   integer, private, parameter :: FE_TOWARDZERO = X'00c00000'
-#else
-#ifdef TARGET_LINUX_POWER
+#elif defined(TARGET_LINUX_RISCV)
+  integer, private, parameter :: FE_TONEAREST  = 0
+  integer, private, parameter :: FE_DOWNWARD   = 2
+  integer, private, parameter :: FE_UPWARD     = 3
+  integer, private, parameter :: FE_TOWARDZERO = 1
+#elif defined(TARGET_LINUX_POWER)
   integer, private, parameter :: FE_TONEAREST  = 0
   integer, private, parameter :: FE_TOWARDZERO = 1
   integer, private, parameter :: FE_UPWARD     = 2
@@ -48,7 +52,6 @@ module IEEE_ARITHMETIC
   integer, private, parameter :: FE_DOWNWARD   = 1024
   integer, private, parameter :: FE_UPWARD     = 2048
   integer, private, parameter :: FE_TOWARDZERO = 3072
-#endif
 #endif
 
   type(ieee_round_type), parameter :: ieee_nearest = ieee_round_type(0)
@@ -486,7 +489,7 @@ contains
 
   pure logical function ieee_support_denormalnox()
 !pgi$ defaultkind
-#if defined TARGET_LINUX_ARM || defined TARGET_LINUX_POWER || defined PGFLANG
+#if defined(TARGET_LINUX_ARM) || defined(TARGET_LINUX_RISCV) || defined(TARGET_LINUX_POWER) || defined(PGFLANG)
     ieee_support_denormalnox = .false.
 #else
     ieee_support_denormalnox = .true.
@@ -497,7 +500,7 @@ contains
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
     real :: x
-#if defined TARGET_LINUX_ARM || defined TARGET_LINUX_POWER || defined PGFLANG
+#if defined(TARGET_LINUX_ARM) || defined(TARGET_LINUX_RISCV) || defined(TARGET_LINUX_POWER) || defined(PGFLANG)
     ieee_support_denormalr = .false.
 #else
     ieee_support_denormalr = .true.
@@ -589,7 +592,7 @@ contains
 
   pure logical function ieee_support_uflowctrlnox()
 !pgi$ defaultkind
-#if defined TARGET_LINUX_ARM || defined TARGET_LINUX_POWER || defined PGFLANG
+#if defined(TARGET_LINUX_ARM) || defined(TARGET_LINUX_RISCV) || defined(TARGET_LINUX_POWER) || defined(PGFLANG)
     ieee_support_uflowctrlnox = .false.
 #else
     ieee_support_uflowctrlnox = .true.
@@ -600,7 +603,7 @@ contains
 !pgi$ defaultkind
 !dir$ ignore_tkr (kr) x
     real :: x
-#if defined TARGET_LINUX_ARM || defined TARGET_LINUX_POWER || defined PGFLANG
+#if defined(TARGET_LINUX_ARM) || defined(TARGET_LINUX_RISCV) || defined(TARGET_LINUX_POWER) || defined(PGFLANG)
     ieee_support_uflowctrlr = .false.
 #else
     ieee_support_uflowctrlr = .true.

@@ -56,7 +56,7 @@ RGSETB rgsetb;
 
 const int scratch_regs[3] = {IR_RAX, IR_RCX, IR_RDX};
 
-#if defined(TARGET_LLVM_ARM) || defined(TARGET_LLVM_POWER)
+#if defined(TARGET_LLVM_ARM) || defined(TARGET_LLVM_POWER) || defined(TARGET_LLVM_RISCV)
 
 /* arguments passed in registers */
 int mr_arg_ir[MR_MAX_IREG_ARGS + 1];

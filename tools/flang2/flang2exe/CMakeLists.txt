@@ -117,6 +117,12 @@ add_flang_executable(flang2
   ${SOURCES} ${SHARED_CPP_SOURCES}
   )
 
+if(DEFINED CROSS_COMPILE_TARGET_TRIPLE)
+  set_target_properties(flang2
+    PROPERTIES OUTPUT_NAME
+    "${CROSS_COMPILE_TARGET_TRIPLE}-flang2")
+endif()
+
 target_compile_definitions(flang2
   PRIVATE
   ${COMMON_DEFS}
