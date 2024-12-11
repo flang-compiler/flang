@@ -14042,10 +14042,15 @@ cg_llvm_init(void)
 
   CHECK(TARGET_PTRSIZE == size_of(DT_CPTR));
 
-  if (flg.llvm_target_triple)
+  if (flg.llvm_target_triple) {
     triple = flg.llvm_target_triple;
-  else
+  } else {
+#ifdef CROSS_COMPILE_TARGET_TRIPLE
+    triple = CROSS_COMPILE_TARGET_TRIPLE;
+#else
     triple = LLVM_DEFAULT_TARGET_TRIPLE;
+#endif
+  }
 
   ir_version = get_llvm_version();
 

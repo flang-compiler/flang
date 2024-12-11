@@ -26,7 +26,7 @@ jobs:
     strategy:
       matrix:
         target: [AArch64]
-        llvm_branch: [release_17x, release_18x]
+        llvm_branch: [release_18x, release_19x]
 
     steps:
       - name: Check tools
