@@ -154,25 +154,25 @@
 
         contains
             logical function compare_eq_cptrs(a,b)
-            type(C_PTR) :: a,b
+            type(C_PTR), intent(in) :: a,b
             compare_eq_cptrs = (a%val .eq. b%val)
             return
             end function
 
             logical function compare_ne_cptrs(a,b)
-            type(C_PTR) :: a,b
+            type(C_PTR), intent(in) :: a,b
             compare_ne_cptrs = (a%val .ne. b%val)
             return
             end function
 
             logical function compare_eq_cfunptrs(a,b)
-            type(C_FUNPTR) :: a,b
+            type(C_FUNPTR), intent(in) :: a,b
             compare_eq_cfunptrs = (a%val .eq. b%val)
             return
             end function
 
             logical function compare_ne_cfunptrs(a,b)
-            type(C_FUNPTR) :: a,b
+            type(C_FUNPTR), intent(in) :: a,b
             compare_ne_cfunptrs = (a%val .ne. b%val)
             return
             end function
