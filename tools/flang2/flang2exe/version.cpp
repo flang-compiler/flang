@@ -9,10 +9,14 @@
 #include "version.h"
 
 #ifndef LANGUAGE
-#define LANGUAGE "F90"
+#define LANGUAGE FLANG_LANGUAGE
 #endif
 
+#ifdef FLANG_VENDOR
+#define PRODUCT FLANG_VENDOR FLANG_LANGUAGE " "
+#else
 #define PRODUCT ""
+#endif
 
 /* COPYRIGHT is extern to make it easy to find in symbol table */
 /* it also has extra space to patch in interesting stuff */
