@@ -51,6 +51,14 @@
 
 static bool process_input(char *argv0, bool *need_cuda_constructor);
 
+/** Product name in debug output
+ */
+#ifdef FLANG_VENDOR
+#define DNAME FLANG_VENDOR FLANG_LANGUAGE
+#else
+#define DNAME FLANG_LANGUAGE
+#endif
+
 #if DEBUG & sun
 #ifndef _ERRNO_H
 extern int errno;
@@ -199,7 +207,7 @@ process_input(char *argv0, bool *need_cuda_constructor)
   gbl.func_count++;
   gbl.multi_func_count = gbl.func_count;
 
-    TR("F90 ILM INPUT begins\n")
+    TR(DNAME " ILM INPUT begins\n")
     if (!IS_PARFILE)
     {
       upper(0);
@@ -278,7 +286,7 @@ process_input(char *argv0, bool *need_cuda_constructor)
             AssignAddresses(); /* exp_rte.c */
           }
         }
-        TR("F90 EXPANDER begins\n");
+        TR(DNAME " EXPANDER begins\n");
 
         expand(); /* expand ILM's into ILI  */
         DUMP("expand");
@@ -315,14 +323,14 @@ process_input(char *argv0, bool *need_cuda_constructor)
           gbl.ompaccel_isdevice = true;
 #endif
 
-        TR("F90 SCHEDULER begins\n");
+        TR(DNAME " SCHEDULER begins\n");
         DUMP("before-schedule");
         schedule();
         xtimes[5] += get_rutime();
         DUMP("schedule");
       } /* CUDAG(GBL_CURRFUNC) & CUDA_HOST */
     }
-    TR("F90 ASSEMBLER begins\n");
+    TR(DNAME " ASSEMBLER begins\n");
     assemble();
     xtimes[6] += get_rutime();
     upper_save_syminfo();
@@ -989,7 +997,7 @@ process_stb_file()
     gbl.func_count++;
     gbl.multi_func_count = gbl.func_count;
 
-    TR("F90 STBFILE INPUT begins\n")
+    TR(DNAME " STBFILE INPUT begins\n")
     upper(1); /* should we generate upper_stbfil()? */
 
     if (gbl.eof_flag)
