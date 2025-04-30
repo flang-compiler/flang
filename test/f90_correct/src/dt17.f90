@@ -42,7 +42,7 @@
 	  do i = lbound(a,1),ubound(a,1)
 	   do j = lbound(a,2),ubound(a,2)
 	    if(a(i,j)%i .ne. ia(i,j) )then
-	     write(*,'(a,a,i1,a,i1,a,i4,a,i4)') s,'a(',i,',',j,')%i=',a(i,j)%i,' != ',ia(i)
+	     write(*,'(a,a,i1,a,i1,a,i4,a,i4)') s,'a(',i,',',j,')%i=',a(i,j)%i,' != ',ia(i,j)
 	     r = 0
 	    endif
 	    do k = lbound(ja,1),ubound(ja,1)
