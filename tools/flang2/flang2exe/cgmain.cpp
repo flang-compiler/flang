@@ -3523,12 +3523,14 @@ write_instructions(LL_Module *module)
     }
     /*
      *  Do not dump debug location here if
+     *  - debug info is not available
      *  - it is NULL
      *  - it is already written (dbg_line_op_written) or
      *  - it is a known internal (f90 runtime) call in prolog (fort_init &
      * f90_*)
      */
-    if (!(LL_MDREF_IS_NULL(instrs->dbg_line_op) || dbg_line_op_written ||
+    if (module->debug_info &&
+          !(LL_MDREF_IS_NULL(instrs->dbg_line_op) || dbg_line_op_written ||
           ((instrs->dbg_line_op ==
             lldbg_get_subprogram_line(module->debug_info)) &&
            should_suppress_debug_loc(instrs)))) {
