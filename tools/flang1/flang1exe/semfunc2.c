@@ -84,6 +84,11 @@ static ITEM *stfunc_argl;
 static int pass_position = 0;
 static int pass_object_dummy = 0;
 
+/** \brief current statement function argument information used in AST traversal
+ *  to exclude dummy argument in statement function.
+ */
+static ARGINFO *cur_stfunc_arginfo;
+
 /** \brief Set position of type-bound procedure passed object location. */
 void
 set_pass_objects(int pos, int pod)
@@ -270,6 +275,21 @@ dump_stfunc(int sptr)
   fprintf(gbl.dbgfil, "\n");
 }
 
+static void
+chk_stfunc_shared_var(int ast, int *unused)
+{
+  if (ast && A_TYPEG(ast) == A_ID) {
+    for (ARGINFO* arginfo = cur_stfunc_arginfo; arginfo != NULL;
+         arginfo = arginfo->next)
+      if (ast == arginfo->formal)
+        return;
+    int sptr = A_SPTRG(ast);
+    // exclude structure member
+    if (STYPEG(sptr) != ST_MEMBER)
+      sem_check_scope(sptr, sptr);
+  }
+}
+
 /*---------------------------------------------------------------------*/
 
 int
@@ -423,6 +443,12 @@ ref_stfunc(SST *stktop, ITEM *args)
    * of the statement function.
    */
   asn_sfuse(sfdsc->l_use);
+
+  if (sem.parallel || sem.task || sem.target || sem.teams || sem.orph) {
+    cur_stfunc_arginfo = sfdsc->args;
+    ast_traverse(sfdsc->rhs, NULL, chk_stfunc_shared_var, NULL);
+    cur_stfunc_arginfo = NULL;
+  }
 
   ast = ast_rewrite(sfdsc->rhs);
   ast_unvisit();
