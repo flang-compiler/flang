@@ -8166,7 +8166,7 @@ semant1(int rednum, SST *top)
     bind_attr.altname = 0;
 
     np = scn.id.name + SST_CVALG(RHS(2));
-    if (sem_strcmp(np, "c") != 0) {
+    if (sem_strcmp(np, "c") != 0 || SST_IDG(RHS(6)) != S_CONST) {
       error(4, 3, gbl.lineno, "Illegal BIND -", np);
     } else {
       bind_attr.exist = DA_B(DA_C) | DA_B(DA_ALIAS);
