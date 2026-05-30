@@ -7359,8 +7359,11 @@ _reshape(int func_args, DTYPE dtype, int lhs)
     /* pad and order must not be present */
     return 0;
   if (DTYG(dtype) == TY_CHAR) {
+    /* character must have constant length */
+    int length_ast = DTY(DDTG(dtype) + 1);
     if (DDTG(dtype) == DT_ASSCHAR || DDTG(dtype) == DT_ASSNCHAR ||
-        DDTG(dtype) == DT_DEFERCHAR || DDTG(dtype) == DT_DEFERNCHAR) {
+        DDTG(dtype) == DT_DEFERCHAR || DDTG(dtype) == DT_DEFERNCHAR ||
+        !length_ast || A_TYPEG(length_ast) != A_CNST) {
       return 0;
     }
   }
