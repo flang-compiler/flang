@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.9.0)
 
 # If we are not building as a part of LLVM, build Flang as a
 # standalone project, using LLVM as an external library:
