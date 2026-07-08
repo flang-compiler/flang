@@ -11,6 +11,7 @@
 
 #include "lrutils.h"
 #include "prstab.h"
+#include "universal.h"
 
 INT xargc;
 char **xargv;
@@ -922,7 +923,7 @@ INT
 fndnul(void)
 {
   static struct {
-    char e_1[128];
+    FLANG_NONSTRING char e_1[128];
     INT e_2;
   } equiv_128 = {"1       p   o   t   e   n   t   i   a   l   l   y  "
                  "     n   u   l   l       n   o   n   -   t   e   r   m   i  "

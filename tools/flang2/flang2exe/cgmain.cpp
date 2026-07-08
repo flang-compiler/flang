@@ -6315,6 +6315,7 @@ gen_binary_expr(int ilix, int itype)
       vcon1_sptr = get_vcon_scalar(constant, vdt);
       break;
     default:
+      bit_type = make_int_lltype(32); /* silence -Wsometimes-uninitialized */
       assert(0, "Unexpected dtype for VNOT", DTySeqTyElement(vect_dtype),
              ERR_Fatal);
     }
@@ -8309,7 +8310,7 @@ gen_llvm_expr(int ilix, LL_Type *expected_type)
   OPERAND *operand, *args, *call_op;
   OPERAND *cc_op1, *cc_op2, *c1, *cse1;
   INT tmp[2];
-  const char *intrinsic_name;
+  const char *intrinsic_name = NULL;
   float f;
   union {
     double d;

@@ -35,6 +35,14 @@
 #define FLANG_FALLTHROUGH
 #endif
 
+/* FLANG_NONSTRING - Mark char[] declarations that intentionally omit
+   terminating NULLs. */
+#if __has_attribute(nonstring)
+#define FLANG_NONSTRING __attribute__((nonstring))
+#else
+#define FLANG_NONSTRING
+#endif
+
 #ifdef __cplusplus
 
 #ifdef SHADOW_BUILD
