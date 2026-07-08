@@ -2813,7 +2813,7 @@ rewrite_cmplxpart_rval(SST *e)
 {
   int ast;
   ITEM *list;
-  const char *intrnm;
+  const char *intrnm = NULL;
   SST *arg;
   int sptr;
   int part; /* 1==> real, 2==>imag */
@@ -2843,7 +2843,7 @@ rewrite_cmplxpart_rval(SST *e)
       break;
 #endif
     default:
-      interr("rewrite_cmplxpart_rval: unexpected type", DTY(dtype), 3);
+      interr("rewrite_cmplxpart_rval: unexpected type", DTY(dtype), ERR_Severe);
     }
     sptr = getsymbol(intrnm);
     if (IS_INTRINSIC(STYPEG(sptr))) {
