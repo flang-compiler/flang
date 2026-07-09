@@ -7,12 +7,12 @@
 
 #include "float128.h"
 #include "format-double.h"
+#include "universal.h"
+
 #include <string.h>
 #ifndef TARGET_WIN
-#include <stdbool.h>
 #include <stdint.h>
 #else
-typedef enum bool { false, true } bool;
 typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 #endif
@@ -150,6 +150,7 @@ nan_or_infinite(char *out, int width, uint128_t raw, int sign_char)
   }
 }
 
+FLANG_NONSTRING
 static char base100[BASE_NUM][2] = {
     "00", "01", "02", "03", "04", "05", "06", "07", "08", "09",
     "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
