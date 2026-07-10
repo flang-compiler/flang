@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  linux:
+    strategy:
+      matrix:
+        architecture:
+          - '[{"name": "AArch64", "runner": "ubuntu-24.04-arm"}]'
+          - '[{"name": "X86", "runner": "ubuntu-24.04"}]'
+    uses: ./.github/workflows/build_flang.yml
+    with:
+      architecture: ${{ matrix.architecture }}
+    secrets: inherit

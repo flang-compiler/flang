@@ -1,46 +1,30 @@
 name: Flang build & test
 
 on:
-  push:
-    branches: [ master ]
-    paths-ignore:
-      - '**/.github/workflows/build_flang_arm64.yml'
-      - '**/.github/workflows/build_flang_windows.yml'
-  pull_request:
-    branches: [ master ]
-    paths-ignore:
-      - '**/.github/workflows/build_flang_arm64.yml'
-      - '**/.github/workflows/build_flang_windows.yml'
+  workflow_call:
+    inputs:
+      architecture:
+        required: true
+        type: string
 
 jobs:
   build_flang:
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.target.runner }}
     env:
       install_prefix: /usr/local
     strategy:
       matrix:
-        target: [X86]
-        cc: [clang]
-        version: [14, 15]
-        llvm_branch: [release_19x, release_20x]
-        include:
-          - target: X86
-            cc: gcc
-            version: 12
-            llvm_branch: release_19x
-          - target: X86
-            cc: gcc
-            version: 12
-            llvm_branch: release_20x
+        target: ${{ fromJSON(inputs.architecture) }}
+        llvm_branch: [release_19x, release_20x, release_21x]
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so the job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1
         with:
-          key: ${{ matrix.cc }}-${{ matrix.version }}
+          key: ${{ matrix.llvm_branch }}
 
       - name: Check tools
         run: |
@@ -56,7 +40,7 @@ jobs:
           cd ../..
           # Search backwards in the workflow history for the specified branch
           # for the first successful run that produced the desired artifact.
-          build_name="llvm_build_${{ matrix.target }}_${{ matrix.cc }}_${{ matrix.version }}_${{ matrix.llvm_branch }}"
+          build_name="llvm_build_${{ matrix.target.name }}_clang_18_${{ matrix.llvm_branch }}"
           curl -sL https://api.github.com/repos/flang-compiler/classic-flang-llvm-project/actions/workflows/pre-compile_llvm.yml/runs -o llvm_runs.json
           urls=(`jq -r --arg b ${{ matrix.llvm_branch }} '.workflow_runs[] | select(.head_branch == $b) | select (.conclusion == "success") | .artifacts_url?' llvm_runs.json`)
           for artifacts_url in "${urls[@]}"; do
@@ -88,7 +72,7 @@ jobs:
       - name: Build and install flang & libpgmath
         run: |
           ${{ env.install_prefix }}/bin/clang --version
-          ./build-flang.sh -t ${{ matrix.target }} -p ${{ env.install_prefix }} -n $(nproc) -c -s -v -l $(realpath ../../classic-flang-llvm-project/llvm)
+          ./build-flang.sh -t ${{ matrix.target.name }} -p ${{ env.install_prefix }} -n $(nproc) -c -s -v -l $(realpath ../../classic-flang-llvm-project/llvm)
 
       - name: Copy llvm-lit
         run: |
@@ -99,14 +83,16 @@ jobs:
           cd build/flang
           make check-flang-long
 
-      # Archive documentation just once, for the fastest job.
-      - if: matrix.cc == 'clang' && matrix.version == '15'
+      # Archive documentation just once.
+      - name: Archive HTML documentation
+        if: matrix.target.name == 'X86' && matrix.llvm_branch == 'release_21x'
         run: |
           cd build/flang/docs/web
           cp -r html/ ../../.. # copy to a place where Upload can find it.
 
-      # Upload docs just once, for the fastest job.
-      - if: matrix.cc == 'clang' && matrix.version == '15'
+      # Upload docs just once.
+      - name: Upload HTML documentation
+        if: matrix.target.name == 'X86' && matrix.llvm_branch == 'release_21x'
         uses: actions/upload-artifact@v4
         with:
           name: html_docs_flang

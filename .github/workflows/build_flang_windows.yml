@@ -1,37 +1,21 @@
 name: Flang build for Windows (build only)
 
 on:
-  push:
-    branches: [ master ]
-    paths-ignore:
-      - '**/.github/workflows/build_flang_arm64.yml'
-      - '**/.github/workflows/build_flang.yml'
-  pull_request:
-    branches: [ master ]
-    paths-ignore:
-      - '**/.github/workflows/build_flang_arm64.yml'
-      - '**/.github/workflows/build_flang.yml'
+  workflow_call:
+    inputs:
+      matrix:
+        required: true
+        type: string
 
 jobs:
   build-win:
     name: Windows build
     strategy:
       matrix:
-        os:
-          - windows-latest
-          # - self-hosted
-        llvm_branch: [release_19x, release_20x]
-        include:
-          - os: windows-latest
-            arch: amd64
-            target: X86
-          # Enable Windows on ARM build, when an official
-          # self-hosted machine is available.
-          #- os: self-hosted
-          #  arch: arm64
-          #  target: AArch64
-    if: github.repository_owner == 'flang-compiler'
-    runs-on: ${{ matrix.os }}
+        target: ${{ fromJSON(inputs.architecture) }}
+        llvm_branch: [release_19x, release_20x, release_21x]
+
+    runs-on: ${{ matrix.target.runner }}
 
     steps:
       - name: Clean Workspace
@@ -43,17 +27,17 @@ jobs:
       - name: Setup Windows
         uses: llvm/actions/setup-windows@main
         with:
-          arch: ${{ matrix.arch }}
+          arch: ${{ matrix.target.arch }}
 
       - name: Setup Ninja
         uses: llvm/actions/install-ninja@main
 
       - name: Setup Graphviz for Doxygen
-        if: ${{ matrix.os == 'windows-latest'}}
+        if: ${{ matrix.target.runner == 'windows-latest'}}
         run: choco install  graphviz
 
       - name: Setup Sphinx
-        if: ${{ matrix.os == 'windows-latest'}}
+        if: ${{ matrix.target.runner == 'windows-latest'}}
         run: pip install sphinx
 
       - name: Display path
@@ -72,7 +56,7 @@ jobs:
           cd ../..
           # Search backwards in the workflow history for the specified branch
           # for the first successful run that produced the desired artifact.
-          $build_name="llvm_build_win_${{ matrix.arch }}_clangcl_${{ matrix.llvm_branch }}"
+          $build_name="llvm_build_win_${{ matrix.target.arch }}_clangcl_${{ matrix.llvm_branch }}"
           Invoke-WebRequest -Uri https://api.github.com/repos/flang-compiler/classic-flang-llvm-project/actions/workflows/pre-compile_llvm.yml/runs -OutFile llvm_runs.json
           $urls = @($(jq -r --arg b ${{ matrix.llvm_branch }} '.workflow_runs[] | select(.head_branch == $b) | select (.conclusion == "success") | .artifacts_url?' llvm_runs.json))
           Invoke-WebRequest "$(jq -r '.workflow_runs[0].artifacts_url?' llvm_runs.json)" -OutFile llvm_artifacts.json
@@ -104,7 +88,7 @@ jobs:
       - name: Build and install flang & libpgmath
         run: |
           $pcount = $($(Get-WmiObject -class Win32_ComputerSystem).numberoflogicalprocessors)
-          python .\scripts\build_flang.py -d build -t ${{ matrix.target }} -p "$(pwd)\..\..\classic-flang-llvm-project\classic-flang-llvm-project\build\" -j $pcount -v
+          python .\scripts\build_flang.py -d build -t ${{ matrix.target.name }} -p "$(pwd)\..\..\classic-flang-llvm-project\classic-flang-llvm-project\build\" -j $pcount -v
         shell: powershell
 
       - name: Copy llvm-lit
