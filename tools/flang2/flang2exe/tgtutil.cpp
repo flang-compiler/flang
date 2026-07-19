@@ -404,7 +404,7 @@ tgt_target_fill_params(SPTR arg_base_sptr, SPTR arg_size_sptr, SPTR args_sptr,
       chk_block(ilix);
     } else {
       /* Optimization - Pass by value for scalar */
-      if (TY_ISSCALAR(DTY(param_dtype)) && (targetinfo->symbols[i].map_type & OMP_TGT_MAPTYPE_IMPLICIT) || isMidnum || isThis ) {
+      if ((TY_ISSCALAR(DTY(param_dtype)) && (targetinfo->symbols[i].map_type & OMP_TGT_MAPTYPE_IMPLICIT)) || isMidnum || isThis ) {
         iliy = mk_ompaccel_ldsptr(param_sptr);
         load_dtype = param_dtype;
       } else {
